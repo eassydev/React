@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Save, FileText, Loader2, Type, Globe2 } from 'lucide-react';
-import { fetchAllCategories, fetchSubCategoriesByCategoryId, fetchFilterAttributes, createRateCard, Category, Subcategory, Attribute } from '@/lib/api';
+import { fetchAllCategories, fetchSubCategoriesByCategoryId, fetchProviders, Provider, fetchFilterAttributes, createRateCard, Category, Subcategory, Attribute } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 
 // Importing React-Quill dynamically
@@ -40,7 +40,8 @@ const RateCardForm: React.FC = () => {
   const [description, setDescription] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
   const { toast } = useToast();
-
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [selectedProviderId, setSelectedProviderId] = useState<string>('');
   // Fetch categories on load
   useEffect(() => {
     const loadCategories = async () => {
@@ -82,6 +83,24 @@ const RateCardForm: React.FC = () => {
     }
   }, [selectedCategoryId]);
 
+
+  useEffect(() => {
+    const loadProviders = async () => {
+      try {
+        const providerData = await fetchProviders();
+        console.log(providerData)
+        setProviders(providerData);
+      } catch (error) {
+        toast({
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load providers.',
+        });
+      }
+    };
+    loadProviders();
+  }, []);
+  
   // Fetch filter attributes when a subcategory is selected
   useEffect(() => {
     if (selectedSubcategoryId) {
@@ -109,6 +128,7 @@ const RateCardForm: React.FC = () => {
       filter_attribute_id: selectedFilterAttributesId ? parseInt(selectedFilterAttributesId) : null, 
       price: parseFloat(price),
       active: isActive,
+      provider_id: parseInt(selectedProviderId), // Add provider ID
     };
 
     try {
@@ -286,7 +306,29 @@ const RateCardForm: React.FC = () => {
                   style={{ height: "200px" }}
                 />
               </div>
-
+              <div className="space-y-2">
+  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+    <Globe2 className="w-4 h-4 text-blue-500" />
+    <span>Select Provider</span>
+  </label>
+  <Select
+    value={selectedProviderId}
+    onValueChange={(value) => setSelectedProviderId(value)}
+  >
+    <SelectTrigger className="bg-white border-gray-200">
+      <SelectValue placeholder="Select a provider" />
+    </SelectTrigger>
+    <SelectContent>
+      {providers.map((provider) =>
+        provider?.id && provider?.first_name ? (
+          <SelectItem key={provider.id} value={provider.id.toString()}>
+            {provider.first_name}
+          </SelectItem>
+        ) : null
+      )}
+    </SelectContent>
+  </Select>
+</div>
               {/* Active/Inactive Switch */}
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">

@@ -65,6 +65,11 @@ export const sidebarItems: SidebarItem[] = [
     icon: ListCheckIcon,
     route: `${basePath}/package`,
   },
+  {
+    title: "Pages",
+    icon: ListCheckIcon,
+    route: `${basePath}/pages`,
+  },
   // {
   //   title: "Invoice",
   //   icon: Receipt,

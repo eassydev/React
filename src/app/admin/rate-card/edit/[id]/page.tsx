@@ -17,6 +17,7 @@ import {
   Category,
   Subcategory,
   Attribute,
+  fetchProviders, Provider,
 } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 
@@ -50,6 +51,8 @@ const RateCardEditForm: React.FC = () => {
   const [description, setDescription] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
   const { toast } = useToast();
+  const [providers, setProviders] = useState<Provider[]>([]);
+const [selectedProviderId, setSelectedProviderId] = useState<string>('');
 
   // Fetch categories and rate card details once on component mount
   useEffect(() => {
@@ -58,12 +61,16 @@ const RateCardEditForm: React.FC = () => {
         // Fetch all categories
         const fetchedCategories = await fetchAllCategories();
         setCategories(fetchedCategories);
-
+  
+        // Fetch all providers
+        const fetchedProviders = await fetchProviders();
+        setProviders(fetchedProviders);
+  
         // Fetch rate card details if the rateCardId exists
         if (rateCardId) {
           const rateCardData = await fetchRateCardById(rateCardId.toString());
-
-          // Set initial values including category and subcategory
+  
+          // Set initial values including category, subcategory, and provider
           setRateCardName(rateCardData.name);
           setDescription(rateCardData.description || '');
           setSelectedCategoryId(rateCardData.category_id?.toString() || '');
@@ -71,12 +78,13 @@ const RateCardEditForm: React.FC = () => {
           setSelectedFilterAttributeId(rateCardData.filter_attribute_id?.toString() || '');
           setPrice(rateCardData.price?.toString() || '');
           setIsActive(rateCardData.active);
-
+          setSelectedProviderId(rateCardData.provider_id?.toString() || ''); // Set initial provider
+  
           // Fetch subcategories for the selected category
           if (rateCardData.category_id) {
             await fetchSubcategories(rateCardData.category_id.toString());
           }
-
+  
           // Fetch filter attributes based on category or subcategory
           const subcategoryId = rateCardData.subcategory_id !== null ? rateCardData.subcategory_id : undefined;
           await fetchFilters(rateCardData.category_id, subcategoryId);
@@ -89,10 +97,12 @@ const RateCardEditForm: React.FC = () => {
         });
       }
     };
-
+  
     fetchData();
   }, [rateCardId]);
+  
 
+  
   // Fetch subcategories when the selected category changes
   useEffect(() => {
     if (selectedCategoryId) {
@@ -147,6 +157,7 @@ const RateCardEditForm: React.FC = () => {
       description,
       category_id: parseInt(selectedCategoryId),
       subcategory_id: selectedSubcategoryId ? parseInt(selectedSubcategoryId) : null,
+      provider_id: selectedProviderId ? parseInt(selectedProviderId) : null,
       filter_attribute_id: selectedFilterAttributeId ? parseInt(selectedFilterAttributeId) : null,
       price: parseFloat(price),
       active: isActive,
@@ -321,6 +332,32 @@ const RateCardEditForm: React.FC = () => {
                   required
                 />
               </div>
+
+
+{/* Provider Selector */}
+<div className="space-y-2">
+  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+    <span>Select Provider</span>
+  </label>
+  <Select
+    value={selectedProviderId}
+    onValueChange={(value) => setSelectedProviderId(value)}
+  >
+    <SelectTrigger className="bg-white border-gray-200">
+      <SelectValue placeholder="Select a provider" />
+    </SelectTrigger>
+    <SelectContent>
+      {providers.map((provider) =>
+        provider?.id ? (
+          <SelectItem key={provider.id} value={provider.id.toString()}>
+            {provider.first_name} {provider.last_name}
+          </SelectItem>
+        ) : null
+      )}
+    </SelectContent>
+  </Select>
+</div>
+
 
               {/* Active/Inactive Switch */}
               <div className="space-y-2">

@@ -73,8 +73,9 @@ export interface Attribute {
 export interface RateCard {
   id?: string;
   category_id: number;
-  subcategory_id: number | null; // Adjusted to use subcategory_id
-  filter_attribute_id: number | null; // Adjusted to use subcategory_id
+  subcategory_id: number | null;
+  filter_attribute_id: number | null;
+  provider_id: number | null; // Change here to allow null values
   name: string;
   description?: string;
   price: number;
@@ -111,6 +112,14 @@ export interface Page {
   updated_at?: number; // UNIX timestamp
 }
 
+
+// Define the structure of the Provider object
+export interface Provider {
+  id: number;
+  first_name: string; // Adjust the fields as necessary based on the provider's structure
+  last_name: string;
+  company_name?: string; // Optional company name
+}
 
 // Define the structure of the API response
 interface ApiResponse {
@@ -480,6 +489,9 @@ export const createRateCard = async (rateCard: RateCard): Promise<ApiResponse> =
   formData.append('price', rateCard.price.toString());
   formData.append('active', rateCard.active ? '1' : '0');
 
+  if (rateCard.provider_id) {
+    formData.append('provider_id', rateCard.provider_id?.toString() || ''); // Adjusted for subcategory
+  }
   if (rateCard.subcategory_id) {
     formData.append('subcategory_id', rateCard.subcategory_id?.toString() || ''); // Adjusted for subcategory
   }
@@ -565,6 +577,9 @@ export const updateRateCard = async (id: string, rateCard: RateCard): Promise<Ap
 
   formData.append('name', rateCard.name);
   formData.append('category_id', rateCard.category_id.toString());
+  if (rateCard.provider_id) {
+    formData.append('provider_id', rateCard.provider_id?.toString() || ''); // Adjusted for subcategory
+  }
   formData.append('price', rateCard.price.toString());
   formData.append('active', rateCard.active ? '1' : '0');
 
@@ -896,5 +911,26 @@ export const restorePage = async (id: string): Promise<ApiResponse> => {
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to restore page.');
+  }
+};
+
+// Function to fetch all providers
+export const fetchProviders = async (): Promise<Provider[]> => {
+  try {
+    const token = getToken(); // Assume getToken() retrieves the auth token
+
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/provider/all', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data; // Return the array of providers
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch providers.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch providers.');
   }
 };
