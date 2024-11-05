@@ -121,6 +121,29 @@ export interface Provider {
   company_name?: string; // Optional company name
 }
 
+
+// Define the structure of the User object
+export interface User {
+  id?: string;
+  first_name: string;
+  last_name: string;
+  email: string;
+  mobile: string;
+  signup_method?: 'email' | 'google' | 'facebook' | 'apple';
+  social_id?: string;
+  app_login_token?: string;
+  referral_code?: string;
+  vip_subscription_status?: 'active' | 'inactive';
+  vip_subscription_start?: number;
+  vip_subscription_expiry?: number;
+  birthdate?: string;
+  anniversary?: string;
+  signup_location?: string;
+  is_active: boolean;
+  created_at?: number;
+  updated_at?: number;
+  deleted_at?: number | null;
+}
 // Define the structure of the API response
 interface ApiResponse {
   status: boolean;
@@ -932,5 +955,106 @@ export const fetchProviders = async (): Promise<Provider[]> => {
     }
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch providers.');
+  }
+};
+
+
+// Fetch all users with optional pagination
+
+export const fetchAllUsers = async (page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response= await apiClient.get('/user', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error('Failed to fetch users.');
+  }
+};
+
+
+// Fetch a single user by ID
+export const fetchUserById = async (id: string): Promise<User> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/user/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch user.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch user.');
+  }
+};
+
+// Create a new user
+export const createUser = async (user: User): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/user', user, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create user.');
+  }
+};
+
+// Update an existing user
+export const updateUser = async (id: string, user: User): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/user/${id}`, user, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update user.');
+  }
+};
+
+// Delete (soft-delete) a user by ID
+export const deleteUser = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/user/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete user.');
+  }
+};
+
+// Restore a soft-deleted user by ID
+export const restoreUser = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post(`/user/${id}/restore`, {}, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to restore user.');
   }
 };
