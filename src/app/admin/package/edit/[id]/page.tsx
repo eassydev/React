@@ -45,6 +45,7 @@ const PackageEditForm: React.FC = () => {
   const [rateCards, setRateCards] = useState<any[]>([]);
   const [selectedRateCards, setSelectedRateCards] = useState<string[]>([]);
   const [isRateCardDropdownOpen, setIsRateCardDropdownOpen] = useState<boolean>(false);
+  const [noService, setNoService] = useState<number | null>(null);
 
   const { toast } = useToast();
   const router = useRouter();
@@ -88,7 +89,7 @@ const PackageEditForm: React.FC = () => {
         setValidityPeriod(packageData.validity_period || null);
         setRenewalOptions(Boolean(packageData.renewal_options));
         setIsActive(Boolean(packageData.is_active));
-        
+        setNoService(packageData.no_of_service || null);
         // Pre-select rate cards based on the response
         const preSelectedRateCards = packageData.rateCards?.map((rc: any) => rc.rate_card_id.toString());
         setSelectedRateCards(preSelectedRateCards ?? []);
@@ -146,6 +147,7 @@ const PackageEditForm: React.FC = () => {
       renewal_options: renewalOptions,
       is_active: isActive,
       rate_card_ids: selectedRateCards,
+      no_of_service: noService,
     };
 
     try {
@@ -317,6 +319,18 @@ const PackageEditForm: React.FC = () => {
                     value={validityPeriod?.toString() || ''}
                     onChange={(e) => setValidityPeriod(parseInt(e.target.value))}
                     placeholder="Enter validity period"
+                  />
+                </div>
+              )}
+
+{packageType === "amc" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">No of Service</label>
+                  <Input
+                    type="number"
+                    value={noService?.toString() || ''}
+                    onChange={(e) => setNoService(parseInt(e.target.value))}
+                    placeholder="Enter No of service"
                   />
                 </div>
               )}

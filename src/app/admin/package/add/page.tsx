@@ -44,7 +44,9 @@ const PackageCreateForm: React.FC = () => {
   const [rateCards, setRateCards] = useState<any[]>([]);
   const [selectedRateCards, setSelectedRateCards] = useState<string[]>([]);
   const [isRateCardDropdownOpen, setIsRateCardDropdownOpen] = useState<boolean>(false);
+  const [noService, setNoService] = useState<number | null>(null);
 
+  
   const { toast } = useToast();
 
   // Fetch rate cards on component mount
@@ -103,6 +105,7 @@ const PackageCreateForm: React.FC = () => {
       renewal_options: renewalOptions,
       is_active: isActive,
       rate_card_ids: selectedRateCards,
+      no_of_service: noService,
     };
 
     try {
@@ -279,6 +282,18 @@ const PackageCreateForm: React.FC = () => {
                     value={validityPeriod?.toString() || ''}
                     onChange={(e) => setValidityPeriod(parseInt(e.target.value))}
                     placeholder="Enter validity period"
+                  />
+                </div>
+              )}
+
+{packageType === "amc" && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">No of Service</label>
+                  <Input
+                    type="number"
+                    value={noService?.toString() || ''}
+                    onChange={(e) => setNoService(parseInt(e.target.value))}
+                    placeholder="Enter No of service"
                   />
                 </div>
               )}
