@@ -95,6 +95,7 @@ export interface Package {
   discount_value: number;
   final_price?: number;
   validity_period?: number | null;
+  no_of_service?: number | null;
   renewal_options: boolean;
   is_active: boolean;
   rate_card_ids?: string[]; // Array of rate card IDs
@@ -115,12 +116,50 @@ export interface Page {
 
 // Define the structure of the Provider object
 export interface Provider {
-  id: number;
-  first_name: string; // Adjust the fields as necessary based on the provider's structure
+  id?: string;
+  first_name: string;
   last_name: string;
-  company_name?: string; // Optional company name
+  gender?: 'male' | 'female' | 'other';
+  email: string;
+  phone: string;
+  company_name?: string;
+  gst_number?: string;
+  pan_number?: string;
+  active: number;
+  rating?: number;
+  country?: string;
+  state?: string;
+  city?: string;
+  postal_code?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
+
+// Define the structure of the Bank object
+export interface Bank {
+  id?: string; // Optional for editing
+  name: string;
+  is_active: boolean;
+  created_at?: number; // UNIX timestamp
+  updated_at?: number; // UNIX timestamp
+}
+
+// Define the structure of the Provider Bank Detail object
+export interface ProviderBankDetail {
+  id?: string;
+  provider_id: string;
+  bank_id: string;
+  account_holder_name: string;
+  account_number: string;
+  ifsc_code: string;
+  account_type: 'savings' | 'current' | 'business';
+  status?: 'pending' | 'verified' | 'rejected';
+  created_at?: number;
+  updated_at?: number;
+  deleted_at?: number | null;
+  primary?: boolean; // New field for marking primary account
+}
 
 // Define the structure of the User object
 export interface User {
@@ -144,6 +183,19 @@ export interface User {
   updated_at?: number;
   deleted_at?: number | null;
 }
+
+
+export interface VIPPlan {
+  id?: string; // Optional for editing
+  plan_name: string;
+  price: number;
+  discount_percentage: number;
+  description: string;
+  validity_period: number;
+  status: boolean;
+  image?: File | null; // Optional for image upload
+}
+
 // Define the structure of the API response
 interface ApiResponse {
   status: boolean;
@@ -703,6 +755,7 @@ export const createPackage = async (pkg: Package): Promise<ApiResponse> => {
   formData.append('discount_type', pkg.discount_type);
   formData.append('discount_value', pkg.discount_value.toString());
   if (pkg.validity_period) formData.append('validity_period', pkg.validity_period?.toString() || '');
+  if (pkg.no_of_service) formData.append('no_of_service', pkg.no_of_service?.toString() || '');
   formData.append('renewal_options', pkg.renewal_options ? '1' : '0');
   formData.append('is_active', pkg.is_active ? '1' : '0');
 
@@ -742,6 +795,8 @@ export const updatePackage = async (id: string, pkg: Package): Promise<ApiRespon
   formData.append('discount_type', pkg.discount_type);
   formData.append('discount_value', pkg.discount_value.toString());
   if (pkg.validity_period) formData.append('validity_period', pkg.validity_period?.toString() || '');
+  if (pkg.no_of_service) formData.append('no_of_service', pkg.no_of_service?.toString() || '');
+
   formData.append('renewal_options', pkg.renewal_options ? '1' : '0');
   formData.append('is_active', pkg.is_active ? '1' : '0');
 
@@ -1056,5 +1111,414 @@ export const restoreUser = async (id: string): Promise<ApiResponse> => {
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to restore user.');
+  }
+};
+
+
+
+// Fetch all providers with optional pagination
+export const fetchAllProviders = async (page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/provider', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch providers.');
+  }
+};
+
+// Fetch a specific provider by ID
+export const fetchProviderById = async (id: string): Promise<Provider> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/provider/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch provider.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch provider.');
+  }
+};
+
+// Create a new provider
+export const createProvider = async (provider: Provider): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/provider', provider, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create provider.');
+  }
+};
+
+// Update an existing provider
+export const updateProvider = async (id: string, provider: Provider): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/provider/${id}`, provider, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update provider.');
+  }
+};
+
+// Delete (soft-delete) a provider by ID
+export const deleteProvider = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/provider/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete provider.');
+  }
+};
+
+// Restore a soft-deleted provider by ID
+export const restoreProvider = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post(`/provider/${id}/restore`, {}, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to restore provider.');
+  }
+};
+
+
+// Function to create a new VIP plan
+export const createVIPPlan = async (vipPlan: VIPPlan): Promise<ApiResponse> => {
+  const formData = new FormData();
+  
+  formData.append("plan_name", vipPlan.plan_name);
+  formData.append("price", vipPlan.price.toString());
+  formData.append("discount_percentage", vipPlan.discount_percentage.toString());
+  formData.append("description", vipPlan.description);
+  formData.append("validity_period", vipPlan.validity_period.toString());
+  formData.append("status", vipPlan.status ? "1" : "0");
+
+  // Add image file if available
+  if (vipPlan.image) {
+    formData.append("image", vipPlan.image);
+  }
+
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post("/vip", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "admin-auth-token": token || "",
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to create VIP plan.");
+  }
+};
+
+// Function to fetch all VIP plans with optional pagination
+export const fetchVIPPlans = async (page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get("/vip", {
+      params: { page, size },
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+    return response.data;
+  } catch (error:any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch providers.');
+  }
+};
+
+
+
+// Function to fetch a single VIP plan by ID
+export const fetchVIPPlanById = async (id: string): Promise<VIPPlan> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/vip/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || "Failed to fetch VIP plan.");
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch VIP plan.");
+  }
+};
+
+// Function to update an existing VIP plan
+export const updateVIPPlan = async (id: string, vipPlan: VIPPlan): Promise<ApiResponse> => {
+  const formData = new FormData();
+
+  formData.append("plan_name", vipPlan.plan_name);
+  formData.append("price", vipPlan.price.toString());
+  formData.append("discount_percentage", vipPlan.discount_percentage.toString());
+  formData.append("description", vipPlan.description);
+  formData.append("validity_period", vipPlan.validity_period.toString());
+  formData.append("status", vipPlan.status ? "1" : "0");
+
+  // Add image file if available
+  if (vipPlan.image) {
+    formData.append("image", vipPlan.image);
+  }
+
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/vip/${id}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "admin-auth-token": token || "",
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to update VIP plan.");
+  }
+};
+
+// Function to delete a VIP plan
+export const deleteVIPPlan = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/vip/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to delete VIP plan.");
+  }
+};
+
+// Function to restore a soft-deleted VIP plan
+export const restoreVIPPlan = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post(`/vip/${id}/restore`, {}, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to restore VIP plan.");
+  }
+};
+
+
+
+// Fetch all providers with optional pagination
+export const fetchBanks = async (page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/bank', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch bank.');
+  }
+};
+
+// Function to fetch all banks
+export const fetchAllBanks = async (): Promise<Bank[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/bank/all', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch banks.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch banks.');
+  }
+};
+
+// Function to fetch a single bank by ID
+export const fetchBankById = async (id: string): Promise<Bank> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/bank/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch bank.');
+  }
+};
+
+// Function to create a new bank
+export const createBank = async (bank: Bank): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/bank', bank, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create bank.');
+  }
+};
+
+// Function to update an existing bank
+export const updateBank = async (id: string, bank: Bank): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/bank/${id}`, bank, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update bank.');
+  }
+};
+
+// Function to delete (soft-delete) a bank
+export const deleteBank = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/bank/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete bank.');
+  }
+};
+
+// Fetch all provider bank details with optional pagination
+export const fetchProviderBankDetails = async (provider_id: string, page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/provider-bank', {
+      params: { provider_id, page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch provider bank details.');
+  }
+};
+
+// Function to fetch a single provider bank detail by ID
+export const fetchProviderBankDetailById = async (id: string): Promise<ProviderBankDetail> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/provider-bank/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch provider bank detail.');
+  }
+};
+
+// Function to create a new provider bank detail
+export const createProviderBankDetail = async (detail: ProviderBankDetail): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/provider-bank', detail, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create provider bank detail.');
+  }
+};
+
+// Function to update an existing provider bank detail
+export const updateProviderBankDetail = async (
+  id: string,
+  detail: ProviderBankDetail
+): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/provider-bank/${id}`, detail, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update provider bank detail.');
+  }
+};
+
+// Function to delete (soft-delete) a provider bank detail
+export const deleteProviderBankDetail = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/provider-bank/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete provider bank detail.');
   }
 };

@@ -75,6 +75,26 @@ export const sidebarItems: SidebarItem[] = [
     icon: ListCheckIcon,
     route: `${basePath}/user`,
   },
+  {
+    title: "Provider",
+    icon: ListCheckIcon,
+    route: `${basePath}/provider`,
+  },
+  {
+    title: "Bank",
+    icon: ListCheckIcon,
+    route: `${basePath}/pages`,
+  },
+  {
+    title: "Provider account",
+    icon: ListCheckIcon,
+    route: `${basePath}/user`,
+  },
+  {
+    title: "Vip plan",
+    icon: ListCheckIcon,
+    route: `${basePath}/provider`,
+  },
   // {
   //   title: "Invoice",
   //   icon: Receipt,
