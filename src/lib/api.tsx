@@ -189,12 +189,15 @@ export interface VIPPlan {
   id?: string; // Optional for editing
   plan_name: string;
   price: number;
-  discount_percentage: number;
+  discount_price?: number; // Optional field for discount
   description: string;
   validity_period: number;
   status: boolean;
   image?: File | null; // Optional for image upload
+  platform_fees: boolean; // Boolean for platform fees
+  no_of_bookings: number; // Number of bookings included in the plan
 }
+
 
 // Define the structure of the API response
 interface ApiResponse {
@@ -1221,10 +1224,19 @@ export const createVIPPlan = async (vipPlan: VIPPlan): Promise<ApiResponse> => {
   
   formData.append("plan_name", vipPlan.plan_name);
   formData.append("price", vipPlan.price.toString());
-  formData.append("discount_percentage", vipPlan.discount_percentage.toString());
+  
+  // Optional discount price
+  if (vipPlan.discount_price !== undefined) {
+    formData.append("discount_price", vipPlan.discount_price.toString());
+  }
+  
   formData.append("description", vipPlan.description);
   formData.append("validity_period", vipPlan.validity_period.toString());
   formData.append("status", vipPlan.status ? "1" : "0");
+  
+  // New fields
+  formData.append("platform_fees", vipPlan.platform_fees ? "1" : "0");
+  formData.append("no_of_bookings", vipPlan.no_of_bookings.toString());
 
   // Add image file if available
   if (vipPlan.image) {
@@ -1289,10 +1301,19 @@ export const updateVIPPlan = async (id: string, vipPlan: VIPPlan): Promise<ApiRe
 
   formData.append("plan_name", vipPlan.plan_name);
   formData.append("price", vipPlan.price.toString());
-  formData.append("discount_percentage", vipPlan.discount_percentage.toString());
+  
+  // Optional discount price
+  if (vipPlan.discount_price !== undefined) {
+    formData.append("discount_price", vipPlan.discount_price.toString());
+  }
+  
   formData.append("description", vipPlan.description);
   formData.append("validity_period", vipPlan.validity_period.toString());
   formData.append("status", vipPlan.status ? "1" : "0");
+
+  // New fields
+  formData.append("platform_fees", vipPlan.platform_fees ? "1" : "0");
+  formData.append("no_of_bookings", vipPlan.no_of_bookings.toString());
 
   // Add image file if available
   if (vipPlan.image) {
