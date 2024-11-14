@@ -46,6 +46,11 @@ export const sidebarItems: SidebarItem[] = [
   // },
   // { heading: "Apps & Pages" },
   {
+    title: "Banner",
+    icon: ListCheckIcon,
+    route: `${basePath}/banner`,
+  },
+  {
     title: "Category",
     icon: ListCheckIcon,
     route: `${basePath}/category`,
@@ -83,17 +88,17 @@ export const sidebarItems: SidebarItem[] = [
   {
     title: "Bank",
     icon: ListCheckIcon,
-    route: `${basePath}/pages`,
+    route: `${basePath}/bank`,
   },
-  {
-    title: "Provider account",
-    icon: ListCheckIcon,
-    route: `${basePath}/user`,
-  },
+  // {
+  //   title: "Provider account",
+  //   icon: ListCheckIcon,
+  //   route: providerId ? `${basePath}/provider/${providerId}/account`,
+  // }
   {
     title: "Vip plan",
     icon: ListCheckIcon,
-    route: `${basePath}/provider`,
+    route: `${basePath}/vip-plan`,
   },
   // {
   //   title: "Invoice",

@@ -2,7 +2,7 @@
 
 import axios from 'axios';
 
-const API_URL = 'http://localhost:5000/admin'; // Replace with your API URL
+const API_URL = 'http://localhost:5001/admin'; // Replace with your API URL
 
 interface LoginResponse {
   token: string;
