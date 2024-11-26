@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Save, ImageIcon, Globe2, Type, FileInput, MapPin, Download, FileText, Loader2, Plus, Trash2 } from 'lucide-react';
-import { createCategory, Category, Location, Attribute } from '@/lib/api'; // Import the API function
+import { createCategory,fetchAllGstRates, Category, Location, Attribute } from '@/lib/api'; // Import the API function
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
 
@@ -59,8 +59,10 @@ const CategoryForm: React.FC = () => {
   const [isActive, setIsActive] = useState<boolean>(true);
   const [categoryName, setCategoryName] = useState<string>('');
   const [attributes, setAttributes] = useState<Attribute[]>([]);
-  const [tax, setTax] = useState<number | null>(null);
-  const [igstTax, setIgstTax] = useState<number | null>(null);
+  const [igst, setIgst] = useState<number | null>(null);
+  const [sgst, setSgst] = useState<number | null>(null);
+  const [cgst, setCgst] = useState<number | null>(null);
+  const [hstRates, setHstRates] = useState<any[]>([]);
   const [sacCode, setSacCode] = useState<string>('');
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const { toast } = useToast();
@@ -73,6 +75,23 @@ const CategoryForm: React.FC = () => {
     }
   }, [locationMethod]);
 
+
+  useEffect(() => {
+    const fetchTaxRates = async () => {
+      try {
+        const rates = await fetchAllGstRates();
+        setHstRates(rates);
+      } catch (error) {
+        toast({
+          variant: "error",
+          title: "Error",
+          description: "Failed to load tax rates.",
+        });
+      }
+    };
+
+    fetchTaxRates();
+  }, []);
   const initializeAutocomplete = () => {
     if (typeof window !== 'undefined' && window.google) {
       const inputElement = document.getElementById('location-input') as HTMLInputElement;
@@ -85,6 +104,9 @@ const CategoryForm: React.FC = () => {
     }
   };
 
+  const handleDropdownChange = (value: string, setter: (value: number) => void) => {
+    setter(parseFloat(value));
+  };
   const handlePlaceSelect = () => {
     const place = autocompleteRef.current?.getPlace();
     if (place) {
@@ -200,8 +222,9 @@ const CategoryForm: React.FC = () => {
       active: isActive,
       filterattributes: attributes,
       location_method: locationMethod,
-      tax,       // Now holds percentage
-      igst_tax: igstTax, // Now holds percentage
+      igst_tax: igst,
+      sgst_tax: sgst,
+      cgst_tax: cgst,
       sac_code: sacCode, // Holds SAC code as before
     };
 
@@ -290,41 +313,73 @@ const CategoryForm: React.FC = () => {
                 )}
               </div>
 
-              <div className="space-y-2">
+              {/* GST Dropdowns */}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <span>Tax (%)</span>
+                  <span>IGST (%)</span>
                 </label>
-                <Select value={tax?.toString() ?? ''} onValueChange={(value) => setTax(parseInt(value))}>
-                  <SelectTrigger className="bg-white border-gray-200 h-11">
-                    <SelectValue placeholder="Select Tax %" />
+                <Select
+                    value={igst?.toString() || ""}
+                    onValueChange={(value) => handleDropdownChange(value, setIgst)}
+                  >
+                  <SelectTrigger className="bg-white border-gray-200">
+                    <SelectValue placeholder="Select IGST" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="0">0%</SelectItem>
-                    <SelectItem value="5">5%</SelectItem>
-                    <SelectItem value="12">12%</SelectItem>
-                    <SelectItem value="18">18%</SelectItem>
-                    <SelectItem value="24">24%</SelectItem>
+                  {hstRates.map((rate) =>
+                          <SelectItem key={rate.id} value={rate.IGST.toString()}>
+                            {rate.IGST}
+                          </SelectItem>
+                      )}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* IGST Tax Field */}
+
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <span>IGST Tax (%)</span>
+                  <span>SGST (%)</span>
                 </label>
-                <Select value={igstTax?.toString() ?? ''} onValueChange={(value) => setIgstTax(parseInt(value))}>
-                  <SelectTrigger className="bg-white border-gray-200 h-11">
-                    <SelectValue placeholder="Select IGST Tax %" />
+                <Select
+                    value={sgst?.toString() || ""}
+                    onValueChange={(value) => handleDropdownChange(value, setSgst)}
+                  >
+                  <SelectTrigger className="bg-white border-gray-200">
+                    <SelectValue placeholder="Select IGST" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="0">0%</SelectItem>
-                    <SelectItem value="5">5%</SelectItem>
-                    <SelectItem value="12">12%</SelectItem>
-                    <SelectItem value="18">18%</SelectItem>
-                    <SelectItem value="24">24%</SelectItem>
+                  {hstRates.map((rate) =>
+                          <SelectItem key={rate.id} value={rate.SGST.toString()}>
+                            {rate.SGST}
+                          </SelectItem>
+                      )}
                   </SelectContent>
                 </Select>
+              </div>
+
+               
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <span>CGST (%)</span>
+                </label>
+                <Select
+                    value={cgst?.toString() || ""}
+                    onValueChange={(value) => handleDropdownChange(value, setCgst)}
+                  >
+                  <SelectTrigger className="bg-white border-gray-200">
+                    <SelectValue placeholder="Select IGST" />
+                  </SelectTrigger>
+                  <SelectContent>
+                  {hstRates.map((rate) =>
+                          <SelectItem key={rate.id} value={rate.CGST.toString()}>
+                            {rate.CGST}
+                          </SelectItem>
+                      )}
+                  </SelectContent>
+                </Select>
+              </div>
+
               </div>
 
 

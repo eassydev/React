@@ -10,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Save, ImageIcon, Type, FileText, Loader2, Plus, Trash2, Globe2 } from 'lucide-react';
-import { fetchSubcategoryById, updateSubcategory, Subcategory, Attribute, Category, fetchAllCategories } from '@/lib/api';
+import { fetchSubcategoryById, fetchAllGstRates,updateSubcategory, Subcategory, Attribute, Category, fetchAllCategories } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 
 // Importing React-Quill dynamically
@@ -43,9 +43,11 @@ const SubcategoryEdit: React.FC = () => {
   const [isActive, setIsActive] = useState<boolean>(true);
   const [subcategoryName, setSubcategoryName] = useState<string>('');
   const [attributes, setAttributes] = useState<Attribute[]>([]);
-  const [tax, setTax] = useState<number | null>(null);
+  const [sgst, setSgst] = useState<number | null>(null);
+const [cgst, setCgst] = useState<number | null>(null);
   const [igstTax, setIgstTax] = useState<number | null>(null);
   const [sacCode, setSacCode] = useState<string>('');
+  const [hstRates, setHstRates] = useState<any[]>([]);
   const [metaDescription, setMetaDescription] = useState<string>('');
   const [metaKeyword, setMetaKeyword] = useState<string>('');
   const { toast } = useToast();
@@ -57,6 +59,23 @@ const SubcategoryEdit: React.FC = () => {
     }
   }, [subcategoryId, selectedCategoryId]);
 
+
+  useEffect(() => {
+    const fetchTaxRates = async () => {
+      try {
+        const rates = await fetchAllGstRates();
+        setHstRates(rates);
+      } catch (error) {
+        toast({
+          variant: "error",
+          title: "Error",
+          description: "Failed to load tax rates.",
+        });
+      }
+    };
+
+    fetchTaxRates();
+  }, []);
   const fetchCategoriesList = async () => {
     try {
       const fetchedCategories = await fetchAllCategories();
@@ -83,8 +102,9 @@ const SubcategoryEdit: React.FC = () => {
       setDescription(subcategoryData.description || '');
       setIsActive(subcategoryData.active || true);
       setAttributes(subcategoryData.filterattributes || []);
-      setTax(subcategoryData.tax ?? null);
-      setIgstTax(subcategoryData.igst_tax ?? null);
+      setSgst(subcategoryData.sgst_tax || null);
+      setCgst(subcategoryData.cgst_tax || null);
+      setIgstTax(subcategoryData.igst_tax ?? null); // Set IGST tax field
       setSacCode(subcategoryData.sac_code || '');
       setMetaDescription(subcategoryData.meta_description || '');
       setMetaKeyword(subcategoryData.meta_keyword || '');
@@ -140,8 +160,9 @@ const SubcategoryEdit: React.FC = () => {
       category_id: parseInt(selectedCategoryId),
       active: isActive,
       filterattributes: attributes,
-      tax,
-      igst_tax: igstTax,
+      cgst_tax:cgst,       // Add tax field
+      sgst_tax:sgst, 
+      igst_tax: igstTax, 
       sac_code: sacCode,
       meta_description: metaDescription,
       meta_keyword: metaKeyword,
@@ -256,45 +277,72 @@ const SubcategoryEdit: React.FC = () => {
                 )}
               </div>
 
-              {/* Tax Fields */}
-              <div className="space-y-2">
-                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <span>Tax (%)</span>
-                </label>
-                <Select value={tax?.toString() || ''} onValueChange={(value) => setTax(parseInt(value))}>
-                  <SelectTrigger className="bg-white border-gray-200 h-11">
-                    <SelectValue placeholder="Select Tax %" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">0%</SelectItem>
-                    <SelectItem value="5">5%</SelectItem>
-                    <SelectItem value="12">12%</SelectItem>
-                    <SelectItem value="18">18%</SelectItem>
-                    <SelectItem value="24">24%</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <div className="grid grid-cols-3 gap-4">
+  {/* IGST Dropdown */}
+  <div className="space-y-2">
+    <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+      <span>IGST (%)</span>
+    </label>
+    <Select
+      value={igstTax?.toString() || ""}
+      onValueChange={(value) => setIgstTax(parseInt(value))}
+    >
+      <SelectTrigger className="bg-white border-gray-200">
+        <SelectValue placeholder="Select IGST" />
+      </SelectTrigger>
+      <SelectContent>
+        {hstRates.map((rate) => (
+          <SelectItem key={`igst-${rate.id}`} value={rate.IGST.toString()}>
+            {rate.IGST}%
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
 
-              {/* IGST Tax Field */}
-              <div className="space-y-2">
-                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <span>IGST Tax (%)</span>
-                </label>
-                <Select value={igstTax?.toString() || ''} onValueChange={(value) => setIgstTax(parseInt(value))}>
-                  <SelectTrigger className="bg-white border-gray-200 h-11">
-                    <SelectValue placeholder="Select IGST Tax %" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="0">0%</SelectItem>
-                    <SelectItem value="5">5%</SelectItem>
-                    <SelectItem value="12">12%</SelectItem>
-                    <SelectItem value="18">18%</SelectItem>
-                    <SelectItem value="24">24%</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* SAC Code Field */}
+  {/* SGST Dropdown */}
+  <div className="space-y-2">
+    <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+      <span>SGST (%)</span>
+    </label>
+    <Select
+      value={sgst?.toString() || ""}
+      onValueChange={(value) => setSgst(parseInt(value))}
+    >
+      <SelectTrigger className="bg-white border-gray-200">
+        <SelectValue placeholder="Select SGST" />
+      </SelectTrigger>
+      <SelectContent>
+        {hstRates.map((rate) => (
+          <SelectItem key={`sgst-${rate.id}`} value={rate.SGST.toString()}>
+            {rate.SGST}%
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
+ {/* CGST Dropdown */}
+ <div className="space-y-2">
+    <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+      <span>CGST (%)</span>
+    </label>
+    <Select
+      value={cgst?.toString() || ""}
+      onValueChange={(value) => setCgst(parseInt(value))}
+    >
+      <SelectTrigger className="bg-white border-gray-200">
+        <SelectValue placeholder="Select CGST" />
+      </SelectTrigger>
+      <SelectContent>
+        {hstRates.map((rate) => (
+          <SelectItem key={`cgst-${rate.id}`} value={rate.CGST.toString()}>
+            {rate.CGST}%
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
+</div>              {/* SAC Code Field */}
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <span>SAC Code</span>

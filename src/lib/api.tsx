@@ -27,9 +27,10 @@ export interface Category {
   location_method: string;
   active: boolean;
   filterattributes?: Attribute[];
-  tax?: number | null;        // New field for tax percentage
-  igst_tax?: number | null;   // New field for IGST percentage
-  sac_code?: string | null;   // New field for SAC code
+  igst_tax?: number | null;   // IGST percentage
+  sgst_tax?: number | null;   // SGST percentage
+  cgst_tax?: number | null;   // CGST percentage
+  sac_code?: string | null;   // SAC code
 }
 
 // Define the structure of the Subcategory object
@@ -41,8 +42,9 @@ export interface Subcategory {
   category_id: number; // Associated category ID
   active: boolean;
   filterattributes?: Attribute[];
-  tax?: number | null;       // Field for tax percentage
-  igst_tax?: number | null;  // Field for IGST percentage
+  igst_tax?: number | null;   // IGST percentage
+  sgst_tax?: number | null;   // SGST percentage
+  cgst_tax?: number | null;   // Field for IGST percentage
   sac_code?: string | null;  // Field for SAC code
   meta_description?: string | null; // Field for meta description
   meta_keyword?: string | null;     // Field for meta keywords
@@ -82,6 +84,12 @@ export interface RateCard {
   active: boolean;
 }
 
+export interface Addon {
+  id?: string;
+  package_id: number;
+  category_id: number;
+}
+
 // Define the structure of the Package object
 export interface Package {
   id?: string;
@@ -99,6 +107,8 @@ export interface Package {
   renewal_options: boolean;
   is_active: boolean;
   rate_card_ids?: string[]; // Array of rate card IDs
+  addon_category_ids?: string[]; // Array of addon category IDs
+  addons?: Addon[]; // Detailed rate card information
   rateCards?: RateCard[]; // Detailed rate card information
 }
 
@@ -212,6 +222,66 @@ export interface Banner {
   image?: File | null; // Optional file input for the banner image
 }
 
+
+export interface FAQ {
+  id?: string; // Optional for editing
+  question: string;
+  answer: string;
+  status: 'active' | 'inactive'; // Enum for status
+  created_at?: number; // UNIX timestamp
+  updated_at?: number; // UNIX timestamp
+}
+
+
+
+export interface Onboarding {
+  id?: string; // Optional for editing
+  title: string;
+  description: string;
+  is_active: boolean;
+  image?: File | null; // Optional image upload
+  created_at?: number; // UNIX timestamp
+  updated_at?: number; // UNIX timestamp
+}
+
+
+export interface GstRate {
+  id?: string; // Optional for editing
+  CGST: number;
+  SGST: number;
+  IGST: number;
+  is_active: boolean;
+  created_at?: number; // UNIX timestamp
+  updated_at?: number; // UNIX timestamp
+  deleted_at?: number | null; // UNIX timestamp for soft-delete
+}
+
+export interface Booking {
+  id?: string; // Optional for editing
+  user_id: number;
+  provider_id: number;
+  order_number: string;
+  booking_date: string;
+  quantity: number;
+  base_price: number;
+  discount_amount?: number;
+  cgst?: number;
+  sgst?: number;
+  igst?: number;
+  total_tax?: number;
+  taxable_amount?: number;
+  total_amount: number;
+  status?: "pending" | "confirmed" | "completed" | "cancelled";
+  payment_status?: "pending" | "paid" | "failed" | "refunded";
+  payment_method?: string;
+  transaction_id?: string;
+  address_id: number;
+  description?: string;
+  created_at?: number;
+  updated_at?: number;
+}
+
+
 // Define the structure of the API response
 interface ApiResponse {
   status: boolean;
@@ -238,9 +308,12 @@ export const createCategory = async (category: Category): Promise<ApiResponse> =
     formData.append('attributes', JSON.stringify(category.filterattributes));
   }
 
-  // Add new fields for tax, IGST, and SAC code
-  if (category.tax !== null && category.tax !== undefined) {
-    formData.append('tax', category.tax.toString());
+ 
+  if (category.sgst_tax !== null && category.sgst_tax !== undefined) {
+    formData.append('sgst_tax', category.sgst_tax.toString());
+  }
+  if (category.cgst_tax !== null && category.cgst_tax !== undefined) {
+    formData.append('cgst_tax', category.cgst_tax.toString());
   }
   if (category.igst_tax !== null && category.igst_tax !== undefined) {
     formData.append('igst_tax', category.igst_tax.toString());
@@ -341,9 +414,12 @@ export const updateCategory = async (id: string, category: Category): Promise<Ap
     formData.append('attributes', JSON.stringify(category.filterattributes));
   }
 
-  // Add new fields for tax, IGST, and SAC code
-  if (category.tax !== null && category.tax !== undefined) {
-    formData.append('tax', category.tax.toString());
+  
+  if (category.sgst_tax !== null && category.sgst_tax !== undefined) {
+    formData.append('sgst_tax', category.sgst_tax.toString());
+  }
+  if (category.cgst_tax !== null && category.cgst_tax !== undefined) {
+    formData.append('cgst_tax', category.cgst_tax.toString());
   }
   if (category.igst_tax !== null && category.igst_tax !== undefined) {
     formData.append('igst_tax', category.igst_tax.toString());
@@ -405,9 +481,11 @@ export const createSubcategory = async (subcategory: Subcategory): Promise<ApiRe
     formData.append('attributes', JSON.stringify(subcategory.filterattributes));
   }
 
-  // Add tax, IGST, and SAC code fields
-  if (subcategory.tax !== null && subcategory.tax !== undefined) {
-    formData.append('tax', subcategory.tax.toString());
+  if (subcategory.sgst_tax !== null && subcategory.sgst_tax !== undefined) {
+    formData.append('sgst_tax', subcategory.sgst_tax.toString());
+  }
+  if (subcategory.cgst_tax !== null && subcategory.cgst_tax !== undefined) {
+    formData.append('cgst_tax', subcategory.cgst_tax.toString());
   }
   if (subcategory.igst_tax !== null && subcategory.igst_tax !== undefined) {
     formData.append('igst_tax', subcategory.igst_tax.toString());
@@ -541,9 +619,11 @@ export const updateSubcategory = async (id: string, subcategory: Subcategory): P
     formData.append('attributes', JSON.stringify(subcategory.filterattributes));
   }
 
-  // Add tax, IGST, and SAC code fields
-  if (subcategory.tax !== null && subcategory.tax !== undefined) {
-    formData.append('tax', subcategory.tax.toString());
+  if (subcategory.sgst_tax !== null && subcategory.sgst_tax !== undefined) {
+    formData.append('sgst_tax', subcategory.sgst_tax.toString());
+  }
+  if (subcategory.cgst_tax !== null && subcategory.cgst_tax !== undefined) {
+    formData.append('cgst_tax', subcategory.cgst_tax.toString());
   }
   if (subcategory.igst_tax !== null && subcategory.igst_tax !== undefined) {
     formData.append('igst_tax', subcategory.igst_tax.toString());
@@ -805,6 +885,11 @@ export const createPackage = async (pkg: Package): Promise<ApiResponse> => {
     pkg.rate_card_ids.forEach((rateCardId) => formData.append('rate_card_ids[]', rateCardId));
   }
 
+   // Append addon category IDs
+   if (pkg.addon_category_ids) {
+    pkg.addon_category_ids.forEach((categoryId) => formData.append('addon_category_ids[]', categoryId));
+  }
+
   try {
     const token = getToken();
     const response: AxiosResponse<ApiResponse> = await apiClient.post('/package', formData, {
@@ -844,6 +929,11 @@ export const updatePackage = async (id: string, pkg: Package): Promise<ApiRespon
   // Append rate card IDs
   if (pkg.rate_card_ids) {
     pkg.rate_card_ids.forEach((rateCardId) => formData.append('rate_card_ids[]', rateCardId));
+  }
+
+   // Append addon category IDs
+   if (pkg.addon_category_ids) {
+    pkg.addon_category_ids.forEach((categoryId) => formData.append('addon_category_ids[]', categoryId));
   }
 
   try {
@@ -1087,6 +1177,27 @@ export const fetchAllUsers = async (page = 1, size = 10) => {
 };
 
 
+
+
+export const fetchAllUsersWithouPagination = async (): Promise<User[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/user/all', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch banks.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch banks.');
+  }
+};
+
+
 // Fetch a single user by ID
 export const fetchUserById = async (id: string): Promise<User> => {
   try {
@@ -1186,6 +1297,28 @@ export const fetchAllProviders = async (page = 1, size = 10) => {
     throw new Error(error.response?.data?.message || 'Failed to fetch providers.');
   }
 };
+
+
+
+// Function to fetch all banks
+export const fetchAllProvidersWithoupagination = async (): Promise<Provider[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/provider/all', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch banks.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch banks.');
+  }
+};
+
 
 // Fetch a specific provider by ID
 export const fetchProviderById = async (id: string): Promise<Provider> => {
@@ -1732,5 +1865,485 @@ export const deleteBanner = async (id: string): Promise<ApiResponse> => {
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to delete banner.');
+  }
+};
+
+
+// Fetch all FAQs with optional pagination
+export const fetchFAQs = async (page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/faq', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch FAQs.');
+  }
+};
+
+// Fetch a single FAQ by ID
+export const fetchFAQById = async (id: string): Promise<FAQ> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/faq/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch FAQ.');
+  }
+};
+
+// Create a new FAQ
+export const createFAQ = async (faq: FAQ): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/faq', faq, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create FAQ.');
+  }
+};
+
+// Update an existing FAQ
+export const updateFAQ = async (id: string, faq: FAQ): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/faq/${id}`, faq, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update FAQ.');
+  }
+};
+
+// Delete an FAQ
+export const deleteFAQ = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/faq/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete FAQ.');
+  }
+};
+
+
+// Fetch all carts with optional pagination
+export const fetchCarts = async (page = 1, size = 10) => {
+  try {
+    const token = getToken(); // Retrieve the token
+    const response = await apiClient.get('/cart', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch carts.');
+  }
+};
+
+// Fetch a single cart by ID
+export const fetchCartById = async (id: string) => {
+  try {
+    const token = getToken(); // Retrieve the token
+    const response = await apiClient.get(`/cart/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch cart.');
+  }
+};
+
+// Delete (soft-delete) a cart by ID
+export const deleteCart = async (id: string) => {
+  try {
+    const token = getToken(); // Retrieve the token
+    const response = await apiClient.delete(`/cart/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete cart.');
+  }
+};
+
+
+
+
+// Fetch all onboarding entries with pagination
+export const fetchOnboardings = async (page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get("/onboarding", {
+      params: { page, size },
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch onboarding entries.");
+  }
+};
+
+// Fetch all onboarding entries without pagination
+export const fetchAllOnboardings = async (): Promise<Onboarding[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get("/onboarding/all", {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || "Failed to fetch onboarding entries.");
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch onboarding entries.");
+  }
+};
+
+// Fetch a single onboarding entry by ID
+export const fetchOnboardingById = async (id: string): Promise<Onboarding> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/onboarding/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || "Failed to fetch onboarding entry.");
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch onboarding entry.");
+  }
+};
+
+// Create a new onboarding entry
+export const createOnboarding = async (onboarding: Onboarding): Promise<ApiResponse> => {
+  const formData = new FormData();
+
+  formData.append("title", onboarding.title);
+  formData.append("description", onboarding.description);
+
+  if (onboarding.image) {
+    formData.append("image", onboarding.image);
+  }
+
+  // Add the active status field
+  formData.append("is_active", onboarding.is_active ? "1" : "0");
+
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post("/onboarding", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "admin-auth-token": token || "",
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to create onboarding entry.");
+  }
+};
+
+// Update an existing onboarding entry
+export const updateOnboarding = async (id: string, onboarding: Onboarding): Promise<ApiResponse> => {
+  const formData = new FormData();
+
+  formData.append("title", onboarding.title);
+  formData.append("description", onboarding.description);
+
+  if (onboarding.image) {
+    formData.append("image", onboarding.image);
+  }
+
+  // Add the active status field
+  formData.append("is_active", onboarding.is_active ? "1" : "0");
+
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/onboarding/${id}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "admin-auth-token": token || "",
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to update onboarding entry.");
+  }
+};
+
+// Delete an onboarding entry
+export const deleteOnboarding = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/onboarding/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to delete onboarding entry.");
+  }
+};
+
+
+// Fetch all GST rates with optional pagination
+export const fetchGstRates = async (page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/gst-rate', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch GST rates.');
+  }
+};
+
+// Fetch all GST rates without pagination
+export const fetchAllGstRates = async (): Promise<GstRate[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/gst-rate/all', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch GST rates.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch GST rates.');
+  }
+};
+
+// Fetch a specific GST rate by ID
+export const fetchGstRateById = async (id: string): Promise<GstRate> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/gst-rate/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch GST rate.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch GST rate.');
+  }
+};
+
+// Create a new GST rate
+export const createGstRate = async (gstRate: GstRate): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/gst-rate', gstRate, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create GST rate.');
+  }
+};
+
+// Update an existing GST rate
+export const updateGstRate = async (id: string, gstRate: GstRate): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/gst-rate/${id}`, gstRate, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update GST rate.');
+  }
+};
+
+// Delete (soft-delete) a GST rate
+export const deleteGstRate = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/gst-rate/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete GST rate.');
+  }
+};
+
+// Restore a soft-deleted GST rate
+export const restoreGstRate = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post(`/gst-rate/${id}/restore`, {}, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to restore GST rate.');
+  }
+};
+
+
+
+// Function to fetch delivery addresses by user ID
+export const fetchUserAddresses = async (userId: number): Promise<{ id: number; full_address: string }[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`user/${userId}/addresses`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (response?.data?.status && Array.isArray(response.data.data)) {
+      return response.data.data.map((address: any) => {
+        const { id, street_address, city, state, postal_code } = address;
+        return {
+          id,
+          full_address: `${street_address || ""}, ${city || ""}, ${state || ""}, ${postal_code || ""}`.replace(/,\s*$/, ""),
+        };
+      });
+    } else {
+      throw new Error(response?.data?.message || "No addresses found for the specified user.");
+    }
+  } catch (error: any) {
+    const errorMessage = error?.response?.data?.message || error.message || "Failed to fetch delivery addresses.";
+    throw new Error(errorMessage);
+  }
+};
+
+export const createBooking = async (booking: Booking): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post("/booking", booking, {
+      headers: {
+        "Content-Type": "application/json",
+        "admin-auth-token": token || "",
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to create booking.");
+  }
+};
+export const fetchBookings = async (page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get("/booking", {
+      params: { page, size },
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error("Failed to fetch bookings.");
+  }
+};
+export const fetchBookingById = async (id: string): Promise<Booking> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/booking/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch booking.");
+  }
+};
+export const updateBooking = async (id: string, booking: Booking): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/booking/${id}`, booking, {
+      headers: {
+        "Content-Type": "application/json",
+        "admin-auth-token": token || "",
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to update booking.");
+  }
+};
+export const deleteBooking = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/booking/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to delete booking.");
   }
 };

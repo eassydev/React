@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Save, ImageIcon, Type, FileText, Loader2, Plus, Trash2, Globe2 } from 'lucide-react';
-import { createSubcategory, fetchAllCategories, Subcategory, Attribute, Category } from '@/lib/api';
+import { createSubcategory, fetchAllGstRates,fetchAllCategories, Subcategory, Attribute, Category } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 
 // Importing React-Quill dynamically
@@ -36,8 +36,10 @@ const SubcategoryForm: React.FC = () => {
   const [isActive, setIsActive] = useState<boolean>(true);
   const [subcategoryName, setSubcategoryName] = useState<string>('');
   const [attributes, setAttributes] = useState<Attribute[]>([]);
-  const [tax, setTax] = useState<number | null>(null);
-  const [igstTax, setIgstTax] = useState<number | null>(null);
+  const [igst, setIgst] = useState<number | null>(null);
+  const [sgst, setSgst] = useState<number | null>(null);
+  const [cgst, setCgst] = useState<number | null>(null);
+  const [hstRates, setHstRates] = useState<any[]>([]);
   const [sacCode, setSacCode] = useState<string>('');
   const [metaDescription, setMetaDescription] = useState<string>('');
   const [metaKeyword, setMetaKeyword] = useState<string>('');
@@ -60,6 +62,23 @@ const SubcategoryForm: React.FC = () => {
     loadCategories();
   }, []);
 
+
+  useEffect(() => {
+    const fetchTaxRates = async () => {
+      try {
+        const rates = await fetchAllGstRates();
+        setHstRates(rates);
+      } catch (error) {
+        toast({
+          variant: "error",
+          title: "Error",
+          description: "Failed to load tax rates.",
+        });
+      }
+    };
+
+    fetchTaxRates();
+  }, []);
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -84,7 +103,9 @@ const SubcategoryForm: React.FC = () => {
   const removeAttribute = (index: number) => {
     setAttributes((prev) => prev.filter((_, i) => i !== index));
   };
-
+  const handleDropdownChange = (value: string, setter: (value: number) => void) => {
+    setter(parseFloat(value));
+  };
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -96,8 +117,9 @@ const SubcategoryForm: React.FC = () => {
       category_id: parseInt(selectedCategoryId),
       active: isActive,
       filterattributes: attributes,
-      tax,
-      igst_tax: igstTax,
+      igst_tax: igst,
+      sgst_tax: sgst,
+      cgst_tax: cgst,
       sac_code: sacCode,
       meta_description: metaDescription,
       meta_keyword: metaKeyword,
@@ -213,42 +235,73 @@ const SubcategoryForm: React.FC = () => {
                 )}
               </div>
 
-              {/* Tax Fields */}
-              <div className="space-y-2">
+                {/* GST Dropdowns */}
+                <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <span>Tax (%)</span>
+                  <span>IGST (%)</span>
                 </label>
-                <Select value={tax?.toString() ?? ''} onValueChange={(value) => setTax(parseInt(value))}>
-                  <SelectTrigger className="bg-white border-gray-200 h-11">
-                    <SelectValue placeholder="Select Tax %" />
+                <Select
+                    value={igst?.toString() || ""}
+                    onValueChange={(value) => handleDropdownChange(value, setIgst)}
+                  >
+                  <SelectTrigger className="bg-white border-gray-200">
+                    <SelectValue placeholder="Select IGST" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="0">0%</SelectItem>
-                    <SelectItem value="5">5%</SelectItem>
-                    <SelectItem value="12">12%</SelectItem>
-                    <SelectItem value="18">18%</SelectItem>
-                    <SelectItem value="24">24%</SelectItem>
+                  {hstRates.map((rate) =>
+                          <SelectItem key={rate.id} value={rate.IGST.toString()}>
+                            {rate.IGST}
+                          </SelectItem>
+                      )}
                   </SelectContent>
                 </Select>
               </div>
 
-              {/* IGST Tax Field */}
+
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <span>IGST Tax (%)</span>
+                  <span>SGST (%)</span>
                 </label>
-                <Select value={igstTax?.toString() ?? ''} onValueChange={(value) => setIgstTax(parseInt(value))}>
-                  <SelectTrigger className="bg-white border-gray-200 h-11">
-                    <SelectValue placeholder="Select IGST Tax %" />
+                <Select
+                    value={sgst?.toString() || ""}
+                    onValueChange={(value) => handleDropdownChange(value, setSgst)}
+                  >
+                  <SelectTrigger className="bg-white border-gray-200">
+                    <SelectValue placeholder="Select IGST" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="0">0%</SelectItem>
-                    <SelectItem value="5">5%</SelectItem>
-                    <SelectItem value="12">12%</SelectItem>
-                    <SelectItem value="18">18%</SelectItem>
-                    <SelectItem value="24">24%</SelectItem>
+                  {hstRates.map((rate) =>
+                          <SelectItem key={rate.id} value={rate.SGST.toString()}>
+                            {rate.SGST}
+                          </SelectItem>
+                      )}
                   </SelectContent>
                 </Select>
+              </div>
+
+               
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <span>CGST (%)</span>
+                </label>
+                <Select
+                    value={cgst?.toString() || ""}
+                    onValueChange={(value) => handleDropdownChange(value, setCgst)}
+                  >
+                  <SelectTrigger className="bg-white border-gray-200">
+                    <SelectValue placeholder="Select IGST" />
+                  </SelectTrigger>
+                  <SelectContent>
+                  {hstRates.map((rate) =>
+                          <SelectItem key={rate.id} value={rate.CGST.toString()}>
+                            {rate.CGST}
+                          </SelectItem>
+                      )}
+                  </SelectContent>
+                </Select>
+              </div>
+
               </div>
 
               {/* SAC Code Field */}

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Save, Loader2, ImageIcon, FileText, ChevronDown } from 'lucide-react';
-import { fetchAllRatecard, createPackage, Package } from '@/lib/api';
+import { fetchAllRatecard,fetchAllCategories, createPackage, Package } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -44,26 +44,34 @@ const PackageCreateForm: React.FC = () => {
   const [rateCards, setRateCards] = useState<any[]>([]);
   const [selectedRateCards, setSelectedRateCards] = useState<string[]>([]);
   const [isRateCardDropdownOpen, setIsRateCardDropdownOpen] = useState<boolean>(false);
+  const [categories, setCategories] = useState<any[]>([]);
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // Addon Category IDs
   const [noService, setNoService] = useState<number | null>(null);
+  const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); // **[Added state for Addon dropdown toggle]**
 
   
   const { toast } = useToast();
 
   // Fetch rate cards on component mount
   useEffect(() => {
-    const fetchRateCardData = async () => {
+    const fetchInitialData = async () => {
       try {
-        const response = await fetchAllRatecard();
-        setRateCards(response || []);
+        const [rateCardResponse, categoryResponse] = await Promise.all([
+          fetchAllRatecard(),
+          fetchAllCategories(),
+        ]);
+        setRateCards(rateCardResponse || []);
+        setCategories(categoryResponse || []);
       } catch (error) {
+        console.log(error)
         toast({
-          variant: 'error',
-          title: 'Error',
-          description: 'Failed to load rate cards.',
+          variant: "error",
+          title: "Error",
+          description: "Failed to load data.",
         });
       }
     };
-    fetchRateCardData();
+    fetchInitialData();
   }, []);
 
   // Handle image upload
@@ -105,6 +113,7 @@ const PackageCreateForm: React.FC = () => {
       renewal_options: renewalOptions,
       is_active: isActive,
       rate_card_ids: selectedRateCards,
+      addon_category_ids: selectedCategories, // Include addon category selections
       no_of_service: noService,
     };
 
@@ -133,6 +142,15 @@ const PackageCreateForm: React.FC = () => {
       setSelectedRateCards((prev) => [...prev, rateCardId]);
     } else {
       setSelectedRateCards((prev) => prev.filter((id) => id !== rateCardId));
+    }
+  };
+
+  // Handle addon category selection
+  const handleCategorySelection = (categoryId: string, isChecked: boolean) => {
+    if (isChecked) {
+      setSelectedCategories((prev) => [...prev, categoryId]);
+    } else {
+      setSelectedCategories((prev) => prev.filter((id) => id !== categoryId));
     }
   };
 
@@ -243,6 +261,40 @@ const PackageCreateForm: React.FC = () => {
                   )}
                 </div>
               </div>
+
+
+              {/* Addon Categories Dropdown with Checkbox Selection */}
+<div className="space-y-2">
+  <label className="text-sm font-medium text-gray-700">Select Addon Categories</label>
+  <div className="relative">
+    <button
+      type="button"
+      className="flex items-center justify-between w-full p-2 bg-white border border-gray-200 rounded"
+      onClick={() => setIsAddonDropdownOpen(!isAddonDropdownOpen)}
+    >
+      {selectedCategories.length > 0 ? `Selected (${selectedCategories.length})` : 'Select addon categories'}
+      <ChevronDown className="w-4 h-4" />
+    </button>
+    {isAddonDropdownOpen && (
+      <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-auto">
+        {categories.map((category) => (
+          <div key={category.id} className="flex items-center p-2">
+            <Checkbox
+              checked={selectedCategories.includes(category.id.toString())}
+              onCheckedChange={(checked: any) =>
+                handleCategorySelection(category.id.toString(), checked)
+              }
+              id={`category-${category.id}`}
+            />
+            <label htmlFor={`category-${category.id}`} className="ml-2">
+              {category.name}
+            </label>
+          </div>
+        ))}
+      </div>
+    )}
+  </div>
+</div>
 
               {/* Discount Fields */}
               <div className="flex space-x-4">
