@@ -282,6 +282,26 @@ export interface Booking {
 }
 
 
+
+export interface Promocode {
+  id?: string; // Optional for editing
+  code: string; // Required promocode
+  description?: string; // Optional description
+  discount_type: "flat" | "percentage"; // Enum for discount type
+  discount_value: number; // Required discount value
+  min_order_value?: number | null; // Optional field for minimum order value
+  start_date: string; // Required start date
+  end_date: string; // Required end date
+  status: "active" | "inactive" | "expired"; // Enum for promocode status
+  selection_type: string; // Specific selection type options (Category, Subcategory, etc.)
+  selection_id: number | null; // ID of the selected item (category, subcategory, etc.)
+  is_global: boolean; // Indicates if the promocode is global
+  display_to_customer: boolean; // Indicates if the promocode is visible to customers
+  is_active: boolean; // Indicates if the promocode is active
+  provider_id: string; // ID of the associated provider
+  image?: File; // Optional image file for the promocode
+}
+
 // Define the structure of the API response
 interface ApiResponse {
   status: boolean;
@@ -1853,6 +1873,25 @@ export const fetchBanners = async (page = 1, size = 10) => {
     throw new Error(error.response?.data?.message || 'Failed to fetch banner.');
   }
 };
+
+// Function to fetch all banks
+export const fetchBannerPromo = async (): Promise<Banner[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/banner/promocode', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch banner.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch banner.');
+  }
+};
 // Function to delete (soft-delete) a bank
 export const deleteBanner = async (id: string): Promise<ApiResponse> => {
   try {
@@ -2347,3 +2386,146 @@ export const deleteBooking = async (id: string): Promise<ApiResponse> => {
     throw new Error(error.response?.data?.message || "Failed to delete booking.");
   }
 };
+
+
+
+
+// Add Promocode API
+export const createPromocode = async (promocode: Promocode): Promise<ApiResponse> => {
+  const formData = new FormData();
+
+  formData.append("code", promocode.code);
+  if (promocode.description) formData.append("description", promocode.description);
+  formData.append("discount_type", promocode.discount_type);
+  formData.append("discount_value", promocode.discount_value.toString());
+  if (promocode.min_order_value !== undefined)
+    formData.append("min_order_value", promocode.min_order_value?.toString() || "");
+  formData.append("start_date", promocode.start_date);
+  formData.append("end_date", promocode.end_date);
+  formData.append("status", promocode.status);
+  formData.append("selection_type", promocode.selection_type);
+  formData.append("selection_id", promocode.selection_id?.toString() || "");
+  formData.append("is_global", promocode.is_global ? "1" : "0");
+  formData.append("display_to_customer", promocode.display_to_customer ? "1" : "0");
+  formData.append("is_active", promocode.is_active ? "1" : "0");
+  formData.append("provider_id", promocode.provider_id);
+
+  // Add image if provided
+  if (promocode.image) {
+    formData.append("image", promocode.image);
+  }
+
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post("/promocode", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "admin-auth-token": token || "",
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to create promocode.");
+  }
+};
+
+// Fetch a single promocode by ID
+export const fetchPromocodeById = async (id: string): Promise<Promocode> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/promocode/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch promocode.");
+  }
+};
+
+// Update an existing promocode
+export const updatePromocode = async (id: string, promocode: Promocode): Promise<ApiResponse> => {
+  const formData = new FormData();
+
+  formData.append("code", promocode.code);
+  if (promocode.description) formData.append("description", promocode.description);
+  formData.append("discount_type", promocode.discount_type);
+  formData.append("discount_value", promocode.discount_value.toString());
+  if (promocode.min_order_value !== undefined)
+    formData.append("min_order_value", promocode.min_order_value?.toString() || "");
+  formData.append("start_date", promocode.start_date);
+  formData.append("end_date", promocode.end_date);
+  formData.append("status", promocode.status);
+  formData.append("selection_type", promocode.selection_type);
+  formData.append("selection_id", promocode.selection_id?.toString() || "");
+  formData.append("is_global", promocode.is_global ? "1" : "0");
+  formData.append("display_to_customer", promocode.display_to_customer ? "1" : "0");
+  formData.append("is_active", promocode.is_active ? "1" : "0");
+  formData.append("provider_id", promocode.provider_id);
+
+  // Add image if provided
+  if (promocode.image) {
+    formData.append("image", promocode.image);
+  }
+
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/promocode/${id}`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "admin-auth-token": token || "",
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to update promocode.");
+  }
+};
+
+// Fetch all promocodes with optional pagination
+export const fetchPromocodes = async (page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get("/promocode", {
+      params: { page, size },
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch promocodes.");
+  }
+};
+
+// Delete a promocode
+export const deletePromocode = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/promocode/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to delete promocode.");
+  }
+};
+
+// Restore a soft-deleted promocode
+export const restorePromocode = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post(`/promocode/${id}/restore`, {}, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to restore promocode.");
+  }
+};
+
