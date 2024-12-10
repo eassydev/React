@@ -16,36 +16,51 @@ const getToken = (): string | null => {
 // Define the structure of the Category object
 
 
-// Define the structure of the Location object
 export interface Category {
   id?: string; // Optional for editing
   name: string;
-  description: string;
   image: File | null;
   locations: Location[];
   location_type: string;
+  service_time?: string;
+  optional_heading?: string;
+  exclude_heading?: string;
+  exclude_description?: string;
   location_method: string;
   active: boolean;
-  filterattributes?: Attribute[];
+  attributes?: Attribute[];
+  serviceDetails?: ServiceDetail[]; // Includes service details
   igst_tax?: number | null;   // IGST percentage
   sgst_tax?: number | null;   // SGST percentage
   cgst_tax?: number | null;   // CGST percentage
   sac_code?: string | null;   // SAC code
+  excludeItems?: ExcludeItem[]; // Array of excluded items
+  excludedImages?: ExcludeImage[]; // Array of excluded images
+  includeItems?: IncludeItem[]; // Array of excluded items
+
 }
+
 
 // Define the structure of the Subcategory object
 export interface Subcategory {
   id?: string; // Optional for editing
   name: string;
-  description: string;
   image: File | null;
-  category_id: number; // Associated category ID
+  category_id: number; // Associated category ID  // Field for SAC code
+  service_time?: string;
+  optional_heading?: string;
+  exclude_heading?: string;
+  exclude_description?: string;
   active: boolean;
-  filterattributes?: Attribute[];
+  attributes?: Attribute[];
+  serviceDetails?: ServiceDetail[]; // Includes service details
   igst_tax?: number | null;   // IGST percentage
   sgst_tax?: number | null;   // SGST percentage
-  cgst_tax?: number | null;   // Field for IGST percentage
-  sac_code?: string | null;  // Field for SAC code
+  cgst_tax?: number | null;   // CGST percentage
+  sac_code?: string | null;   // SAC code
+  excludeItems?: ExcludeItem[]; // Array of excluded items
+  excludedImages?: ExcludeImage[]; // Array of excluded images
+  includeItems?: IncludeItem[]; // Array of excluded items
   meta_description?: string | null; // Field for meta description
   meta_keyword?: string | null;     // Field for meta keywords
 }
@@ -61,15 +76,42 @@ export interface Location {
   source_type: string;
 }
 
-// Define the structure of the Attribute object
-export interface Attribute {
+
+
+
+export type Attribute = {
   id?: number;
-  attribute_name: string;
-  attribute_value: string;
-  attribute_type: string;
+  name: string;
+  type: string;
+  options: string[];
+};
+
+export type ServiceDetail = {
+  id?: number;
+  title: string;
+  description: string;
+};
+
+export interface ExcludeItem {
+  id?: number; // Auto-incremented primary key
+  category_id?: number | null; // Foreign key for the category, nullable
+  subcategory_id?: number | null; // Foreign key for the subcategory, nullable
+  item: string; // The excluded item's name or identifier
+  created_at?: number; // UNIX timestamp for creation
+  updated_at?: number; // UNIX timestamp for last update
 }
 
 
+export type IncludeItem = {
+  id?: string; // Optional for existing images
+  title: string;
+  description: string;
+};
+
+export interface ExcludeImage {
+  id?: string; // Optional for existing images
+  image_path: File; // Image file for the exclude section
+}
 
 // Define the structure of the RateCard object
 export interface RateCard {
@@ -302,6 +344,42 @@ export interface Promocode {
   image?: File; // Optional image file for the promocode
 }
 
+
+export interface Blog {
+  title: string;
+  slug: string;
+  description: string;
+  image: File | null;
+  is_active: boolean; // Replaced active with is_active
+}
+
+
+export interface Notification {
+  title: string;
+  message: string;
+  type: "customer" | "provider";
+  redirect_screen?:string;
+  category_id?: number;
+  subcategory_id?: number;
+  recipients?: { id: number; name: string }[];
+  inner_image?: File | null;
+  outer_image?: File | null;
+  is_active: boolean;
+  send_to_all: boolean;
+}
+
+
+
+export interface WalletOffer {
+  id?: number;
+  event_type: "sign_up" | "order" | "referral" | "sign_up_referral";
+  es_cash: number;
+  start_date: string; // Format: YYYY-MM-DD
+  end_date: string;   // Format: YYYY-MM-DD
+  is_active: boolean;
+  order_amount?: number | null; // Optional
+}
+
 // Define the structure of the API response
 interface ApiResponse {
   status: boolean;
@@ -309,52 +387,7 @@ interface ApiResponse {
   data?: any;
 }
 
-// Function to create a new category with attributes
-export const createCategory = async (category: Category): Promise<ApiResponse> => {
-  const formData = new FormData();
 
-  formData.append('name', category.name);
-  formData.append('description', category.description);
-  formData.append('active', category.active ? '1' : '0');
-
-  if (category.image) {
-    formData.append('image', category.image);
-  }
-  formData.append('locationType', category.location_type);
-  formData.append('locationMethod', category.location_method);
-  formData.append('locations', JSON.stringify(category.locations));
-
-  if (category.filterattributes && category.filterattributes.length > 0) {
-    formData.append('attributes', JSON.stringify(category.filterattributes));
-  }
-
- 
-  if (category.sgst_tax !== null && category.sgst_tax !== undefined) {
-    formData.append('sgst_tax', category.sgst_tax.toString());
-  }
-  if (category.cgst_tax !== null && category.cgst_tax !== undefined) {
-    formData.append('cgst_tax', category.cgst_tax.toString());
-  }
-  if (category.igst_tax !== null && category.igst_tax !== undefined) {
-    formData.append('igst_tax', category.igst_tax.toString());
-  }
-  if (category.sac_code) {
-    formData.append('sac_code', category.sac_code);
-  }
-
-  try {
-    const token = getToken();
-    const response: AxiosResponse<ApiResponse> = await apiClient.post('/category', formData, {
-      headers: {
-        'Content-Type': 'multipart/form-data',
-        'admin-auth-token': token || '',
-      },
-    });
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to create category.');
-  }
-};
 
 
 export const fetchCategories = async (page = 1, size = 10) => {
@@ -415,26 +448,35 @@ export const fetchCategoryById = async (id: string): Promise<Category> => {
   }
 };
 
-// Function to update an existing category with attributes
-export const updateCategory = async (id: string, category: Category): Promise<ApiResponse> => {
+export const createCategory = async (category: Category): Promise<ApiResponse> => {
   const formData = new FormData();
 
+  // Basic Category Details
   formData.append('name', category.name);
-  formData.append('description', category.description);
   formData.append('active', category.active ? '1' : '0');
 
+  // Image
   if (category.image) {
     formData.append('image', category.image);
   }
+
+  // Locations
   formData.append('locationType', category.location_type);
   formData.append('locationMethod', category.location_method);
   formData.append('locations', JSON.stringify(category.locations));
-
-  if (category.filterattributes && category.filterattributes.length > 0) {
-    formData.append('attributes', JSON.stringify(category.filterattributes));
+  if (category.optional_heading !== null && category.optional_heading !== undefined) {
+    formData.append('optional_heading', category.optional_heading.toString());
   }
-
-  
+  if (category.service_time !== null && category.service_time !== undefined) {
+    formData.append('service_time', category.service_time.toString());
+  }
+  if (category.exclude_heading !== null && category.exclude_heading !== undefined) {
+    formData.append('exclude_heading', category.exclude_heading.toString());
+  }
+  if (category.exclude_description !== null && category.exclude_description !== undefined) {
+    formData.append('exclude_description', category.exclude_description.toString());
+  }
+  // GST and SAC Code
   if (category.sgst_tax !== null && category.sgst_tax !== undefined) {
     formData.append('sgst_tax', category.sgst_tax.toString());
   }
@@ -447,6 +489,152 @@ export const updateCategory = async (id: string, category: Category): Promise<Ap
   if (category.sac_code) {
     formData.append('sac_code', category.sac_code);
   }
+
+  // Attributes and Options
+  if (category.attributes && category.attributes.length > 0) {
+    const attributes = category.attributes.map((attr) => ({
+      attribute_name: attr.name,
+      attribute_type: attr.type,
+      options: attr.options,
+    }));
+    formData.append('attributes', JSON.stringify(attributes));
+  }
+
+  // Service Details
+  if (category.serviceDetails && category.serviceDetails.length > 0) {
+    formData.append('serviceDetails', JSON.stringify(category.serviceDetails));
+  }
+
+  // Exclude Items
+  if (category.excludeItems && category.excludeItems.length > 0) {
+    const excludeItems = category.excludeItems.map((item) => ({
+      item: item.item, // Use only the item field
+    }));
+    formData.append('excludeItems', JSON.stringify(excludeItems));
+  }
+
+
+  if (category.includeItems && category.includeItems.length > 0) {
+    const includeItems = category.includeItems.map((item) => ({
+      title: item.title,
+      description: item.description,
+    }));
+    formData.append('includeItems', JSON.stringify(includeItems));
+  }
+ // Exclude Images
+ if (category.excludedImages) {
+  category.excludedImages.forEach((excludeImage, index) => {
+    if (excludeImage.image_path instanceof File) {
+      console.log(`Appending Excluded Image ${index}:`, excludeImage.image_path);
+      formData.append('excludedImages', excludeImage.image_path); // Append the File object
+    } else {
+      console.warn(`Invalid image at index ${index}:`, excludeImage.image_path);
+    }
+  });
+}
+
+
+
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/category', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create category.');
+  }
+};
+
+
+
+export const updateCategory = async (id: string, category: Category): Promise<ApiResponse> => {
+  const formData = new FormData();
+
+  // Basic Category Details
+  formData.append('name', category.name);
+  formData.append('active', category.active ? '1' : '0');
+
+  // Image
+  if (category.image) {
+    formData.append('image', category.image);
+  }
+
+  // Locations
+  formData.append('locationType', category.location_type);
+  formData.append('locationMethod', category.location_method);
+  formData.append('locations', JSON.stringify(category.locations));
+  if (category.optional_heading !== null && category.optional_heading !== undefined) {
+    formData.append('optional_heading', category.optional_heading.toString());
+  }
+  if (category.service_time !== null && category.service_time !== undefined) {
+    formData.append('service_time', category.service_time.toString());
+  }
+  if (category.exclude_heading !== null && category.exclude_heading !== undefined) {
+    formData.append('exclude_heading', category.exclude_heading.toString());
+  }
+  if (category.exclude_description !== null && category.exclude_description !== undefined) {
+    formData.append('exclude_description', category.exclude_description.toString());
+  }
+  // GST and SAC Code
+  if (category.sgst_tax !== null && category.sgst_tax !== undefined) {
+    formData.append('sgst_tax', category.sgst_tax.toString());
+  }
+  if (category.cgst_tax !== null && category.cgst_tax !== undefined) {
+    formData.append('cgst_tax', category.cgst_tax.toString());
+  }
+  if (category.igst_tax !== null && category.igst_tax !== undefined) {
+    formData.append('igst_tax', category.igst_tax.toString());
+  }
+  if (category.sac_code) {
+    formData.append('sac_code', category.sac_code);
+  }
+
+  // Attributes and Options
+  if (category.attributes && category.attributes.length > 0) {
+    const attributes = category.attributes.map((attr) => ({
+      attribute_name: attr.name,
+      attribute_type: attr.type,
+      options: attr.options,
+    }));
+    formData.append('attributes', JSON.stringify(attributes));
+  }
+
+  // Service Details
+  if (category.serviceDetails && category.serviceDetails.length > 0) {
+    formData.append('serviceDetails', JSON.stringify(category.serviceDetails));
+  }
+
+  // Exclude Items
+  if (category.excludeItems && category.excludeItems.length > 0) {
+    const excludeItems = category.excludeItems.map((item) => ({
+      item: item.item, // Use only the item field
+    }));
+    formData.append('excludeItems', JSON.stringify(excludeItems));
+  }
+
+
+  if (category.includeItems && category.includeItems.length > 0) {
+    const includeItems = category.includeItems.map((item) => ({
+      title: item.title,
+      description: item.description,
+    }));
+    formData.append('includeItems', JSON.stringify(includeItems));
+  }
+ // Exclude Images
+ if (category.excludedImages) {
+  category.excludedImages.forEach((excludeImage, index) => {
+    if (excludeImage.image_path instanceof File) {
+      console.log(`Appending Excluded Image ${index}:`, excludeImage.image_path);
+      formData.append('excludedImages', excludeImage.image_path); // Append the File object
+    } else {
+      console.warn(`Invalid image at index ${index}:`, excludeImage.image_path);
+    }
+  });
+}
 
   try {
     const token = getToken();
@@ -487,7 +675,6 @@ export const createSubcategory = async (subcategory: Subcategory): Promise<ApiRe
 
   // Add required fields
   formData.append('name', subcategory.name);
-  formData.append('description', subcategory.description);
   formData.append('category_id', subcategory.category_id.toString());
   formData.append('active', subcategory.active ? '1' : '0');
 
@@ -496,11 +683,19 @@ export const createSubcategory = async (subcategory: Subcategory): Promise<ApiRe
     formData.append('image', subcategory.image);
   }
 
-  // Add filter attributes if present
-  if (subcategory.filterattributes && subcategory.filterattributes.length > 0) {
-    formData.append('attributes', JSON.stringify(subcategory.filterattributes));
+  if (subcategory.optional_heading !== null && subcategory.optional_heading !== undefined) {
+    formData.append('optional_heading', subcategory.optional_heading.toString());
   }
-
+  if (subcategory.service_time !== null && subcategory.service_time !== undefined) {
+    formData.append('service_time', subcategory.service_time.toString());
+  }
+  if (subcategory.exclude_heading !== null && subcategory.exclude_heading !== undefined) {
+    formData.append('exclude_heading', subcategory.exclude_heading.toString());
+  }
+  if (subcategory.exclude_description !== null && subcategory.exclude_description !== undefined) {
+    formData.append('exclude_description', subcategory.exclude_description.toString());
+  }
+  // GST and SAC Code
   if (subcategory.sgst_tax !== null && subcategory.sgst_tax !== undefined) {
     formData.append('sgst_tax', subcategory.sgst_tax.toString());
   }
@@ -513,6 +708,50 @@ export const createSubcategory = async (subcategory: Subcategory): Promise<ApiRe
   if (subcategory.sac_code) {
     formData.append('sac_code', subcategory.sac_code);
   }
+
+  // Attributes and Options
+  if (subcategory.attributes && subcategory.attributes.length > 0) {
+    const attributes = subcategory.attributes.map((attr) => ({
+      attribute_name: attr.name,
+      attribute_type: attr.type,
+      options: attr.options,
+    }));
+    formData.append('attributes', JSON.stringify(attributes));
+  }
+
+  // Service Details
+  if (subcategory.serviceDetails && subcategory.serviceDetails.length > 0) {
+    formData.append('serviceDetails', JSON.stringify(subcategory.serviceDetails));
+  }
+
+  // Exclude Items
+  if (subcategory.excludeItems && subcategory.excludeItems.length > 0) {
+    const excludeItems = subcategory.excludeItems.map((item) => ({
+      item: item.item, // Use only the item field
+    }));
+    formData.append('excludeItems', JSON.stringify(excludeItems));
+  }
+
+
+  if (subcategory.includeItems && subcategory.includeItems.length > 0) {
+    const includeItems = subcategory.includeItems.map((item) => ({
+      title: item.title,
+      description: item.description,
+    }));
+    formData.append('includeItems', JSON.stringify(includeItems));
+  }
+ // Exclude Images
+ if (subcategory.excludedImages) {
+  subcategory.excludedImages.forEach((excludeImage, index) => {
+    if (excludeImage.image_path instanceof File) {
+      console.log(`Appending Excluded Image ${index}:`, excludeImage.image_path);
+      formData.append('excludedImages', excludeImage.image_path); // Append the File object
+    } else {
+      console.warn(`Invalid image at index ${index}:`, excludeImage.image_path);
+    }
+  });
+}
+
 
   // Add meta description and meta keywords fields
   if (subcategory.meta_description) {
@@ -623,9 +862,9 @@ export const fetchSubcategoryById = async (id: string): Promise<Subcategory> => 
 export const updateSubcategory = async (id: string, subcategory: Subcategory): Promise<ApiResponse> => {
   const formData = new FormData();
 
+  
   // Add required fields
   formData.append('name', subcategory.name);
-  formData.append('description', subcategory.description);
   formData.append('category_id', subcategory.category_id.toString());
   formData.append('active', subcategory.active ? '1' : '0');
 
@@ -634,11 +873,19 @@ export const updateSubcategory = async (id: string, subcategory: Subcategory): P
     formData.append('image', subcategory.image);
   }
 
-  // Add filter attributes if present
-  if (subcategory.filterattributes && subcategory.filterattributes.length > 0) {
-    formData.append('attributes', JSON.stringify(subcategory.filterattributes));
+  if (subcategory.optional_heading !== null && subcategory.optional_heading !== undefined) {
+    formData.append('optional_heading', subcategory.optional_heading.toString());
   }
-
+  if (subcategory.service_time !== null && subcategory.service_time !== undefined) {
+    formData.append('service_time', subcategory.service_time.toString());
+  }
+  if (subcategory.exclude_heading !== null && subcategory.exclude_heading !== undefined) {
+    formData.append('exclude_heading', subcategory.exclude_heading.toString());
+  }
+  if (subcategory.exclude_description !== null && subcategory.exclude_description !== undefined) {
+    formData.append('exclude_description', subcategory.exclude_description.toString());
+  }
+  // GST and SAC Code
   if (subcategory.sgst_tax !== null && subcategory.sgst_tax !== undefined) {
     formData.append('sgst_tax', subcategory.sgst_tax.toString());
   }
@@ -652,6 +899,50 @@ export const updateSubcategory = async (id: string, subcategory: Subcategory): P
     formData.append('sac_code', subcategory.sac_code);
   }
 
+  // Attributes and Options
+  if (subcategory.attributes && subcategory.attributes.length > 0) {
+    const attributes = subcategory.attributes.map((attr) => ({
+      attribute_name: attr.name,
+      attribute_type: attr.type,
+      options: attr.options,
+    }));
+    formData.append('attributes', JSON.stringify(attributes));
+  }
+
+  // Service Details
+  if (subcategory.serviceDetails && subcategory.serviceDetails.length > 0) {
+    formData.append('serviceDetails', JSON.stringify(subcategory.serviceDetails));
+  }
+
+  // Exclude Items
+  if (subcategory.excludeItems && subcategory.excludeItems.length > 0) {
+    const excludeItems = subcategory.excludeItems.map((item) => ({
+      item: item.item, // Use only the item field
+    }));
+    formData.append('excludeItems', JSON.stringify(excludeItems));
+  }
+
+
+  if (subcategory.includeItems && subcategory.includeItems.length > 0) {
+    const includeItems = subcategory.includeItems.map((item) => ({
+      title: item.title,
+      description: item.description,
+    }));
+    formData.append('includeItems', JSON.stringify(includeItems));
+  }
+ // Exclude Images
+ if (subcategory.excludedImages) {
+  subcategory.excludedImages.forEach((excludeImage, index) => {
+    if (excludeImage.image_path instanceof File) {
+      console.log(`Appending Excluded Image ${index}:`, excludeImage.image_path);
+      formData.append('excludedImages', excludeImage.image_path); // Append the File object
+    } else {
+      console.warn(`Invalid image at index ${index}:`, excludeImage.image_path);
+    }
+  });
+}
+
+
   // Add meta description and meta keywords fields
   if (subcategory.meta_description) {
     formData.append('meta_description', subcategory.meta_description);
@@ -659,7 +950,6 @@ export const updateSubcategory = async (id: string, subcategory: Subcategory): P
   if (subcategory.meta_keyword) {
     formData.append('meta_keyword', subcategory.meta_keyword);
   }
-
   try {
     const token = getToken();
     const response: AxiosResponse<ApiResponse> = await apiClient.put(`/sub-category/${id}`, formData, {
@@ -2529,3 +2819,259 @@ export const restorePromocode = async (id: string): Promise<ApiResponse> => {
   }
 };
 
+
+
+
+
+
+export const createBlog = async (blog: Blog): Promise<ApiResponse> => {
+  const formData = new FormData();
+
+  // Append basic blog details
+  formData.append('title', blog.title);
+  formData.append('slug', blog.slug);
+  formData.append('description', blog.description);
+  formData.append('is_active', blog.is_active ? '1' : '0');
+
+  // Append the image
+  if (blog.image) {
+    console.log('Appending image:', blog.image);
+    formData.append('image', blog.image);
+  }
+
+  try {
+    const token = getToken();
+
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/blog', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error creating blog:', error);
+    throw new Error(error.response?.data?.message || 'Failed to create blog.');
+  }
+};
+
+
+export const fetchBlogs = async (page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/blog', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data; // Return data and meta info
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch blogs.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch blogs.');
+  }
+};
+
+// **Delete a Blog by ID**
+export const deleteBlog = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/blog/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data; // Return success response
+    } else {
+      throw new Error(response.data.message || 'Failed to delete blog.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete blog.');
+  }
+};
+// Fetch a single blog
+export const getBlogById = async (id: number): Promise<Blog> => {
+  const token = getToken();
+  const response: AxiosResponse<ApiResponse> = await apiClient.get(`/blog/${id}`, {
+    headers: {
+      "admin-auth-token": token || "",
+    },
+  });
+  return response.data.data;
+};
+
+// Update a blog
+export const updateBlog = async (id: number, blog: Blog): Promise<ApiResponse> => {
+  const formData = new FormData();
+
+  // Append fields
+  formData.append("title", blog.title);
+  formData.append("slug", blog.slug);
+  formData.append("description", blog.description);
+  formData.append("is_active", blog.is_active ? "1" : "0");
+
+  if (blog.image) {
+    formData.append("image", blog.image);
+  }
+
+  const token = getToken();
+  const response: AxiosResponse<ApiResponse> = await apiClient.put(`/blog/${id}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+      "admin-auth-token": token || "",
+    },
+  });
+
+  return response.data;
+};
+
+
+
+export const createNotification = async (notification: Notification) => {
+  const formData = new FormData();
+
+  formData.append("title", notification.title);
+  formData.append("message", notification.message);
+  formData.append("type", notification.type);
+  if (notification.redirect_screen) formData.append("redirect_screen", notification.redirect_screen);
+  if (notification.category_id) formData.append("category_id", notification.category_id.toString());
+  if (notification.subcategory_id) formData.append("subcategory_id", notification.subcategory_id.toString());
+  if (notification.inner_image) formData.append("inner_image", notification.inner_image);
+  if (notification.outer_image) formData.append("outer_image", notification.outer_image);
+  formData.append("is_active", notification.is_active ? "1" : "0");
+  formData.append("send_to_all", notification.send_to_all ? "1" : "0");
+  if (notification.recipients) formData.append("recipients", JSON.stringify(notification.recipients));
+
+  // const response = await apiClient.post("/notification", formData);
+  const token = getToken();
+
+  const response: AxiosResponse<ApiResponse> = await apiClient.post('/notification', formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data',
+      'admin-auth-token': token || '',
+    },
+  });
+
+  return response.data;
+};
+
+
+
+
+export const fetchNotifications = async (page = 1, size = 10) => {
+  try {
+    const token = getToken(); // Retrieve the token
+
+    const response: AxiosResponse = await apiClient.get('/notification', {
+      params: { page, size }, // Pass pagination params
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data; // Return the data from the response
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch notifications.');
+  }
+};
+
+
+// Fetch all wallet offers with optional pagination
+export const fetchWalletOffers = async (page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/wallet-offer', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch wallet offers.');
+  }
+};
+
+// Fetch a single wallet offer by ID
+export const fetchWalletOfferById = async (id: number): Promise<WalletOffer> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/wallet-offer/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch wallet offer.');
+  }
+};
+
+// Create a new wallet offer
+export const createWalletOffer = async (walletOffer: WalletOffer): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/wallet-offer', walletOffer, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create wallet offer.');
+  }
+};
+
+// Update an existing wallet offer
+export const updateWalletOffer = async (id: number, walletOffer: WalletOffer): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/wallet-offer/${id}`, walletOffer, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update wallet offer.');
+  }
+};
+
+// Soft-delete a wallet offer
+export const deleteWalletOffer = async (id: number): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/wallet-offer/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete wallet offer.');
+  }
+};
+
+// Restore a soft-deleted wallet offer
+export const restoreWalletOffer = async (id: number): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post(`/wallet-offer/${id}/restore`, {}, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to restore wallet offer.');
+  }
+};
