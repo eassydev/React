@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Save, FileText, Loader2, Type, Globe2 } from 'lucide-react';
-import { fetchAllCategories, fetchSubCategoriesByCategoryId, fetchProviders, Provider, fetchFilterAttributes, createRateCard, Category, Subcategory, Attribute } from '@/lib/api';
+import { fetchAllCategories, fetchSubCategoriesByCategoryId, fetchProviders, Provider,fetchFilterOptionsByAttributeId, fetchFilterAttributes,AttributeOption, createRateCard, Category, Subcategory, Attribute } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 
 // Importing React-Quill dynamically
@@ -42,6 +42,8 @@ const RateCardForm: React.FC = () => {
   const { toast } = useToast();
   const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedProviderId, setSelectedProviderId] = useState<string>('');
+  const [filterOptions, setFilterOptions] = useState<AttributeOption[]>([]);
+const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>('');
   // Fetch categories on load
   useEffect(() => {
     const loadCategories = async () => {
@@ -85,6 +87,23 @@ const RateCardForm: React.FC = () => {
 
 
   useEffect(() => {
+    if (selectedFilterAttributesId) {
+      const loadFilterOptions = async () => {
+        try {
+          const options = await fetchFilterOptionsByAttributeId(parseInt(selectedFilterAttributesId));
+          setFilterOptions(options);
+        } catch (error) {
+          setFilterOptions([]);
+        }
+      };
+      loadFilterOptions();
+    } else {
+      setFilterOptions([]);
+    }
+  }, [selectedFilterAttributesId]);
+
+  
+  useEffect(() => {
     const loadProviders = async () => {
       try {
         const providerData = await fetchProviders();
@@ -126,6 +145,7 @@ const RateCardForm: React.FC = () => {
       category_id: parseInt(selectedCategoryId),
       subcategory_id: selectedSubcategoryId ? parseInt(selectedSubcategoryId) : null,
       filter_attribute_id: selectedFilterAttributesId ? parseInt(selectedFilterAttributesId) : null, 
+      filter_option_id:selectedFilterOptionId ? parseInt(selectedFilterOptionId) : null, 
       price: parseFloat(price),
       active: isActive,
       provider_id: parseInt(selectedProviderId), // Add provider ID
@@ -266,9 +286,9 @@ const RateCardForm: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {filterAttributes.map((attribute) =>
-                        attribute?.id && attribute?.attribute_name ? (
+                        attribute?.id && attribute?.name ? (
                           <SelectItem key={attribute.id} value={attribute.id.toString()}>
-                            {attribute.attribute_name}
+                            {attribute.name}
                           </SelectItem>
                         ) : null
                       )}
@@ -276,6 +296,28 @@ const RateCardForm: React.FC = () => {
                   </Select>
                 </div>
               )}
+
+
+{filterOptions.length > 0 && (
+  <div className="space-y-2">
+    <label className="text-sm font-medium text-gray-700">Select Filter Option</label>
+    <Select
+      value={selectedFilterOptionId}
+      onValueChange={(value) => setSelectedFilterOptionId(value)}
+    >
+      <SelectTrigger className="bg-white border-gray-200">
+        <SelectValue placeholder="Select a filter option" />
+      </SelectTrigger>
+      <SelectContent>
+        {filterOptions.map((option) => (
+          <SelectItem key={option.id} value={option.id.toString()}>
+            {option.value}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
+)}
 
               {/* Price Field */}
               <div className="space-y-2">

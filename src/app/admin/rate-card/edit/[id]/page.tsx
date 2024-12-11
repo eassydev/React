@@ -18,6 +18,7 @@ import {
   Subcategory,
   Attribute,
   fetchProviders, Provider,
+  fetchFilterOptionsByAttributeId,AttributeOption
 } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 
@@ -53,7 +54,8 @@ const RateCardEditForm: React.FC = () => {
   const { toast } = useToast();
   const [providers, setProviders] = useState<Provider[]>([]);
 const [selectedProviderId, setSelectedProviderId] = useState<string>('');
-
+const [filterOptions, setFilterOptions] = useState<AttributeOption[]>([]);
+const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>('');
   // Fetch categories and rate card details once on component mount
   useEffect(() => {
     const fetchData = async () => {
@@ -76,6 +78,7 @@ const [selectedProviderId, setSelectedProviderId] = useState<string>('');
           setSelectedCategoryId(rateCardData.category_id?.toString() || '');
           setSelectedSubcategoryId(rateCardData.subcategory_id?.toString() || '');
           setSelectedFilterAttributeId(rateCardData.filter_attribute_id?.toString() || '');
+          setSelectedFilterOptionId(rateCardData.filter_option_id?.toString() || '');
           setPrice(rateCardData.price?.toString() || '');
           setIsActive(rateCardData.active);
           setSelectedProviderId(rateCardData.provider_id?.toString() || ''); // Set initial provider
@@ -101,6 +104,21 @@ const [selectedProviderId, setSelectedProviderId] = useState<string>('');
     fetchData();
   }, [rateCardId]);
   
+  useEffect(() => {
+    if (selectedFilterAttributeId) {
+      const loadFilterOptions = async () => {
+        try {
+          const options = await fetchFilterOptionsByAttributeId(parseInt(selectedFilterAttributeId));
+          setFilterOptions(options);
+        } catch (error) {
+          setFilterOptions([]);
+        }
+      };
+      loadFilterOptions();
+    } else {
+      setFilterOptions([]);
+    }
+  }, [selectedFilterAttributeId]);
 
   
   // Fetch subcategories when the selected category changes
@@ -159,6 +177,7 @@ const [selectedProviderId, setSelectedProviderId] = useState<string>('');
       subcategory_id: selectedSubcategoryId ? parseInt(selectedSubcategoryId) : null,
       provider_id: selectedProviderId ? parseInt(selectedProviderId) : null,
       filter_attribute_id: selectedFilterAttributeId ? parseInt(selectedFilterAttributeId) : null,
+      filter_option_id:selectedFilterOptionId ? parseInt(selectedFilterOptionId) : null, 
       price: parseFloat(price),
       active: isActive,
     };
@@ -293,9 +312,9 @@ const [selectedProviderId, setSelectedProviderId] = useState<string>('');
                     </SelectTrigger>
                     <SelectContent>
                       {filterAttributes.map((attribute) =>
-                        attribute?.id && attribute?.attribute_name ? (
+                        attribute?.id && attribute?.name ? (
                           <SelectItem key={attribute.id} value={attribute.id.toString()}>
-                            {attribute.attribute_name}
+                            {attribute.name}
                           </SelectItem>
                         ) : null
                       )}
@@ -304,6 +323,28 @@ const [selectedProviderId, setSelectedProviderId] = useState<string>('');
                 </div>
               )}
 
+
+
+{filterOptions.length > 0 && (
+  <div className="space-y-2">
+    <label className="text-sm font-medium text-gray-700">Select Filter Option</label>
+    <Select
+      value={selectedFilterOptionId}
+      onValueChange={(value) => setSelectedFilterOptionId(value)}
+    >
+      <SelectTrigger className="bg-white border-gray-200">
+        <SelectValue placeholder="Select a filter option" />
+      </SelectTrigger>
+      <SelectContent>
+        {filterOptions.map((option) => (
+          <SelectItem key={option.id} value={option.id.toString()}>
+            {option.value}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
+)}
               {/* Description Field with React-Quill */}
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">

@@ -86,6 +86,12 @@ export type Attribute = {
   options: string[];
 };
 
+
+export interface AttributeOption {
+  id: number;
+  value: string;
+}
+
 export type ServiceDetail = {
   id?: number;
   title: string;
@@ -119,6 +125,7 @@ export interface RateCard {
   category_id: number;
   subcategory_id: number | null;
   filter_attribute_id: number | null;
+  filter_option_id: number | null;
   provider_id: number | null; // Change here to allow null values
   name: string;
   description?: string;
@@ -378,6 +385,24 @@ export interface WalletOffer {
   end_date: string;   // Format: YYYY-MM-DD
   is_active: boolean;
   order_amount?: number | null; // Optional
+}
+
+// Role Interface
+export interface Role {
+  id?: string; // Optional for editing
+  role_name: string; // Name of the role
+  active: boolean; // Indicates if the role is active
+  created_at?: string; // Optional: Timestamp
+  updated_at?: string; // Optional: Timestamp
+}
+
+// Permission Interface
+export interface Permission {
+  id?: string; // Optional for editing
+  permission_name: string; // Permission name
+  route: string; // Route associated with the permission
+  created_at?: string; // Optional: Timestamp
+  updated_at?: string; // Optional: Timestamp
 }
 
 // Define the structure of the API response
@@ -999,6 +1024,10 @@ export const createRateCard = async (rateCard: RateCard): Promise<ApiResponse> =
   if (rateCard.filter_attribute_id) {
     formData.append('filter_attribute_id', rateCard.filter_attribute_id?.toString() || ''); // Adjusted for subcategory
   }
+  if (rateCard.filter_option_id) {
+    formData.append('filter_option_id', rateCard.filter_option_id?.toString() || ''); // Adjusted for subcategory
+  }
+  
   if (rateCard.description) {
     formData.append('description', rateCard.description);
   }
@@ -1089,6 +1118,9 @@ export const updateRateCard = async (id: string, rateCard: RateCard): Promise<Ap
   }
   if (rateCard.filter_attribute_id) {
     formData.append('filter_attribute_id', rateCard.filter_attribute_id?.toString() || ''); // Adjusted for subcategory
+  }
+  if (rateCard.filter_option_id) {
+    formData.append('filter_option_id', rateCard.filter_option_id?.toString() || ''); // Adjusted for subcategory
   }
   if (rateCard.description) {
     formData.append('description', rateCard.description);
@@ -3075,3 +3107,198 @@ export const restoreWalletOffer = async (id: number): Promise<ApiResponse> => {
     throw new Error(error.response?.data?.message || 'Failed to restore wallet offer.');
   }
 };
+
+
+
+// Fetch options for a specific filter attribute
+export const fetchFilterOptionsByAttributeId = async (attributeId: number): Promise<AttributeOption[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/filter/attribute-options/${attributeId}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data; // Return attribute options
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch attribute options.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch attribute options.');
+  }
+};
+
+
+// Fetch all roles
+export const fetchRoles = async (): Promise<Role[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/role', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch roles.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch roles.');
+  }
+};
+
+// Fetch a specific role by ID
+export const fetchRoleById = async (id: string): Promise<Role> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/role/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch role.');
+  }
+};
+
+// Create a new role
+export const createRole = async (role: Role): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/role', role, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create role.');
+  }
+};
+
+// Update an existing role
+export const updateRole = async (id: string, role: Role): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/role/${id}`, role, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update role.');
+  }
+};
+
+// Delete a role
+export const deleteRole = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/role/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete role.');
+  }
+};
+
+
+
+export const fetchPermissions = async (page = 1, size = 10) => {
+  try {
+    const token = getToken(); // Retrieve the token
+
+    const response: AxiosResponse = await apiClient.get('/permission', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '', // Add the token to the request headers
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    throw new Error('Failed to fetch permission');
+  }
+};
+
+// Fetch a specific permission by ID
+export const fetchPermissionById = async (id: string): Promise<Permission> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/permission/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch permission.');
+  }
+};
+
+// Create a new permission
+export const createPermission = async (permission: Permission): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/permission', permission, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create permission.');
+  }
+};
+
+// Update an existing permission
+export const updatePermission = async (id: string, permission: Permission): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/permission/${id}`, permission, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update permission.');
+  }
+};
+
+// Delete a permission
+export const deletePermission = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/permission/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete permission.');
+  }
+};
+
