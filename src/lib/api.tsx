@@ -1,7 +1,12 @@
 import axios, { AxiosResponse } from 'axios';
+import dotenv from "dotenv";
+dotenv.config();
+
+// Access environment variables
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Set the base URL for your API
-const BASE_URL = 'http://localhost:5001/admin';
+// const BASE_URL = 'http://localhost:5001/admin';
 
 // Initialize Axios instance with base URL
 const apiClient = axios.create({
@@ -83,7 +88,7 @@ export type Attribute = {
   id?: number;
   name: string;
   type: string;
-  options: string[];
+  options: AttributeOption[];
 };
 
 
@@ -388,23 +393,40 @@ export interface WalletOffer {
 }
 
 // Role Interface
-export interface Role {
-  id?: string; // Optional for editing
-  role_name: string; // Name of the role
-  active: boolean; // Indicates if the role is active
-  created_at?: string; // Optional: Timestamp
-  updated_at?: string; // Optional: Timestamp
-}
-
 // Permission Interface
 export interface Permission {
-  id?: string; // Optional for editing
-  permission_name: string; // Permission name
-  route: string; // Route associated with the permission
-  created_at?: string; // Optional: Timestamp
-  updated_at?: string; // Optional: Timestamp
+  id?: string; // Unique identifier for the permission
+  permission_name: string; // Name of the permission group or type
+  route: string; // Specific route or action associated with the permission
+  created_at?: string; // Optional: Creation timestamp
+  updated_at?: string; // Optional: Last update timestamp
 }
 
+// Role Interface
+export interface Role {
+  id?: string; // Optional for editing or database reference
+  role_name: string; // Descriptive name of the role (e.g., Admin, Editor)
+  active: boolean; // Indicates if the role is active
+  permissions?: { id: string }[]; // Permission IDs to link permissions to roles
+  created_at?: string; // Optional: Creation timestamp
+  updated_at?: string; // Optional: Last update timestamp
+}
+
+
+export interface Setting {
+  id?: string; // Optional for editing
+  attribute_name: string; // Name of the attribute
+  attribute_value: string; // Value of the attribute
+  created_at?: number; // UNIX timestamp for creation
+  updated_at?: number; // UNIX timestamp for update
+}
+
+export interface QuickService {
+  id?: string; // Optional for editing
+  image: File | null; // The image file
+  active: boolean; // Indicates if the role is active
+  category_ids: string[]; // Array of category IDs
+}
 // Define the structure of the API response
 interface ApiResponse {
   status: boolean;
@@ -2892,7 +2914,7 @@ export const createBlog = async (blog: Blog): Promise<ApiResponse> => {
 export const fetchBlogs = async (page = 1, size = 10) => {
   try {
     const token = getToken();
-    const response: AxiosResponse<ApiResponse> = await apiClient.get('/blog', {
+    const response = await apiClient.get('/blog', {
       params: { page, size },
       headers: {
         'admin-auth-token': token || '',
@@ -3019,7 +3041,7 @@ export const fetchNotifications = async (page = 1, size = 10) => {
 export const fetchWalletOffers = async (page = 1, size = 10) => {
   try {
     const token = getToken();
-    const response: AxiosResponse<ApiResponse> = await apiClient.get('/wallet-offer', {
+    const response = await apiClient.get('/wallet-offer', {
       params: { page, size },
       headers: {
         'admin-auth-token': token || '',
@@ -3132,10 +3154,10 @@ export const fetchFilterOptionsByAttributeId = async (attributeId: number): Prom
 
 
 // Fetch all roles
-export const fetchRoles = async (): Promise<Role[]> => {
+export const fetchRolesAll = async (): Promise<Role[]> => {
   try {
     const token = getToken();
-    const response: AxiosResponse<ApiResponse> = await apiClient.get('/role', {
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/role/all', {
       headers: {
         'admin-auth-token': token || '',
       },
@@ -3148,6 +3170,24 @@ export const fetchRoles = async (): Promise<Role[]> => {
     }
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch roles.');
+  }
+};
+
+
+export const fetchRoles = async (page = 1, size = 10) => {
+  try {
+    const token = getToken(); // Retrieve the token
+
+    const response: AxiosResponse = await apiClient.get('/role', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '', // Add the token to the request headers
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    throw new Error('Failed to fetch role');
   }
 };
 
@@ -3236,6 +3276,26 @@ export const fetchPermissions = async (page = 1, size = 10) => {
   }
 };
 
+// Function to fetch categories with attributes
+export const fetchAllPermission = async (): Promise<Permission[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/permission/all', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch permission.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch permission.');
+  }
+};
+
 // Fetch a specific permission by ID
 export const fetchPermissionById = async (id: string): Promise<Permission> => {
   try {
@@ -3302,3 +3362,215 @@ export const deletePermission = async (id: string): Promise<ApiResponse> => {
   }
 };
 
+
+// Fetch all settings with pagination
+export const fetchSettings = async (page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/settings', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch settings.');
+  }
+};
+
+// Fetch a specific setting by ID
+export const fetchSettingById = async (id: string): Promise<Setting> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/settings/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch setting.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch setting.');
+  }
+};
+
+// Create a new setting
+export const createSetting = async (setting: Setting): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/settings', setting, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create setting.');
+  }
+};
+
+// Update an existing setting
+export const updateSetting = async (id: string, setting: Setting): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/settings/${id}`, setting, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update setting.');
+  }
+};
+
+// Delete a setting (soft delete)
+export const deleteSetting = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/settings/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete setting.');
+  }
+};
+
+// Create Admin API
+export const createAdmin = async (adminData: any): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/admin', adminData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create admin.');
+  }
+};
+
+
+// Fetch all admins with optional pagination
+export const fetchAdmins = async (page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/admin', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch admins.');
+  }
+};
+
+// Fetch a single admin by ID
+export const fetchAdminById = async (id: string): Promise<any> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/admin/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data.data; // Assuming `data` contains the admin details
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch admin.');
+  }
+};
+
+
+// Update an existing admin by ID
+export const updateAdmin = async (id: string, adminData: any): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/admin/${id}`, adminData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update admin.');
+  }
+};
+
+
+// Delete (soft-delete) an admin by ID
+export const deleteAdmin = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/admin/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete admin.');
+  }
+};
+
+// API to create or update Quick Service
+export const createQuickService = async (data: QuickService): Promise<any> => {
+  const formData = new FormData();
+
+  // Append image file
+  if (data.image) {
+    formData.append('image', data.image);
+  }
+
+  // Append categories_ids as JSON string
+  formData.append('category_ids', JSON.stringify(data.category_ids));
+  if (data.active !== undefined) {
+    formData.append('active', data.active ? '1' : '0');
+  }
+ 
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post('/quick-service', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create or update Quick Service.');
+  }
+};
+
+// API to fetch the first Quick Service entry
+export const fetchFirstQuickService = async (): Promise<QuickService> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/quick-service/first', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch Quick Service.');
+  }
+};

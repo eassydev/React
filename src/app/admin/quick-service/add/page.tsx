@@ -8,12 +8,12 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription }
 import { useToast } from "@/hooks/use-toast";
 import { ChevronDown, Save, Loader2 } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
-import { fetchCategories, createQuickService } from "@/lib/api"; // Replace with actual API functions
+import { fetchAllCategories, createQuickService, fetchFirstQuickService } from "@/lib/api";
 
 const QuickSelectionPage: React.FC = () => {
   const [image, setImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
-  const [categories, setCategories] = useState<any[]>([]); // Categories fetched from API
+  const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -21,22 +21,41 @@ const QuickSelectionPage: React.FC = () => {
 
   const { toast } = useToast();
 
-  // Fetch categories from API
+  // Fetch categories and initial Quick Service data
   useEffect(() => {
-    const fetchCategoryData = async () => {
+    const fetchInitialData = async () => {
       try {
-        const fetchedCategories = await fetchCategories(); // Fetch categories from your API
+        // Fetch categories
+        const fetchedCategories = await fetchAllCategories();
         setCategories(fetchedCategories || []);
+
+        // Fetch first Quick Service entry
+        const quickService = await fetchFirstQuickService();
+        if (quickService) {
+          // Parse category_ids and populate state
+          const parsedCategories = 
+          typeof quickService.category_ids === "string" 
+            ? JSON.parse(quickService.category_ids) 
+            : Array.isArray(quickService.category_ids)
+            ? quickService.category_ids 
+            : [];
+        
+          setSelectedCategories(parsedCategories);
+
+          setIsActive(quickService.active || true);
+
+          if (quickService.image) {
+            setImagePreview(
+              `${quickService.image}`
+            );
+          }
+        }
       } catch (error) {
-        toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to fetch categories.",
-        });
+      
       }
     };
 
-    fetchCategoryData();
+    fetchInitialData();
   }, []);
 
   // Handle image upload
@@ -62,36 +81,39 @@ const QuickSelectionPage: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    if (!image || selectedCategories.length === 0) {
+    if (!image && !imagePreview) {
       toast({
         variant: "error",
         title: "Validation Error",
-        description: "Image and at least one category must be selected.",
+        description: "An image is required.",
       });
       setIsSubmitting(false);
       return;
     }
 
-    // Construct the payload for submission
+    if (selectedCategories.length === 0) {
+      toast({
+        variant: "error",
+        title: "Validation Error",
+        description: "At least one category must be selected.",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     const payload = {
-      image, // Image file for upload
-      category_ids: selectedCategories, // Selected category IDs
-      is_active: isActive, // Active status
+      image,
+      category_ids: selectedCategories,
+      active: isActive,
     };
 
     try {
-      await createQuickService(payload); // Submit to your API
+      await createQuickService(payload);
       toast({
         variant: "success",
         title: "Success",
         description: "Quick service saved successfully.",
       });
-
-      // Reset form fields after success
-      setImage(null);
-      setImagePreview(null);
-      setSelectedCategories([]);
-      setIsActive(true);
     } catch (error: any) {
       toast({
         variant: "error",
@@ -113,15 +135,10 @@ const QuickSelectionPage: React.FC = () => {
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
           <CardHeader className="border-b border-gray-100 pb-6">
-            <div className="flex items-center space-x-2">
-              <div className="h-8 w-1 bg-blue-600 rounded-full" />
-              <div>
-                <CardTitle className="text-xl text-gray-800">New Quick Service</CardTitle>
-                <CardDescription className="text-gray-500">
-                  Fill in the details below to create or edit a quick service
-                </CardDescription>
-              </div>
-            </div>
+            <CardTitle className="text-xl text-gray-800">New Quick Service</CardTitle>
+            <CardDescription className="text-gray-500">
+              Fill in the details below to create or edit a quick service
+            </CardDescription>
           </CardHeader>
 
           <CardContent className="pt-6">
@@ -129,11 +146,9 @@ const QuickSelectionPage: React.FC = () => {
               {/* Image Field */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Image</label>
-                <Input type="file" accept="image/*" onChange={handleImageUpload} required />
+                <Input type="file" accept="image/*" onChange={handleImageUpload} />
                 {imagePreview && (
-                  <div className="mt-2">
-                    <img src={imagePreview} alt="Preview" className="h-32 w-32 object-cover rounded-md" />
-                  </div>
+                  <img src={imagePreview} alt="Preview" className="mt-2 h-32 w-32 object-cover rounded-md" />
                 )}
               </div>
 
@@ -157,14 +172,11 @@ const QuickSelectionPage: React.FC = () => {
                         <div key={category.id} className="flex items-center p-2">
                           <Checkbox
                             checked={selectedCategories.includes(category.id.toString())}
-                            onCheckedChange={(checked: any) =>
-                              handleCategorySelection(category.id.toString(), checked)
+                            onCheckedChange={(checked) =>
+                              handleCategorySelection(category.id.toString(), checked as boolean)
                             }
-                            id={`category-${category.id}`}
                           />
-                          <label htmlFor={`category-${category.id}`} className="ml-2">
-                            {category.name}
-                          </label>
+                          <span className="ml-2">{category.name}</span>
                         </div>
                       ))}
                     </div>
@@ -177,26 +189,19 @@ const QuickSelectionPage: React.FC = () => {
                 <Switch checked={isActive} onCheckedChange={setIsActive} />
                 <span className="text-sm text-gray-700">Active</span>
               </div>
-            </form>
-          </CardContent>
 
-          <CardFooter className="border-t border-gray-100 mt-6">
-            <div className="flex space-x-3 pt-6">
-              <Button className="w-full" disabled={isSubmitting} onClick={onSubmit}>
+              <Button type="submit" disabled={isSubmitting} className="w-full">
                 {isSubmitting ? (
-                  <div className="flex items-center justify-center space-x-2">
+                  <div className="flex items-center space-x-2">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     <span>Saving...</span>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-center space-x-2">
-                    <Save className="w-4 h-4" />
-                    <span>Save Quick Service</span>
-                  </div>
+                  "Save Quick Service"
                 )}
               </Button>
-            </div>
-          </CardFooter>
+            </form>
+          </CardContent>
         </Card>
       </div>
     </div>

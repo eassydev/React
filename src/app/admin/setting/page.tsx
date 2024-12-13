@@ -12,78 +12,68 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from "lucide-react";
-import { fetchPermissions, deletePermission, Permission } from "@/lib/api";
+import { fetchSettings, deleteSetting } from "@/lib/api"; // API functions
 import Link from "next/link";
-import {
-  AlertDialog,
-  AlertDialogTrigger,
-  AlertDialogContent,
-  AlertDialogHeader,
-  AlertDialogFooter,
-} from "@/components/ui/alert-dialog";
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 
-const PermissionList = () => {
-  const [permissions, setPermissions] = useState<Permission[]>([]);
+const SettingList = () => {
+  const [settings, setSettings] = useState<any[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
   const [totalPages, setTotalPages] = useState(0);
+  const [totalItems, setTotalItems] = useState(0);
 
   const { toast } = useToast();
 
-  // Fetch permissions with pagination
-  const loadPermissions = async (page = 1, size = 5) => {
+  // Fetch settings with pagination
+  const fetchSettingsData = async (page = 1, size = 5) => {
     try {
-      const { data, meta } = await fetchPermissions(page, size);
-      setPermissions(data);
+      const { data, meta } = await fetchSettings(page, size);
+      setSettings(data);
       setTotalPages(meta.totalPages);
+      setTotalItems(meta.totalItems);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.log(error)
-      toast({
-        title: "Error",
-        description: "Failed to load permissions.",
-        variant: "destructive",
-      });
+      console.error("Error fetching settings:", error);
     }
   };
 
   useEffect(() => {
-    loadPermissions(pagination.pageIndex + 1, pagination.pageSize);
+    fetchSettingsData(pagination.pageIndex + 1, pagination.pageSize);
   }, [pagination.pageIndex, pagination.pageSize]);
 
-  const handleDelete = async (permission: Permission) => {
+  const handleSettingDelete = async (setting: any) => {
     try {
-      await deletePermission((permission.id ?? '').toString());
+      await deleteSetting(setting.id);
       toast({
         title: "Success",
-        description: `Permission "${permission.permission_name}" deleted.`,
+        description: `Setting "${setting.attribute_name}" deleted successfully.`,
         variant: "success",
       });
-      loadPermissions(pagination.pageIndex + 1, pagination.pageSize);
+      fetchSettingsData(pagination.pageIndex + 1, pagination.pageSize);
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to delete permission.",
+        description: `Failed to delete setting: ${error}`,
         variant: "destructive",
       });
     }
   };
 
-  const permissionColumns: ColumnDef<Permission>[] = [
+  const settingColumns: ColumnDef<any>[] = [
     { accessorKey: "id", header: "ID" },
-    { accessorKey: "permission_name", header: "Permission Name" },
-    { accessorKey: "route", header: "Route" },
-
+    { accessorKey: "attribute_name", header: "Attribute Name" },
+    { accessorKey: "attribute_value", header: "Attribute Value" },
     {
       id: "actions",
       header: "Actions",
       cell: ({ row }) => (
-        <div className="flex space-x-2">
-          <Link href={`/permissions/edit/${row.original.id}`}>
-            <Button variant="ghost" size="icon">
+        <div className="flex items-center space-x-2">
+          <Button variant="ghost" size="icon">
+            <Link href={`/admin/settings/edit/${row.original.id}`} passHref>
               <Edit className="w-4 h-4 text-blue-600" />
-            </Button>
-          </Link>
+            </Link>
+          </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <Button variant="ghost" size="icon">
@@ -92,11 +82,11 @@ const PermissionList = () => {
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <h2 className="text-lg font-bold">Delete Permission</h2>
-                <p>Are you sure you want to delete "{row.original.permission_name}"?</p>
+                <h2 className="text-xl font-bold">Confirm Delete</h2>
+                <p>Are you sure you want to delete: {row.original.attribute_name}?</p>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <Button onClick={() => handleDelete(row.original)} variant="destructive">
+                <Button variant="secondary" onClick={() => handleSettingDelete(row.original)}>
                   Yes, Delete
                 </Button>
                 <Button variant="outline">Cancel</Button>
@@ -108,9 +98,9 @@ const PermissionList = () => {
     },
   ];
 
-  const table = useReactTable({
-    data: permissions,
-    columns: permissionColumns,
+  const settingTable = useReactTable({
+    data: settings,
+    columns: settingColumns,
     state: { pagination },
     pageCount: totalPages,
     onPaginationChange: setPagination,
@@ -119,39 +109,40 @@ const PermissionList = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gray-50 p-4 md:p-8">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-12xl mx-auto space-y-6">
-        <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-900">Permissions List</h1>
-          <Button asChild className="flex items-center space-x-2 bg-primary">
-            <Link href="/permissions/add">
-              <Plus className="w-4 h-4 mr-2" />
-              <span>Add Permission</span>
+        <div className="flex items-center justify-between">
+          <h1 className="text-3xl font-bold text-gray-900">Settings List</h1>
+          <Button asChild variant="default" className="flex items-center space-x-2">
+            <Link href="/admin/settings/add">
+              <Plus className="w-4 h-4 mr-1" />
+              <span>Add Setting</span>
             </Link>
           </Button>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Permissions</CardTitle>
+        <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
+          <CardHeader className="border-b border-gray-100 pb-4">
+            <CardTitle className="text-xl text-gray-800">Settings</CardTitle>
           </CardHeader>
 
           <CardContent className="overflow-x-auto">
             <Table>
               <TableHeader>
-                {table.getHeaderGroups().map((headerGroup) => (
+                {settingTable.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id}>
-                        {flexRender(header.column.columnDef.header, header.getContext())}
+                      <TableHead key={header.id} className="text-left">
+                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                       </TableHead>
                     ))}
                   </TableRow>
                 ))}
               </TableHeader>
+
               <TableBody>
-                {table.getRowModel().rows.length ? (
-                  table.getRowModel().rows.map((row) => (
+                {settingTable.getRowModel().rows.length ? (
+                  settingTable.getRowModel().rows.map((row) => (
                     <TableRow key={row.id}>
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
@@ -162,8 +153,8 @@ const PermissionList = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={permissionColumns.length} className="text-center">
-                      No permissions found.
+                    <TableCell colSpan={settingColumns.length} className="h-24 text-center">
+                      No settings found.
                     </TableCell>
                   </TableRow>
                 )}
@@ -174,22 +165,26 @@ const PermissionList = () => {
           <div className="flex justify-between items-center p-4">
             <Button
               variant="outline"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
+              onClick={() => settingTable.previousPage()}
+              disabled={!settingTable.getCanPreviousPage()}
+              className="flex items-center"
             >
-              <ChevronLeft className="w-4 h-4 mr-2" /> Previous
+              <ChevronLeft className="w-4 h-4 mr-2" />
+              Previous
             </Button>
 
-            <span>
+            <span className="text-gray-600">
               Page {pagination.pageIndex + 1} of {totalPages}
             </span>
 
             <Button
               variant="outline"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
+              onClick={() => settingTable.nextPage()}
+              disabled={!settingTable.getCanNextPage()}
+              className="flex items-center"
             >
-              Next <ChevronRight className="w-4 h-4 ml-2" />
+              Next
+              <ChevronRight className="w-4 h-4 ml-2" />
             </Button>
           </div>
         </Card>
@@ -198,4 +193,4 @@ const PermissionList = () => {
   );
 };
 
-export default PermissionList;
+export default SettingList;

@@ -126,8 +126,10 @@ const [cgst, setCgst] = useState<number | null>(null);
         const excludeImages = categoryData.excludedImages.map((image) => ({
           image: image.image_path,
         }));
-        setExcludeImages(excludeImages || []);
-      } else {
+        setExcludeImages(
+          excludeImages ? excludeImages.map((item) => item.image) : []
+        );   
+         } else {
         setExcludeImages([]);
       }
   console.log(categoryData.excludedImages,"categoryData.excludeImages");
@@ -166,8 +168,16 @@ const [cgst, setCgst] = useState<number | null>(null);
   };
 
   const addAttribute = () => {
-    setAttributes((prev) => [...prev, { name: "", type: "list", options: [""] }]);
+    setAttributes((prev) => [
+      ...prev,
+      {
+        name: "",
+        type: "list",
+        options: [{ id: Date.now(), value: "" }], // Initialize options with a valid object
+      },
+    ]);
   };
+  
 
   const updateAttribute = (index: number, field: string, value: string) => {
     const updatedAttributes = [...attributes];
@@ -182,16 +192,24 @@ const [cgst, setCgst] = useState<number | null>(null);
    // Add an option to a specific attribute
    const addOption = (attrIndex: number) => {
     const updatedAttributes = [...attributes];
-    updatedAttributes[attrIndex].options.push("");
+    updatedAttributes[attrIndex].options.push({
+      id: Date.now(), // Assign a unique ID
+      value: "", // Initialize an empty value
+    });
     setAttributes(updatedAttributes);
   };
+  
 
   // Update an option for a specific attribute
   const updateOption = (attrIndex: number, optIndex: number, value: string) => {
     const updatedAttributes = [...attributes];
-    updatedAttributes[attrIndex].options[optIndex] = value;
+    updatedAttributes[attrIndex].options[optIndex] = {
+      ...updatedAttributes[attrIndex].options[optIndex], // Retain the existing `id`
+      value, // Update only the value
+    };
     setAttributes(updatedAttributes);
   };
+  
 
   // Remove an option from a specific attribute
   const removeOption = (attrIndex: number, optIndex: number) => {
@@ -587,7 +605,7 @@ const [cgst, setCgst] = useState<number | null>(null);
             <div key={optIndex} className="flex items-center space-x-2">
               <Input
   placeholder={`Option ${optIndex + 1}`}
-  value={option.value.toString() || ''} // Directly use the string
+      value={option.value || ''} // Safely access the `value` property
   onChange={(e) => updateOption(attrIndex, optIndex, e.target.value)}
   className="h-10 flex-1"
 />
@@ -705,7 +723,7 @@ const [cgst, setCgst] = useState<number | null>(null);
   {excludeImages.map((image, index) => (
     <div key={index} className="relative">
       <img
-        src={image instanceof File ? URL.createObjectURL(image) : image.image}
+        src={image instanceof File ? URL.createObjectURL(image) : image}
         alt={`Exclude Image ${index + 1}`}
         className="w-24 h-24 object-cover rounded-md"
       />

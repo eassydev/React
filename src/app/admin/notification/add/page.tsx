@@ -74,12 +74,11 @@ const AddNotificationForm: React.FC = () => {
     }
   }, [notification.category_id, toast]);
 
-  // Fetch Recipients based on Type and Send-to-All
   useEffect(() => {
     const loadRecipients = async () => {
       if (!notification.send_to_all) {
         try {
-          let data: any[];
+          let data: any[] = []; // Initialize data as an empty array
           if (notification.type === "provider") {
             data = await fetchAllProvidersWithoupagination();
           } else if (notification.type === "customer") {
@@ -95,7 +94,7 @@ const AddNotificationForm: React.FC = () => {
     };
     loadRecipients();
   }, [notification.type, notification.send_to_all, toast]);
-
+  
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNotification({ ...notification, [e.target.name]: e.target.value });
   };

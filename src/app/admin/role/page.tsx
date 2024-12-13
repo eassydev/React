@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from "lucide-react";
-import { fetchPermissions, deletePermission, Permission } from "@/lib/api";
+import { fetchRoles, deleteRole, Role } from "@/lib/api";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -23,63 +23,61 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 
-const PermissionList = () => {
-  const [permissions, setPermissions] = useState<Permission[]>([]);
+const RoleList = () => {
+  const [roles, setRoles] = useState<Role[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
   const [totalPages, setTotalPages] = useState(0);
 
   const { toast } = useToast();
 
-  // Fetch permissions with pagination
-  const loadPermissions = async (page = 1, size = 5) => {
+  // Fetch roles with pagination
+  const loadRoles = async (page = 1, size = 5) => {
     try {
-      const { data, meta } = await fetchPermissions(page, size);
-      setPermissions(data);
+      const { data, meta } = await fetchRoles(page, size);
+      setRoles(data);
       setTotalPages(meta.totalPages);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.log(error)
       toast({
         title: "Error",
-        description: "Failed to load permissions.",
+        description: "Failed to load roles.",
         variant: "destructive",
       });
     }
   };
 
   useEffect(() => {
-    loadPermissions(pagination.pageIndex + 1, pagination.pageSize);
+    loadRoles(pagination.pageIndex + 1, pagination.pageSize);
   }, [pagination.pageIndex, pagination.pageSize]);
 
-  const handleDelete = async (permission: Permission) => {
+  const handleDelete = async (role: Role) => {
     try {
-      await deletePermission((permission.id ?? '').toString());
+      await deleteRole(role.id!.toString());
       toast({
         title: "Success",
-        description: `Permission "${permission.permission_name}" deleted.`,
+        description: `Role "${role.role_name}" deleted.`,
         variant: "success",
       });
-      loadPermissions(pagination.pageIndex + 1, pagination.pageSize);
+      loadRoles(pagination.pageIndex + 1, pagination.pageSize);
     } catch (error) {
+      console.log(error)
       toast({
         title: "Error",
-        description: "Failed to delete permission.",
+        description: "Failed to delete role.",
         variant: "destructive",
       });
     }
   };
 
-  const permissionColumns: ColumnDef<Permission>[] = [
+  const roleColumns: ColumnDef<Role>[] = [
     { accessorKey: "id", header: "ID" },
-    { accessorKey: "permission_name", header: "Permission Name" },
-    { accessorKey: "route", header: "Route" },
-
+    { accessorKey: "role_name", header: "Role Name" },
     {
       id: "actions",
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex space-x-2">
-          <Link href={`/permissions/edit/${row.original.id}`}>
+          <Link href={`/roles/edit/${row.original.id}`}>
             <Button variant="ghost" size="icon">
               <Edit className="w-4 h-4 text-blue-600" />
             </Button>
@@ -92,8 +90,8 @@ const PermissionList = () => {
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <h2 className="text-lg font-bold">Delete Permission</h2>
-                <p>Are you sure you want to delete "{row.original.permission_name}"?</p>
+                <h2 className="text-lg font-bold">Delete Role</h2>
+                <p>Are you sure you want to delete "{row.original.role_name}"?</p>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <Button onClick={() => handleDelete(row.original)} variant="destructive">
@@ -109,8 +107,8 @@ const PermissionList = () => {
   ];
 
   const table = useReactTable({
-    data: permissions,
-    columns: permissionColumns,
+    data: roles,
+    columns: roleColumns,
     state: { pagination },
     pageCount: totalPages,
     onPaginationChange: setPagination,
@@ -122,18 +120,18 @@ const PermissionList = () => {
     <div className="min-h-screen bg-gray-50 p-4 md:p-8">
       <div className="max-w-12xl mx-auto space-y-6">
         <div className="flex justify-between items-center">
-          <h1 className="text-3xl font-bold text-gray-900">Permissions List</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Roles List</h1>
           <Button asChild className="flex items-center space-x-2 bg-primary">
-            <Link href="/permissions/add">
+            <Link href="/roles/add">
               <Plus className="w-4 h-4 mr-2" />
-              <span>Add Permission</span>
+              <span>Add Role</span>
             </Link>
           </Button>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Permissions</CardTitle>
+            <CardTitle>Roles</CardTitle>
           </CardHeader>
 
           <CardContent className="overflow-x-auto">
@@ -162,8 +160,8 @@ const PermissionList = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={permissionColumns.length} className="text-center">
-                      No permissions found.
+                    <TableCell colSpan={roleColumns.length} className="text-center">
+                      No roles found.
                     </TableCell>
                   </TableRow>
                 )}
@@ -198,4 +196,4 @@ const PermissionList = () => {
   );
 };
 
-export default PermissionList;
+export default RoleList;

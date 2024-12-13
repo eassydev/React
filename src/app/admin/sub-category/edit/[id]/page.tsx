@@ -137,8 +137,10 @@ const [cgst, setCgst] = useState<number | null>(null);
         const excludeImages = subcategoryData.excludedImages.map((image) => ({
           image: image.image_path,
         }));
-        setExcludeImages(excludeImages || []);
-      } else {
+        setExcludeImages(
+          excludeImages ? excludeImages.map((item) => item.image) : []
+        ); 
+            } else {
         setExcludeImages([]);
       }
   console.log(subcategoryData.excludedImages,"categoryData.excludeImages");
@@ -176,9 +178,15 @@ const [cgst, setCgst] = useState<number | null>(null);
   };
 
   const addAttribute = () => {
-    setAttributes((prev) => [...prev, { name: "", type: "list", options: [""] }]);
+    setAttributes((prev) => [
+      ...prev,
+      {
+        name: "",
+        type: "list",
+        options: [{ id: Date.now(), value: "" }], // Initialize options with a valid object
+      },
+    ]);
   };
-
   const updateAttribute = (index: number, field: string, value: string) => {
     const updatedAttributes = [...attributes];
     updatedAttributes[index] = { ...updatedAttributes[index], [field]: value };
@@ -189,20 +197,26 @@ const [cgst, setCgst] = useState<number | null>(null);
     setServiceDetails((prev) => [...prev, { title: "", description: "" }]);
   };
 
-   // Add an option to a specific attribute
-   const addOption = (attrIndex: number) => {
+   
+  const addOption = (attrIndex: number) => {
     const updatedAttributes = [...attributes];
-    updatedAttributes[attrIndex].options.push("");
+    updatedAttributes[attrIndex].options.push({
+      id: Date.now(), // Assign a unique ID
+      value: "", // Initialize an empty value
+    });
     setAttributes(updatedAttributes);
   };
+  
 
   // Update an option for a specific attribute
   const updateOption = (attrIndex: number, optIndex: number, value: string) => {
     const updatedAttributes = [...attributes];
-    updatedAttributes[attrIndex].options[optIndex] = value;
+    updatedAttributes[attrIndex].options[optIndex] = {
+      ...updatedAttributes[attrIndex].options[optIndex], // Retain the existing `id`
+      value, // Update only the value
+    };
     setAttributes(updatedAttributes);
   };
-
   // Remove an option from a specific attribute
   const removeOption = (attrIndex: number, optIndex: number) => {
     const updatedAttributes = [...attributes];
@@ -679,7 +693,7 @@ const [cgst, setCgst] = useState<number | null>(null);
   {excludeImages.map((image, index) => (
     <div key={index} className="relative">
       <img
-        src={image instanceof File ? URL.createObjectURL(image) : image.image}
+        src={image instanceof File ? URL.createObjectURL(image) : image}
         alt={`Exclude Image ${index + 1}`}
         className="w-24 h-24 object-cover rounded-md"
       />

@@ -314,9 +314,14 @@ const CategoryForm: React.FC = () => {
   const addAttribute = () => {
     setAttributes((prev) => [
       ...prev,
-      { name: "", type: "list", options: [""] },
+      {
+        name: "",
+        type: "list",
+        options: [{ id: Date.now(), value: "" }], // Initialize options with a valid object
+      },
     ]);
   };
+  
 
   // Update attribute fields
   const updateAttribute = (index: number, field: string, value: string) => {
@@ -325,17 +330,23 @@ const CategoryForm: React.FC = () => {
     setAttributes(updatedAttributes);
   };
 
-  // Add an option to a specific attribute
   const addOption = (attrIndex: number) => {
     const updatedAttributes = [...attributes];
-    updatedAttributes[attrIndex].options.push("");
+    updatedAttributes[attrIndex].options.push({
+      id: Date.now(), // Assign a unique ID
+      value: "", // Initialize an empty value
+    });
     setAttributes(updatedAttributes);
   };
+  
 
   // Update an option for a specific attribute
   const updateOption = (attrIndex: number, optIndex: number, value: string) => {
     const updatedAttributes = [...attributes];
-    updatedAttributes[attrIndex].options[optIndex] = value;
+    updatedAttributes[attrIndex].options[optIndex] = {
+      ...updatedAttributes[attrIndex].options[optIndex], // Retain the existing `id`
+      value, // Update only the value
+    };
     setAttributes(updatedAttributes);
   };
 
@@ -585,7 +596,7 @@ const CategoryForm: React.FC = () => {
                 <div key={optIndex} className="flex items-center space-x-2">
                   <Input
                     placeholder={`Option ${optIndex + 1}`}
-                    value={option}
+                    value={option.value} // Access the `value` property
                     onChange={(e) => updateOption(attrIndex, optIndex, e.target.value)}
                     className="h-10 flex-1"
                   />

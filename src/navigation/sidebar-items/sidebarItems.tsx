@@ -38,7 +38,7 @@ export type SidebarItem = NavItem | NavHeader
 const basePath = "/admin"
 
 export const sidebarItems: SidebarItem[] = [
-  { heading: "Overview" },
+  { heading: "Admin" },
   // {
   //   title: "Dashboard",
   //   icon: PanelsTopLeft,
@@ -49,6 +49,21 @@ export const sidebarItems: SidebarItem[] = [
     title: "Banner",
     icon: ListCheckIcon,
     route: `${basePath}/banner`,
+  },
+  {
+    title: "System Admin",
+    icon: ListCheckIcon,
+    route: `${basePath}/admin`,
+  },
+  {
+    title: "Notification",
+    icon: ListCheckIcon,
+    route: `${basePath}/notification`,
+  },
+  {
+    title: "Live cart",
+    icon: ListCheckIcon,
+    route: `${basePath}/live-cart`,
   },
   {
     title: "Category",
@@ -81,6 +96,11 @@ export const sidebarItems: SidebarItem[] = [
     route: `${basePath}/user`,
   },
   {
+    title: "Wallet Offer",
+    icon: ListCheckIcon,
+    route: `${basePath}/wallet-offer`,
+  },
+  {
     title: "Provider",
     icon: ListCheckIcon,
     route: `${basePath}/provider`,
@@ -90,21 +110,51 @@ export const sidebarItems: SidebarItem[] = [
     icon: ListCheckIcon,
     route: `${basePath}/bank`,
   },
-  // {
-  //   title: "Provider account",
-  //   icon: ListCheckIcon,
-  //   route: providerId ? `${basePath}/provider/${providerId}/account`,
-  // }
+  {
+    title: "Gst",
+    icon: ListCheckIcon,
+    route: `${basePath}/gst`,
+  },
   {
     title: "Vip plan",
     icon: ListCheckIcon,
     route: `${basePath}/vip-plan`,
   },
-  // {
-  //   title: "Invoice",
-  //   icon: Receipt,
-  //   children: [{ title: "List Preview", route: "about" }],
-  // },
+  {
+    title: "Blog",
+    icon: ListCheckIcon,
+    route: `${basePath}/blog`,
+  },
+  {
+    title: "role",
+    icon: ListCheckIcon,
+    route: `${basePath}/role`,
+  },
+  {
+    title: "Permission",
+    icon: ListCheckIcon,
+    route: `${basePath}/permission`,
+  },
+  {
+    title: "Promocode",
+    icon: ListCheckIcon,
+    route: `${basePath}/promocode`,
+  },
+  {
+    title: "FAQ",
+    icon: ListCheckIcon,
+    route: `${basePath}/faq`,
+  },
+  {
+    title: "Setting",
+    icon: ListCheckIcon,
+    route: `${basePath}/setting`,
+  },
+  {
+    title: "App",
+    icon: Receipt,
+    children: [{ title: "Quick service", route: `${basePath}/quick-service/add` }, { title: "Onboarding", route: `${basePath}/onboarding` }],
+  },
   // {
   //   title: "Auth",
   //   icon: Receipt,

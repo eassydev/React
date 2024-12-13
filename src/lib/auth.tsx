@@ -1,8 +1,13 @@
 // lib/auth.ts
 
 import axios from 'axios';
+import dotenv from "dotenv";
+dotenv.config();
 
-const API_URL = 'http://localhost:5001/admin'; // Replace with your API URL
+// Access environment variables
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+// const BASE_URL = 'http://localhost:5001/admin'; // Replace with your API URL
 
 interface LoginResponse {
   token: string;
@@ -11,7 +16,7 @@ interface LoginResponse {
 
 export const login = async (username: string, password: string): Promise<LoginResponse> => {
   try {
-    const response = await axios.post<LoginResponse>(`${API_URL}/login`, { username, password });
+    const response = await axios.post<LoginResponse>(`${BASE_URL}/login`, { username, password });
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to login');
