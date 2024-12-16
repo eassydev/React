@@ -28,7 +28,7 @@ export default function LoginForm() {
   useEffect(() => {
     const token = localStorage.getItem("token");
     if (token) {
-      router.replace("/admin/dashboard"); // Redirect immediately
+      router.replace("/admin"); // Redirect immediately
     } else {
       setIsRedirecting(false); // Allow form rendering when no token exists
     }
