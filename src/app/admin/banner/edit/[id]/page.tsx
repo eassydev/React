@@ -123,7 +123,7 @@ const EditBannerForm: React.FC = () => {
       await updateBanner(id.toString(), updatedBanner);
 
       toast({ variant: "success", title: "Success", description: "Banner updated successfully." });
-      router.push("/admin/banners");
+      router.push("/admin/banner");
     } catch (error) {
       toast({ variant: "error", title: "Error", description: "Failed to update banner." });
     } finally {

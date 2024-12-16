@@ -105,7 +105,7 @@ const WalletOfferList = () => {
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="icon">
-            <Link href={`/admin/wallet-offers/edit/${row.original.id}`} passHref>
+            <Link href={`/admin/wallet-offer/edit/${row.original.id}`} passHref>
               <Edit className="w-4 h-4 text-blue-600" />
             </Link>
           </Button>
@@ -149,7 +149,7 @@ const WalletOfferList = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">Wallet Offer List</h1>
           <Button asChild variant="default" className="flex items-center space-x-2">
-            <Link href="/admin/wallet-offers/add">
+            <Link href="/admin/wallet-offer/add">
               <Plus className="w-4 h-4 mr-1" />
               <span>Add Offer</span>
             </Link>

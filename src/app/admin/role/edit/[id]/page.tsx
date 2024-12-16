@@ -118,7 +118,7 @@ const RoleEditForm: React.FC = () => {
         description: "Role updated successfully.",
       });
 
-    //  router.push("/roles");
+  router.push("/admin/role");
     } catch (error) {
       console.error("Error updating role:", error);
       toast({

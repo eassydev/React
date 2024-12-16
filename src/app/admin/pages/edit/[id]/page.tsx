@@ -102,7 +102,7 @@ const EditPageForm: React.FC = () => {
         title: "Success",
         description: "Page updated successfully.",
       });
-      //router.push("/pages"); // Redirect to the pages list after success
+      router.push("/admin/pages"); // Redirect to the pages list after success
     } catch (error: any) {
       toast({
         variant: "error",

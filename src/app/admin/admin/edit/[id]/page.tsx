@@ -87,7 +87,7 @@ const AdminEditForm: React.FC = () => {
         title: "Success",
         description: "Admin updated successfully.",
       });
-      router.push("/admin"); // Redirect to the admin list
+      router.push("/admin/admin"); // Redirect to the admin list
     } catch (error: any) {
       toast({
         variant: "error",

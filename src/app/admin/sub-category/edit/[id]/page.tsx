@@ -332,7 +332,7 @@ const [cgst, setCgst] = useState<number | null>(null);
         title: 'Success',
         description: 'Subcategory updated successfully',
       });
-      //router.push('/admin/subcategory'); // Redirect after successful update
+      router.push('/admin/sub-category'); // Redirect after successful update
     } catch (error) {
       toast({
         variant: 'error',

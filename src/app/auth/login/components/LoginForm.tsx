@@ -53,7 +53,7 @@ export default function LoginForm() {
         description: response.message || "You are now logged in.",
       });
 
-      router.replace("/admin/dashboard");
+      router.replace("/admin");
     } catch (error: any) {
       toast({
         title: "Login failed",

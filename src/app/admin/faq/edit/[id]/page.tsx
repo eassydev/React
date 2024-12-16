@@ -86,7 +86,7 @@ const EditFAQForm: React.FC = () => {
         description: "FAQ updated successfully.",
       });
 
-      router.push("/admin/faqs"); // Redirect to the FAQ list page
+      router.push("/admin/faq"); // Redirect to the FAQ list page
     } catch (error: any) {
       toast({
         variant: "error",

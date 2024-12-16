@@ -81,7 +81,7 @@ const EditBlogForm: React.FC = () => {
         description: "Blog updated successfully!",
       });
 
-      router.push("/blogs"); // Redirect to blog list page
+      router.push("/admin/blog"); // Redirect to blog list page
     } catch (error: any) {
       toast({
         variant: "error",

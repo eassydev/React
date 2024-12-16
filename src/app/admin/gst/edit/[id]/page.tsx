@@ -87,7 +87,7 @@ const EditGSTForm: React.FC = () => {
         title: "Success",
         description: "GST Rate updated successfully.",
       });
-      router.push("/gst-rates"); // Redirect to the GST rates list after success
+      router.push("/gst"); // Redirect to the GST rates list after success
     } catch (error: any) {
       toast({
         variant: "error",

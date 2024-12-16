@@ -85,7 +85,7 @@ const WalletOfferEditForm: React.FC = () => {
         title: "Success",
         description: "Wallet offer updated successfully.",
       });
-      router.push("/wallet-offers"); // Redirect on success
+      router.push("/admin/wallet-offer"); // Redirect on success
     } catch (error: any) {
       toast({
         variant: "error",

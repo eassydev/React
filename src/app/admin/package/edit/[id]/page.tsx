@@ -168,7 +168,7 @@ const PackageEditForm: React.FC = () => {
         title: 'Success',
         description: 'Package updated successfully.',
       });
-      //router.push('/packages'); // Redirect to the packages list after success
+      router.push('/admin/package'); // Redirect to the packages list after success
     } catch (error: any) {
       toast({
         variant: 'error',

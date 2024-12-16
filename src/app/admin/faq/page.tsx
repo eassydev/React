@@ -90,7 +90,7 @@ const FAQList = () => {
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="icon">
-            <Link href={`/admin/faqs/edit/${row.original.id}`} passHref>
+            <Link href={`/admin/faq/edit/${row.original.id}`} passHref>
               <Edit className="w-4 h-4 text-blue-600" />
             </Link>
           </Button>
@@ -134,7 +134,7 @@ const FAQList = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">FAQ List</h1>
           <Button asChild variant="default" className="flex items-center space-x-2">
-            <Link href="/admin/faqs/add">
+            <Link href="/admin/faq/add">
               <Plus className="w-4 h-4 mr-1" />
               <span>Add FAQ</span>
             </Link>

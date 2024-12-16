@@ -107,7 +107,7 @@ const ProviderList = () => {
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="icon">
-            <Link href={`/admin/providers/edit/${row.original.id}`} passHref>
+            <Link href={`/admin/provider/edit/${row.original.id}`} passHref>
               <Edit className="w-4 h-4 text-blue-600" />
             </Link>
           </Button>
@@ -151,7 +151,7 @@ const ProviderList = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">Provider List</h1>
           <Button asChild variant="default" className="flex items-center space-x-2">
-            <Link href="/admin/providers/add">
+            <Link href="/admin/provider/add">
               <Plus className="w-4 h-4 mr-1" />
               <span>Add Provider</span>
             </Link>

@@ -69,7 +69,7 @@ const SettingEditForm: React.FC = () => {
         title: "Success",
         description: "Setting updated successfully.",
       });
-      // router.push("/settings"); // Redirect to settings list after success
+      router.push("/admin/setting"); // Redirect to settings list after success
     } catch (error: any) {
       toast({
         variant: "error",

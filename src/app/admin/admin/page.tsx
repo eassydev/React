@@ -106,7 +106,7 @@ const AdminList = () => {
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
-          <Link href={`/admin/edit/${row.original.id}`} passHref>
+          <Link href={`/admin/admin/edit/${row.original.id}`} passHref>
             <Button variant="ghost" size="icon">
               <Edit className="w-4 h-4 text-blue-600" />
             </Button>
@@ -153,7 +153,7 @@ const AdminList = () => {
       <div className="max-w-12xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">Admin List</h1>
-          <Link href="/admin/add" passHref>
+          <Link href="/admin/admin/add" passHref>
             <Button variant="default" className="flex items-center space-x-2">
               <Plus className="w-4 h-4 mr-1" />
               <span>Add Admin</span>

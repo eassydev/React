@@ -92,7 +92,7 @@ const NotificationList = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">Notification List</h1>
           <Button asChild variant="default" className="flex items-center space-x-2">
-            <Link href="/admin/notifications/add">
+            <Link href="/admin/notification/add">
               <Plus className="w-4 h-4 mr-1" />
               <span>Add Notification</span>
             </Link>

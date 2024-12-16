@@ -48,7 +48,7 @@ const EditUserForm: React.FC = () => {
         title: "Success",
         description: "User updated successfully.",
       });
-      router.push("/users"); // Redirect after successful update
+      router.push("/admin/user"); // Redirect after successful update
     } catch (error: any) {
       toast({
         variant: "error",

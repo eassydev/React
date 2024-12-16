@@ -95,7 +95,7 @@ const EditPermissionForm: React.FC = () => {
         title: "Success",
         description: "Permission updated successfully.",
       });
-      // router.push("/permissions"); // Redirect to permissions list
+       router.push("/admin/permission"); // Redirect to permissions list
     } catch (error: any) {
       toast({
         variant: "error",

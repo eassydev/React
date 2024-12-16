@@ -66,7 +66,7 @@ const EditBankForm: React.FC = () => {
         description: "Bank updated successfully.",
       });
 
-      router.push("/admin/banks"); // Redirect to the bank list after update
+      router.push("/admin/bank"); // Redirect to the bank list after update
     } catch (error: any) {
       toast({
         variant: "error",

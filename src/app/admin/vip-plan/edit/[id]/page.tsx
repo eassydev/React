@@ -103,7 +103,7 @@ const EditVIPPlanForm: React.FC = () => {
         title: "Success",
         description: response.message,
       });
-    //  router.push("/vip-plans");
+     router.push("/admin/vip-plan");
     } catch (error: any) {
       toast({
         variant: "error",

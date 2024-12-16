@@ -77,7 +77,7 @@ const RoleList = () => {
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex space-x-2">
-          <Link href={`/roles/edit/${row.original.id}`}>
+          <Link href={`/role/edit/${row.original.id}`}>
             <Button variant="ghost" size="icon">
               <Edit className="w-4 h-4 text-blue-600" />
             </Button>
@@ -122,7 +122,7 @@ const RoleList = () => {
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold text-gray-900">Roles List</h1>
           <Button asChild className="flex items-center space-x-2 bg-primary">
-            <Link href="/roles/add">
+            <Link href="/role/add">
               <Plus className="w-4 h-4 mr-2" />
               <span>Add Role</span>
             </Link>

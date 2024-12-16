@@ -106,7 +106,7 @@ const EditOnboardingForm: React.FC = () => {
         title: "Success",
         description: "Onboarding updated successfully.",
       });
-      router.push("/onboarding"); // Redirect to the onboarding list after success
+      router.push("/admin/onboarding"); // Redirect to the onboarding list after success
     } catch (error: any) {
       toast({
         variant: "error",
