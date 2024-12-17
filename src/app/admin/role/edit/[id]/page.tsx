@@ -52,27 +52,29 @@ const RoleEditForm: React.FC = () => {
   };
 
   const loadPermissions = async () => {
-    try {
-      const response: Permission[] = await fetchAllPermission(); // API returns flat list
-      const groupedPermissions = response.reduce((acc, permission) => {
-        const groupName = permission.permission_name || "Ungrouped";
-        if (!acc[groupName]) {
-          acc[groupName] = [];
-        }
-        acc[groupName].push(permission);
-        return acc;
-      }, {} as GroupedPermissions);
+      try {
+        const response = await fetchAllPermission(); // Fetch API data
   
-      setPermissions(groupedPermissions); // Set grouped permissions
-    } catch (error) {
-      console.error("Error fetching permissions:", error);
-      toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load permissions.",
-      });
-    }
-  };
+        const groupedPermissions = Object.keys(response).reduce((acc, key) => {
+          const permissionsArray = response[key];
+          console.log(key)
+          if (Array.isArray(permissionsArray)) {
+            acc[key] = permissionsArray; // Use dynamic key as group name
+          }
+          return acc;
+        }, {} as GroupedPermissions);
+  
+        setPermissions(groupedPermissions); // Set grouped permissions
+      } catch (error) {
+        console.error("Error fetching permissions:", error);
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to load permissions.",
+        });
+      }
+    };
+  
   
 
   // Toggle Permission Selection

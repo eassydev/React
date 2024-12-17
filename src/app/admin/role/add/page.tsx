@@ -7,12 +7,11 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Save, Loader2 } from "lucide-react";
-import { fetchAllPermission, createRole, Role, Permission } from "@/lib/api";
-
-// Permission Interface
+import { fetchAllPermission, createRole, Role,Permission } from "@/lib/api";
 
 
-// Role Interface
+
+// Grouped Permissions Interface
 interface GroupedPermissions {
   [groupName: string]: Permission[];
 }
@@ -29,30 +28,30 @@ const RoleAddForm: React.FC = () => {
     loadPermissions();
   }, []);
 
-  // Fetch grouped permissions
-// Fetch all permissions and group them by 'permission_name'
-const loadPermissions = async () => {
-  try {
-    const response: Permission[] = await fetchAllPermission(); // API returns flat list
-    const groupedPermissions = response.reduce((acc, permission) => {
-      const groupName = permission.permission_name || "Ungrouped";
-      if (!acc[groupName]) {
-        acc[groupName] = [];
-      }
-      acc[groupName].push(permission);
-      return acc;
-    }, {} as GroupedPermissions);
+  // Fetch and group permissions dynamically
+  const loadPermissions = async () => {
+    try {
+      const response = await fetchAllPermission(); // Fetch API data
 
-    setPermissions(groupedPermissions); // Set grouped permissions
-  } catch (error) {
-    console.error("Error fetching permissions:", error);
-    toast({
-      variant: "destructive",
-      title: "Error",
-      description: "Failed to load permissions.",
-    });
-  }
-};
+      const groupedPermissions = Object.keys(response).reduce((acc, key) => {
+        const permissionsArray = response[key];
+        console.log(key)
+        if (Array.isArray(permissionsArray)) {
+          acc[key] = permissionsArray; // Use dynamic key as group name
+        }
+        return acc;
+      }, {} as GroupedPermissions);
+
+      setPermissions(groupedPermissions); // Set grouped permissions
+    } catch (error) {
+      console.error("Error fetching permissions:", error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to load permissions.",
+      });
+    }
+  };
 
   // Toggle permission selection
   const togglePermission = (permissionId: string) => {
@@ -137,16 +136,16 @@ const loadPermissions = async () => {
                 <label className="text-sm font-medium text-gray-700">Permissions</label>
                 {Object.entries(permissions).map(([groupName, groupPermissions]) => (
                   <div key={groupName} className="mb-4">
-                    <h3 className="text-md font-semibold mb-2">{groupName}</h3>
+                    <h3 className="text-md font-semibold mb-2 capitalize">{groupName}</h3>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-2">
                       {groupPermissions.map((permission) => (
                         <div key={permission.id} className="flex items-center space-x-2">
                           <Checkbox
-                            id={permission.id}
-                            checked={selectedPermissions.has(permission.id ?? '')}
-                            onCheckedChange={() => togglePermission(permission.id ?? '')}
+                            id={String(permission.id)}
+                            checked={selectedPermissions.has(String(permission.id))}
+                            onCheckedChange={() => togglePermission(String(permission.id))}
                           />
-                          <label htmlFor={permission.id} className="text-sm text-gray-700">
+                          <label htmlFor={String(permission.id)} className="text-sm text-gray-700">
                             {permission.route}
                           </label>
                         </div>

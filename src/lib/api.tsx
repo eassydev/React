@@ -13,10 +13,39 @@ const apiClient = axios.create({
   baseURL: BASE_URL,
 });
 
+
+// Add Axios interceptor to handle expired tokens or unauthenticated responses
+apiClient.interceptors.response.use(
+  (response) => {
+    // Return the response if it's successful
+    return response;
+  },
+  (error) => {
+    // Check for token expiration or missing token errors
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      // Clear localStorage or cookies to remove invalid token
+      localStorage.removeItem('token');
+
+      // Redirect to the login page
+      window.location.href = '/auth/login'; // Adjust the login page URL if needed
+    }
+    // Propagate the error for further handling
+    return Promise.reject(error);
+  }
+);
 // Get the token from localStorage at the time of making a request
 const getToken = (): string | null => {
-  return typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+  if (typeof window !== 'undefined') {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      window.location.href = '/auth/login'; // Redirect to login
+      return null;
+    }
+    return token;
+  }
+  return null;
 };
+
 
 // Define the structure of the Category object
 
@@ -432,6 +461,12 @@ interface ApiResponse {
   status: boolean;
   message: string;
   data?: any;
+}
+
+
+interface ApiPermissionResponse {
+  data?: any;
+  [key: string]: Permission[]; // Dynamic keys mapping to arrays of Permission
 }
 
 
@@ -3276,20 +3311,19 @@ export const fetchPermissions = async (page = 1, size = 10) => {
   }
 };
 
-// Function to fetch categories with attributes
-export const fetchAllPermission = async (): Promise<Permission[]> => {
+export const fetchAllPermission = async (): Promise<ApiPermissionResponse> => {
   try {
     const token = getToken();
-    const response: AxiosResponse<ApiResponse> = await apiClient.get('/permission/all', {
+    const response: AxiosResponse<ApiPermissionResponse> = await apiClient.get('/permission/all', {
       headers: {
         'admin-auth-token': token || '',
       },
     });
 
-    if (response.data.status) {
-      return response.data.data;
+    if (response.data) {
+      return response.data.data; // Return the full dynamic object
     } else {
-      throw new Error(response.data.message || 'Failed to fetch permission.');
+      throw new Error('Failed to fetch permission.');
     }
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch permission.');
@@ -3574,3 +3608,31 @@ export const fetchFirstQuickService = async (): Promise<QuickService> => {
     throw new Error(error.response?.data?.message || 'Failed to fetch Quick Service.');
   }
 };
+
+
+// Logout API
+export const logout = async (): Promise<void> => {
+  try {
+    const token = getToken();
+    await apiClient.post(
+      '/login/logout',
+      {},
+      {
+        headers: {
+          'admin-auth-token': token || '',
+        },
+      }
+    );
+
+    // Clear localStorage
+    localStorage.removeItem('token');
+    // Redirect to login page
+    window.location.href = '/auth/login';
+  } catch (error: any) {
+    // console.error('Error during logout:', error.response?.data?.message || error.message);
+    // // Clear token and redirect even if API call fails
+    // localStorage.removeItem('token');
+    // window.location.href = '/auth/login';
+  }
+};
+
