@@ -337,7 +337,7 @@ const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>('')
       </SelectTrigger>
       <SelectContent>
         {filterOptions.map((option) => (
-          <SelectItem key={option.id} value={option.id.toString()}>
+          <SelectItem key={option.id} value={option.id!.toString()}>
             {option.value}
           </SelectItem>
         ))}
