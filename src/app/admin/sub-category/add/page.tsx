@@ -152,7 +152,7 @@ const SubcategoryForm: React.FC = () => {
       {
         name: "",
         type: "list",
-        options: [{ id: Date.now(), value: "" }], // Initialize options with a valid object
+        options: [{  value: "" }], // Initialize options with a valid object
       },
     ]);
   };
@@ -167,7 +167,6 @@ const SubcategoryForm: React.FC = () => {
   const addOption = (attrIndex: number) => {
     const updatedAttributes = [...attributes];
     updatedAttributes[attrIndex].options.push({
-      id: Date.now(), // Assign a unique ID
       value: "", // Initialize an empty value
     });
     setAttributes(updatedAttributes);
