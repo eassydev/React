@@ -122,7 +122,7 @@ export type Attribute = {
 
 
 export interface AttributeOption {
-  id: number;
+  id?: number;
   value: string;
 }
 
