@@ -472,23 +472,35 @@ interface ApiPermissionResponse {
 
 
 
-export const fetchCategories = async (page = 1, size = 10) => {
+export const fetchCategories = async (page = 1, size = 10, status: string = "all") => {
   try {
     const token = getToken(); // Retrieve the token
 
-    const response: AxiosResponse = await apiClient.get('/category', {
-      params: { page, size },
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.status = status;
+    }
+
+    // Make API call
+    const response: AxiosResponse = await apiClient.get("/category", {
+      params, // Query params (page, size, status)
       headers: {
-        'admin-auth-token': token || '', // Add the token to the request headers
+        "admin-auth-token": token || "", // Add the token to the request headers
       },
     });
 
-    return response.data;
+    return response.data; // Return the data
   } catch (error) {
-    throw new Error('Failed to fetch subcategories');
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
   }
 };
-
 
 // Function to fetch categories with attributes
 export const fetchAllCategories = async (): Promise<Category[]> => {
@@ -535,7 +547,7 @@ export const createCategory = async (category: Category): Promise<ApiResponse> =
 
   // Basic Category Details
   formData.append('name', category.name);
-  formData.append('active', category.active ? '1' : '0');
+  formData.append('active', category.active ? '0' : '1');
 
   // Image
   if (category.image) {
@@ -638,7 +650,7 @@ export const updateCategory = async (id: string, category: Category): Promise<Ap
 
   // Basic Category Details
   formData.append('name', category.name);
-  formData.append('active', category.active ? '1' : '0');
+  formData.append('active', category.active ? '0' : '1');
 
   // Image
   if (category.image) {
@@ -758,7 +770,7 @@ export const createSubcategory = async (subcategory: Subcategory): Promise<ApiRe
   // Add required fields
   formData.append('name', subcategory.name);
   formData.append('category_id', subcategory.category_id.toString());
-  formData.append('active', subcategory.active ? '1' : '0');
+  formData.append('active', subcategory.active ? '0' : '1');
 
   // Add optional image field
   if (subcategory.image) {
@@ -879,12 +891,21 @@ export const fetchAllSubCategories = async (): Promise<Subcategory[]> => {
 };
 
 // Adjust the fetchSubcategories API function to support pagination
-export const fetchSubcategories = async (page = 1, size = 10) => {
+export const fetchSubcategories = async (page = 1, size = 10,status: string = "all") => {
   try {
     const token = getToken(); // Retrieve the token
+ // Prepare query parameters
+ const params: Record<string, any> = {
+  page,
+  size,
+};
 
+// Include status filter only if it's not 'all'
+if (status !== "all") {
+  params.status = status;
+}
     const response: AxiosResponse = await apiClient.get('/sub-category', {
-      params: { page, size },
+      params,
       headers: {
         'admin-auth-token': token || '', // Add the token to the request headers
       },
@@ -948,7 +969,7 @@ export const updateSubcategory = async (id: string, subcategory: Subcategory): P
   // Add required fields
   formData.append('name', subcategory.name);
   formData.append('category_id', subcategory.category_id.toString());
-  formData.append('active', subcategory.active ? '1' : '0');
+  formData.append('active', subcategory.active ? '0' : '1');
 
   // Add optional image field
   if (subcategory.image) {
@@ -3252,7 +3273,6 @@ export const createRole = async (role: Role): Promise<ApiResponse> => {
         'admin-auth-token': token || '',
       },
     });
-
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to create role.');
@@ -3636,3 +3656,79 @@ export const logout = async (): Promise<void> => {
   }
 };
 
+
+
+export const generateUniqueFilename = (prefix: string, extension: string): string => {
+  const now = new Date();
+  const timestamp = now
+    .toISOString()
+    .replace(/[-T:.Z]/g, ''); // Format as YYYYMMDDHHMMSS
+
+  const randomValue = Math.floor(Math.random() * 1000); // Add a small random value
+
+  return `${prefix}_${timestamp}_${randomValue}.${extension}`;
+};
+
+
+export const exportCategories = async (): Promise<void> => {
+  try {
+    const token = getToken(); // Retrieve the admin-auth-token
+
+    const response: AxiosResponse = await apiClient.get('/category/export', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      responseType: 'blob', // Treat the response as a binary file
+    });
+
+    // Generate a unique filename
+    const uniqueFilename = generateUniqueFilename('categories', 'xlsx');
+
+    // Create a downloadable link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', uniqueFilename); // Unique filename
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Error exporting categories:', error);
+    throw new Error('Failed to export categories');
+  }
+};
+
+
+export const exportSubcategories = async (): Promise<void> => {
+  try {
+    const token = getToken(); // Retrieve the admin-auth-token
+
+    const response: AxiosResponse = await apiClient.get('/sub-category/export', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      responseType: 'blob', // Treat the response as a binary file
+    });
+
+    // Generate a unique filename
+    const uniqueFilename = generateUniqueFilename('subcategories', 'xlsx');
+
+    // Create a downloadable link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', uniqueFilename); // Unique filename
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Error exporting subcategories:', error);
+    throw new Error('Failed to export subcategories');
+  }
+};

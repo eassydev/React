@@ -97,12 +97,12 @@ const RoleAddForm: React.FC = () => {
 
       setRoleName("");
       setSelectedPermissions(new Set());
-    } catch (error) {
+    } catch (error:any) {
       console.error("Error creating role:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to create role.",
+        description: error?.message,
       });
     } finally {
       setIsSubmitting(false);

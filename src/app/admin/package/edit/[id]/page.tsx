@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Save, Loader2, ImageIcon, FileText, ChevronDown } from 'lucide-react';
-import { fetchAllRatecard,fetchAllCategories, fetchPackageById, updatePackage, Package } from '@/lib/api';
+import { fetchAllRatecard, fetchAllCategories, fetchPackageById, updatePackage, Package } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -38,7 +38,7 @@ const PackageEditForm: React.FC = () => {
   const [createdBy, setCreatedBy] = useState<string>('admin');
   const [providerId, setProviderId] = useState<string | null>(null);
   const [discountType, setDiscountType] = useState<string>('flat');
-  const [discountValue, setDiscountValue] = useState<number>(0);
+  const [discountValue, setDiscountValue] = useState<number| null>(0);
   const [validityPeriod, setValidityPeriod] = useState<number | null>(null);
   const [renewalOptions, setRenewalOptions] = useState<boolean>(false);
   const [isActive, setIsActive] = useState<boolean>(true);
@@ -47,6 +47,7 @@ const PackageEditForm: React.FC = () => {
   const [isRateCardDropdownOpen, setIsRateCardDropdownOpen] = useState<boolean>(false);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // **Selected Addon Categories**
   const [categories, setCategories] = useState<any[]>([]); // **Addon Categories**
+  const [discountError, setDiscountError] = useState<string | null>(null); // State for error message
 
   const [noService, setNoService] = useState<number | null>(null);
   const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); // **Addon Dropdown Toggle**
@@ -85,7 +86,7 @@ const PackageEditForm: React.FC = () => {
       if (!id) return;
       try {
         const packageData = await fetchPackageById(id.toString());
-        
+
         // Set package details
         setPackageName(packageData.name);
         setDescription(packageData.description || '');
@@ -103,7 +104,7 @@ const PackageEditForm: React.FC = () => {
         setSelectedRateCards(preSelectedRateCards ?? []);
         const preSelectedAddons = packageData.addons?.map((addon: any) => addon.category_id.toString());
         setSelectedCategories(preSelectedAddons ?? []);
-  
+
         if (packageData.image) setImagePreview(`/uploads/${packageData.image}`);
       } catch (error) {
         console.log('Failed to load package details.', error);
@@ -168,6 +169,8 @@ const PackageEditForm: React.FC = () => {
         title: 'Success',
         description: 'Package updated successfully.',
       });
+      setIsSubmitting(false);
+
       router.push('/admin/package'); // Redirect to the packages list after success
     } catch (error: any) {
       toast({
@@ -305,38 +308,38 @@ const PackageEditForm: React.FC = () => {
               </div>
 
 
- {/* Addon Categories Dropdown with Checkbox Selection */}
- <div className="space-y-2">
-  <label className="text-sm font-medium text-gray-700">Select Addon Categories</label>
-  <div className="relative">
-    <button
-      type="button"
-      className="flex items-center justify-between w-full p-2 bg-white border border-gray-200 rounded"
-      onClick={() => setIsAddonDropdownOpen(!isAddonDropdownOpen)}
-    >
-      {selectedCategories.length > 0 ? `Selected (${selectedCategories.length})` : 'Select addon categories'}
-      <ChevronDown className="w-4 h-4" />
-    </button>
-    {isAddonDropdownOpen && (
-      <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-auto">
-        {categories.map((category) => (
-          <div key={category.id} className="flex items-center p-2">
-            <Checkbox
-              checked={selectedCategories.includes(category.id.toString())}
-              onCheckedChange={(checked: any) =>
-                handleCategorySelection(category.id.toString(), checked)
-              }
-              id={`category-${category.id}`}
-            />
-            <label htmlFor={`category-${category.id}`} className="ml-2">
-              {category.name}
-            </label>
-          </div>
-        ))}
-      </div>
-    )}
-  </div>
-</div>
+              {/* Addon Categories Dropdown with Checkbox Selection */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Select Addon Categories</label>
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="flex items-center justify-between w-full p-2 bg-white border border-gray-200 rounded"
+                    onClick={() => setIsAddonDropdownOpen(!isAddonDropdownOpen)}
+                  >
+                    {selectedCategories.length > 0 ? `Selected (${selectedCategories.length})` : 'Select addon categories'}
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
+                  {isAddonDropdownOpen && (
+                    <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-auto">
+                      {categories.map((category) => (
+                        <div key={category.id} className="flex items-center p-2">
+                          <Checkbox
+                            checked={selectedCategories.includes(category.id.toString())}
+                            onCheckedChange={(checked: any) =>
+                              handleCategorySelection(category.id.toString(), checked)
+                            }
+                            id={`category-${category.id}`}
+                          />
+                          <label htmlFor={`category-${category.id}`} className="ml-2">
+                            {category.name}
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* Discount Fields */}
               <div className="flex space-x-4">
@@ -353,16 +356,28 @@ const PackageEditForm: React.FC = () => {
                   </Select>
                 </div>
 
-                <div className="flex-1 space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Discount Value</label>
-                  <Input
-                    type="number"
-                    value={discountValue.toString()}
-                    onChange={(e) => setDiscountValue(parseFloat(e.target.value))}
-                    placeholder="Enter discount value"
-                    required
-                  />
-                </div>
+               <div className="flex-1 space-y-2">
+                       <label className="text-sm font-medium text-gray-700">Discount Value</label>
+                       <Input
+                         type="number"
+                         value={discountValue ?? ""}
+                         onChange={(e) => {
+                           const value = Number(e.target.value);
+                           if (value < 0) {
+                             setDiscountError("Discount value cannot be negative.");
+                             setDiscountValue(value || null); // Set value
+                           } else {
+                             setDiscountError(null); // Clear error
+                             setDiscountValue(value || null); // Set value
+                           }
+                         }}
+                         placeholder="Enter discount value"
+                         required
+                       />
+                       {discountError && (
+                         <span className="text-red-500 text-sm">{discountError}</span>
+                       )}
+                     </div>
               </div>
 
               {/* Validity Period (for AMC only) */}
@@ -378,7 +393,7 @@ const PackageEditForm: React.FC = () => {
                 </div>
               )}
 
-{packageType === "amc" && (
+              {packageType === "amc" && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">No of Service</label>
                   <Input

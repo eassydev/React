@@ -121,12 +121,12 @@ const RoleEditForm: React.FC = () => {
       });
 
   router.push("/admin/role");
-    } catch (error) {
+    } catch (error:any) {
       console.error("Error updating role:", error);
       toast({
         variant: "destructive",
         title: "Error",
-        description: "Failed to update role.",
+        description: error?.message,
       });
     } finally {
       setIsSubmitting(false);

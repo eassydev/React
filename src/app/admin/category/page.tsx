@@ -1,111 +1,208 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from '@tanstack/react-table';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/components/ui/table';
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from 'lucide-react';
-import { fetchCategories, deleteCategory } from '@/lib/api';
-import Link from 'next/link';
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from '@/components/ui/alert-dialog';
+} from "@tanstack/react-table";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
+import {
+  Download,
+  Plus,
+  Edit,
+  Trash2,
+  Printer,
+  Copy,
+} from "lucide-react";
+import { fetchCategories, exportCategories, deleteCategory } from "@/lib/api";
+import Link from "next/link";
+import { AlertDialog, AlertDialogTrigger,AlertDialogTitle , AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
 
 const CategoryList = () => {
   const [categories, setCategories] = useState<any[]>([]);
-  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
+  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
-  const [totalItems, setTotalItems] = useState(0);
-
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [isExporting, setIsExporting] = useState(false);
+  const [isDialogOpen, setIsDialogOpen] = useState(false); // Manage Alert visibility
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const { toast } = useToast();
 
-  // Fetch categories from the backend with pagination
-  const fetchCategoriesData = async (page = 1, size = 5) => {
+  // Fetch categories with pagination and status filter
+  const fetchCategoriesData = async (page = 1, size = 50, status = "all") => {
     try {
-      const { data, meta } = await fetchCategories(page, size);
+      const { data, meta } = await fetchCategories(page, size, status);
       setCategories(data);
       setTotalPages(meta.totalPages);
-      setTotalItems(meta.totalItems);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.error('Error fetching categories:', error);
+      console.error("Error fetching categories:", error);
     }
   };
 
   useEffect(() => {
-    fetchCategoriesData(pagination.pageIndex + 1, pagination.pageSize);
-  }, [pagination.pageIndex, pagination.pageSize]);
+    fetchCategoriesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus);
+  }, [pagination.pageIndex, pagination.pageSize, filterStatus]);
 
-  const handleCategoryDelete = async (category: any) => {
+  const handleExport = async () => {
     try {
-      await deleteCategory(category.id);
-      toast({
-        title: 'Success',
-        description: `Category "${category.name}" deleted successfully`,
-        variant: 'success',
-      });
-      fetchCategoriesData(pagination.pageIndex + 1, pagination.pageSize);
+      setIsExporting(true);
+      await exportCategories();
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: `Failed to delete category: ${error}`,
-        variant: 'destructive',
-      });
+      console.error("Error exporting categories:", error);
+      toast({ title: "Error", description: "Failed to export categories." });
+    } finally {
+      setIsExporting(false);
     }
   };
 
+  const handleCopy = () => {
+    const formattedData = categories.map((item) => `${item.id}, ${item.name}, ${item.status}`).join("\n");
+    navigator.clipboard.writeText(formattedData);
+    toast({ title: "Copied to Clipboard", description: "Category data copied." });
+  };
+
+  const handlePrint = () => {
+    const printableContent = categories
+      .map((item) => `<tr><td>${item.id}</td><td>${item.name}</td><td>${item.status}</td></tr>`)
+      .join("");
+    const newWindow = window.open("", "_blank");
+    newWindow?.document.write(`
+      <html>
+        <head>
+          <title>Print Categories</title>
+          <style>
+            table { width: 100%; border-collapse: collapse; }
+            td, th { border: 1px solid black; padding: 8px; text-align: left; }
+          </style>
+        </head>
+        <body>
+          <h1>Categories</h1>
+          <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Status</th></tr></thead>
+            <tbody>${printableContent}</tbody>
+          </table>
+        </body>
+      </html>
+    `);
+    newWindow?.print();
+  };
+
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFilterStatus(e.target.value);
+  };
+
+  const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setPagination((prev) => ({ ...prev, pageSize: Number(e.target.value) }));
+  };
+
+
+  const handleDelete = async () => {
+    try {
+      if (deleteTargetId !== null) {
+        await deleteCategory(deleteTargetId.toString());
+        toast({ title: "Deleted", description: "Category deleted successfully." });
+        fetchCategoriesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus); // Refresh data
+        setIsDialogOpen(false); // Close the dialog
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to delete category.", variant: "destructive" });
+    }
+  };
   const categoryColumns: ColumnDef<any>[] = [
-    { accessorKey: 'id', header: 'ID' },
-    { accessorKey: 'name', header: 'Name' },
+    { accessorKey: "id", header: "ID", size: 100 },
+    { accessorKey: "name", header: "Name", size: 200 },
     {
-      accessorKey: 'description',
-      header: 'Description',
-      cell: ({ getValue }) => {
-        const description = getValue() as string;
-        return <div dangerouslySetInnerHTML={{ __html: description }} />;
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const statusValue = row.original.active;
+
+        let statusLabel = "";
+        let statusClass = "";
+
+        switch (statusValue) {
+          case 0:
+            statusLabel = "Active";
+            statusClass = "bg-green-200 text-green-800";
+            break;
+          case 1:
+            statusLabel = "Inactive";
+            statusClass = "bg-yellow-200 text-yellow-800";
+            break;
+          case 2:
+            statusLabel = "Deleted";
+            statusClass = "bg-red-200 text-red-800";
+            break;
+          default:
+            statusLabel = "Unknown";
+            statusClass = "bg-gray-200 text-gray-800";
+            break;
+        }
+
+        return <span className={`badge px-2 py-1 rounded ${statusClass}`}>{statusLabel}</span>;
       },
     },
     {
-      accessorKey: 'active',
-      header: 'Status',
-      cell: (info) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${info.getValue() ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-          {info.getValue() ? 'Active' : 'Inactive'}
-        </span>
-      ),
+      accessorKey: "image",
+      header: "Image",
+      cell: ({ row }) => {
+        const imageUrl = row.original.image;
+    
+        // Only render the img tag if imageUrl is valid
+        if (!imageUrl) return null;
+    
+        return (
+          <img
+            src={imageUrl}
+            alt={row.original.name || "No Image"}
+            className="h-12 w-12 object-cover rounded"
+          />
+        );
+      },
     },
+    
     {
-      id: 'actions',
-      header: 'Actions',
+      id: "actions",
+      header: "Actions",
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="icon">
-            <Link href={`/admin/category/edit/${row.original.id}`} passHref>
+          <Link href={`/admin/category/edit/${row.original.id}`}>
+            <Button variant="ghost" size="icon">
               <Edit className="w-4 h-4 text-blue-600" />
-            </Link>
-          </Button>
-          <AlertDialog>
+            </Button>
+          </Link>
+          <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setDeleteTargetId(row.original.id)}
+              >
                 <Trash2 className="w-4 h-4 text-red-600" />
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <h2 className="text-xl font-bold">Confirm Delete</h2>
-                <p>Are you sure you want to delete category: {row.original.name}?</p>
+                <AlertDialogTitle>
+                  <VisuallyHidden>Confirm Delete</VisuallyHidden>
+                </AlertDialogTitle>
+                <p className="text-xl font-bold">Are you sure you want to delete category: {row.original.name}?</p>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <Button variant="secondary" onClick={() => handleCategoryDelete(row.original)}>
+                <Button variant="secondary" onClick={handleDelete}>
                   Yes, Delete
                 </Button>
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  Cancel
+                </Button>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -125,86 +222,58 @@ const CategoryList = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
-      <div className="max-w-12xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900">Category List</h1>
-          <Button asChild variant="default" className="flex items-center space-x-2">
-            <Link href="/admin/category/add">
-              <Plus className="w-4 h-4 mr-1" />
-              <span>Add Category</span>
-            </Link>
-          </Button>
+    <div className="p-4">
+      <div className="flex justify-between mb-4">
+        <h1 className="text-2xl font-bold">Category List</h1>
+        <div className="flex space-x-2">
+          <select value={filterStatus} onChange={handleStatusChange} className="border p-2 rounded">
+            <option value="">All</option>
+            <option value="0">Active</option>
+            <option value="1">Deactivated</option>
+            <option value="2">Deleted</option>
+          </select>
+          <select value={pagination.pageSize} onChange={handlePageSizeChange} className="border p-2 rounded">
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+            <option value={150}>150</option>
+          </select>
+          <Button onClick={handleExport}><Download className="w-4 h-4 mr-2" />Export</Button>
+          <Button onClick={handleCopy}><Copy className="w-4 h-4 mr-2" />Copy</Button>
+          <Button onClick={handlePrint}><Printer className="w-4 h-4 mr-2" />Print</Button>
+          <Link href="/admin/category/add">
+            <Button><Plus className="w-4 h-4 mr-2" />Add Category</Button>
+          </Link>
         </div>
-
-        <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
-          <CardHeader className="border-b border-gray-100 pb-4">
-            <CardTitle className="text-xl text-gray-800">Categories</CardTitle>
-          </CardHeader>
-
-          <CardContent className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                {categoryTable.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id} className="text-left">
-                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-
-              <TableBody>
-                {categoryTable.getRowModel().rows.length ? (
-                  categoryTable.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id}>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={categoryColumns.length} className="h-24 text-center">
-                      No categories found.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-
-          <div className="flex justify-between items-center p-4">
-            <Button
-              variant="outline"
-              onClick={() => categoryTable.previousPage()}
-              disabled={!categoryTable.getCanPreviousPage()}
-              className="flex items-center"
-            >
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Previous
-            </Button>
-
-            <span className="text-gray-600">
-              Page {pagination.pageIndex + 1} of {totalPages}
-            </span>
-
-            <Button
-              variant="outline"
-              onClick={() => categoryTable.nextPage()}
-              disabled={!categoryTable.getCanNextPage()}
-              className="flex items-center"
-            >
-              Next
-              <ChevronRight className="w-4 h-4 ml-2" />
-            </Button>
-          </div>
-        </Card>
       </div>
+      <Card>
+        <CardHeader><CardTitle>Categories</CardTitle></CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              {categoryTable.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id} style={{ width: header.column.getSize() }}>
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                    </TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {categoryTable.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 };

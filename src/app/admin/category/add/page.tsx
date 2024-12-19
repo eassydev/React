@@ -7,9 +7,10 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Save, ImageIcon, Globe2, Type, FileInput, MapPin, Download, FileText, Loader2, Plus, Trash2 } from 'lucide-react';
-import { createCategory,fetchAllGstRates, Category, Location, Attribute,ServiceDetail,ExcludeImage, IncludeItem } from '@/lib/api'; // Import the API function
+import { createCategory, fetchAllGstRates, Category, Location, Attribute, ServiceDetail, ExcludeImage, IncludeItem } from '@/lib/api'; // Import the API function
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
+import { useRouter } from 'next/navigation';
 
 // Importing React-Quill dynamically
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
@@ -51,6 +52,7 @@ const loadGoogleMapsScript = (apiKey: string) => {
 
 
 const CategoryForm: React.FC = () => {
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [categoryImage, setCategoryImage] = useState<File | null>(null);
@@ -76,7 +78,7 @@ const CategoryForm: React.FC = () => {
   const [excludeImages, setExcludeImages] = useState<File[]>([]);
   const [includeItems, setIncludeItems] = useState<IncludeItem[]>([]);
   const [showIncludeSection, setShowIncludeSection] = useState(false);
-  
+
   const autocompleteRef = useRef<google.maps.places.Autocomplete | null>(null);
   const { toast } = useToast();
 
@@ -154,7 +156,7 @@ const CategoryForm: React.FC = () => {
   const handlePlaceSelect = () => {
     const place = autocompleteRef.current?.getPlace();
     if (place) {
-      console.log(place,"place")
+      console.log(place, "place")
       const locationData: Location = {
         country: getAddressComponent(place, 'country'),
         state: getAddressComponent(place, 'administrative_area_level_1'),
@@ -256,24 +258,24 @@ const CategoryForm: React.FC = () => {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-  
+
     // Prepare exclude items
     const formattedExcludeItems = excludeItems.map((item) => ({
       item, // Wrap each item in an object with the `item` field
     }));
-  
+
     // Prepare exclude images
     const formattedExcludeImages: ExcludeImage[] = excludeImages.map((file) => ({
       image_path: file, // Wrap each file in an object with the `image` property
     }));
-  
+
     const categoryData: Category = {
       name: categoryName,
       image: categoryImage,
       optional_heading: optionalHeading,
       locations,
-      exclude_heading:excludeHeading,
-      exclude_description:excludeDescription,
+      exclude_heading: excludeHeading,
+      exclude_description: excludeDescription,
       location_type: locationType,
       service_time: serviceTime,
       active: isActive,
@@ -285,10 +287,10 @@ const CategoryForm: React.FC = () => {
       cgst_tax: cgst,
       sac_code: sacCode,
       excludeItems: formattedExcludeItems, // Add exclude items
-      includeItems:includeItems,
+      includeItems: includeItems,
       excludedImages: formattedExcludeImages, // Add exclude images as ExcludeImage[]
     };
-  
+
     try {
       const catdata = await createCategory(categoryData);
       toast({
@@ -296,6 +298,8 @@ const CategoryForm: React.FC = () => {
         title: 'Success.',
         description: catdata.message,
       });
+      router.push('/admin/category'); // Redirect after successful update
+
       setIsSubmitting(false);
     } catch (error) {
       toast({
@@ -306,10 +310,10 @@ const CategoryForm: React.FC = () => {
       setIsSubmitting(false);
     }
   };
-  
 
 
- 
+
+
   // Add a new attribute
   const addAttribute = () => {
     setAttributes((prev) => [
@@ -317,11 +321,11 @@ const CategoryForm: React.FC = () => {
       {
         name: "",
         type: "list",
-        options: [{  value: "" }], // Initialize options with a valid object
+        options: [{ value: "" }], // Initialize options with a valid object
       },
     ]);
   };
-  
+
 
   // Update attribute fields
   const updateAttribute = (index: number, field: string, value: string) => {
@@ -337,7 +341,7 @@ const CategoryForm: React.FC = () => {
     });
     setAttributes(updatedAttributes);
   };
-  
+
 
   // Update an option for a specific attribute
   const updateOption = (attrIndex: number, optIndex: number, value: string) => {
@@ -418,8 +422,8 @@ const CategoryForm: React.FC = () => {
                 />
               </div>
 
-             {/* OPTIONAL Field */}
-             <div className="space-y-2">
+              {/* OPTIONAL Field */}
+              <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <Type className="w-4 h-4 text-blue-500" />
                   <span>Optional heading</span>
@@ -449,7 +453,7 @@ const CategoryForm: React.FC = () => {
 
 
 
-              
+
 
               {/* Category Image Field */}
               <div className="space-y-2">
@@ -468,69 +472,69 @@ const CategoryForm: React.FC = () => {
               {/* GST Dropdowns */}
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <span>IGST (%)</span>
-                </label>
-                <Select
+                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                    <span>IGST (%)</span>
+                  </label>
+                  <Select
                     value={igst?.toString() || ""}
                     onValueChange={(value) => handleDropdownChange(value, setIgst)}
                   >
-                  <SelectTrigger className="bg-white border-gray-200">
-                    <SelectValue placeholder="Select IGST" />
-                  </SelectTrigger>
-                  <SelectContent>
-                  {hstRates.map((rate) =>
-                          <SelectItem key={rate.id} value={rate.IGST.toString()}>
-                            {rate.IGST}
-                          </SelectItem>
+                    <SelectTrigger className="bg-white border-gray-200">
+                      <SelectValue placeholder="Select IGST" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {hstRates.map((rate) =>
+                        <SelectItem key={rate.id} value={rate.IGST.toString()}>
+                          {rate.IGST}
+                        </SelectItem>
                       )}
-                  </SelectContent>
-                </Select>
-              </div>
+                    </SelectContent>
+                  </Select>
+                </div>
 
 
-              <div className="space-y-2">
-                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <span>SGST (%)</span>
-                </label>
-                <Select
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                    <span>SGST (%)</span>
+                  </label>
+                  <Select
                     value={sgst?.toString() || ""}
                     onValueChange={(value) => handleDropdownChange(value, setSgst)}
                   >
-                  <SelectTrigger className="bg-white border-gray-200">
-                    <SelectValue placeholder="Select IGST" />
-                  </SelectTrigger>
-                  <SelectContent>
-                  {hstRates.map((rate) =>
-                          <SelectItem key={rate.id} value={rate.SGST.toString()}>
-                            {rate.SGST}
-                          </SelectItem>
+                    <SelectTrigger className="bg-white border-gray-200">
+                      <SelectValue placeholder="Select IGST" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {hstRates.map((rate) =>
+                        <SelectItem key={rate.id} value={rate.SGST.toString()}>
+                          {rate.SGST}
+                        </SelectItem>
                       )}
-                  </SelectContent>
-                </Select>
-              </div>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-               
-              <div className="space-y-2">
-                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <span>CGST (%)</span>
-                </label>
-                <Select
+
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                    <span>CGST (%)</span>
+                  </label>
+                  <Select
                     value={cgst?.toString() || ""}
                     onValueChange={(value) => handleDropdownChange(value, setCgst)}
                   >
-                  <SelectTrigger className="bg-white border-gray-200">
-                    <SelectValue placeholder="Select IGST" />
-                  </SelectTrigger>
-                  <SelectContent>
-                  {hstRates.map((rate) =>
-                          <SelectItem key={rate.id} value={rate.CGST.toString()}>
-                            {rate.CGST}
-                          </SelectItem>
+                    <SelectTrigger className="bg-white border-gray-200">
+                      <SelectValue placeholder="Select IGST" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {hstRates.map((rate) =>
+                        <SelectItem key={rate.id} value={rate.CGST.toString()}>
+                          {rate.CGST}
+                        </SelectItem>
                       )}
-                  </SelectContent>
-                </Select>
-              </div>
+                    </SelectContent>
+                  </Select>
+                </div>
 
               </div>
 
@@ -561,267 +565,267 @@ const CategoryForm: React.FC = () => {
               </div>
 
               {/* Attributes Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Attributes</h3>
-        {attributes.map((attribute, attrIndex) => (
-          <div key={attrIndex} className="space-y-2 border p-4 rounded-md bg-gray-50">
-            {/* Attribute Name */}
-            <Input
-              placeholder="Attribute Name"
-              value={attribute.name}
-              onChange={(e) => updateAttribute(attrIndex, "name", e.target.value)}
-              className="h-10"
-            />
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Attributes</h3>
+                {attributes.map((attribute, attrIndex) => (
+                  <div key={attrIndex} className="space-y-2 border p-4 rounded-md bg-gray-50">
+                    {/* Attribute Name */}
+                    <Input
+                      placeholder="Attribute Name"
+                      value={attribute.name}
+                      onChange={(e) => updateAttribute(attrIndex, "name", e.target.value)}
+                      className="h-10"
+                    />
 
-            {/* Attribute Type */}
-            <Select
-              value={attribute.type}
-              onValueChange={(value) => updateAttribute(attrIndex, "type", value)}
-            >
-              <SelectTrigger className="bg-white border-gray-200">
-                <SelectValue placeholder="Select Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="list">List</SelectItem>
-                <SelectItem value="dropdown">Dropdown</SelectItem>
-                <SelectItem value="search">Search</SelectItem>
-              </SelectContent>
-            </Select>
+                    {/* Attribute Type */}
+                    <Select
+                      value={attribute.type}
+                      onValueChange={(value) => updateAttribute(attrIndex, "type", value)}
+                    >
+                      <SelectTrigger className="bg-white border-gray-200">
+                        <SelectValue placeholder="Select Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="list">List</SelectItem>
+                        <SelectItem value="dropdown">Dropdown</SelectItem>
+                        <SelectItem value="search">Search</SelectItem>
+                      </SelectContent>
+                    </Select>
 
-            {/* Options Management */}
-            <div className="space-y-2">
-              <h4 className="text-sm font-medium">Options</h4>
-              {attribute.options.map((option, optIndex) => (
-                <div key={optIndex} className="flex items-center space-x-2">
-                  <Input
-                    placeholder={`Option ${optIndex + 1}`}
-                    value={option.value} // Access the `value` property
-                    onChange={(e) => updateOption(attrIndex, optIndex, e.target.value)}
-                    className="h-10 flex-1"
-                  />
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    className="p-2 text-red-500"
-                    onClick={() => removeOption(attrIndex, optIndex)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              ))}
-              <Button
-                type="button"
-                variant="outline"
-                className="mt-2 flex items-center"
-                onClick={() => addOption(attrIndex)}
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Add Option
-              </Button>
-            </div>
+                    {/* Options Management */}
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium">Options</h4>
+                      {attribute.options.map((option, optIndex) => (
+                        <div key={optIndex} className="flex items-center space-x-2">
+                          <Input
+                            placeholder={`Option ${optIndex + 1}`}
+                            value={option.value} // Access the `value` property
+                            onChange={(e) => updateOption(attrIndex, optIndex, e.target.value)}
+                            className="h-10 flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="p-2 text-red-500"
+                            onClick={() => removeOption(attrIndex, optIndex)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="mt-2 flex items-center"
+                        onClick={() => addOption(attrIndex)}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Option
+                      </Button>
+                    </div>
 
-            {/* Remove Attribute */}
-            <Button
-              type="button"
-              variant="ghost"
-              className="mt-4 flex items-center text-red-500"
-              onClick={() => removeAttribute(attrIndex)}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Remove Attribute
-            </Button>
-          </div>
-        ))}
+                    {/* Remove Attribute */}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="mt-4 flex items-center text-red-500"
+                      onClick={() => removeAttribute(attrIndex)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Remove Attribute
+                    </Button>
+                  </div>
+                ))}
 
-        <Button type="button" variant="outline" onClick={addAttribute}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Attribute
-        </Button>
-      </div>
-
-      {/* Service Details Section */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-semibold">Service Details</h3>
-        {serviceDetails.map((service, serviceIndex) => (
-          <div key={serviceIndex} className="space-y-2 border p-4 rounded-md bg-gray-50">
-            {/* Service Title */}
-            <Input
-              placeholder="Service Title"
-              value={service.title}
-              onChange={(e) => updateServiceDetail(serviceIndex, "title", e.target.value)}
-              className="h-10"
-            />
-
-            {/* Service Description */}
-            <ReactQuill
-              value={service.description}
-              onChange={(value) => updateServiceDetail(serviceIndex, "description", value)}
-              theme="snow"
-            />
-
-            {/* Remove Service Detail */}
-            <Button
-              type="button"
-              variant="ghost"
-              className="mt-4 flex items-center text-red-500"
-              onClick={() => removeServiceDetail(serviceIndex)}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Remove Service Detail
-            </Button>
-          </div>
-        ))}
-
-        <Button type="button" variant="outline" onClick={addServiceDetail}>
-          <Plus className="w-4 h-4 mr-2" />
-          Add Service Detail
-        </Button>
-      </div>
-      <div className="space-y-4">
-
-      <Button type="button" onClick={() => setShowExcludeSection(!showExcludeSection)} className="mb-4">
-        {showExcludeSection ? "Hide Exclude Section" : "Show Exclude Section"}
-      </Button>
-
-      {showExcludeSection && (
-        <div className="space-y-6 border p-4 rounded-md bg-gray-50">
-          {/* Exclude Heading */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Exclude Heading</label>
-            <Input
-              placeholder="Enter heading"
-              value={excludeHeading}
-              onChange={(e) => setExcludeHeading(e.target.value)}
-            />
-          </div>
-
-          {/* Exclude Description */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Exclude Description</label>
-            <Input
-              placeholder="Enter description"
-              value={excludeDescription}
-              onChange={(e) => setExcludeDescription(e.target.value)}
-            />
-          </div>
-
-          {/* Multiple Image Upload */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Upload Images</label>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => handleExcludeImageUpload(e.target.files)}
-            />
-            <div className="flex flex-wrap gap-4 mt-4">
-              {excludeImages.map((image, index) => (
-                <div key={index} className="relative">
-                  <img
-                    src={URL.createObjectURL(image)}
-                    alt={`Exclude Image ${index + 1}`}
-                    className="w-24 h-24 object-cover rounded-md"
-                  />
-                  <button
-                    type="button"
-                    className="absolute top-1 right-1 bg-white rounded-full p-1 text-red-500"
-                    onClick={() => removeImage(index)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Exclude Items */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Exclude Items</h3>
-            {excludeItems.map((item, index) => (
-              <div
-                key={index}
-                className="flex items-center space-x-3 bg-gray-100 p-2 rounded-md"
-              >
-                <Input
-                  placeholder={`Item ${index + 1}`}
-                  value={item}
-                  onChange={(e) => updateExcludeItem(index, e.target.value)}
-                  className="h-10 flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="p-2 text-red-500"
-                  onClick={() => removeExcludeItem(index)}
-                >
-                  <Trash2 className="w-4 h-4" />
+                <Button type="button" variant="outline" onClick={addAttribute}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Attribute
                 </Button>
               </div>
-            ))}
 
-            {/* Add Exclude Item Button */}
-            <Button
-              type="button"
-              variant="outline"
-              className="flex items-center"
-              onClick={addExcludeItem}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Exclude Item
-            </Button>
-          </div>
-        </div>
-      )}
-      </div>
+              {/* Service Details Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Service Details</h3>
+                {serviceDetails.map((service, serviceIndex) => (
+                  <div key={serviceIndex} className="space-y-2 border p-4 rounded-md bg-gray-50">
+                    {/* Service Title */}
+                    <Input
+                      placeholder="Service Title"
+                      value={service.title}
+                      onChange={(e) => updateServiceDetail(serviceIndex, "title", e.target.value)}
+                      className="h-10"
+                    />
+
+                    {/* Service Description */}
+                    <ReactQuill
+                      value={service.description}
+                      onChange={(value) => updateServiceDetail(serviceIndex, "description", value)}
+                      theme="snow"
+                    />
+
+                    {/* Remove Service Detail */}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="mt-4 flex items-center text-red-500"
+                      onClick={() => removeServiceDetail(serviceIndex)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Remove Service Detail
+                    </Button>
+                  </div>
+                ))}
+
+                <Button type="button" variant="outline" onClick={addServiceDetail}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Service Detail
+                </Button>
+              </div>
+              <div className="space-y-4">
+
+                <Button type="button" onClick={() => setShowExcludeSection(!showExcludeSection)} className="mb-4">
+                  {showExcludeSection ? "Hide Exclude Section" : "Show Exclude Section"}
+                </Button>
+
+                {showExcludeSection && (
+                  <div className="space-y-6 border p-4 rounded-md bg-gray-50">
+                    {/* Exclude Heading */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Exclude Heading</label>
+                      <Input
+                        placeholder="Enter heading"
+                        value={excludeHeading}
+                        onChange={(e) => setExcludeHeading(e.target.value)}
+                      />
+                    </div>
+
+                    {/* Exclude Description */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Exclude Description</label>
+                      <Input
+                        placeholder="Enter description"
+                        value={excludeDescription}
+                        onChange={(e) => setExcludeDescription(e.target.value)}
+                      />
+                    </div>
+
+                    {/* Multiple Image Upload */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Upload Images</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => handleExcludeImageUpload(e.target.files)}
+                      />
+                      <div className="flex flex-wrap gap-4 mt-4">
+                        {excludeImages.map((image, index) => (
+                          <div key={index} className="relative">
+                            <img
+                              src={URL.createObjectURL(image)}
+                              alt={`Exclude Image ${index + 1}`}
+                              className="w-24 h-24 object-cover rounded-md"
+                            />
+                            <button
+                              type="button"
+                              className="absolute top-1 right-1 bg-white rounded-full p-1 text-red-500"
+                              onClick={() => removeImage(index)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Exclude Items */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Exclude Items</h3>
+                      {excludeItems.map((item, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center space-x-3 bg-gray-100 p-2 rounded-md"
+                        >
+                          <Input
+                            placeholder={`Item ${index + 1}`}
+                            value={item}
+                            onChange={(e) => updateExcludeItem(index, e.target.value)}
+                            className="h-10 flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="p-2 text-red-500"
+                            onClick={() => removeExcludeItem(index)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+
+                      {/* Add Exclude Item Button */}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex items-center"
+                        onClick={addExcludeItem}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Exclude Item
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
 
 
 
-      <div className="space-y-4">
+              <div className="space-y-4">
 
-<Button type="button" onClick={() => setShowIncludeSection((prev) => !prev)} className="mb-4">
-  {showExcludeSection ? "Hide Include Section" : "Show Include Section"}
-</Button>
+                <Button type="button" onClick={() => setShowIncludeSection((prev) => !prev)} className="mb-4">
+                  {showExcludeSection ? "Hide Include Section" : "Show Include Section"}
+                </Button>
 
 
-      {/* Include Section */}
-      {showIncludeSection && (
-        <div className="space-y-4 border p-4 rounded-md bg-gray-50">
-          <h3 className="text-lg font-semibold">Include Items</h3>
+                {/* Include Section */}
+                {showIncludeSection && (
+                  <div className="space-y-4 border p-4 rounded-md bg-gray-50">
+                    <h3 className="text-lg font-semibold">Include Items</h3>
 
-          {includeItems.map((item, index) => (
-            <div key={index} className="space-y-2">
-              <Input
-                placeholder="Title"
-                value={item.title}
-                onChange={(e) => updateIncludeItem(index, "title", e.target.value)}
-                className="h-10"
-              />
-              <Input
-                placeholder="Description"
-                value={item.description}
-                onChange={(e) => updateIncludeItem(index, "description", e.target.value)}
-                className="h-10"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                className="p-2 text-red-500"
-                onClick={() => removeIncludeItem(index)}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
+                    {includeItems.map((item, index) => (
+                      <div key={index} className="space-y-2">
+                        <Input
+                          placeholder="Title"
+                          value={item.title}
+                          onChange={(e) => updateIncludeItem(index, "title", e.target.value)}
+                          className="h-10"
+                        />
+                        <Input
+                          placeholder="Description"
+                          value={item.description}
+                          onChange={(e) => updateIncludeItem(index, "description", e.target.value)}
+                          className="h-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="p-2 text-red-500"
+                          onClick={() => removeIncludeItem(index)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
 
-          <Button type="button" onClick={addIncludeItem} variant="outline" className="mt-2 flex items-center">
-            <Plus className="w-4 h-4 mr-2" />
-            Add More
-          </Button>
-</div>
-         
-      )}
-      </div>
-    
+                    <Button type="button" onClick={addIncludeItem} variant="outline" className="mt-2 flex items-center">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add More
+                    </Button>
+                  </div>
+
+                )}
+              </div>
+
 
               {/* Location Type Selector */}
               <div className="space-y-2">

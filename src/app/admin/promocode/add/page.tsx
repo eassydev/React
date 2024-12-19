@@ -6,7 +6,7 @@ import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from "@
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { Save, Loader2 } from "lucide-react";
+import { Save, Loader2, Globe2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   createPromocode,
@@ -24,7 +24,7 @@ const AddPromocodeForm: React.FC = () => {
   const [discountType, setDiscountType] = useState<"flat" | "percentage">("flat");
   const [discountValue, setDiscountValue] = useState<number | null>(null);
   const [minOrderValue, setMinOrderValue] = useState<number | null>(null);
-  const [startDate, setStartDate] = useState<string>(""); 
+  const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [status, setStatus] = useState<"active" | "inactive" | "expired">("active");
   const [selectionType, setSelectionType] = useState<string>("");
@@ -32,7 +32,7 @@ const AddPromocodeForm: React.FC = () => {
   const [providerId, setProviderId] = useState<string | null>(null);
   const [image, setImage] = useState<File | null>(null);
   const [options, setOptions] = useState<{ id: number; name: string }[]>([]);
-  const [providers, setProviders] = useState<{ id: string; name: string }[]>([]);
+  const [providers, setProviders] = useState<{ id: string; first_name: string }[]>([]);
   const [isGlobal, setIsGlobal] = useState<boolean>(false);
   const [displayToCustomer, setDisplayToCustomer] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -91,7 +91,7 @@ const AddPromocodeForm: React.FC = () => {
     const loadProviders = async () => {
       try {
         const providersData = await fetchAllProvidersWithoupagination();
-        setProviders(providersData.map((provider: any) => ({ id: provider.id, name: provider.first_name || "Unnamed Provider" })));
+        setProviders(providersData.map((provider: any) => ({ id: provider.id, first_name: provider.first_name || "Unnamed Provider" })));
       } catch (error) {
         toast({ variant: "error", title: "Error", description: "Failed to load providers." });
       }
@@ -195,18 +195,29 @@ const AddPromocodeForm: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-700">Provider</label>
-                <Select value={providerId || ""} onValueChange={setProviderId}>
+
+
+
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <Globe2 className="w-4 h-4 text-blue-500" />
+                  <span>Select Provider</span>
+                </label>
+                <Select
+                  value={providerId ?? ''}
+                  onValueChange={(value) => setProviderId(value)}
+                >
                   <SelectTrigger className="bg-white border-gray-200">
-                    <SelectValue placeholder="Select Provider" />
+                    <SelectValue placeholder="Select a provider" />
                   </SelectTrigger>
                   <SelectContent>
-                    {providers.map((provider) => (
-                      <SelectItem key={provider.id} value={provider.id}>
-                        {provider.name}
-                      </SelectItem>
-                    ))}
+                    {providers.map((provider) =>
+                      provider?.id && provider?.first_name ? (
+                        <SelectItem key={provider.id} value={provider.id.toString()}>
+                          {provider.first_name}
+                        </SelectItem>
+                      ) : null
+                    )}
                   </SelectContent>
                 </Select>
               </div>
@@ -244,47 +255,56 @@ const AddPromocodeForm: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700">Discount Value</label>
-                <Input
-                  type="number"
-                  value={discountValue ?? ""}
-                  onChange={(e) => setDiscountValue(Number(e.target.value))}
-                  placeholder="Enter discount value"
-                  required
-                />
-              </div>
+  <label className="text-sm font-medium text-gray-700">Discount Value</label>
+  <Input
+    type="number"
+    value={discountValue ?? ""}
+    onChange={(e) => {
+      const value = Number(e.target.value);
+      setDiscountValue(value > 0 ? value : null); // Set to null (blank) for negative or zero values
+    }}
+    placeholder="Enter discount value"
+    required
+  />
+</div>
 
-              
+<div>
+  <label className="text-sm font-medium text-gray-700">Min Order Value</label>
+  <Input
+    type="number"
+    value={minOrderValue ?? ""}
+    onChange={(e) => {
+      const value = Number(e.target.value);
+      setMinOrderValue(value > 0 ? value : null); // Set to null (blank) for negative or zero values
+    }}
+    placeholder="Enter min order value (optional)"
+  />
+</div>
+
+
 
               <div>
-                <label className="text-sm font-medium text-gray-700">Min Order Value</label>
+                <label className="text-sm font-medium text-gray-700">Start Date & Time</label>
                 <Input
-                  type="number"
-                  value={minOrderValue ?? ""}
-                  onChange={(e) => setMinOrderValue(Number(e.target.value))}
-                  placeholder="Enter min order value (optional)"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700">Start Date</label>
-                <Input
-                  type="date"
+                  type="datetime-local"
                   value={startDate}
+                  min={new Date().toISOString().slice(0, 16)} // Prevent past date-time
                   onChange={(e) => setStartDate(e.target.value)}
                   required
                 />
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700">End Date</label>
+                <label className="text-sm font-medium text-gray-700">End Date & Time</label>
                 <Input
-                  type="date"
+                  type="datetime-local"
                   value={endDate}
+                  min={startDate || new Date().toISOString().slice(0, 16)} // Prevent dates before start date-time
                   onChange={(e) => setEndDate(e.target.value)}
                   required
                 />
               </div>
+
 
               <div>
                 <label className="text-sm font-medium text-gray-700">Selection Type</label>

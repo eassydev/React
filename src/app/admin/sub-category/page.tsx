@@ -1,102 +1,183 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from '@tanstack/react-table';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/components/ui/table';
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from 'lucide-react';
-import { fetchSubcategories, deleteSubcategory } from '@/lib/api';
-import Link from 'next/link';
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from '@/components/ui/alert-dialog';
+} from "@tanstack/react-table";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
+import {
+  Download,
+  Plus,
+  Edit,
+  Trash2,
+  Printer,
+  Copy,
+} from "lucide-react";
+import { fetchSubcategories, exportSubcategories, deleteSubcategory } from "@/lib/api";
+import Link from "next/link";
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 
 const SubcategoryList = () => {
   const [subcategories, setSubcategories] = useState<any[]>([]);
-  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
+  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
-  const [totalItems, setTotalItems] = useState(0);
-
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [isExporting, setIsExporting] = useState(false);
+  const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const { toast } = useToast();
 
-  const fetchSubcategoriesData = async (page = 1, size = 5) => {
+  const fetchSubcategoriesData = async (page = 1, size = 50, status = "all") => {
     try {
-      const { data, meta } = await fetchSubcategories(page, size);
+      const { data, meta } = await fetchSubcategories(page, size, status);
       setSubcategories(data);
       setTotalPages(meta.totalPages);
-      setTotalItems(meta.totalItems);
-      setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.error('Error fetching subcategories:', error);
+      console.error("Error fetching subcategories:", error);
     }
   };
 
   useEffect(() => {
-    fetchSubcategoriesData(pagination.pageIndex + 1, pagination.pageSize);
-  }, [pagination.pageIndex, pagination.pageSize]);
+    fetchSubcategoriesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus);
+  }, [pagination.pageIndex, pagination.pageSize, filterStatus]);
 
-  const handleSubcategoryDelete = async (subcategory: any) => {
+  const handleExport = async () => {
     try {
-      await deleteSubcategory(subcategory.id);
-      toast({
-        title: 'Success',
-        description: `Subcategory "${subcategory.name}" deleted successfully`,
-        variant: 'success',
-      });
-      fetchSubcategoriesData(pagination.pageIndex + 1, pagination.pageSize);
+      setIsExporting(true);
+      await exportSubcategories();
+      toast({ title: "Exported Successfully", description: "Subcategories exported to Excel." });
     } catch (error) {
-      toast({
-        title: 'Error',
-        description: `Failed to delete subcategory: ${error}`,
-        variant: 'destructive',
-      });
+      console.error("Error exporting subcategories:", error);
+      toast({ title: "Error", description: "Failed to export subcategories." });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleCopy = () => {
+    const formattedData = subcategories.map((item) => `${item.id}, ${item.name}, ${item.status}`).join("\n");
+    navigator.clipboard.writeText(formattedData);
+    toast({ title: "Copied", description: "Subcategory data copied to clipboard." });
+  };
+
+  const handlePrint = () => {
+    const printableContent = subcategories
+      .map((item) => `<tr><td>${item.id}</td><td>${item.name}</td><td>${item.status}</td></tr>`)
+      .join("");
+    const newWindow = window.open("", "_blank");
+    newWindow?.document.write(`
+      <html>
+        <head>
+          <title>Print Subcategories</title>
+          <style>
+            table { width: 100%; border-collapse: collapse; }
+            td, th { border: 1px solid black; padding: 8px; text-align: left; }
+          </style>
+        </head>
+        <body>
+          <h1>Subcategories</h1>
+          <table>
+            <thead><tr><th>ID</th><th>Name</th><th>Status</th></tr></thead>
+            <tbody>${printableContent}</tbody>
+          </table>
+        </body>
+      </html>
+    `);
+    newWindow?.print();
+  };
+
+  const handleDelete = async () => {
+    try {
+      if (deleteTargetId) {
+        await deleteSubcategory(deleteTargetId.toString());
+        toast({ title: "Deleted", description: "Subcategory deleted successfully." });
+        fetchSubcategoriesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus);
+      }
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to delete subcategory." });
     }
   };
 
   const subcategoryColumns: ColumnDef<any>[] = [
-    { accessorKey: 'id', header: 'ID' },
-    { accessorKey: 'name', header: 'Name' },
-    {
-      accessorKey: 'description',
-      header: 'Description',
-      cell: ({ getValue }) => {
-        const description = getValue() as string;
-        return <div dangerouslySetInnerHTML={{ __html: description }} />;
-      },
-    },
+    { accessorKey: "id", header: "ID", size: 100 },
+    { accessorKey: "name", header: "Name", size: 200 },
     {
       accessorKey: 'category.name',
       header: 'Category Name',
       cell: ({ getValue }) => <span>{String(getValue())}</span>, // Convert to string
     },
     {
-      accessorKey: 'active',
-      header: 'Status',
-      cell: (info) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${info.getValue() ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-          {info.getValue() ? 'Active' : 'Inactive'}
-        </span>
-      ),
+      accessorKey: "status",
+      header: "Status",
+      cell: ({ row }) => {
+        const statusValue = row.original.active;
+
+        let statusLabel = "";
+        let statusClass = "";
+
+        switch (statusValue) {
+          case 0:
+            statusLabel = "Active";
+            statusClass = "bg-green-200 text-green-800";
+            break;
+          case 1:
+            statusLabel = "Inactive";
+            statusClass = "bg-yellow-200 text-yellow-800";
+            break;
+          case 2:
+            statusLabel = "Deleted";
+            statusClass = "bg-red-200 text-red-800";
+            break;
+          default:
+            statusLabel = "Unknown";
+            statusClass = "bg-gray-200 text-gray-800";
+            break;
+        }
+
+        return <span className={`badge px-2 py-1 rounded ${statusClass}`}>{statusLabel}</span>;
+      },
     },
     {
-      id: 'actions',
-      header: 'Actions',
+      accessorKey: "image",
+      header: "Image",
+      cell: ({ row }) => {
+        const imageUrl = row.original.image;
+    
+        // Only render the img tag if imageUrl is valid
+        if (!imageUrl) return null;
+    
+        return (
+          <img
+            src={imageUrl}
+            alt={row.original.name || "No Image"}
+            className="h-12 w-12 object-cover rounded"
+          />
+        );
+      },
+    },
+    {
+      id: "actions",
+      header: "Actions",
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="icon">
-            <Link href={`/admin/sub-category/edit/${row.original.id}`} passHref>
+          <Link href={`/admin/sub-category/edit/${row.original.id}`}>
+            <Button variant="ghost" size="icon">
               <Edit className="w-4 h-4 text-blue-600" />
-            </Link>
-          </Button>
+            </Button>
+          </Link>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setDeleteTargetId(row.original.id)}
+              >
                 <Trash2 className="w-4 h-4 text-red-600" />
               </Button>
             </AlertDialogTrigger>
@@ -106,7 +187,7 @@ const SubcategoryList = () => {
                 <p>Are you sure you want to delete subcategory: {row.original.name}?</p>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <Button variant="secondary" onClick={() => handleSubcategoryDelete(row.original)}>
+                <Button variant="secondary" onClick={handleDelete}>
                   Yes, Delete
                 </Button>
                 <Button variant="outline">Cancel</Button>
@@ -129,86 +210,50 @@ const SubcategoryList = () => {
   });
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
-      <div className="max-w-12xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900">Subcategory List</h1>
-          <Button asChild variant="default" className="flex items-center space-x-2">
-            <Link href="/admin/sub-category/add">
-              <Plus className="w-4 h-4 mr-1" />
-              <span>Add Subcategory</span>
-            </Link>
-          </Button>
+    <div className="p-4">
+      <div className="flex justify-between mb-4">
+        <h1 className="text-2xl font-bold">Subcategory List</h1>
+        <div className="flex space-x-2">
+          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="border p-2 rounded">
+            <option value="all">All</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+          <Button onClick={handleExport}><Download className="w-4 h-4 mr-2" />Export</Button>
+          <Button onClick={handleCopy}><Copy className="w-4 h-4 mr-2" />Copy</Button>
+          <Button onClick={handlePrint}><Printer className="w-4 h-4 mr-2" />Print</Button>
+          <Link href="/admin/sub-category/add">
+            <Button><Plus className="w-4 h-4 mr-2" />Add Subcategory</Button>
+          </Link>
         </div>
-
-        <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
-          <CardHeader className="border-b border-gray-100 pb-4">
-            <CardTitle className="text-xl text-gray-800">Subcategories</CardTitle>
-          </CardHeader>
-
-          <CardContent className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                {subcategoryTable.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id} className="text-left">
-                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-                      </TableHead>
-                    ))}
-                  </TableRow>
-                ))}
-              </TableHeader>
-
-              <TableBody>
-                {subcategoryTable.getRowModel().rows.length ? (
-                  subcategoryTable.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id}>
-                      {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                        </TableCell>
-                      ))}
-                    </TableRow>
-                  ))
-                ) : (
-                  <TableRow>
-                    <TableCell colSpan={subcategoryColumns.length} className="h-24 text-center">
-                      No subcategories found.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </CardContent>
-
-          <div className="flex justify-between items-center p-4">
-            <Button
-              variant="outline"
-              onClick={() => subcategoryTable.previousPage()}
-              disabled={!subcategoryTable.getCanPreviousPage()}
-              className="flex items-center"
-            >
-              <ChevronLeft className="w-4 h-4 mr-2" />
-              Previous
-            </Button>
-
-            <span className="text-gray-600">
-              Page {pagination.pageIndex + 1} of {totalPages}
-            </span>
-
-            <Button
-              variant="outline"
-              onClick={() => subcategoryTable.nextPage()}
-              disabled={!subcategoryTable.getCanNextPage()}
-              className="flex items-center"
-            >
-              Next
-              <ChevronRight className="w-4 h-4 ml-2" />
-            </Button>
-          </div>
-        </Card>
       </div>
+      <Card>
+        <CardHeader><CardTitle>Subcategories</CardTitle></CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              {subcategoryTable.getHeaderGroups().map((headerGroup) => (
+                <TableRow key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <TableHead key={header.id}>{flexRender(header.column.columnDef.header, header.getContext())}</TableHead>
+                  ))}
+                </TableRow>
+              ))}
+            </TableHeader>
+            <TableBody>
+              {subcategoryTable.getRowModel().rows.map((row) => (
+                <TableRow key={row.id}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </CardContent>
+      </Card>
     </div>
   );
 };

@@ -7,8 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Save, FileText, Loader2, Type, Globe2 } from 'lucide-react';
-import { fetchAllCategories, fetchSubCategoriesByCategoryId, fetchProviders, Provider,fetchFilterOptionsByAttributeId, fetchFilterAttributes,AttributeOption, createRateCard, Category, Subcategory, Attribute } from '@/lib/api';
+import { fetchAllCategories, fetchSubCategoriesByCategoryId, fetchProviders, Provider, fetchFilterOptionsByAttributeId, fetchFilterAttributes, AttributeOption, createRateCard, Category, Subcategory, Attribute } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
+import { useRouter, usePathname } from 'next/navigation';
 
 // Importing React-Quill dynamically
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
@@ -27,6 +28,8 @@ const quillModules = {
 };
 
 const RateCardForm: React.FC = () => {
+    const router = useRouter();
+  
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
@@ -43,7 +46,9 @@ const RateCardForm: React.FC = () => {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedProviderId, setSelectedProviderId] = useState<string>('');
   const [filterOptions, setFilterOptions] = useState<AttributeOption[]>([]);
-const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>('');
+  const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>('');
+  const [priceError, setPriceError] = useState<string>('');
+
   // Fetch categories on load
   useEffect(() => {
     const loadCategories = async () => {
@@ -69,11 +74,11 @@ const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>('')
           const subcategoryData = await fetchSubCategoriesByCategoryId(parseInt(selectedCategoryId));
           setSubcategories(subcategoryData);
           try {
-          const filterAttributeData = await fetchFilterAttributes(parseInt(selectedCategoryId), null);
-          setFilterAttributes(filterAttributeData);
-        } catch (error) {
-          setFilterAttributes([]);
-        }
+            const filterAttributeData = await fetchFilterAttributes(parseInt(selectedCategoryId), null);
+            setFilterAttributes(filterAttributeData);
+          } catch (error) {
+            setFilterAttributes([]);
+          }
         } catch (error) {
           setSubcategories([]);
         }
@@ -102,7 +107,7 @@ const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>('')
     }
   }, [selectedFilterAttributesId]);
 
-  
+
   useEffect(() => {
     const loadProviders = async () => {
       try {
@@ -119,7 +124,7 @@ const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>('')
     };
     loadProviders();
   }, []);
-  
+
   // Fetch filter attributes when a subcategory is selected
   useEffect(() => {
     if (selectedSubcategoryId) {
@@ -144,8 +149,8 @@ const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>('')
       description,
       category_id: parseInt(selectedCategoryId),
       subcategory_id: selectedSubcategoryId ? parseInt(selectedSubcategoryId) : null,
-      filter_attribute_id: selectedFilterAttributesId ? parseInt(selectedFilterAttributesId) : null, 
-      filter_option_id:selectedFilterOptionId ? parseInt(selectedFilterOptionId) : null, 
+      filter_attribute_id: selectedFilterAttributesId ? parseInt(selectedFilterAttributesId) : null,
+      filter_option_id: selectedFilterOptionId ? parseInt(selectedFilterOptionId) : null,
       price: parseFloat(price),
       active: isActive,
       provider_id: parseInt(selectedProviderId), // Add provider ID
@@ -158,8 +163,11 @@ const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>('')
         title: 'Success',
         description: response.message,
       });
+      
       setIsSubmitting(false);
-    //  resetForm(); // Reset form after submission
+      router.push('/admin/rate-card'); // Redirect after successful update
+
+      //  resetForm(); // Reset form after submission
     } catch (error) {
       toast({
         variant: 'error',
@@ -298,28 +306,27 @@ const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>('')
               )}
 
 
-{filterOptions.length > 0 && (
-  <div className="space-y-2">
-    <label className="text-sm font-medium text-gray-700">Select Filter Option</label>
-    <Select
-      value={selectedFilterOptionId}
-      onValueChange={(value) => setSelectedFilterOptionId(value)}
-    >
-      <SelectTrigger className="bg-white border-gray-200">
-        <SelectValue placeholder="Select a filter option" />
-      </SelectTrigger>
-      <SelectContent>
-        {filterOptions.map((option) => (
-          <SelectItem key={option.id} value={option.id!.toString()}>
-            {option.value}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  </div>
-)}
+              {filterOptions.length > 0 && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Select Filter Option</label>
+                  <Select
+                    value={selectedFilterOptionId}
+                    onValueChange={(value) => setSelectedFilterOptionId(value)}
+                  >
+                    <SelectTrigger className="bg-white border-gray-200">
+                      <SelectValue placeholder="Select a filter option" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {filterOptions.map((option) => (
+                        <SelectItem key={option.id} value={option.id!.toString()}>
+                          {option.value}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
-              {/* Price Field */}
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <span>Price</span>
@@ -328,10 +335,20 @@ const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>('')
                   type="number"
                   placeholder="Enter price"
                   value={price}
-                  onChange={(e) => setPrice(e.target.value)}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (parseFloat(value) < 0) {
+                      setPriceError('Price cannot be negative.');
+                      setPrice(value);
+                    } else {
+                      setPriceError('');
+                      setPrice(value);
+                    }
+                  }}
                   className="h-11"
                   required
                 />
+                {priceError && <p className="text-red-500 text-sm">{priceError}</p>}
               </div>
 
               {/* Description Field with React-Quill */}
@@ -349,28 +366,28 @@ const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>('')
                 />
               </div>
               <div className="space-y-2">
-  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-    <Globe2 className="w-4 h-4 text-blue-500" />
-    <span>Select Provider</span>
-  </label>
-  <Select
-    value={selectedProviderId}
-    onValueChange={(value) => setSelectedProviderId(value)}
-  >
-    <SelectTrigger className="bg-white border-gray-200">
-      <SelectValue placeholder="Select a provider" />
-    </SelectTrigger>
-    <SelectContent>
-      {providers.map((provider) =>
-        provider?.id && provider?.first_name ? (
-          <SelectItem key={provider.id} value={provider.id.toString()}>
-            {provider.first_name}
-          </SelectItem>
-        ) : null
-      )}
-    </SelectContent>
-  </Select>
-</div>
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <Globe2 className="w-4 h-4 text-blue-500" />
+                  <span>Select Provider</span>
+                </label>
+                <Select
+                  value={selectedProviderId}
+                  onValueChange={(value) => setSelectedProviderId(value)}
+                >
+                  <SelectTrigger className="bg-white border-gray-200">
+                    <SelectValue placeholder="Select a provider" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {providers.map((provider) =>
+                      provider?.id && provider?.first_name ? (
+                        <SelectItem key={provider.id} value={provider.id.toString()}>
+                          {provider.first_name}
+                        </SelectItem>
+                      ) : null
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
               {/* Active/Inactive Switch */}
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
