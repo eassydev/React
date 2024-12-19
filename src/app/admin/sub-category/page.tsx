@@ -92,6 +92,15 @@ const SubcategoryList = () => {
     newWindow?.print();
   };
 
+   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      setFilterStatus(e.target.value);
+    };
+  
+    const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      setPagination((prev) => ({ ...prev, pageSize: Number(e.target.value) }));
+    };
+  
+
   const handleDelete = async () => {
     try {
       if (deleteTargetId) {
@@ -214,10 +223,16 @@ const SubcategoryList = () => {
       <div className="flex justify-between mb-4">
         <h1 className="text-2xl font-bold">Subcategory List</h1>
         <div className="flex space-x-2">
-          <select value={filterStatus} onChange={(e) => setFilterStatus(e.target.value)} className="border p-2 rounded">
-            <option value="all">All</option>
-            <option value="active">Active</option>
-            <option value="inactive">Inactive</option>
+        <select value={filterStatus} onChange={handleStatusChange} className="border p-2 rounded">
+            <option value="">All</option>
+            <option value="0">Active</option>
+            <option value="1">Deactivated</option>
+            <option value="2">Deleted</option>
+          </select>
+          <select value={pagination.pageSize} onChange={handlePageSizeChange} className="border p-2 rounded">
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+            <option value={150}>150</option>
           </select>
           <Button onClick={handleExport}><Download className="w-4 h-4 mr-2" />Export</Button>
           <Button onClick={handleCopy}><Copy className="w-4 h-4 mr-2" />Copy</Button>
