@@ -35,9 +35,15 @@ const AddBannerForm: React.FC = () => {
   const [displayOrder, setDisplayOrder] = useState<number>(1); // Set type to number
   const [deepLink, setDeepLink] = useState<string>("");
   const [image, setImage] = useState<File | null>(null);
+  const [latitude, setLatitude] = useState<string>("");
+  const [longitude, setLongitude] = useState<string>("");
+  const [radius, setRadius] = useState<number | null>(null);
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
   const [isActive, setIsActive] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const today = new Date().toISOString().split("T")[0];
 
   useEffect(() => {
     const loadOptions = async () => {
@@ -111,11 +117,16 @@ const AddBannerForm: React.FC = () => {
         description,
         selection_type: selectionType,
         selection_id: selectedItemId,
-        is_active: isActive,
-        media_type: mediaType, // mediaType is now strictly "image" or "video"
-        display_order: displayOrder, // displayOrder is a number
+        media_type: mediaType,
+        display_order: displayOrder,
         deep_link: deepLink,
-        image: image,
+        latitude: Number(latitude),
+        longitude: Number(longitude),
+        radius,
+        start_date: startDate,
+        end_date: endDate,
+        is_active: isActive,
+        image,
       };
 
       await createBanner(bannerData);
@@ -126,20 +137,11 @@ const AddBannerForm: React.FC = () => {
         description: "Banner created successfully.",
       });
 
-      // setTitle("");
-      // setDescription("");
-      // setSelectionType("");
-      // setSelectedItemId(null);
-      // setOptions([]);
-      // setImage(null);
-      // setMediaType("image");
-      // setDisplayOrder(1);
-      // setDeepLink("");
     } catch (error) {
       toast({
         variant: "error",
         title: "Error",
-        description: "Failed to create banner.",
+        description: ` ${error}`,
       });
     } finally {
       setIsSubmitting(false);
@@ -242,6 +244,28 @@ const AddBannerForm: React.FC = () => {
                   onChange={(e) => setDeepLink(e.target.value)}
                   placeholder="Enter deep link URL"
                 />
+              </div>
+
+              <div>
+                <label>Latitude</label>
+                <Input type="number" value={latitude} onChange={(e) => setLatitude(e.target.value)} />
+
+              </div>
+              <div>
+                <label>Longitude</label>
+                <Input type="number" value={longitude} onChange={(e) => setLongitude(e.target.value)} />
+              </div>
+              <div>
+                <label>Radius (in km)</label>
+                <Input type="number" value={radius || ""} onChange={(e) => setRadius(Number(e.target.value))} />
+              </div>
+              <div>
+                <label>Start Date</label>
+                <Input type="date" value={startDate} min={today} onChange={(e) => setStartDate(e.target.value)} />
+              </div>
+              <div>
+                <label>End Date</label>
+                <Input type="date" value={endDate} min={startDate || today} onChange={(e) => setEndDate(e.target.value)} />
               </div>
 
               <div>

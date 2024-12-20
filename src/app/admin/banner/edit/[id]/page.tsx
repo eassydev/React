@@ -36,8 +36,14 @@ const EditBannerForm: React.FC = () => {
   const [displayOrder, setDisplayOrder] = useState<number>(1);
   const [deepLink, setDeepLink] = useState<string>("");
   const [image, setImage] = useState<File | null>(null);
+  const [latitude, setLatitude] = useState<string>("");
+  const [longitude, setLongitude] = useState<string>("");
+  const [radius, setRadius] = useState<number | null>(null);
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
   const [isActive, setIsActive] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const today = new Date().toISOString().split("T")[0];
 
   const { id } = useParams();
   const { toast } = useToast();
@@ -112,12 +118,17 @@ const EditBannerForm: React.FC = () => {
         id: id ? id.toString() : '',
         title,
         description,
-        selection_type:selectionType,
+        selection_type: selectionType,
         selection_id: selectedItemId,
-        is_active: isActive,
         media_type: mediaType,
         display_order: displayOrder,
         deep_link: deepLink,
+        latitude: Number(latitude),
+        longitude: Number(longitude),
+        radius,
+        start_date: startDate,
+        end_date: endDate,
+        is_active: isActive,
         image: image || undefined,
       };
       await updateBanner(id.toString(), updatedBanner);
@@ -207,7 +218,27 @@ const EditBannerForm: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Deep Link URL</label>
                 <Input value={deepLink} onChange={(e) => setDeepLink(e.target.value)} />
               </div>
+              <div>
+                <label>Latitude</label>
+                <Input type="number" value={latitude} onChange={(e) => setLatitude(e.target.value)} />
 
+              </div>
+              <div>
+                <label>Longitude</label>
+                <Input type="number" value={longitude} onChange={(e) => setLongitude(e.target.value)} />
+              </div>
+              <div>
+                <label>Radius (in km)</label>
+                <Input type="number" value={radius || ""} onChange={(e) => setRadius(Number(e.target.value))} />
+              </div>
+              <div>
+                <label>Start Date</label>
+                <Input type="date" value={startDate} min={today} onChange={(e) => setStartDate(e.target.value)} />
+              </div>
+              <div>
+                <label>End Date</label>
+                <Input type="date" value={endDate} min={startDate || today} onChange={(e) => setEndDate(e.target.value)} />
+              </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Upload Image</label>
                 <input type="file" accept="image/*" onChange={handleImageChange} />

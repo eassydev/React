@@ -294,15 +294,20 @@ export interface VIPPlan {
 
 export interface Banner {
   id?: string; // Optional for editing
-  title: string;
-  description: string;
-  selection_type:string; // Specific selection type options
+  title: string; // Banner title
+  description: string; // Banner description
+  selection_type: string; // Specific selection type options
   selection_id: number | null; // ID of the selected item (category, subcategory, etc.)
-  is_active: boolean;
-  media_type: "image" | "video"; // Type of media
+  is_active: boolean; // Banner active status
+  media_type: "image" | "video"; // Type of media (image or video)
   display_order?: number; // Optional order of display
   deep_link?: string; // Optional link for deeper navigation
   image?: File | null; // Optional file input for the banner image
+  latitude?: number | null; // Latitude for geo-targeting
+  longitude?: number | null; // Longitude for geo-targeting
+  radius?: number | null; // Radius for targeting in kilometers
+  start_date?: string; // Start date for banner visibility (ISO format: YYYY-MM-DD)
+  end_date?: string; // End date for banner visibility (ISO format: YYYY-MM-DD)
 }
 
 
@@ -2155,49 +2160,6 @@ export const deleteProviderBankDetail = async (id: string): Promise<ApiResponse>
 
 
 
-// Add banner
-export const createBanner = async (bannerData: Banner) => {
-  const formData = new FormData();
-  formData.append("title", bannerData.title);
-  formData.append("description", bannerData.description);
-  formData.append("is_active", bannerData.is_active ? "1" : "0");
-  
-  if (bannerData.media_type) {
-    formData.append("media_type", bannerData.media_type as "image" | "video");
-  }
-
-  if (bannerData.display_order !== undefined) {
-    formData.append("display_order", bannerData.display_order.toString());
-  }
-  
-  if (bannerData.deep_link) {
-    formData.append("deep_link", bannerData.deep_link);
-  }
-
-  if (bannerData.selection_type) {
-    formData.append("selection_type", bannerData.selection_type);
-  }
-
-  if (bannerData.selection_id) {
-    formData.append("selection_id", bannerData.selection_id.toString());
-  }
-  if (bannerData.image) {
-    formData.append("media_file", bannerData.image); // The image file
-  }
-
-  try {
-    const token = getToken();
-    const response: AxiosResponse<ApiResponse> = await apiClient.post(`/banner`, formData, {
-      headers: {
-        "Content-Type": "multipart/form-data",
-        "admin-auth-token": token || "",
-      },
-    });
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to update VIP plan.");
-  }
-};
 
 
 // Function to fetch a specific banner by ID
@@ -2215,14 +2177,17 @@ export const getBanner = async (id: string | number): Promise<Banner> => {
   }
 };
 
-// Function to update a specific banner by ID
-export const updateBanner = async (id: string | number, bannerData: Banner): Promise<ApiResponse> => {
+// Add banner
+export const createBanner = async (bannerData: Banner) => {
   const formData = new FormData();
   formData.append("title", bannerData.title);
   formData.append("description", bannerData.description);
   formData.append("is_active", bannerData.is_active ? "1" : "0");
-  formData.append("media_type", bannerData.media_type);
-  
+
+  if (bannerData.media_type) {
+    formData.append("media_type", bannerData.media_type as "image" | "video");
+  }
+
   if (bannerData.display_order !== undefined) {
     formData.append("display_order", bannerData.display_order.toString());
   }
@@ -2239,8 +2204,92 @@ export const updateBanner = async (id: string | number, bannerData: Banner): Pro
     formData.append("selection_id", bannerData.selection_id.toString());
   }
 
+  if (bannerData.latitude !== undefined) {
+    formData.append("latitude", bannerData.latitude!.toString());
+  }
+
+  if (bannerData.longitude !== undefined) {
+    formData.append("longitude", bannerData.longitude!.toString());
+  }
+
+  if (bannerData.radius !== undefined) {
+    formData.append("radius", bannerData.radius!.toString());
+  }
+
+  if (bannerData.start_date) {
+    formData.append("start_date", bannerData.start_date);
+  }
+
+  if (bannerData.end_date) {
+    formData.append("end_date", bannerData.end_date);
+  }
+
   if (bannerData.image) {
-    formData.append("image", bannerData.image);
+    formData.append("media_file", bannerData.image); // The image file
+  }
+
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post(`/banner`, formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "admin-auth-token": token || "",
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to create banner.");
+  }
+};
+
+
+
+// Function to update a specific banner by ID
+export const updateBanner = async (id: string | number, bannerData: Banner): Promise<ApiResponse> => {
+  const formData = new FormData();
+  formData.append("title", bannerData.title);
+  formData.append("description", bannerData.description);
+  formData.append("is_active", bannerData.is_active ? "1" : "0");
+  formData.append("media_type", bannerData.media_type);
+
+  if (bannerData.display_order !== undefined) {
+    formData.append("display_order", bannerData.display_order.toString());
+  }
+
+  if (bannerData.deep_link) {
+    formData.append("deep_link", bannerData.deep_link);
+  }
+
+  if (bannerData.selection_type) {
+    formData.append("selection_type", bannerData.selection_type);
+  }
+
+  if (bannerData.selection_id) {
+    formData.append("selection_id", bannerData.selection_id.toString());
+  }
+
+  if (bannerData.latitude !== undefined) {
+    formData.append("latitude", bannerData.latitude!.toString());
+  }
+
+  if (bannerData.longitude !== undefined) {
+    formData.append("longitude", bannerData.longitude!.toString());
+  }
+
+  if (bannerData.radius !== undefined) {
+    formData.append("radius", bannerData.radius!.toString());
+  }
+
+  if (bannerData.start_date) {
+    formData.append("start_date", bannerData.start_date);
+  }
+
+  if (bannerData.end_date) {
+    formData.append("end_date", bannerData.end_date);
+  }
+
+  if (bannerData.image) {
+    formData.append("media_file", bannerData.image);
   }
 
   try {
