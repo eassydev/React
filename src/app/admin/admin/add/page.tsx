@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription }
 import { useToast } from "@/hooks/use-toast";
 import { Save, Loader2 } from "lucide-react";
 import { createAdmin, fetchRolesAll, Role } from "@/lib/api"; // Admin creation and role APIs
+import { useRouter } from 'next/navigation';
 
 const AdminAddForm: React.FC = () => {
   const [fullName, setFullName] = useState<string>(""); // Updated to full_name
@@ -17,6 +18,7 @@ const AdminAddForm: React.FC = () => {
   const [isActive, setIsActive] = useState<boolean>(true);
   const [roles, setRoles] = useState<Role[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+    const router = useRouter();
 
   const { toast } = useToast();
 
@@ -66,13 +68,9 @@ const AdminAddForm: React.FC = () => {
         title: "Success",
         description: "Admin created successfully.",
       });
+      setIsSubmitting(false);
+      router.push('/admin/admin'); // Redirect after successful update
 
-      // Reset form fields
-      setFullName("");
-      setEmail("");
-      setPassword("");
-      setRoleId("");
-      setIsActive(true);
     } catch (error: any) {
       toast({
         variant: "error",

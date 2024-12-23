@@ -62,7 +62,14 @@ const EditBannerForm: React.FC = () => {
         setDisplayOrder(existingBanner.display_order || 0);
         setDeepLink(existingBanner.deep_link || "");
         setIsActive(existingBanner.is_active);
-
+       setLatitude(existingBanner.latitude!.toString() || "");
+        setLongitude(existingBanner.longitude!.toString()  || "");
+        setRadius(existingBanner.radius !== undefined && existingBanner.radius !== null
+          ? Number(existingBanner.radius)
+          : null
+        );      
+        setStartDate(existingBanner.start_date ? existingBanner.start_date.split("T")[0] : "");
+        setEndDate(existingBanner.end_date ? existingBanner.end_date.split("T")[0] : "");
         // Trigger options loading for selectionType
         if (existingBanner.selection_type) {
           setSelectionType(existingBanner.selection_type);
@@ -158,25 +165,36 @@ const EditBannerForm: React.FC = () => {
                 <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-700">Description</label>
-                <ReactQuill value={description} onChange={setDescription} theme="snow" modules={quillModules} style={{ height: "200px" }} />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700">Selection Type</label>
-                <Select value={selectionType} onValueChange={(value) => setSelectionType(value)}>
-                  <SelectTrigger className="bg-white border-gray-200">
-                    <SelectValue placeholder="Select Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Category">Category</SelectItem>
-                    <SelectItem value="Subcategory">Subcategory</SelectItem>
-                    <SelectItem value="Ratecard">Ratecard</SelectItem>
-                    <SelectItem value="Package">Package</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+              <div className="space-y-2" style={{ height: "270px" }}>
+                                            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                                              <FileText className="w-4 h-5 text-blue-500" />
+                                              <span>Description</span>
+                                            </label>
+                                            <ReactQuill
+                                              value={description}
+                                              onChange={setDescription}
+                                              theme="snow"
+                                              modules={quillModules}
+                                              style={{ height: "200px" }}
+                                            />
+                                          </div>
+              
+                                          
+              
+                            <div  className="space-x-2">
+                              <label className="text-sm font-medium text-gray-700">Selection Type</label>
+                              <Select value={selectionType} onValueChange={(value) => setSelectionType(value)}>
+                                <SelectTrigger className="bg-white border-gray-200">
+                                  <SelectValue placeholder="Select Type" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="Category">Category</SelectItem>
+                                  <SelectItem value="Subcategory">Subcategory</SelectItem>
+                                  <SelectItem value="Ratecard">Ratecard</SelectItem>
+                                  <SelectItem value="Package">Package</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
 
               {selectionType && (
                 <div>

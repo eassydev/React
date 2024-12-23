@@ -10,9 +10,16 @@ import {
 } from "@tanstack/react-table";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
+import {
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from "@/components/ui/table";
 import { ChevronLeft, ChevronRight, Edit, Trash2 } from "lucide-react";
-import { fetchCarts, deleteCart } from "@/lib/api"; // Update with correct Cart API functions
+import { fetchCarts, deleteCart, exportLiveCart } from "@/lib/api";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -22,19 +29,35 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { DateRange } from "react-date-range";
+import "react-date-range/dist/styles.css"; // Main style file
+import "react-date-range/dist/theme/default.css"; // Theme css
 
 const CartList = () => {
   const [carts, setCarts] = useState<any[]>([]);
-  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
+    const [isExporting, setIsExporting] = useState(false);
+  
+  const [pagination, setPagination] = useState<PaginationState>({
+    pageIndex: 0,
+    pageSize: 5,
+  });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
 
+  const [dateRange, setDateRange] = useState([
+    {
+      startDate: new Date(),
+      endDate: new Date(),
+      key: "selection",
+    },
+  ]);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
+
   const { toast } = useToast();
 
-  // Fetch cart data from the backend with pagination
   const fetchCartData = async (page = 1, size = 5) => {
     try {
-      const { data, meta } = await fetchCarts(page, size); // Fetch paginated cart list
+      const { data, meta } = await fetchCarts(page, size);
       setCarts(data);
       setTotalPages(meta.totalPages);
       setTotalItems(meta.totalItems);
@@ -56,7 +79,7 @@ const CartList = () => {
         description: `Cart ID "${cart.id}" deleted successfully.`,
         variant: "success",
       });
-      fetchCartData(pagination.pageIndex + 1, pagination.pageSize); // Refresh the list
+      fetchCartData(pagination.pageIndex + 1, pagination.pageSize);
     } catch (error) {
       toast({
         title: "Error",
@@ -65,6 +88,25 @@ const CartList = () => {
       });
     }
   };
+
+
+  const handleExport = async () => {
+      try {
+        setIsExporting(true);
+        const startDate = dateRange[0].startDate.toISOString().split("T")[0];
+        const endDate = dateRange[0].endDate.toISOString().split("T")[0];
+        await exportLiveCart(startDate,endDate);
+        setIsExporting(true);
+
+      } catch (error) {
+        console.error("Error exporting categories:", error);
+        toast({ title: "Error", description: "Failed to export categories." });
+      } finally {
+        setIsExporting(false);
+      }
+    }
+
+
   const cartColumns: ColumnDef<any>[] = [
     { accessorKey: "id", header: "ID" },
     {
@@ -124,7 +166,10 @@ const CartList = () => {
                 <p>Are you sure you want to delete cart ID: {row.original.id}?</p>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <Button variant="secondary" onClick={() => handleCartDelete(row.original)}>
+                <Button
+                  variant="secondary"
+                  onClick={() => handleCartDelete(row.original)}
+                >
                   Yes, Delete
                 </Button>
                 <Button variant="outline">Cancel</Button>
@@ -151,6 +196,51 @@ const CartList = () => {
       <div className="max-w-12xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">Cart List</h1>
+          {isCalendarOpen && (
+              <div
+                className="absolute z-50 bg-white shadow-lg mt-2"
+                style={{
+                  top: "20%",
+                  left: "40%",
+                  right: "0",
+                  maxWidth: "500px",
+                  margin: "auto",
+                }}
+              >
+                <DateRange
+                  ranges={dateRange}
+                  months={2} // Allow 2 months to be visible
+                  direction="horizontal" // Arrange months horizontally
+                  onChange={(ranges: any) => {
+                    const selectedRange = ranges.selection;
+                    setDateRange([selectedRange]);
+                    if (selectedRange.startDate && selectedRange.endDate) {
+                      setIsCalendarOpen(false); // Close calendar when end date is selected
+                    }
+                  }}
+                  rangeColors={["#4A90E2"]}
+                />
+              </div>
+            )}
+          <div className="relative space-x-6">
+            <input
+              type="text"
+              className="border rounded px-2 py-1"
+              value={`${dateRange[0].startDate.toLocaleDateString()} - ${dateRange[0].endDate.toLocaleDateString()}`}
+              onClick={() => setIsCalendarOpen((prev) => !prev)}
+              readOnly
+            />
+            
+            <Button variant="default" onClick={handleExport} disabled={isExporting}>
+              {isExporting ? (
+                <div className="flex items-center">
+                  <span className="loader mr-2"></span> Exporting...
+                </div>
+              ) : (
+                "Export to XLS"
+              )}
+            </Button>
+          </div>
         </div>
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
@@ -167,7 +257,10 @@ const CartList = () => {
                       <TableHead key={header.id} className="text-left">
                         {header.isPlaceholder
                           ? null
-                          : flexRender(header.column.columnDef.header, header.getContext())}
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
                       </TableHead>
                     ))}
                   </TableRow>
@@ -180,14 +273,20 @@ const CartList = () => {
                     <TableRow key={row.id}>
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
-                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
                         </TableCell>
                       ))}
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={cartColumns.length} className="h-24 text-center">
+                    <TableCell
+                      colSpan={cartColumns.length}
+                      className="h-24 text-center"
+                    >
                       No carts found.
                     </TableCell>
                   </TableRow>

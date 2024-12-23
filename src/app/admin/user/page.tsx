@@ -12,16 +12,29 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
 import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from "lucide-react";
-import { fetchAllUsers, deleteUser } from "@/lib/api"; // Replace with actual API functions
+import { fetchAllUsers, deleteUser, exportUsers } from "@/lib/api"; // Replace with actual API functions
 import Link from "next/link";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { DateRange } from "react-date-range";
+import "react-date-range/dist/styles.css"; // Main style file
+import "react-date-range/dist/theme/default.css"; // Theme css
 
 const UserList = () => {
   const [users, setUsers] = useState<any[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
+  const [pincode, setPincode] = useState(""); // State for pincode filter
+ const [dateRange, setDateRange] = useState([
+    {
+      startDate: new Date(),
+      endDate: new Date(),
+      key: "selection",
+    },
+  ]);
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false);
 
   const { toast } = useToast();
 
@@ -37,6 +50,26 @@ const UserList = () => {
       console.error("Error fetching users:", error);
     }
   };
+
+
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      const startDate = dateRange[0].startDate.toISOString().split("T")[0];
+      const endDate = dateRange[0].endDate.toISOString().split("T")[0];
+  
+      // Call the exportUsers function with separate arguments
+      await exportUsers(startDate, endDate, pincode);
+  
+      toast({ title: "Success", description: "Data exported successfully." });
+    } catch (error) {
+      console.error("Error exporting users:", error);
+      toast({ title: "Error", description: "Failed to export data." });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+  
 
   useEffect(() => {
     fetchUsersData(pagination.pageIndex + 1, pagination.pageSize);
@@ -126,15 +159,71 @@ const UserList = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-12xl mx-auto space-y-6">
+
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900">User List</h1>
-          <Button asChild variant="default" className="flex items-center space-x-2">
+        <h1 className="text-3xl font-bold text-gray-900">User List</h1>
+        {isCalendarOpen && (
+                      <div
+                        className="absolute z-50 bg-white shadow-lg mt-2"
+                        style={{
+                          top: "20%",
+                          left: "40%",
+                          right: "0",
+                          maxWidth: "500px",
+                          margin: "auto",
+                        }}
+                      >
+                        <DateRange
+                          ranges={dateRange}
+                          months={2} // Allow 2 months to be visible
+                          direction="horizontal" // Arrange months horizontally
+                          onChange={(ranges: any) => {
+                            const selectedRange = ranges.selection;
+                            setDateRange([selectedRange]);
+                            if (selectedRange.startDate && selectedRange.endDate) {
+                              setIsCalendarOpen(false); // Close calendar when end date is selected
+                            }
+                          }}
+                          rangeColors={["#4A90E2"]}
+                        />
+                      </div>
+                    )}
+                  <div className="flex items-center justify-between relative space-x-6">
+                  <input
+              type="text"
+              className="border rounded px-2 py-1"
+              placeholder="Filter by Pincode"
+              value={pincode}
+              onChange={(e) => setPincode(e.target.value)}
+            />
+                    <input
+                      type="text"
+                      className="border rounded px-2 py-1"
+                      value={`${dateRange[0].startDate.toLocaleDateString()} - ${dateRange[0].endDate.toLocaleDateString()}`}
+                      onClick={() => setIsCalendarOpen((prev) => !prev)}
+                      readOnly
+                    />
+                    
+                    <Button variant="default" onClick={handleExport} disabled={isExporting}>
+                      {isExporting ? (
+                        <div className="flex items-center">
+                          <span className="loader mr-2"></span> Exporting...
+                        </div>
+                      ) : (
+                        "Export to XLS"
+                      )}
+                    </Button>
+
+                    <Button asChild variant="default" className="flex items-center space-x-2">
             <Link href="/admin/user/add">
               <Plus className="w-4 h-4 mr-1" />
               <span>Add User</span>
             </Link>
           </Button>
-        </div>
+                  </div>
+                </div>
+
+    
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
           <CardHeader className="border-b border-gray-100 pb-4">

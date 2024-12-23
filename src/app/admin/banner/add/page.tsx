@@ -10,6 +10,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription }
 import { Save, Loader2, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { createBanner, Banner, fetchAllCategories, fetchAllSubCategories, fetchAllRatecard, fetchAllpackages } from "@/lib/api";
+import { useRouter } from 'next/navigation';
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
@@ -26,6 +27,7 @@ const quillModules = {
 };
 
 const AddBannerForm: React.FC = () => {
+    const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectionType, setSelectionType] = useState<string>("");
@@ -136,6 +138,8 @@ const AddBannerForm: React.FC = () => {
         title: "Success",
         description: "Banner created successfully.",
       });
+      setIsSubmitting(false);
+      router.push('/admin/banner'); // Redirect after successful update
 
     } catch (error) {
       toast({
@@ -169,19 +173,24 @@ const AddBannerForm: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-700">Description</label>
-                <ReactQuill
-                  value={description}
-                  onChange={setDescription}
-                  theme="snow"
-                  modules={quillModules}
-                  style={{ height: "200px" }}
-                  placeholder="Enter banner description"
-                />
-              </div>
 
-              <div>
+                            <div className="space-y-2" style={{ height: "270px" }}>
+                              <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                                <FileText className="w-4 h-5 text-blue-500" />
+                                <span>Description</span>
+                              </label>
+                              <ReactQuill
+                                value={description}
+                                onChange={setDescription}
+                                theme="snow"
+                                modules={quillModules}
+                                style={{ height: "200px" }}
+                              />
+                            </div>
+
+                            
+
+              <div  className="space-x-2">
                 <label className="text-sm font-medium text-gray-700">Selection Type</label>
                 <Select value={selectionType} onValueChange={(value) => setSelectionType(value)}>
                   <SelectTrigger className="bg-white border-gray-200">
