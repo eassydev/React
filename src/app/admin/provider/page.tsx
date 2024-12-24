@@ -24,8 +24,9 @@ import {
   Edit,
   Trash2,
   Plus,
+  Download, Copy,
 } from "lucide-react";
-import { fetchAllProviders, deleteProvider } from "@/lib/api";
+import { fetchAllProviders, deleteProvider, exportProvider } from "@/lib/api";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -44,13 +45,14 @@ const ProviderList = () => {
   });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
-
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
 
   // Fetch providers from the backend with pagination
-  const fetchProvidersData = async (page = 1, size = 5) => {
+  const fetchProvidersData = async (page = 1, size = 5, status = "all") => {
     try {
-      const { data, meta } = await fetchAllProviders(page, size);
+      const { data, meta } = await fetchAllProviders(page, size, filterStatus);
       setProviders(data);
       setTotalPages(meta.totalPages);
       setTotalItems(meta.totalItems);
@@ -61,8 +63,8 @@ const ProviderList = () => {
   };
 
   useEffect(() => {
-    fetchProvidersData(pagination.pageIndex + 1, pagination.pageSize);
-  }, [pagination.pageIndex, pagination.pageSize]);
+    fetchProvidersData(pagination.pageIndex + 1, pagination.pageSize, filterStatus);
+  }, [pagination.pageIndex, pagination.pageSize, filterStatus]);
 
   const handleProviderDelete = async (provider: any) => {
     try {
@@ -72,7 +74,7 @@ const ProviderList = () => {
         description: `Provider "${provider.first_name} ${provider.last_name}" deleted successfully`,
         variant: "success",
       });
-      fetchProvidersData(pagination.pageIndex + 1, pagination.pageSize);
+      fetchProvidersData(pagination.pageIndex + 1, pagination.pageSize, filterStatus);
     } catch (error) {
       toast({
         title: "Error",
@@ -81,6 +83,64 @@ const ProviderList = () => {
       });
     }
   };
+
+    const handleExport = async () => {
+      try {
+        setIsExporting(true);
+        await exportProvider();
+       
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to export rate cards',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsExporting(false);
+      }
+    };
+  
+    const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+      setFilterStatus(e.target.value);
+    };
+  
+      const handlePrint = () => {
+        const printableContent = providers
+          .map((item) => `<tr><td>${item.id}</td><td>${item.first_name}</td><td>${item.is_active}</td></tr>`)
+          .join("");
+        const newWindow = window.open("", "_blank");
+        newWindow?.document.write(`
+          <html>
+            <head>
+              <title>Print Categories</title>
+              <style>
+                table { width: 100%; border-collapse: collapse; }
+                td, th { border: 1px solid black; padding: 8px; text-align: left; }
+              </style>
+            </head>
+            <body>
+              <h1>Categories</h1>
+              <table>
+                <thead><tr><th>ID</th><th>Name</th><th>Status</th></tr></thead>
+                <tbody>${printableContent}</tbody>
+              </table>
+            </body>
+          </html>
+        `);
+        newWindow?.print();
+      };
+    
+      const handleCopy = () => {
+        const formattedData = providers.map((item) => `${item.id}, ${item.first_name}, ${item.is_active}`).join("\n");
+        navigator.clipboard.writeText(formattedData);
+        toast({ title: "Copied to Clipboard", description: "Category data copied." });
+      };
+    
+      const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setPagination((prev) => ({ ...prev, pageSize: Number(e.target.value) }));
+      };
+    
+
 
   const providerColumns: ColumnDef<any>[] = [
     { accessorKey: "id", header: "ID" },
@@ -91,15 +151,33 @@ const ProviderList = () => {
     {
       accessorKey: "is_active",
       header: "Status",
-      cell: (info) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${
-            info.getValue() ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
-          }`}
-        >
-          {info.getValue() ? "Active" : "Inactive"}
-        </span>
-      ),
+      cell: ({ row }) => {
+        const statusValue = row.original.active;
+
+        let statusLabel = "";
+        let statusClass = "";
+
+        switch (statusValue) {
+          case 0:
+            statusLabel = "Active";
+            statusClass = "bg-green-200 text-green-800";
+            break;
+          case 1:
+            statusLabel = "Inactive";
+            statusClass = "bg-yellow-200 text-yellow-800";
+            break;
+          case 2:
+            statusLabel = "Deleted";
+            statusClass = "bg-red-200 text-red-800";
+            break;
+          default:
+            statusLabel = "Unknown";
+            statusClass = "bg-gray-200 text-gray-800";
+            break;
+        }
+
+        return <span className={`badge px-2 py-1 rounded ${statusClass}`}>{statusLabel}</span>;
+      },
     },
     {
       id: "actions",
@@ -150,12 +228,28 @@ const ProviderList = () => {
       <div className="max-w-12xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">Provider List</h1>
-          <Button asChild variant="default" className="flex items-center space-x-2">
+          <div className="flex space-x-2">
+            <select value={filterStatus} onChange={handleStatusChange} className="border p-2 rounded">
+                       <option value="">All</option>
+                       <option value="0">Active</option>
+                       <option value="1">Deactivated</option>
+                       <option value="2">Deleted</option>
+                     </select>
+                     <select value={pagination.pageSize} onChange={handlePageSizeChange} className="border p-2 rounded">
+                       <option value={50}>50</option>
+                       <option value={100}>100</option>
+                       <option value={150}>150</option>
+                     </select>
+                     <Button onClick={handleExport}><Download className="w-4 h-4 mr-2" />Export</Button>
+                     <Button onClick={handleCopy}><Copy className="w-4 h-4 mr-2" />Copy</Button>
+                     <Button asChild variant="default" className="flex items-center space-x-2">
             <Link href="/admin/provider/add">
               <Plus className="w-4 h-4 mr-1" />
               <span>Add Provider</span>
             </Link>
           </Button>
+          </div>
+         
         </div>
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">

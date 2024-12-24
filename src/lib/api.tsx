@@ -1147,11 +1147,11 @@ export const createRateCard = async (rateCard: RateCard): Promise<ApiResponse> =
 };
 
 // Function to fetch all rate cards with pagination
-export const fetchRateCards = async (page = 1, size = 10) => {
+export const fetchRateCards = async (page = 1, size = 10,  status: string = "all") => {
   try {
     const token = getToken();
     const response: AxiosResponse = await apiClient.get('/rate-card', {
-      params: { page, size },
+      params: { page, size, status },
       headers: {
         'admin-auth-token': token || '',
       },
@@ -1725,11 +1725,11 @@ export const restoreUser = async (id: string): Promise<ApiResponse> => {
 
 
 // Fetch all providers with optional pagination
-export const fetchAllProviders = async (page = 1, size = 10) => {
+export const fetchAllProviders = async (page = 1, size = 10, status: string = "all") => {
   try {
     const token = getToken();
     const response = await apiClient.get('/provider', {
-      params: { page, size },
+      params: { page, size , status},
       headers: {
         'admin-auth-token': token || '',
       },
@@ -3889,5 +3889,70 @@ export const exportUsers = async (startDate: string, endDate: string, pincode:st
   } catch (error) {
     console.error('Error exporting live cart:', error);
     throw new Error('Failed to export live cart');
+  }
+};
+
+
+
+export const exportRatecard = async (): Promise<void> => {
+  try {
+    const token = getToken(); // Retrieve the admin-auth-token
+
+    const response: AxiosResponse = await apiClient.get('/rate-card/export', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      responseType: 'blob', // Treat the response as a binary file
+    });
+
+    // Generate a unique filename
+    const uniqueFilename = generateUniqueFilename('rate-card', 'xlsx');
+
+    // Create a downloadable link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', uniqueFilename); // Unique filename
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Error exporting categories:', error);
+    throw new Error('Failed to export categories');
+  }
+};
+
+
+export const exportProvider = async (): Promise<void> => {
+  try {
+    const token = getToken(); // Retrieve the admin-auth-token
+
+    const response: AxiosResponse = await apiClient.get('/provider/export', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      responseType: 'blob', // Treat the response as a binary file
+    });
+
+    // Generate a unique filename
+    const uniqueFilename = generateUniqueFilename('provider', 'xlsx');
+
+    // Create a downloadable link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', uniqueFilename); // Unique filename
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Error exporting categories:', error);
+    throw new Error('Failed to export categories');
   }
 };

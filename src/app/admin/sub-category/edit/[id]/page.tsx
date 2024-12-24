@@ -567,7 +567,6 @@ const [cgst, setCgst] = useState<number | null>(null);
       </Select>
 
       {/* Options Management */}
-      {attribute.type === "list" && (
         <div className="space-y-2">
           <h4 className="text-sm font-medium">Options</h4>
           {attribute.options.map((option, optIndex) => (
@@ -598,8 +597,6 @@ const [cgst, setCgst] = useState<number | null>(null);
             Add Option
           </Button>
         </div>
-      )}
-
       {/* Remove Attribute */}
       <Button
         type="button"
