@@ -343,13 +343,27 @@ export interface GstRate {
   updated_at?: number; // UNIX timestamp
   deleted_at?: number | null; // UNIX timestamp for soft-delete
 }
-
 export interface Booking {
   id?: string; // Optional for editing
   user_id: number;
   provider_id: number;
   order_number: string;
   booking_date: string;
+  delivery_address_id:number;
+  service_date?: string; // Added field for service date
+  service_time?: string; // Added field for service time
+  place_to_supply?: string; // Added field for supply location
+  place_to_deliver?: string; // Added field for delivery location
+  razorpay_order_id?: string; // Added field for Razorpay order ID
+  invoice_number?: string; // Added field for invoice number
+  advance_receipt_number?: string; // Added field for advance receipt number
+  transaction_id?: string; // Transaction ID
+  category_id?: number; // Category ID
+  subcategory_id?: number; // Subcategory ID
+  package_id?: number; // Package ID
+  filter_attribute_id?: number; // Filter attribute ID
+  filter_option_id?: number; // Filter option ID
+  selection_type?: "Category" | "Package"; // Type of selection
   quantity: number;
   base_price: number;
   discount_amount?: number;
@@ -359,15 +373,18 @@ export interface Booking {
   total_tax?: number;
   taxable_amount?: number;
   total_amount: number;
-  status?: "pending" | "confirmed" | "completed" | "cancelled";
-  payment_status?: "pending" | "paid" | "failed" | "refunded";
-  payment_method?: string;
-  transaction_id?: string;
-  address_id: number;
-  description?: string;
-  created_at?: number;
-  updated_at?: number;
+  status?: "pending" | "confirmed" | "completed" | "cancelled"; // Booking status
+  payment_status?: "pending" | "paid" | "failed" | "refunded"; // Payment status
+  payment_method?: "credit_card" | "debit_card" | "upi" | "wallet" | "net_banking" | "cod"; // Payment method
+  address_id: number; // Address ID
+  description?: string; // Additional details about the booking
+  start_otp?: string; // OTP for starting the service
+  end_otp?: string; // OTP for completing the service
+  created_at?: number; // Created timestamp
+  updated_at?: number; // Updated timestamp
+  deleted_at?: number; // Soft delete timestamp
 }
+
 
 
 
@@ -1741,6 +1758,36 @@ export const fetchAllProvidersWithoupagination = async (): Promise<Provider[]> =
     }
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch banks.');
+  }
+};
+
+
+export const fetchProvidersByFilters = async (
+  categoryId?: any,
+  subcategoryId?: any,
+  filterAttributeId?: any,
+  filterOptionId?: any
+) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/rate-card/provider', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      params: {
+         categoryId,
+         subcategoryId,
+         filterAttributeId,
+         filterOptionId,
+      },
+    });
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch providers.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch providers.');
   }
 };
 
@@ -3698,10 +3745,6 @@ export const logout = async (): Promise<void> => {
     // Redirect to login page
     window.location.href = '/auth/login';
   } catch (error: any) {
-    // console.error('Error during logout:', error.response?.data?.message || error.message);
-    // // Clear token and redirect even if API call fails
-    // localStorage.removeItem('token');
-    // window.location.href = '/auth/login';
   }
 };
 

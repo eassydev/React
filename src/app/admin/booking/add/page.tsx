@@ -1,56 +1,130 @@
 "use client";
-
-import React, { useState, useEffect, FormEvent } from "react";
-import dynamic from "next/dynamic";
-import { Input } from "@/components/ui/input";
-import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { Save, Loader2, MapPin } from "lucide-react";
+import React, { useState, useEffect, FormEvent } from 'react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@/components/ui/select';
 import { useToast } from "@/hooks/use-toast";
-import {
-  fetchAllProvidersWithoupagination,
-  fetchAllUsersWithouPagination,
-  fetchUserAddresses,
-  fetchAllCategories,
-  fetchAllSubCategories,
-  fetchAllRatecard,
-  fetchAllpackages,
-  createBooking,
-} from "@/lib/api";
+import { useRouter } from 'next/navigation';
+import { Save, FileText, Loader2, Type, Globe2 } from 'lucide-react';
+import { fetchAllCategories,createBooking, fetchSubCategoriesByCategoryId,fetchAllUsersWithouPagination,fetchUserAddresses, fetchProvidersByFilters, Provider, Package, fetchFilterOptionsByAttributeId, fetchFilterAttributes, AttributeOption, createRateCard, Category, Subcategory, Attribute } from '@/lib/api';
 
-const CreateBookingForm: React.FC = () => {
+
+const AddBookingForm: React.FC = () => {
+  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [selectionType, setSelectionType] = useState<string>('Category');
+
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  const [filterAttributes, setFilterAttributes] = useState<Attribute[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  const [selectedPackageId, setSelectedPackageId] = useState<string>('');    
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>('');
+  const [selectedFilterAttributesId, setSelectedFilterAttributesId] = useState<string>('');
+  const [serviceDate, setServiceDate] = useState<string>('');
+  const [serviceTime, setServiceTime] = useState<string>('');
+  const [placeToSupply, setPlaceToSupply] = useState<string>('');
+  const [placeToDeliver, setPlaceToDeliver] = useState<string>('');
+  const [razorpayOrderId, setRazorpayOrderId] = useState<string>('');
+  const [invoiceNumber, setInvoiceNumber] = useState<string>('');
+  const [advanceReceiptNumber, setAdvanceReceiptNumber] = useState<string>('');
+  const [transactionId, setTransactionId] = useState<string>('');
+  const [filterOptions, setFilterOptions] = useState<AttributeOption[]>([]);
+  const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>('');
+  const [packages, setPackages] = useState<Package[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
   const [providerId, setProviderId] = useState<number | null>(null);
-  const [orderNumber, setOrderNumber] = useState<string>("");
-  const [bookingDate, setBookingDate] = useState<string>("");
-  const [deliveryAddressId, setDeliveryAddressId] = useState<number | null>(null);
-  const [quantity, setQuantity] = useState<number>(1);
-  const [basePrice, setBasePrice] = useState<number>(0);
-  const [totalAmount, setTotalAmount] = useState<number>(0);
-  const [selectionType, setSelectionType] = useState<string>("");
-  const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
-  const [options, setOptions] = useState<{ id: number; name: string }[]>([]);
-
   const [providers, setProviders] = useState<{ id: number; name: string }[]>([]);
   const [users, setUsers] = useState<{ id: number; name: string }[]>([]);
   const [addresses, setAddresses] = useState<{ id: number; full_address: string }[]>([]);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [deliveryAddressId, setDeliveryAddressId] = useState<number | null>(null);
+
   const { toast } = useToast();
+
+  // Fetch categories on load
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const categoryData = await fetchAllCategories();
+        setCategories(categoryData);
+      } catch (error) {
+        toast({
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load categories.',
+        });
+      }
+    };
+    loadCategories();
+  }, []);
+
+  useEffect(() => {
+    if (selectedCategoryId) {
+      const loadSubcategoriesAndFilters = async () => {
+        try {
+          const subcategoryData = await fetchSubCategoriesByCategoryId(parseInt(selectedCategoryId));
+          setSubcategories(subcategoryData);
+          try {
+            const filterAttributeData = await fetchFilterAttributes(parseInt(selectedCategoryId), null);
+            setFilterAttributes(filterAttributeData);
+          } catch (error) {
+            setFilterAttributes([]);
+          }
+        } catch (error) {
+          setSubcategories([]);
+        }
+      };
+      loadSubcategoriesAndFilters();
+    } else {
+      setSubcategories([]);
+      setFilterAttributes([]);
+    }
+  }, [selectedCategoryId]);
+
+
+
+    // Fetch filter attributes when a subcategory is selected
+    useEffect(() => {
+      if (selectedSubcategoryId) {
+        const loadFilterAttributes = async () => {
+          try {
+            const filterAttributeData = await fetchFilterAttributes(parseInt(selectedCategoryId), parseInt(selectedSubcategoryId));
+            setFilterAttributes(filterAttributeData);
+          } catch (error) {
+            setFilterAttributes([]);
+          }
+        };
+        loadFilterAttributes();
+      }
+    }, [selectedSubcategoryId, selectedCategoryId]);
+  
+  
+  useEffect(() => {
+    if (selectedFilterAttributesId) {
+      const loadFilterOptions = async () => {
+        try {
+          const options = await fetchFilterOptionsByAttributeId(parseInt(selectedFilterAttributesId));
+          setFilterOptions(options);
+        } catch (error) {
+          setFilterOptions([]);
+        }
+      };
+      loadFilterOptions();
+    } else {
+      setFilterOptions([]);
+    }
+  }, [selectedFilterAttributesId]);
+
 
   useEffect(() => {
     // Fetch providers and users on component mount
     const loadInitialData = async () => {
       try {
-        const providerData = await fetchAllProvidersWithoupagination();
         const userData = await fetchAllUsersWithouPagination();
 
-        setProviders(
-          providerData.map((provider: any) => ({
-            id: provider.id,
-            name: `${provider.first_name} ${provider.last_name}`,
-          }))
-        );
+
+      
         setUsers(
           userData.map((user: any) => ({
             id: user.id,
@@ -64,6 +138,32 @@ const CreateBookingForm: React.FC = () => {
 
     loadInitialData();
   }, [toast]);
+
+
+  useEffect(() => {
+    const loadInitialDataProvider = async () => {
+      try {
+        const providerData = await fetchProvidersByFilters(
+          selectedCategoryId || '',
+          selectedSubcategoryId || '',
+          selectedFilterAttributesId || '',
+          selectedFilterOptionId || ''
+        );
+        setProviders(
+          providerData.map((provider: any) => ({
+            id: provider.id,
+            name: `${provider.name}`,
+          }))
+        );
+      } catch (error) {
+        toast({ variant: "error", title: "Error", description: "Failed to load initial data." });
+      }
+    };
+  
+    loadInitialDataProvider();
+  }, [selectedCategoryId, selectedSubcategoryId, selectedFilterAttributesId, selectedFilterOptionId]);
+  
+ 
 
   useEffect(() => {
     // Fetch addresses when a user is selected
@@ -80,87 +180,41 @@ const CreateBookingForm: React.FC = () => {
           });
         }
       };
-  
       loadAddresses();
     } else {
       setAddresses([]); // Clear addresses if no user is selected
     }
   }, [userId, toast]);
-  useEffect(() => {
-    // Fetch selection options based on selectionType
-    const loadOptions = async () => {
-      try {
-        let data: { id: number; name: string }[] = [];
-        switch (selectionType) {
-          case "Category":
-            const categories = await fetchAllCategories();
-            data = categories.map((category) => ({
-              id: Number(category.id) || 0,
-              name: category.name || "Unnamed Category",
-            }));
-            break;
-          case "Subcategory":
-            const subcategories = await fetchAllSubCategories();
-            data = subcategories.map((subcategory) => ({
-              id: Number(subcategory.id) || 0,
-              name: subcategory.name || "Unnamed Subcategory",
-            }));
-            break;
-          case "Ratecard":
-            const ratecards = await fetchAllRatecard();
-            data = ratecards.map((ratecard) => ({
-              id: Number(ratecard.id) || 0,
-              name: ratecard.name || "Unnamed Ratecard",
-            }));
-            break;
-          case "Package":
-            const packages = await fetchAllpackages();
-            data = packages.map((pkg) => ({
-              id: Number(pkg.id) || 0,
-              name: pkg.name || "Unnamed Package",
-            }));
-            break;
-          default:
-            setOptions([]);
-            return;
-        }
-        setOptions(data);
-        setSelectedItemId(null);
-      } catch (error) {
-        toast({ variant: "error", title: "Error", description: `Failed to load ${selectionType} options.` });
-      }
-    };
-
-    if (selectionType) loadOptions();
-  }, [selectionType, toast]);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-
-    if (!userId || !providerId || !orderNumber || !bookingDate || !deliveryAddressId || !selectionType || !selectedItemId) {
-      toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Please fill in all required fields.",
-      });
-      return;
-    }
-
     setIsSubmitting(true);
+  
+    const bookingData: any = {
+      service_date: serviceDate,
+      service_time: serviceTime,
+      place_to_supply: placeToSupply,
+      place_to_deliver: placeToDeliver,
+      razorpay_order_id: razorpayOrderId,
+      invoice_number: invoiceNumber,
+      advance_receipt_number: advanceReceiptNumber,
+      transaction_id: transactionId,
+      user_id: userId, // Include selected user
+      provider_id: providerId, // Include selected provider
+      delivery_address_id: deliveryAddressId, // Include selected delivery address
+    };
+  
+    // Add category or package-specific data based on selectionType
+    if (selectionType === "Category") {
+      bookingData.category_id = parseInt(selectedCategoryId) || null;
+      bookingData.subcategory_id = selectedSubcategoryId ? parseInt(selectedSubcategoryId) : null;
+      bookingData.filter_attribute_id = selectedFilterAttributesId ? parseInt(selectedFilterAttributesId) : null;
+      bookingData.filter_option_id = selectedFilterOptionId ? parseInt(selectedFilterOptionId) : null;
+    } else if (selectionType === "Package") {
+      bookingData.package_id = selectedPackageId ? parseInt(selectedPackageId) : null;
+    }
+  
     try {
-      const bookingData = {
-        user_id: userId,
-        provider_id: providerId,
-        order_number: orderNumber,
-        booking_date: bookingDate,
-        address_id: deliveryAddressId,
-        quantity,
-        base_price: basePrice,
-        total_amount: totalAmount,
-        selection_type: selectionType,
-        selection_id: selectedItemId,
-      };
-
       await createBooking(bookingData);
 
       toast({
@@ -168,42 +222,193 @@ const CreateBookingForm: React.FC = () => {
         title: "Success",
         description: "Booking created successfully.",
       });
-
-      // Reset form fields
-      setUserId(null);
-      setProviderId(null);
-      setOrderNumber("");
-      setBookingDate("");
-      setDeliveryAddressId(null);
-      setQuantity(1);
-      setBasePrice(0);
-      setTotalAmount(0);
-      setSelectionType("");
-      setSelectedItemId(null);
-      setOptions([]);
+      setIsSubmitting(false);
+      router.push("/admin/booking"); // Redirect after successful submission
     } catch (error) {
       toast({
         variant: "error",
         title: "Error",
-        description: "Failed to create booking.",
+        description: `Failed to create rate card: ${error}`,
       });
-    } finally {
       setIsSubmitting(false);
     }
   };
+  
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-12xl mx-auto space-y-6">
+        <div className="text-left space-y-2">
+          <h1 className="text-3xl font-bold text-gray-900">Booking Card Management</h1>
+          <p className="text-gray-500">Create a new Booking</p>
+        </div>
+
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
-          <form onSubmit={onSubmit} className="space-y-6">
-            <CardHeader>
+          <CardHeader className="border-b border-gray-100 pb-6">
+            <div className="flex items-center space-x-2">
+              <div className="h-8 w-1 bg-blue-600 rounded-full" />
+              <div>
               <CardTitle>Create New Booking</CardTitle>
               <CardDescription>Fill in the details below to create a new booking</CardDescription>
-            </CardHeader>
+              </div>
+            </div>
+          </CardHeader>
 
-            <CardContent className="space-y-6">
-              <div>
+          <CardContent className="pt-6">
+            <form onSubmit={onSubmit} className="space-y-6">
+              {/* Category Selector */}
+
+              <div className="space-x-2">
+                <label className="text-sm font-medium text-gray-700">Selection Type</label>
+                <Select value={selectionType} onValueChange={(value) => setSelectionType(value)}>
+                  <SelectTrigger className="bg-white border-gray-200">
+                    <SelectValue placeholder="Select Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Category">Category</SelectItem>
+                    <SelectItem value="Package">Package</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+             
+
+
+              {selectionType === 'Category' && (
+  <div className="space-y-4">
+    {/* Category Selector */}
+    <div className="space-y-2">
+      <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+        <Globe2 className="w-4 h-4 text-blue-500" />
+        <span>Select Category</span>
+      </label>
+      <Select
+        value={selectedCategoryId}
+        onValueChange={(value) => setSelectedCategoryId(value)}
+      >
+        <SelectTrigger className="bg-white border-gray-200">
+          <SelectValue placeholder="Select a category" />
+        </SelectTrigger>
+        <SelectContent>
+          {categories.map((category) =>
+            category?.id && category?.name ? (
+              <SelectItem key={category.id} value={category.id.toString()}>
+                {category.name}
+              </SelectItem>
+            ) : null
+          )}
+        </SelectContent>
+      </Select>
+    </div>
+
+    {/* Subcategory Selector */}
+    {subcategories.length > 0 && (
+      <div className="space-y-2">
+        <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+          <Globe2 className="w-4 h-4 text-blue-500" />
+          <span>Select Subcategory</span>
+        </label>
+        <Select
+          value={selectedSubcategoryId}
+          onValueChange={(value) => setSelectedSubcategoryId(value)}
+        >
+          <SelectTrigger className="bg-white border-gray-200">
+            <SelectValue placeholder="Select a subcategory" />
+          </SelectTrigger>
+          <SelectContent>
+            {subcategories.map((subcategory) =>
+              subcategory?.id && subcategory?.name ? (
+                <SelectItem key={subcategory.id} value={subcategory.id.toString()}>
+                  {subcategory.name}
+                </SelectItem>
+              ) : null
+            )}
+          </SelectContent>
+        </Select>
+      </div>
+    )}
+
+    {/* Filter Attributes Selector */}
+    {filterAttributes.length > 0 && (
+      <div className="space-y-2">
+        <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+          <Globe2 className="w-4 h-4 text-blue-500" />
+          <span>Select Filter Attributes</span>
+        </label>
+        <Select
+          value={selectedFilterAttributesId}
+          onValueChange={(value) => setSelectedFilterAttributesId(value)}
+        >
+          <SelectTrigger className="bg-white border-gray-200">
+            <SelectValue placeholder="Select filter attributes" />
+          </SelectTrigger>
+          <SelectContent>
+            {filterAttributes.map((attribute) =>
+              attribute?.id && attribute?.name ? (
+                <SelectItem key={attribute.id} value={attribute.id.toString()}>
+                  {attribute.name}
+                </SelectItem>
+              ) : null
+            )}
+          </SelectContent>
+        </Select>
+      </div>
+    )}
+
+    {/* Filter Options Selector */}
+    {filterOptions.length > 0 && (
+      <div className="space-y-2">
+        <label className="text-sm font-medium text-gray-700">Select Filter Option</label>
+        <Select
+          value={selectedFilterOptionId}
+          onValueChange={(value) => setSelectedFilterOptionId(value)}
+        >
+          <SelectTrigger className="bg-white border-gray-200">
+            <SelectValue placeholder="Select a filter option" />
+          </SelectTrigger>
+          <SelectContent>
+            {filterOptions.map((option) => (
+              <SelectItem key={option.id} value={option.id!.toString()}>
+                {option.value}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+    )}
+  </div>
+)}
+
+{selectionType === 'Package' && (
+  <div className="space-y-4">
+    {/* Package Selector */}
+    <div className="space-y-2">
+      <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+        <Globe2 className="w-4 h-4 text-blue-500" />
+        <span>Select Package</span>
+      </label>
+      <Select
+        value={selectedPackageId} // State variable to track selected package
+        onValueChange={(value) => setSelectedPackageId(value)} // Update the state when a package is selected
+      >
+        <SelectTrigger className="bg-white border-gray-200">
+          <SelectValue placeholder="Select a package" />
+        </SelectTrigger>
+        <SelectContent>
+          {packages.map((pkg) =>
+            pkg?.id && pkg?.name ? (
+              <SelectItem key={pkg.id} value={pkg.id.toString()}>
+                {pkg.name}
+              </SelectItem>
+            ) : null
+          )}
+        </SelectContent>
+      </Select>
+    </div>
+  </div>
+)}
+
+
+<div>
                 <label className="text-sm font-medium text-gray-700">Select User</label>
                 <Select value={String(userId)} onValueChange={(value) => setUserId(Number(value))}>
                   <SelectTrigger className="bg-white border-gray-200">
@@ -218,6 +423,7 @@ const CreateBookingForm: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
+
 
               <div>
                 <label className="text-sm font-medium text-gray-700">Select Provider</label>
@@ -234,6 +440,7 @@ const CreateBookingForm: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
+
 
               {userId && (
                 <div>
@@ -256,101 +463,118 @@ const CreateBookingForm: React.FC = () => {
                 </div>
               )}
 
-              <div>
-                <label className="text-sm font-medium text-gray-700">Order Number</label>
+              {/* Service Date */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Service Date</label>
                 <Input
-                  value={orderNumber}
-                  onChange={(e) => setOrderNumber(e.target.value)}
-                  placeholder="Enter order number"
+                  type="date"
+                  value={serviceDate}
+                  onChange={(e) => setServiceDate(e.target.value)}
                   required
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-700">Booking Date</label>
+              {/* Service Time */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Service Time</label>
                 <Input
-                  type="datetime-local"
-                  value={bookingDate}
-                  onChange={(e) => setBookingDate(e.target.value)}
+                  type="time"
+                  value={serviceTime}
+                  onChange={(e) => setServiceTime(e.target.value)}
                   required
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-700">Selection Type</label>
-                <Select value={selectionType} onValueChange={(value) => setSelectionType(value)}>
-                  <SelectTrigger className="bg-white border-gray-200">
-                    <SelectValue placeholder="Select Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Category">Category</SelectItem>
-                    <SelectItem value="Subcategory">Subcategory</SelectItem>
-                    <SelectItem value="Ratecard">Ratecard</SelectItem>
-                    <SelectItem value="Package">Package</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {selectionType && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Select {selectionType}</label>
-                  <Select value={String(selectedItemId)} onValueChange={(value) => setSelectedItemId(Number(value))}>
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder={`Select ${selectionType}`} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {options.map((option) => (
-                        <SelectItem key={option.id} value={String(option.id)}>
-                          {option.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              <div>
-                <label className="text-sm font-medium text-gray-700">Quantity</label>
+              {/* Place to Supply */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Place to Supply</label>
                 <Input
-                  type="number"
-                  value={quantity}
-                  onChange={(e) => setQuantity(Number(e.target.value))}
-                  placeholder="Enter quantity"
+                  type="text"
+                  placeholder="Enter supply location"
+                  value={placeToSupply}
+                  onChange={(e) => setPlaceToSupply(e.target.value)}
+                  required
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-700">Base Price</label>
+              {/* Place to Deliver */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Place to Deliver</label>
                 <Input
-                  type="number"
-                  value={basePrice}
-                  onChange={(e) => setBasePrice(Number(e.target.value))}
-                  placeholder="Enter base price"
+                  type="text"
+                  placeholder="Enter delivery location"
+                  value={placeToDeliver}
+                  onChange={(e) => setPlaceToDeliver(e.target.value)}
+                  required
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-700">Total Amount</label>
+              {/* Razorpay Order ID */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Razorpay Order ID</label>
                 <Input
-                  type="number"
-                  value={totalAmount}
-                  onChange={(e) => setTotalAmount(Number(e.target.value))}
-                  placeholder="Enter total amount"
+                  type="text"
+                  placeholder="Enter Razorpay order ID"
+                  value={razorpayOrderId}
+                  onChange={(e) => setRazorpayOrderId(e.target.value)}
+                  required
                 />
               </div>
-            </CardContent>
 
-            <CardFooter>
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Save Booking
-              </Button>
-            </CardFooter>
-          </form>
+              {/* Invoice Number */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Invoice Number</label>
+                <Input
+                  type="text"
+                  placeholder="Enter invoice number"
+                  value={invoiceNumber}
+                  onChange={(e) => setInvoiceNumber(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Advance Receipt Number */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Advance Receipt Number</label>
+                <Input
+                  type="text"
+                  placeholder="Enter advance receipt number"
+                  value={advanceReceiptNumber}
+                  onChange={(e) => setAdvanceReceiptNumber(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Transaction ID */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Transaction ID</label>
+                <Input
+                  type="text"
+                  placeholder="Enter transaction ID"
+                  value={transactionId}
+                  onChange={(e) => setTransactionId(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div className="flex space-x-3 pt-6">
+                <Button className="w-100 flex-1 h-11 bg-primary" disabled={isSubmitting} type="submit">
+                  {isSubmitting ? (
+                    <div className="flex items-center justify-center space-x-2">
+                      <span className="loader" />
+                      <span>Saving...</span>
+                    </div>
+                  ) : (
+                    <span>Save Rate Card</span>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
         </Card>
       </div>
     </div>
   );
 };
 
-export default CreateBookingForm;
+export default AddBookingForm;
