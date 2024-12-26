@@ -218,20 +218,20 @@ const EditPromocodeForm: React.FC = () => {
     <span>Select Provider</span>
   </label>
   <Select
-    value={providerId!.toString()}
+   value={providerId ?? ''}
     onValueChange={(value) => setProviderId(value)}
   >
     <SelectTrigger className="bg-white border-gray-200">
       <SelectValue placeholder="Select a provider" />
     </SelectTrigger>
     <SelectContent>
-      {providers.map((provider) =>
-        provider?.id && provider?.first_name ? (
-          <SelectItem key={provider.id} value={provider.id.toString()}>
-            {provider.first_name}
-          </SelectItem>
-        ) : null
-      )}
+       {providers.map((provider) =>
+                            provider?.id && provider?.first_name ? (
+                              <SelectItem key={provider.id} value={provider.id.toString()}>
+                                {provider.first_name}
+                              </SelectItem>
+                            ) : null
+                          )}
     </SelectContent>
   </Select>
 </div>
