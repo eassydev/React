@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/components/ui/table';
 import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Download, Copy, Printer } from 'lucide-react';
-import { fetchRateCards, deleteRateCard, exportRatecard } from '@/lib/api';
+import { fetchRateCards,downloadSampleCSV, deleteRateCard, exportRatecard } from '@/lib/api';
 import Link from 'next/link';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { useToast } from "@/hooks/use-toast";
@@ -50,7 +50,7 @@ const RateCardList = () => {
         description: 'Rate Card deleted successfully',
         variant: 'success',
       });
-      fetchRateCardsData(pagination.pageIndex + 1, pagination.pageSize, filterStatus);
+      fetchRateCardsData(pagination.pageIndex + 1, pagination.pageSize);
     } catch (error) {
       toast({
         title: 'Error',
@@ -75,6 +75,17 @@ const RateCardList = () => {
       setIsExporting(false);
     }
   };
+
+  const handleSampleExport = async () => {
+    try {
+      await   downloadSampleCSV();
+    } catch (error) {
+     
+    } finally {
+    }
+  };
+
+
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFilterStatus(e.target.value);
@@ -232,6 +243,13 @@ const RateCardList = () => {
           </CardHeader>
 
           <CardContent className="overflow-x-auto">
+          <Button onClick={handleSampleExport}><Download className="w-4 h-4 mx-2" />Sample CSV</Button>
+            <Button asChild  >
+  <Link href="/admin/rate-card/import">Import</Link>
+</Button>
+<Button asChild variant="outline">
+  <Link href="/admin/rate-card/update-batch">Update in Batch</Link>
+</Button>
             <Table>
               <TableHeader>
                 {rateCardTable.getHeaderGroups().map((headerGroup) => (

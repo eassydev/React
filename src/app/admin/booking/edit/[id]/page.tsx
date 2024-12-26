@@ -42,6 +42,7 @@ const EditBookingForm: React.FC = () => {
   const [users, setUsers] = useState<{ id: number; name: string }[]>([]);
   const [addresses, setAddresses] = useState<{ id: number; full_address: string }[]>([]);
   const [deliveryAddressId, setDeliveryAddressId] = useState<number | null>(null);
+  const [status, setStatus] = useState<string>('accepted');
 
   const { toast } = useToast();
 
@@ -158,6 +159,7 @@ const EditBookingForm: React.FC = () => {
         setInvoiceNumber(booking.invoice_number ?? '');
         setAdvanceReceiptNumber(booking.advance_receipt_number ?? '');
         setTransactionId(booking.transaction_id ?? '');
+        setStatus(booking.status || 'accepted');
 
         if (booking.category_id) {
           // Load and set category
@@ -291,6 +293,7 @@ const EditBookingForm: React.FC = () => {
       user_id: userId, // Include selected user
       provider_id: providerId, // Include selected provider
       delivery_address_id: deliveryAddressId, // Include selected delivery address
+      status,
     };
   
     // Add category or package-specific data based on selectionType
@@ -645,6 +648,25 @@ const EditBookingForm: React.FC = () => {
                   required
                 />
               </div>
+
+<div className="space-y-2">
+  <label className="text-sm font-medium text-gray-700">Status</label>
+  <select
+    name="status"
+    id="statusSelect"
+    className="form-control bg-white border-gray-200 p-2 rounded"
+    value={status}
+    onChange={(e) => setStatus(e.target.value)}
+  >
+    <option value="Completed">Completed</option>
+    <option value="Cancelled">Cancelled</option>
+    <option value="Pending">Pending</option>
+    <option value="Accepted">Accepted</option>
+    <option value="Running">Running</option>
+    <option value="Initiated">Initiated</option>
+  </select>
+</div>
+
 
               <div className="flex space-x-3 pt-6">
                 <Button className="w-100 flex-1 h-11 bg-primary" disabled={isSubmitting} type="submit">

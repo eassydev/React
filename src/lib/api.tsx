@@ -478,6 +478,30 @@ export interface QuickService {
   active: boolean; // Indicates if the role is active
   category_ids: string[]; // Array of category IDs
 }
+
+
+// Define the structure of the Staff object
+export interface Staff {
+  id?: string; // Auto-incremented primary key
+  parent_id: string; // Foreign key referencing the Provider
+  first_name: string; // First name of the staff
+  last_name?: string; // Optional last name of the staff
+  gender?: 'male' | 'female' | 'other'; // Enum for gender
+  email?: string; // Optional email address of the staff
+  phone: string; // Required phone number
+  adhaar_card_front?: File | null; // Aadhaar card front image
+  adhar_card_number:string;
+  pan_number:string;
+  adhaar_card_back?: File | null; // Aadhaar card back image
+  pan_card?: File | null; // PAN card image
+  designation?: string; // Designation or role of the staff member
+  active: boolean; // Indicates if the staff is active
+  created_at?: number; // UNIX timestamp for creation
+  updated_at?: number; // UNIX timestamp for last update
+  deleted_at?: number | null; // UNIX timestamp for soft delete
+}
+
+
 // Define the structure of the API response
 interface ApiResponse {
   status: boolean;
@@ -1724,6 +1748,36 @@ export const restoreUser = async (id: string): Promise<ApiResponse> => {
 
 
 
+export const fetchProvidersByFilters = async (
+  categoryId?: any,
+  subcategoryId?: any,
+  filterAttributeId?: any,
+  filterOptionId?: any
+) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/rate-card/provider', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      params: {
+         categoryId,
+         subcategoryId,
+         filterAttributeId,
+         filterOptionId,
+      },
+    });
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch providers.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch providers.');
+  }
+};
+
+
 // Fetch all providers with optional pagination
 export const fetchAllProviders = async (page = 1, size = 10, status: string = "all") => {
   try {
@@ -1762,34 +1816,6 @@ export const fetchAllProvidersWithoupagination = async (): Promise<Provider[]> =
 };
 
 
-export const fetchProvidersByFilters = async (
-  categoryId?: any,
-  subcategoryId?: any,
-  filterAttributeId?: any,
-  filterOptionId?: any
-) => {
-  try {
-    const token = getToken();
-    const response = await apiClient.get('/rate-card/provider', {
-      headers: {
-        'admin-auth-token': token || '',
-      },
-      params: {
-         categoryId,
-         subcategoryId,
-         filterAttributeId,
-         filterOptionId,
-      },
-    });
-    if (response.data.status) {
-      return response.data.data;
-    } else {
-      throw new Error(response.data.message || 'Failed to fetch providers.');
-    }
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch providers.');
-  }
-};
 
 
 // Fetch a specific provider by ID
@@ -3954,5 +3980,259 @@ export const exportProvider = async (): Promise<void> => {
   } catch (error) {
     console.error('Error exporting categories:', error);
     throw new Error('Failed to export categories');
+  }
+};
+
+
+
+export const exportStaff = async (): Promise<void> => {
+  try {
+    const token = getToken(); // Retrieve the admin-auth-token
+
+    const response: AxiosResponse = await apiClient.get('/staff/export', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      responseType: 'blob', // Treat the response as a binary file
+    });
+
+    // Generate a unique filename
+    const uniqueFilename = generateUniqueFilename('staff', 'xlsx');
+
+    // Create a downloadable link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', uniqueFilename); // Unique filename
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Error exporting staff:', error);
+    throw new Error('Failed to export staff');
+  }
+};
+
+
+// Fetch all staff with optional pagination
+export const fetchAllStaff = async (providerId: string, page = 1, size = 10, status: string = "all") => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/staff', {
+      params: { provider_id: providerId, page, size, status },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    if (response.data.status) {
+      return response.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch staff.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch staff.');
+  }
+};
+
+// Fetch all staff without pagination
+export const fetchAllStaffWithoutPagination = async (providerId: string): Promise<Staff[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/staff/all', {
+      params: { provider_id: providerId },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch staff.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch staff.');
+  }
+};
+
+// Fetch a specific staff member by ID
+export const fetchStaffById = async (id: string): Promise<Staff> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/staff/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch staff member.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch staff member.');
+  }
+};
+
+// Create a new staff member
+export const createStaff = async (staff: Staff): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const formData = new FormData();
+
+    // Append fields dynamically
+    formData.append('parent_id', staff.parent_id);
+
+    formData.append('first_name', staff.first_name);
+    if (staff.last_name) formData.append('last_name', staff.last_name);
+    if (staff.gender) formData.append('gender', staff.gender);
+    if (staff.email) formData.append('email', staff.email);
+    formData.append('phone', staff.phone);
+    if (staff.designation) formData.append('designation', staff.designation);
+    if (staff.adhaar_card_front) formData.append('adhaarCardFront', staff.adhaar_card_front);
+    if (staff.adhaar_card_back) formData.append('adhaarCardBack', staff.adhaar_card_back);
+    if (staff.pan_card) formData.append('panCard', staff.pan_card);
+
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/staff', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create staff member.');
+  }
+};
+
+// Update an existing staff member
+export const updateStaff = async (id: string, staff: Staff): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const formData = new FormData();
+
+    // Append fields dynamically
+    formData.append('first_name', staff.first_name);
+    if (staff.last_name) formData.append('last_name', staff.last_name);
+    if (staff.gender) formData.append('gender', staff.gender);
+    if (staff.email) formData.append('email', staff.email);
+    formData.append('phone', staff.phone);
+    if (staff.designation) formData.append('designation', staff.designation);
+    if (staff.adhaar_card_front) formData.append('adhaarCardFront', staff.adhaar_card_front);
+    if (staff.adhaar_card_back) formData.append('adhaarCardBack', staff.adhaar_card_back);
+    if (staff.pan_card) formData.append('panCard', staff.pan_card);
+
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/staff/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update staff member.');
+  }
+};
+
+// Delete (soft-delete) a staff member by ID
+export const deleteStaff = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/staff/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete staff member.');
+  }
+};
+
+
+
+
+// Import rate cards from a CSV or Excel file
+export const importRateCards = async (file: File): Promise<void> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = getToken();
+    const response: AxiosResponse<{ message: string }> = await apiClient.post('/rate-card/import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.status === 200) {
+      console.log(response.data.message || 'Rate cards imported successfully.');
+    } else {
+      throw new Error(response.data.message || 'Failed to import rate cards.');
+    }
+  } catch (error: any) {
+    console.error('Error importing rate cards:', error.message || error);
+    throw new Error(error.response?.data?.message || 'Failed to import rate cards.');
+  }
+};
+
+
+export const downloadSampleCSV = async (): Promise<void> => {
+  try {
+    const token = getToken(); // Retrieve the admin-auth-token
+
+    const response: AxiosResponse = await apiClient.get('/rate-card/sample', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      responseType: 'blob', // Treat the response as a binary file
+    });
+
+    // Generate a unique filename for the sample file
+    const uniqueFilename = generateUniqueFilename('rate_card_sample', 'xlsx');
+
+    // Create a downloadable link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', uniqueFilename); // Unique filename
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Error downloading sample CSV:', error);
+    throw new Error('Failed to download sample CSV');
+  }
+};
+
+
+
+// Import rate cards from a CSV or Excel file
+export const updateRateCardsCsv = async (file: File): Promise<void> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = getToken();
+    const response: AxiosResponse<{ message: string }> = await apiClient.post('/rate-card/update', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.status === 200) {
+      console.log(response.data.message || 'Rate cards updated successfully.');
+    } else {
+      throw new Error(response.data.message || 'Failed to update rate cards.');
+    }
+  } catch (error: any) {
+    console.error('Error update rate cards:', error.message || error);
+    throw new Error(error.response?.data?.message || 'Failed to update rate cards.');
   }
 };

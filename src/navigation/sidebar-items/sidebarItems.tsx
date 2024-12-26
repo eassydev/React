@@ -111,6 +111,11 @@ export const sidebarItems: SidebarItem[] = [
     route: `${basePath}/provider`,
   },
   {
+    title: "Staff",
+    icon: ListCheckIcon,
+    route: `${basePath}/staff`,
+  },
+  {
     title: "Bank",
     icon: ListCheckIcon,
     route: `${basePath}/bank`,
