@@ -4204,7 +4204,7 @@ export const downloadSampleCSV = async (): Promise<void> => {
 
 
 // Import rate cards from a CSV or Excel file
-export const updateRateCards = async (file: File): Promise<void> => {
+export const updateRateCardsCsv = async (file: File): Promise<void> => {
   try {
     const formData = new FormData();
     formData.append('file', file);
