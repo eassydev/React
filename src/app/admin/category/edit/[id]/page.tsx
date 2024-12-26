@@ -11,7 +11,7 @@ import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Save, ImageIcon, Globe2, Type, FileInput, MapPin, Download, FileText, Loader2, Plus, Trash2 } from 'lucide-react';
 import {
-  fetchCategoryById,fetchAllGstRates, updateCategory, Category, Location,ExcludeImage, Attribute,ServiceDetail,IncludeItem
+  fetchCategoryById, fetchAllGstRates, updateCategory, Category, Location, ExcludeImage, Attribute, ServiceDetail, IncludeItem
 } from '@/lib/api'; // Import interfaces and API functions
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
@@ -53,7 +53,7 @@ const CategoryEdit: React.FC = () => {
   const [categoryName, setCategoryName] = useState<string>('');
   const [serviceTime, setServiceTime] = useState<string>('');
   const [sgst, setSgst] = useState<number | null>(null);
-const [cgst, setCgst] = useState<number | null>(null);
+  const [cgst, setCgst] = useState<number | null>(null);
   const [igstTax, setIgstTax] = useState<number | null>(null);
   const [sacCode, setSacCode] = useState<string>('');
   const [hstRates, setHstRates] = useState<any[]>([]);
@@ -66,7 +66,7 @@ const [cgst, setCgst] = useState<number | null>(null);
   const [excludeImages, setExcludeImages] = useState<File[]>([]);
   const [includeItems, setIncludeItems] = useState<IncludeItem[]>([]);
   const [showIncludeSection, setShowIncludeSection] = useState(false);
-  
+
   const { toast } = useToast();
 
   useEffect(() => {
@@ -95,7 +95,7 @@ const [cgst, setCgst] = useState<number | null>(null);
   const fetchCategoryDetails = async (id: string) => {
     try {
       const categoryData: Category = await fetchCategoryById(id);
-  
+
       // Set all fields from API response
       setCategoryName(categoryData.name || '');
       setOptionalHeading(categoryData.optional_heading || '');
@@ -107,10 +107,10 @@ const [cgst, setCgst] = useState<number | null>(null);
       setSgst(categoryData.sgst_tax || null);
       setCgst(categoryData.cgst_tax || null);
       setIgstTax(categoryData.igst_tax ?? null); // Set IGST tax field
-      console.log("categoryData.igst_tax",categoryData.igst_tax)
+      console.log("categoryData.igst_tax", categoryData.igst_tax)
       setSacCode(categoryData.sac_code || ''); // Set SAC code field
-      setExcludeHeading(categoryData.exclude_heading || ''); 
-      setExcludeDescription(categoryData.exclude_description || ''); 
+      setExcludeHeading(categoryData.exclude_heading || '');
+      setExcludeDescription(categoryData.exclude_description || '');
       // Handle Exclude Items
       if (categoryData.excludeItems) {
         const excludeItems = categoryData.excludeItems.map((item) => item.item);
@@ -120,7 +120,7 @@ const [cgst, setCgst] = useState<number | null>(null);
       }
       setShowExcludeSection((categoryData.excludeItems?.length || 0) > 0)
 
-  
+
       // Handle Exclude Images
       if (categoryData.excludedImages) {
         const excludeImages = categoryData.excludedImages.map((image) => ({
@@ -128,11 +128,11 @@ const [cgst, setCgst] = useState<number | null>(null);
         }));
         setExcludeImages(
           excludeImages ? excludeImages.map((item) => item.image) : []
-        );   
-         } else {
+        );
+      } else {
         setExcludeImages([]);
       }
-  console.log(categoryData.excludedImages,"categoryData.excludeImages");
+      console.log(categoryData.excludedImages, "categoryData.excludeImages");
       // Handle Include Items
       setIncludeItems(categoryData.includeItems || []);
       setShowIncludeSection((categoryData.includeItems?.length || 0) > 0)
@@ -142,7 +142,7 @@ const [cgst, setCgst] = useState<number | null>(null);
       } else {
         setImagePreview(null);
       }
-  
+
       setLocationMethod(categoryData.location_method || 'excel');
       setLocationType(categoryData.location_type || 'specific');
     } catch (error) {
@@ -153,7 +153,7 @@ const [cgst, setCgst] = useState<number | null>(null);
       });
     }
   };
-  
+
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -177,7 +177,7 @@ const [cgst, setCgst] = useState<number | null>(null);
       },
     ]);
   };
-  
+
 
   const updateAttribute = (index: number, field: string, value: string) => {
     const updatedAttributes = [...attributes];
@@ -189,8 +189,8 @@ const [cgst, setCgst] = useState<number | null>(null);
     setServiceDetails((prev) => [...prev, { title: "", description: "" }]);
   };
 
-   // Add an option to a specific attribute
-   const addOption = (attrIndex: number) => {
+  // Add an option to a specific attribute
+  const addOption = (attrIndex: number) => {
     const updatedAttributes = [...attributes];
     updatedAttributes[attrIndex].options.push({
       id: Date.now(), // Assign a unique ID
@@ -198,7 +198,7 @@ const [cgst, setCgst] = useState<number | null>(null);
     });
     setAttributes(updatedAttributes);
   };
-  
+
 
   // Update an option for a specific attribute
   const updateOption = (attrIndex: number, optIndex: number, value: string) => {
@@ -209,7 +209,7 @@ const [cgst, setCgst] = useState<number | null>(null);
     };
     setAttributes(updatedAttributes);
   };
-  
+
 
   // Remove an option from a specific attribute
   const removeOption = (attrIndex: number, optIndex: number) => {
@@ -230,7 +230,7 @@ const [cgst, setCgst] = useState<number | null>(null);
       return updatedServiceDetails;
     });
   };
-  
+
 
   const removeServiceDetail = (index: number) => {
     setServiceDetails((prev) => prev.filter((_, i) => i !== index));
@@ -240,7 +240,7 @@ const [cgst, setCgst] = useState<number | null>(null);
   const addIncludeItem = () => {
     setIncludeItems((prev) => [...prev, { title: "", description: "" }]);
   };
-  
+
   // Add a new exclude item
   const addExcludeItem = () => {
     setExcludeItems((prev) => [...prev, ""]);
@@ -345,7 +345,7 @@ const [cgst, setCgst] = useState<number | null>(null);
     const formattedExcludeItems = excludeItems.map((item) => ({
       item, // Wrap each item in an object with the `item` field
     }));
-  
+
     // Prepare exclude images
     const formattedExcludeImages: ExcludeImage[] = excludeImages.map((file) => ({
       image_path: file, // Wrap each file in an object with the `image` property
@@ -355,8 +355,8 @@ const [cgst, setCgst] = useState<number | null>(null);
       image: categoryImage,
       optional_heading: optionalHeading,
       locations,
-      exclude_heading:excludeHeading,
-      exclude_description:excludeDescription,
+      exclude_heading: excludeHeading,
+      exclude_description: excludeDescription,
       location_type: locationType,
       service_time: serviceTime,
       active: isActive,
@@ -368,7 +368,7 @@ const [cgst, setCgst] = useState<number | null>(null);
       cgst_tax: cgst,
       sac_code: sacCode,
       excludeItems: formattedExcludeItems, // Add exclude items
-      includeItems:includeItems,
+      includeItems: includeItems,
       excludedImages: formattedExcludeImages,
     };
 
@@ -429,8 +429,8 @@ const [cgst, setCgst] = useState<number | null>(null);
                 />
               </div>
 
-                {/* OPTIONAL Field */}
-             <div className="space-y-2">
+              {/* OPTIONAL Field */}
+              <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <Type className="w-4 h-4 text-blue-500" />
                   <span>Optional heading</span>
@@ -459,7 +459,7 @@ const [cgst, setCgst] = useState<number | null>(null);
                 />
               </div>
 
-              
+
 
               {/* Category Image Field */}
               <div className="space-y-2">
@@ -475,74 +475,74 @@ const [cgst, setCgst] = useState<number | null>(null);
                 )}
               </div>
 
-             {/* GST Dropdowns */}
-<div className="grid grid-cols-3 gap-4">
-  {/* IGST Dropdown */}
-  <div className="space-y-2">
-    <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-      <span>IGST (%)</span>
-    </label>
-    <Select
-      value={igstTax !== null ? igstTax.toString() : ""}
-      onValueChange={(value) => setIgstTax(parseInt(value))}
-    >
-      <SelectTrigger className="bg-white border-gray-200">
-        <SelectValue placeholder="Select IGST" />
-      </SelectTrigger>
-      <SelectContent>
-        {hstRates.map((rate) => (
-          <SelectItem key={`igst-${rate.id}`} value={rate.IGST.toString()}>
-            {rate.IGST}%
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  </div>
+              {/* GST Dropdowns */}
+              <div className="grid grid-cols-3 gap-4">
+                {/* IGST Dropdown */}
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                    <span>IGST (%)</span>
+                  </label>
+                  <Select
+                    value={igstTax !== null ? igstTax.toString() : ""}
+                    onValueChange={(value) => setIgstTax(parseInt(value))}
+                  >
+                    <SelectTrigger className="bg-white border-gray-200">
+                      <SelectValue placeholder="Select IGST" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {hstRates.map((rate) => (
+                        <SelectItem key={`igst-${rate.id}`} value={rate.IGST.toString()}>
+                          {rate.IGST}%
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-  {/* SGST Dropdown */}
-  <div className="space-y-2">
-    <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-      <span>SGST (%)</span>
-    </label>
-    <Select
-      value={sgst?.toString() || ""}
-      onValueChange={(value) => setSgst(parseInt(value))}
-    >
-      <SelectTrigger className="bg-white border-gray-200">
-        <SelectValue placeholder="Select SGST" />
-      </SelectTrigger>
-      <SelectContent>
-        {hstRates.map((rate) => (
-          <SelectItem key={`sgst-${rate.id}`} value={rate.SGST.toString()}>
-            {rate.SGST}%
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  </div>
+                {/* SGST Dropdown */}
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                    <span>SGST (%)</span>
+                  </label>
+                  <Select
+                    value={sgst?.toString() || ""}
+                    onValueChange={(value) => setSgst(parseInt(value))}
+                  >
+                    <SelectTrigger className="bg-white border-gray-200">
+                      <SelectValue placeholder="Select SGST" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {hstRates.map((rate) => (
+                        <SelectItem key={`sgst-${rate.id}`} value={rate.SGST.toString()}>
+                          {rate.SGST}%
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-  {/* CGST Dropdown */}
-  <div className="space-y-2">
-    <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-      <span>CGST (%)</span>
-    </label>
-    <Select
-      value={cgst?.toString() || ""}
-      onValueChange={(value) => setCgst(parseInt(value))}
-    >
-      <SelectTrigger className="bg-white border-gray-200">
-        <SelectValue placeholder="Select CGST" />
-      </SelectTrigger>
-      <SelectContent>
-        {hstRates.map((rate) => (
-          <SelectItem key={`cgst-${rate.id}`} value={rate.CGST.toString()}>
-            {rate.CGST}%
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  </div>
-</div>
+                {/* CGST Dropdown */}
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                    <span>CGST (%)</span>
+                  </label>
+                  <Select
+                    value={cgst?.toString() || ""}
+                    onValueChange={(value) => setCgst(parseInt(value))}
+                  >
+                    <SelectTrigger className="bg-white border-gray-200">
+                      <SelectValue placeholder="Select CGST" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {hstRates.map((rate) => (
+                        <SelectItem key={`cgst-${rate.id}`} value={rate.CGST.toString()}>
+                          {rate.CGST}%
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
               {/* SAC Code Field */}
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
@@ -569,263 +569,266 @@ const [cgst, setCgst] = useState<number | null>(null);
                 </div>
               </div>
 
-               {/* Attributes Section */}
-               <div className="space-y-4">
-  <h3 className="text-lg font-semibold">Attributes</h3>
-  {attributes.map((attribute, attrIndex) => (
-    <div key={attrIndex} className="space-y-2 border p-4 rounded-md bg-gray-50">
-      {/* Attribute Name */}
-      <Input
-        placeholder="Attribute Name"
-        value={attribute.name}
-        onChange={(e) => updateAttribute(attrIndex, "name", e.target.value)}
-        className="h-10"
-      />
+              {/* Attributes Section */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Attributes</h3>
+                {attributes.map((attribute, attrIndex) => (
+                  <div key={attrIndex} className="space-y-2 border p-4 rounded-md bg-gray-50">
+                    {/* Attribute Name */}
+                    <Input
+                      placeholder="Attribute Name"
+                      value={attribute.name}
+                      onChange={(e) => updateAttribute(attrIndex, "name", e.target.value)}
+                      className="h-10"
+                    />
 
-      {/* Attribute Type */}
-      <Select
-        value={attribute.type}
-        onValueChange={(value) => updateAttribute(attrIndex, "type", value)}
-      >
-        <SelectTrigger className="bg-white border-gray-200">
-          <SelectValue placeholder="Select Type" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="list">List</SelectItem>
-          <SelectItem value="dropdown">Dropdown</SelectItem>
-          <SelectItem value="search">Search</SelectItem>
-        </SelectContent>
-      </Select>
+                    {/* Attribute Type */}
+                    <Select
+                      value={attribute.type}
+                      onValueChange={(value) => updateAttribute(attrIndex, "type", value)}
+                    >
+                      <SelectTrigger className="bg-white border-gray-200">
+                        <SelectValue placeholder="Select Type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="list">List</SelectItem>
+                        <SelectItem value="dropdown">Dropdown</SelectItem>
+                        <SelectItem value="search">Search</SelectItem>
+                      </SelectContent>
+                    </Select>
 
-      {/* Options Management */}
-        <div className="space-y-2">
-          <h4 className="text-sm font-medium">Options</h4>
-          {attribute.options.map((option, optIndex) => (
-            <div key={optIndex} className="flex items-center space-x-2">
-              <Input
-  placeholder={`Option ${optIndex + 1}`}
-      value={option.value || ''} // Safely access the `value` property
-  onChange={(e) => updateOption(attrIndex, optIndex, e.target.value)}
-  className="h-10 flex-1"
-/>
-              <Button
-                type="button"
-                variant="ghost"
-                className="p-2 text-red-500"
-                onClick={() => removeOption(attrIndex, optIndex)}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
-          <Button
-            type="button"
-            variant="outline"
-            className="mt-2 flex items-center"
-            onClick={() => addOption(attrIndex)}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Option
-          </Button>
-        </div>
-    
-
-      {/* Remove Attribute */}
-      <Button
-        type="button"
-        variant="ghost"
-        className="mt-4 flex items-center text-red-500"
-        onClick={() => removeAttribute(attrIndex)}
-      >
-        <Trash2 className="w-4 h-4 mr-2" />
-        Remove Attribute
-      </Button>
-    </div>
-  ))}
-
-  <Button type="button" variant="outline" onClick={addAttribute}>
-    <Plus className="w-4 h-4 mr-2" />
-    Add Attribute
-  </Button>
-</div>
+                    {/* Options Management */}
+                    <div className="space-y-2">
+                      <h4 className="text-sm font-medium">Options</h4>
+                      {attribute.options.map((option, optIndex) => (
+                        <div key={optIndex} className="flex items-center space-x-2">
+                          <Input
+                            placeholder={`Option ${optIndex + 1}`}
+                            value={option.value || ''} // Safely access the `value` property
+                            onChange={(e) => updateOption(attrIndex, optIndex, e.target.value)}
+                            className="h-10 flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="p-2 text-red-500"
+                            onClick={() => removeOption(attrIndex, optIndex)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="mt-2 flex items-center"
+                        onClick={() => addOption(attrIndex)}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Option
+                      </Button>
+                    </div>
 
 
-      {/* Service Details */}
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium">Service Details</h3>
-        {serviceDetails.map((service, index) => (
-          <div key={index} className="space-y-2">
-            <Input
-              placeholder="Service Title"
-              value={service.title}
-              onChange={(e) => updateServiceDetail(index, "title", e.target.value)}
-            />
-            <ReactQuill
-              value={service.description}
-              onChange={(value) => updateServiceDetail(index, "description", value)}
-              modules={quillModules}
-            />
-             {/* Remove Service Detail */}
-             <Button
-              type="button"
-              variant="ghost"
-              className="mt-4 flex items-center text-red-500"
-              onClick={() => removeServiceDetail(index)}
-            >
-              <Trash2 className="w-4 h-4 mr-2" />
-              Remove Service Detail
-            </Button>
-          </div>
-          
-        ))}
-        <Button type="button" onClick={addServiceDetail}>Add Service Detail</Button>
-      </div>
+                    {/* Remove Attribute */}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="mt-4 flex items-center text-red-500"
+                      onClick={() => removeAttribute(attrIndex)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Remove Attribute
+                    </Button>
+                  </div>
+                ))}
 
-      <div className="space-y-4">
-
-      <Button type="button" onClick={() => setShowExcludeSection(!showExcludeSection)} className="mb-4">
-        {showExcludeSection ? "Hide Exclude Section" : "Show Exclude Section"}
-      </Button>
-
-      {showExcludeSection && (
-        <div className="space-y-6 border p-4 rounded-md bg-gray-50">
-          {/* Exclude Heading */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Exclude Heading</label>
-            <Input
-              placeholder="Enter heading"
-              value={excludeHeading}
-              onChange={(e) => setExcludeHeading(e.target.value)}
-            />
-          </div>
-
-          {/* Exclude Description */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Exclude Description</label>
-            <Input
-              placeholder="Enter description"
-              value={excludeDescription}
-              onChange={(e) => setExcludeDescription(e.target.value)}
-            />
-          </div>
-
-          {/* Multiple Image Upload */}
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Upload Images</label>
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={(e) => handleExcludeImageUpload(e.target.files)}
-            />
-           <div className="flex flex-wrap gap-4 mt-4">
-  {excludeImages.map((image, index) => (
-    <div key={index} className="relative">
-      <img
-        src={image instanceof File ? URL.createObjectURL(image) : image}
-        alt={`Exclude Image ${index + 1}`}
-        className="w-24 h-24 object-cover rounded-md"
-      />
-      <button
-        type="button"
-        className="absolute top-1 right-1 bg-white rounded-full p-1 text-red-500"
-        onClick={() => removeImage(index)}
-      >
-        <Trash2 className="w-4 h-4" />
-      </button>
-    </div>
-  ))}
-</div>
-
-          </div>
-
-          {/* Exclude Items */}
-          <div className="space-y-4">
-            <h3 className="text-lg font-semibold">Exclude Items</h3>
-            {excludeItems.map((item, index) => (
-              <div
-                key={index}
-                className="flex items-center space-x-3 bg-gray-100 p-2 rounded-md"
-              >
-                <Input
-                  placeholder={`Item ${index + 1}`}
-                  value={item}
-                  onChange={(e) => updateExcludeItem(index, e.target.value)}
-                  className="h-10 flex-1"
-                />
-                <Button
-                  type="button"
-                  variant="ghost"
-                  className="p-2 text-red-500"
-                  onClick={() => removeExcludeItem(index)}
-                >
-                  <Trash2 className="w-4 h-4" />
+                <Button type="button" variant="outline" onClick={addAttribute}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Attribute
                 </Button>
               </div>
-            ))}
-
-            {/* Add Exclude Item Button */}
-            <Button
-              type="button"
-              variant="outline"
-              className="flex items-center"
-              onClick={addExcludeItem}
-            >
-              <Plus className="w-4 h-4 mr-2" />
-              Add Exclude Item
-            </Button>
-          </div>
-        </div>
-      )}
-      </div>
 
 
+              {/* Service Details */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Service Details</h3>
+                {serviceDetails.map((service, index) => (
+                  <div key={index} className="space-y-2">
+                    <Input
+                      placeholder="Service Title"
+                      value={service.title}
+                      onChange={(e) => updateServiceDetail(index, "title", e.target.value)}
+                    />
+                     <div className="space-y-2" style={{ height: "250px" }}>
+                    <ReactQuill
+                      value={service.description}
+                      onChange={(value) => updateServiceDetail(index, "description", value)}
+                      modules={quillModules}
+                      theme="snow"
+                  style={{ height: "200px" }}
+                    />
+                    </div>
+                    {/* Remove Service Detail */}
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      className="mt-4 flex items-center text-red-500"
+                      onClick={() => removeServiceDetail(index)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Remove Service Detail
+                    </Button>
+                  </div>
 
-      <div className="space-y-4">
+                ))}
+                <Button type="button" onClick={addServiceDetail}>Add Service Detail</Button>
+              </div>
 
-<Button type="button" onClick={() => setShowIncludeSection((prev) => !prev)} className="mb-4">
-  {showExcludeSection ? "Hide Include Section" : "Show Include Section"}
-</Button>
+              <div className="space-y-4">
+
+                <Button type="button" onClick={() => setShowExcludeSection(!showExcludeSection)} className="mb-4">
+                  {showExcludeSection ? "Hide Exclude Section" : "Show Exclude Section"}
+                </Button>
+
+                {showExcludeSection && (
+                  <div className="space-y-6 border p-4 rounded-md bg-gray-50">
+                    {/* Exclude Heading */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Exclude Heading</label>
+                      <Input
+                        placeholder="Enter heading"
+                        value={excludeHeading}
+                        onChange={(e) => setExcludeHeading(e.target.value)}
+                      />
+                    </div>
+
+                    {/* Exclude Description */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Exclude Description</label>
+                      <Input
+                        placeholder="Enter description"
+                        value={excludeDescription}
+                        onChange={(e) => setExcludeDescription(e.target.value)}
+                      />
+                    </div>
+
+                    {/* Multiple Image Upload */}
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium">Upload Images</label>
+                      <input
+                        type="file"
+                        accept="image/*"
+                        multiple
+                        onChange={(e) => handleExcludeImageUpload(e.target.files)}
+                      />
+                      <div className="flex flex-wrap gap-4 mt-4">
+                        {excludeImages.map((image, index) => (
+                          <div key={index} className="relative">
+                            <img
+                              src={image instanceof File ? URL.createObjectURL(image) : image}
+                              alt={`Exclude Image ${index + 1}`}
+                              className="w-24 h-24 object-cover rounded-md"
+                            />
+                            <button
+                              type="button"
+                              className="absolute top-1 right-1 bg-white rounded-full p-1 text-red-500"
+                              onClick={() => removeImage(index)}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+
+                    </div>
+
+                    {/* Exclude Items */}
+                    <div className="space-y-4">
+                      <h3 className="text-lg font-semibold">Exclude Items</h3>
+                      {excludeItems.map((item, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center space-x-3 bg-gray-100 p-2 rounded-md"
+                        >
+                          <Input
+                            placeholder={`Item ${index + 1}`}
+                            value={item}
+                            onChange={(e) => updateExcludeItem(index, e.target.value)}
+                            className="h-10 flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="p-2 text-red-500"
+                            onClick={() => removeExcludeItem(index)}
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      ))}
+
+                      {/* Add Exclude Item Button */}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className="flex items-center"
+                        onClick={addExcludeItem}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Exclude Item
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
 
 
-      {/* Include Section */}
-      {showIncludeSection && (
-        <div className="space-y-4 border p-4 rounded-md bg-gray-50">
-          <h3 className="text-lg font-semibold">Include Items</h3>
 
-          {includeItems.map((item, index) => (
-            <div key={index} className="space-y-2">
-              <Input
-                placeholder="Title"
-                value={item.title}
-                onChange={(e) => updateIncludeItem(index, "title", e.target.value)}
-                className="h-10"
-              />
-              <Input
-                placeholder="Description"
-                value={item.description}
-                onChange={(e) => updateIncludeItem(index, "description", e.target.value)}
-                className="h-10"
-              />
-              <Button
-                type="button"
-                variant="ghost"
-                className="p-2 text-red-500"
-                onClick={() => removeIncludeItem(index)}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          ))}
+              <div className="space-y-4">
 
-          <Button type="button" onClick={addIncludeItem} variant="outline" className="mt-2 flex items-center">
-            <Plus className="w-4 h-4 mr-2" />
-            Add More
-          </Button>
-</div>
-         
-      )}
-      </div>
+                <Button type="button" onClick={() => setShowIncludeSection((prev) => !prev)} className="mb-4">
+                  {showIncludeSection ? "Hide Include Section" : "Show Include Section"}
+                </Button>
+
+                {/* Include Section */}
+                {showIncludeSection && (
+                  <div className="space-y-4 border p-4 rounded-md bg-gray-50">
+                    <h3 className="text-lg font-semibold">Include Items</h3>
+
+                    {includeItems.map((item, index) => (
+                      <div key={index} className="space-y-2">
+                        <Input
+                          placeholder="Title"
+                          value={item.title}
+                          onChange={(e) => updateIncludeItem(index, "title", e.target.value)}
+                          className="h-10"
+                        />
+                        <Input
+                          placeholder="Description"
+                          value={item.description}
+                          onChange={(e) => updateIncludeItem(index, "description", e.target.value)}
+                          className="h-10"
+                        />
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          className="p-2 text-red-500"
+                          onClick={() => removeIncludeItem(index)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+                    ))}
+
+                    <Button type="button" onClick={addIncludeItem} variant="outline" className="mt-2 flex items-center">
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add More
+                    </Button>
+                  </div>
+
+                )}
+              </div>
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <Globe2 className="w-4 h-4 text-blue-500" />

@@ -657,22 +657,30 @@ const CategoryForm: React.FC = () => {
                     />
 
                     {/* Service Description */}
+
+                    <div className="space-y-2" style={{ height: "250px" }}>
                     <ReactQuill
-                      value={service.description}
-                      onChange={(value) => updateServiceDetail(serviceIndex, "description", value)}
-                      theme="snow"
-                    />
+                   value={service.description}
+                   onChange={(value) => updateServiceDetail(serviceIndex, "description", value)}
+                  theme="snow"
+                  style={{ height: "200px" }}
+                />
+                </div>
+
+                    
 
                     {/* Remove Service Detail */}
+                    <div className="space-y-5">
                     <Button
                       type="button"
                       variant="ghost"
-                      className="mt-4 flex items-center text-red-500"
+                      className="mt-5 flex items-center text-red-500"
                       onClick={() => removeServiceDetail(serviceIndex)}
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
                       Remove Service Detail
                     </Button>
+                  </div>
                   </div>
                 ))}
 
@@ -783,7 +791,7 @@ const CategoryForm: React.FC = () => {
               <div className="space-y-4">
 
                 <Button type="button" onClick={() => setShowIncludeSection((prev) => !prev)} className="mb-4">
-                  {showExcludeSection ? "Hide Include Section" : "Show Include Section"}
+                  {showIncludeSection ? "Hide Include Section" : "Show Include Section"}
                 </Button>
 
 

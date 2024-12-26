@@ -1137,7 +1137,7 @@ export const createRateCard = async (rateCard: RateCard): Promise<ApiResponse> =
   formData.append('name', rateCard.name);
   formData.append('category_id', rateCard.category_id.toString());
   formData.append('price', rateCard.price.toString());
-  formData.append('active', rateCard.active ? '1' : '0');
+  formData.append('active', rateCard.active ? '0' : '1');
 
   if (rateCard.provider_id) {
     formData.append('provider_id', rateCard.provider_id?.toString() || ''); // Adjusted for subcategory
@@ -1227,34 +1227,24 @@ export const fetchRateCardById = async (id: string): Promise<RateCard> => {
 
 // Function to update an existing rate card
 export const updateRateCard = async (id: string, rateCard: RateCard): Promise<ApiResponse> => {
-  const formData = new FormData();
-
-  formData.append('name', rateCard.name);
-  formData.append('category_id', rateCard.category_id.toString());
-  if (rateCard.provider_id) {
-    formData.append('provider_id', rateCard.provider_id?.toString() || ''); // Adjusted for subcategory
-  }
-  formData.append('price', rateCard.price.toString());
-  formData.append('active', rateCard.active ? '1' : '0');
-
-  if (rateCard.subcategory_id) {
-    formData.append('subcategory_id', rateCard.subcategory_id?.toString() || ''); // Adjusted for subcategory
-  }
-  if (rateCard.filter_attribute_id) {
-    formData.append('filter_attribute_id', rateCard.filter_attribute_id?.toString() || ''); // Adjusted for subcategory
-  }
-  if (rateCard.filter_option_id) {
-    formData.append('filter_option_id', rateCard.filter_option_id?.toString() || ''); // Adjusted for subcategory
-  }
-  if (rateCard.description) {
-    formData.append('description', rateCard.description);
-  }
+  // Build the JSON payload
+  const payload = {
+    name: rateCard.name,
+    category_id: rateCard.category_id,
+    provider_id: rateCard.provider_id || null,
+    price: rateCard.price,
+    active: rateCard.active ? 0 : 1,
+    subcategory_id: rateCard.subcategory_id || null,
+    filter_attribute_id: rateCard.filter_attribute_id || null,
+    filter_option_id: rateCard.filter_option_id || null,
+    description: rateCard.description || '',
+  };
 
   try {
     const token = getToken();
-    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/rate-card/${id}`, formData, {
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/rate-card/${id}`, payload, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        'Content-Type': 'application/json',
         'admin-auth-token': token || '',
       },
     });
@@ -1915,7 +1905,7 @@ export const createVIPPlan = async (vipPlan: VIPPlan): Promise<ApiResponse> => {
   
   formData.append("description", vipPlan.description);
   formData.append("validity_period", vipPlan.validity_period.toString());
-  formData.append("status", vipPlan.status ? "1" : "0");
+  formData.append("status", vipPlan.status ? "0" : "1");
   
   // New fields
   formData.append("platform_fees", vipPlan.platform_fees ? "1" : "0");
@@ -1992,7 +1982,7 @@ export const updateVIPPlan = async (id: string, vipPlan: VIPPlan): Promise<ApiRe
   
   formData.append("description", vipPlan.description);
   formData.append("validity_period", vipPlan.validity_period.toString());
-  formData.append("status", vipPlan.status ? "1" : "0");
+  formData.append("status", vipPlan.status ? "0" : "1");
 
   // New fields
   formData.append("platform_fees", vipPlan.platform_fees ? "1" : "0");
@@ -3719,7 +3709,7 @@ export const createQuickService = async (data: QuickService): Promise<any> => {
   // Append categories_ids as JSON string
   formData.append('category_ids', JSON.stringify(data.category_ids));
   if (data.active !== undefined) {
-    formData.append('active', data.active ? '1' : '0');
+    formData.append('active', data.active ? '0' : '1');
   }
  
   try {
@@ -4214,7 +4204,7 @@ export const downloadSampleCSV = async (): Promise<void> => {
 
 
 // Import rate cards from a CSV or Excel file
-export const updateRateCardsCsv = async (file: File): Promise<void> => {
+export const updateRateCards = async (file: File): Promise<void> => {
   try {
     const formData = new FormData();
     formData.append('file', file);

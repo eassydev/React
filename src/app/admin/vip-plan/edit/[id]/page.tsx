@@ -12,7 +12,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
-import { Save, FileText, Loader2, Tag, DollarSign, Calendar, Settings } from "lucide-react";
+import { Save, FileText, Loader2, Tag, DollarSign, Calendar, Settings, List } from "lucide-react";
 import { fetchVIPPlanById, updateVIPPlan } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useParams } from "next/navigation";
@@ -48,7 +48,10 @@ const EditVIPPlanForm: React.FC = () => {
   const [image, setImage] = useState<File | null>(null);
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
+  const [priceError, setPriceError] = useState("");
+  const [discountPriceError, setDiscountPriceError] = useState("");
+  const [noOfBookingsError, setNoOfBookingsError] = useState("");
+  const [validityPeriodError, setValidityPeriodError] = useState("");
   // Fetch existing VIP plan data by ID
   useEffect(() => {
     const fetchVIPPlan = async () => {
@@ -152,9 +155,8 @@ const EditVIPPlanForm: React.FC = () => {
                   required
                 />
               </div>
-
-              {/* Price Field */}
-              <div className="space-y-2">
+ {/* Price Field */}
+ <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <DollarSign className="w-4 h-4 text-blue-500" />
                   <span>Price</span>
@@ -163,10 +165,15 @@ const EditVIPPlanForm: React.FC = () => {
                   type="number"
                   placeholder="Enter price"
                   value={price}
-                  onChange={(e) => setPrice(e.target.value)}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    setPrice(value.toString());
+                    setPriceError(value < 0 ? "Price cannot be negative" : "");
+                  }}
                   className="h-11"
                   required
                 />
+                {priceError && <p className="text-red-500 text-sm">{priceError}</p>}
               </div>
 
               {/* Discount Price */}
@@ -178,9 +185,14 @@ const EditVIPPlanForm: React.FC = () => {
                   type="number"
                   placeholder="Enter discount price"
                   value={discountPrice}
-                  onChange={(e) => setDiscountPrice(e.target.value)}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    setDiscountPrice(value.toString());
+                    setDiscountPriceError(value < 0 ? "Discount price cannot be negative" : "");
+                  }}
                   className="h-11"
                 />
+                {discountPriceError && <p className="text-red-500 text-sm">{discountPriceError}</p>}
               </div>
 
               {/* Platform Fees Switch */}
@@ -196,35 +208,47 @@ const EditVIPPlanForm: React.FC = () => {
                 />
               </div>
 
+              
+
               {/* Number of Bookings */}
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <List className="w-4 h-4 text-blue-500" />
                   <span>Number of Bookings</span>
                 </label>
                 <Input
                   type="number"
                   placeholder="Enter number of bookings"
                   value={noOfBookings}
-                  onChange={(e) => setNoOfBookings(e.target.value)}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    setNoOfBookings(value.toString());
+                    setNoOfBookingsError(value < 0 ? "Number of bookings cannot be negative" : "");
+                  }}
                   className="h-11"
                   required
                 />
+                {noOfBookingsError && <p className="text-red-500 text-sm">{noOfBookingsError}</p>}
               </div>
 
               {/* Validity Period Field */}
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <Calendar className="w-4 h-4 text-blue-500" />
                   <span>Validity Period (days)</span>
                 </label>
                 <Input
                   type="number"
                   placeholder="Enter validity period"
                   value={validityPeriod}
-                  onChange={(e) => setValidityPeriod(e.target.value)}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    setValidityPeriod(value.toString());
+                    setValidityPeriodError(value < 0 ? "Validity period cannot be negative" : "");
+                  }}
                   className="h-11"
                   required
                 />
+                {validityPeriodError && <p className="text-red-500 text-sm">{validityPeriodError}</p>}
               </div>
 
               {/* Description Field with React-Quill */}

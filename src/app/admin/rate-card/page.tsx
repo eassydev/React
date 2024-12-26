@@ -243,12 +243,12 @@ const RateCardList = () => {
           </CardHeader>
 
           <CardContent className="overflow-x-auto">
-          <Button onClick={handleSampleExport}><Download className="w-4 h-4 mx-2" />Sample CSV</Button>
-            <Button asChild  >
+          <Button className="mx-2" onClick={handleSampleExport}><span>Sample CSV</span></Button>
+            <Button >
   <Link href="/admin/rate-card/import">Import</Link>
 </Button>
-<Button asChild variant="outline">
-  <Link href="/admin/rate-card/update-batch">Update in Batch</Link>
+<Button   className="mx-2">
+  <Link  href="/admin/rate-card/update-batch">Update in Batch</Link>
 </Button>
             <Table>
               <TableHeader>

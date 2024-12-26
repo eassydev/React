@@ -627,11 +627,15 @@ const [cgst, setCgst] = useState<number | null>(null);
               value={service.title}
               onChange={(e) => updateServiceDetail(index, "title", e.target.value)}
             />
+             <div className="space-y-2" style={{ height: "250px" }}>
             <ReactQuill
               value={service.description}
               onChange={(value) => updateServiceDetail(index, "description", value)}
               modules={quillModules}
+              theme="snow"
+                  style={{ height: "200px" }}
             />
+            </div>
              {/* Remove Service Detail */}
              <Button
               type="button"

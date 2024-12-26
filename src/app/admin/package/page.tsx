@@ -22,6 +22,7 @@ const PackageList = () => {
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
+    const [isDialogOpen, setIsDialogOpen] = useState(false); // Manage Alert visibility
 
   const { toast } = useToast();
 
@@ -50,6 +51,8 @@ const PackageList = () => {
         variant: 'success',
       });
       fetchPackagesData(pagination.pageIndex + 1, pagination.pageSize);
+      setIsDialogOpen(false); // Close the dialog
+
     } catch (error) {
       toast({
         title: 'Error',
@@ -85,7 +88,7 @@ const PackageList = () => {
               <Edit className="w-4 h-4 text-blue-600" />
             </Link>
           </Button>
-          <AlertDialog>
+          <AlertDialog  open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <AlertDialogTrigger asChild>
               <Button variant="ghost" size="icon">
                 <Trash2 className="w-4 h-4 text-red-600" />
@@ -100,7 +103,7 @@ const PackageList = () => {
                 <Button variant="secondary" onClick={() => handlePackageDelete(row.original)}>
                   Yes, Delete
                 </Button>
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>

@@ -15,6 +15,7 @@ import { Switch } from "@/components/ui/switch";
 import { Save, FileText, Loader2, Tag, DollarSign, List } from "lucide-react";
 import { createVIPPlan } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter, useParams } from "next/navigation";
 
 // Importing React-Quill dynamically
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -43,7 +44,12 @@ const VIPPlanForm: React.FC = () => {
   const [image, setImage] = useState<File | null>(null);
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [priceError, setPriceError] = useState("");
+const [discountPriceError, setDiscountPriceError] = useState("");
+const [noOfBookingsError, setNoOfBookingsError] = useState("");
+const [validityPeriodError, setValidityPeriodError] = useState("");
   const { toast } = useToast();
+  const router = useRouter();
 
   // Handle image selection
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -76,7 +82,8 @@ const VIPPlanForm: React.FC = () => {
         description: response.message,
       });
       setIsSubmitting(false);
-      resetForm(); // Optionally reset form fields after submission
+      router.push("/admin/vip-plan");
+
     } catch (error: any) {
       toast({
         variant: "error",
@@ -148,10 +155,15 @@ const VIPPlanForm: React.FC = () => {
                   type="number"
                   placeholder="Enter price"
                   value={price}
-                  onChange={(e) => setPrice(e.target.value)}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    setPrice(value.toString());
+                    setPriceError(value < 0 ? "Price cannot be negative" : "");
+                  }}
                   className="h-11"
                   required
                 />
+                {priceError && <p className="text-red-500 text-sm">{priceError}</p>}
               </div>
 
               {/* Discount Price */}
@@ -163,9 +175,14 @@ const VIPPlanForm: React.FC = () => {
                   type="number"
                   placeholder="Enter discount price"
                   value={discountPrice}
-                  onChange={(e) => setDiscountPrice(e.target.value)}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    setDiscountPrice(value.toString());
+                    setDiscountPriceError(value < 0 ? "Discount price cannot be negative" : "");
+                  }}
                   className="h-11"
                 />
+                {discountPriceError && <p className="text-red-500 text-sm">{discountPriceError}</p>}
               </div>
 
               {/* Number of Bookings */}
@@ -178,10 +195,15 @@ const VIPPlanForm: React.FC = () => {
                   type="number"
                   placeholder="Enter number of bookings"
                   value={noOfBookings}
-                  onChange={(e) => setNoOfBookings(e.target.value)}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    setNoOfBookings(value.toString());
+                    setNoOfBookingsError(value < 0 ? "Number of bookings cannot be negative" : "");
+                  }}
                   className="h-11"
                   required
                 />
+                {noOfBookingsError && <p className="text-red-500 text-sm">{noOfBookingsError}</p>}
               </div>
 
               {/* Validity Period Field */}
@@ -193,11 +215,17 @@ const VIPPlanForm: React.FC = () => {
                   type="number"
                   placeholder="Enter validity period"
                   value={validityPeriod}
-                  onChange={(e) => setValidityPeriod(e.target.value)}
+                  onChange={(e) => {
+                    const value = Number(e.target.value);
+                    setValidityPeriod(value.toString());
+                    setValidityPeriodError(value < 0 ? "Validity period cannot be negative" : "");
+                  }}
                   className="h-11"
                   required
                 />
+                {validityPeriodError && <p className="text-red-500 text-sm">{validityPeriodError}</p>}
               </div>
+
 
               {/* Description Field with React-Quill */}
               <div className="space-y-2" style={{ height: "270px" }}>

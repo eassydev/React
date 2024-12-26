@@ -86,8 +86,8 @@ const VIPPlanList = () => {
       accessorKey: 'status',
       header: 'Status',
       cell: (info) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${info.getValue() ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-          {info.getValue() ? 'Active' : 'Inactive'}
+        <span className={`px-2 py-1 rounded-full text-xs font-medium ${info.getValue() ? 'bg-red-100 text-red-600' : 'bg-green-100 text-green-600'}`}>
+          {info.getValue() ? 'Inactive' : 'Active'}
         </span>
       ),
     },

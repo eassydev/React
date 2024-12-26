@@ -597,13 +597,14 @@ const SubcategoryForm: React.FC = () => {
                       className="h-10"
                     />
 
-                    {/* Service Description */}
+<div className="space-y-2" style={{ height: "250px" }}>
                     <ReactQuill
-                      value={service.description}
-                      onChange={(value) => updateServiceDetail(serviceIndex, "description", value)}
-                      theme="snow"
-                    />
-
+                   value={service.description}
+                   onChange={(value) => updateServiceDetail(serviceIndex, "description", value)}
+                  theme="snow"
+                  style={{ height: "200px" }}
+                />
+                </div>
                     {/* Remove Service Detail */}
                     <Button
                       type="button"

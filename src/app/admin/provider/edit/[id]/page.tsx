@@ -84,7 +84,7 @@ const EditProviderForm: React.FC = () => {
       company_name: companyName,
       gst_number: gstNumber,
       pan_number: panNumber,
-      active: isActive ? 1 : 0,
+      active: isActive ? 0 : 1,
       rating: parseFloat(rating),
       country,
       state,
@@ -99,7 +99,7 @@ const EditProviderForm: React.FC = () => {
         title: "Success",
         description: "Provider updated successfully.",
       });
-      router.push("/admin/providers");
+      router.push("/admin/provider");
     } catch (error: any) {
       toast({
         variant: "error",

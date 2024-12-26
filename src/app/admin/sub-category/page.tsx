@@ -31,6 +31,8 @@ const SubcategoryList = () => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [isExporting, setIsExporting] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
+    const [isDialogOpen, setIsDialogOpen] = useState(false); // Manage Alert visibility
+  
   const { toast } = useToast();
 
   const fetchSubcategoriesData = async (page = 1, size = 50, status = "all") => {
@@ -107,6 +109,8 @@ const SubcategoryList = () => {
         await deleteSubcategory(deleteTargetId.toString());
         toast({ title: "Deleted", description: "Subcategory deleted successfully." });
         fetchSubcategoriesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus);
+        setIsDialogOpen(false); // Close the dialog
+
       }
     } catch (error) {
       toast({ title: "Error", description: "Failed to delete subcategory." });
@@ -180,7 +184,7 @@ const SubcategoryList = () => {
               <Edit className="w-4 h-4 text-blue-600" />
             </Button>
           </Link>
-          <AlertDialog>
+          <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <AlertDialogTrigger asChild>
               <Button
                 variant="ghost"
@@ -199,7 +203,7 @@ const SubcategoryList = () => {
                 <Button variant="secondary" onClick={handleDelete}>
                   Yes, Delete
                 </Button>
-                <Button variant="outline">Cancel</Button>
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>

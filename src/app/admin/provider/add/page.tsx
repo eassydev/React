@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription }
 import { useToast } from "@/hooks/use-toast";
 import { Save, Loader2 } from "lucide-react";
 import { createProvider, Provider } from "@/lib/api";
+import { useRouter, useParams } from "next/navigation";
 
 const AddProviderForm: React.FC = () => {
   const [firstName, setFirstName] = useState<string>("");
@@ -26,6 +27,7 @@ const AddProviderForm: React.FC = () => {
   const [city, setCity] = useState<string>("");
   const [postalCode, setPostalCode] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const router = useRouter();
 
   const { toast } = useToast();
 
@@ -52,7 +54,7 @@ const AddProviderForm: React.FC = () => {
       company_name: companyName,
       gst_number: gstNumber,
       pan_number: panNumber,
-      active: isActive ? 1 : 0,
+      active: isActive ? 0 : 1,
       rating: parseFloat(rating),
       country,
       state,
@@ -67,22 +69,10 @@ const AddProviderForm: React.FC = () => {
         title: "Success",
         description: "Provider created successfully.",
       });
-      // Reset form fields
-      setFirstName("");
-      setLastName("");
-      setGender("male");
-      setEmail("");
-      setPhone("");
-      setCompanyName("");
-      setGstNumber("");
-      setPanNumber("");
-      setIsActive(true);
-      setRating("0.0");
-      setCountry("");
-      setState("");
-      setCity("");
-      setPostalCode("");
+       router.push("/admin/provider");
+
     } catch (error: any) {
+      console.log()
       toast({
         variant: "error",
         title: "Error",
@@ -162,7 +152,7 @@ const AddProviderForm: React.FC = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Phone</label>
                 <Input
-                  type="tel"
+                  type="number"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
                   placeholder="Enter phone number"
@@ -194,6 +184,7 @@ const AddProviderForm: React.FC = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">PAN Number</label>
                 <Input
+                  type="number"
                   value={panNumber}
                   onChange={(e) => setPanNumber(e.target.value)}
                   placeholder="Enter PAN number"

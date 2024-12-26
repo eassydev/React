@@ -73,8 +73,21 @@ const OnboardingList = () => {
       accessorKey: "description",
       header: "Description",
       cell: ({ getValue }) => {
-        const description = getValue() as string;
-        return <span>{description.length > 50 ? `${description.slice(0, 50)}...` : description}</span>;
+        const rawDescription = getValue() as string;
+    
+        // Function to strip HTML tags
+        const stripHtmlTags = (html: string) => {
+          const doc = new DOMParser().parseFromString(html, "text/html");
+          return doc.body.textContent || "";
+        };
+    
+        const plainText = stripHtmlTags(rawDescription);
+    
+        return (
+          <span>
+            {plainText.length > 50 ? `${plainText.slice(0, 50)}...` : plainText}
+          </span>
+        );
       },
     },
     {
