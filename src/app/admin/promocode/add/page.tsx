@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState, useEffect, FormEvent } from "react";
+import dynamic from "next/dynamic";
+
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
@@ -18,6 +20,21 @@ import {
   Promocode,
 } from "@/lib/api";
 
+// Import React-Quill dynamically for client-side rendering
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+import "react-quill/dist/quill.snow.css";
+
+// Quill modules configuration
+const quillModules = {
+  toolbar: [
+    [{ header: "1" }, { header: "2" }, { font: [] }],
+    [{ size: [] }],
+    ["bold", "italic", "underline", "strike", "blockquote"],
+    [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
+    ["link", "image", "video"],
+    ["clean"],
+  ],
+};
 const AddPromocodeForm: React.FC = () => {
   const [code, setCode] = useState<string>("");
   const [description, setDescription] = useState<string>("");
@@ -141,27 +158,27 @@ const AddPromocodeForm: React.FC = () => {
       });
 
       // Reset form
-      setCode("");
-      setDescription("");
-      setDiscountType("flat");
-      setDiscountValue(null);
-      setMinOrderValue(null);
-      setStartDate("");
-      setEndDate("");
-      setStatus("active");
-      setIsActive(true);
-      setSelectionType("");
-      setSelectedItemId(null);
-      setOptions([]);
-      setProviderId(null);
-      setImage(null);
-      setIsGlobal(false);
-      setDisplayToCustomer(true);
+      // setCode("");
+      // setDescription("");
+      // setDiscountType("flat");
+      // setDiscountValue(null);
+      // setMinOrderValue(null);
+      // setStartDate("");
+      // setEndDate("");
+      // setStatus("active");
+      // setIsActive(true);
+      // setSelectionType("");
+      // setSelectedItemId(null);
+      // setOptions([]);
+      // setProviderId(null);
+      // setImage(null);
+      // setIsGlobal(false);
+      // setDisplayToCustomer(true);
     } catch (error) {
       toast({
         variant: "error",
         title: "Error",
-        description: "Failed to create promocode.",
+        description: ` ${error}`,
       });
     } finally {
       setIsSubmitting(false);
@@ -232,13 +249,16 @@ const AddPromocodeForm: React.FC = () => {
                 <Switch checked={isActive} onCheckedChange={setIsActive} />
               </div>
 
-              <div>
+              <div className="space-y-2" style={{ height: "270px" }}>
                 <label className="text-sm font-medium text-gray-700">Description</label>
-                <Input
+                <ReactQuill
                   value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Enter description (optional)"
+                  onChange={setDescription}
+                  theme="snow"
+                  modules={quillModules}
+                  style={{ height: "200px" }}
                 />
+               
               </div>
 
               <div>

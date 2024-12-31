@@ -502,6 +502,43 @@ export interface Staff {
 }
 
 
+
+// Country Interface
+export interface Country {
+  id?: string;
+  name: string;
+  is_active?: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+
+// State interface
+export type State = {
+  id?: string; // Optional because it may not be present during creation
+  name: string;
+  country_id: string;
+  is_active: boolean;
+  created_at?: string; // Optional, set automatically by the backend
+  updated_at?: string; // Optional, set automatically by the backend
+};
+
+
+export interface City {
+  id?: string;
+  name: string;
+  state_id: string;
+  is_active?: boolean;
+}
+
+
+export interface Hub {
+  id?: string;
+  hub_name: string;
+  hub_priority: string; // Priority as a string
+  is_active: boolean;
+}
+
 // Define the structure of the API response
 interface ApiResponse {
   status: boolean;
@@ -1132,35 +1169,25 @@ export const deleteSubcategory = async (id: string): Promise<ApiResponse> => {
 
 // Function to create a new rate card
 export const createRateCard = async (rateCard: RateCard): Promise<ApiResponse> => {
-  const formData = new FormData();
 
-  formData.append('name', rateCard.name);
-  formData.append('category_id', rateCard.category_id.toString());
-  formData.append('price', rateCard.price.toString());
-  formData.append('active', rateCard.active ? '0' : '1');
-
-  if (rateCard.provider_id) {
-    formData.append('provider_id', rateCard.provider_id?.toString() || ''); // Adjusted for subcategory
-  }
-  if (rateCard.subcategory_id) {
-    formData.append('subcategory_id', rateCard.subcategory_id?.toString() || ''); // Adjusted for subcategory
-  }
-  if (rateCard.filter_attribute_id) {
-    formData.append('filter_attribute_id', rateCard.filter_attribute_id?.toString() || ''); // Adjusted for subcategory
-  }
-  if (rateCard.filter_option_id) {
-    formData.append('filter_option_id', rateCard.filter_option_id?.toString() || ''); // Adjusted for subcategory
-  }
+  const payload = {
+    name: rateCard.name,
+    category_id: rateCard.category_id,
+    provider_id: rateCard.provider_id || null,
+    price: rateCard.price,
+    active: rateCard.active ? 0 : 1,
+    subcategory_id: rateCard.subcategory_id || null,
+    filter_attribute_id: rateCard.filter_attribute_id || null,
+    filter_option_id: rateCard.filter_option_id || null,
+    description: rateCard.description || '',
+  };
   
-  if (rateCard.description) {
-    formData.append('description', rateCard.description);
-  }
  
   try {
     const token = getToken();
-    const response: AxiosResponse<ApiResponse> = await apiClient.post('/rate-card', formData, {
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/rate-card', payload, {
       headers: {
-        'Content-Type': 'multipart/form-data',
+        'Content-Type': 'application/json',
         'admin-auth-token': token || '',
       },
     });
@@ -2910,8 +2937,12 @@ export const createPromocode = async (promocode: Promocode): Promise<ApiResponse
   if (promocode.description) formData.append("description", promocode.description);
   formData.append("discount_type", promocode.discount_type);
   formData.append("discount_value", promocode.discount_value.toString());
-  if (promocode.min_order_value !== undefined)
-    formData.append("min_order_value", promocode.min_order_value?.toString() || "");
+  const minOrderValue = promocode.min_order_value !== null && promocode.min_order_value !== undefined
+  ? promocode.min_order_value
+  : null;
+
+// In your insert logic
+formData.append("min_order_value", minOrderValue ? minOrderValue.toString() : "0.0");
   formData.append("start_date", promocode.start_date);
   formData.append("end_date", promocode.end_date);
   formData.append("status", promocode.status);
@@ -2964,8 +2995,12 @@ export const updatePromocode = async (id: string, promocode: Promocode): Promise
   if (promocode.description) formData.append("description", promocode.description);
   formData.append("discount_type", promocode.discount_type);
   formData.append("discount_value", promocode.discount_value.toString());
-  if (promocode.min_order_value !== undefined)
-    formData.append("min_order_value", promocode.min_order_value?.toString() || "");
+  const minOrderValue = promocode.min_order_value !== null && promocode.min_order_value !== undefined
+  ? promocode.min_order_value
+  : null;
+
+// In your insert logic
+formData.append("min_order_value", minOrderValue ? minOrderValue.toString() : "0.0");
   formData.append("start_date", promocode.start_date);
   formData.append("end_date", promocode.end_date);
   formData.append("status", promocode.status);
@@ -4224,5 +4259,791 @@ export const updateRateCardsCsv = async (file: File): Promise<void> => {
   } catch (error: any) {
     console.error('Error update rate cards:', error.message || error);
     throw new Error(error.response?.data?.message || 'Failed to update rate cards.');
+  }
+};
+
+// Fetch all countries with optional pagination
+export const fetchAllCountries = async (
+  page: number = 1,
+  size: number = 10
+) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/countries', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch countries.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch countries.');
+  }
+};
+
+// Fetch all countries without pagination
+export const fetchAllCountriesWithoutPagination = async (): Promise<Country[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/countries/all', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch countries.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch countries.');
+  }
+};
+
+// Fetch a specific country by ID
+export const fetchCountryById = async (id: string): Promise<Country> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/countries/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch country.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch country.');
+  }
+};
+
+// Create a new country
+export const createCountry = async (country: Country): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/countries', country, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create country.');
+  }
+};
+
+// Update an existing country
+export const updateCountry = async (id: string, country: Country): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/countries/${id}`, country, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update country.');
+  }
+};
+
+// Delete (soft-delete) a country by ID
+export const deleteCountry = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/countries/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete country.');
+  }
+};
+
+// Export countries to an Excel file
+export const exportCountriesToXLS = async (): Promise<void> => {
+  try {
+    const token = getToken(); // Retrieve the admin-auth-token
+
+    const response: AxiosResponse = await apiClient.get('/countries/export/xls', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      responseType: 'blob', // Treat the response as a binary file
+    });
+
+    // Generate a unique filename for the exported file
+    const uniqueFilename = generateUniqueFilename('countries', 'xlsx');
+
+    // Create a downloadable link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', uniqueFilename); // Unique filename
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Error exporting countries:', error);
+    throw new Error('Failed to export countries');
+  }
+};
+
+// Import countries from a CSV file
+export const importCountriesFromCSV = async (file: File): Promise<void> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = getToken();
+
+    const response: AxiosResponse<{ message: string }> = await apiClient.post('/countries/import/csv', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.status === 200) {
+      console.log(response.data.message || 'Countries imported successfully.');
+    } else {
+      throw new Error(response.data.message || 'Failed to import countries.');
+    }
+  } catch (error: any) {
+    console.error('Error importing countries:', error.message || error);
+    throw new Error(error.response?.data?.message || 'Failed to import countries.');
+  }
+};
+
+// Download sample CSV for countries
+export const downloadSampleExcel = async (): Promise<void> => {
+  try {
+    const token = getToken(); // Retrieve the admin-auth-token
+
+    const response: AxiosResponse = await apiClient.get('/countries/sample/excel', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      responseType: 'blob', // Treat the response as a binary file
+    });
+
+    // Generate a unique filename for the sample file
+    const uniqueFilename = generateUniqueFilename('countries_sample', 'xlsx');
+
+    // Create a downloadable link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', uniqueFilename); // Unique filename
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Error downloading sample CSV:', error);
+    throw new Error('Failed to download sample CSV');
+  }
+};
+
+
+// Fetch all states with optional pagination
+export const fetchAllStates = async (
+  page: number = 1,
+  size: number = 10
+) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/states', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch states.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch states.');
+  }
+};
+
+// Fetch all states without pagination
+export const fetchAllStatesWithoutPagination = async (): Promise<State[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/states/all', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch states.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch states.');
+  }
+};
+
+// Fetch a specific state by ID
+export const fetchStateById = async (id: string): Promise<State> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/states/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch state.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch state.');
+  }
+};
+
+// Create a new state
+export const createState = async (state: State): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/states', state, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create state.');
+  }
+};
+
+// Update an existing state
+export const updateState = async (id: string, state: State): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/states/${id}`, state, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update state.');
+  }
+};
+
+// Delete (soft-delete) a state by ID
+export const deleteState = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/states/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete state.');
+  }
+};
+
+// Export states to an Excel file
+export const exportStatesToXLS = async (): Promise<void> => {
+  try {
+    const token = getToken();
+
+    const response: AxiosResponse = await apiClient.get('/states/export/xls', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      responseType: 'blob',
+    });
+
+    const uniqueFilename = generateUniqueFilename('states', 'xlsx');
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', uniqueFilename);
+    document.body.appendChild(link);
+    link.click();
+
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Error exporting states:', error);
+    throw new Error('Failed to export states');
+  }
+};
+
+// Import states from a CSV file
+export const importStatesFromCSV = async (file: File): Promise<void> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = getToken();
+
+    const response: AxiosResponse<{ message: string }> = await apiClient.post('/states/import/csv', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.status === 200) {
+      console.log(response.data.message || 'States imported successfully.');
+    } else {
+      throw new Error(response.data.message || 'Failed to import states.');
+    }
+  } catch (error: any) {
+    console.error('Error importing states:', error.message || error);
+    throw new Error(error.response?.data?.message || 'Failed to import states.');
+  }
+};
+
+// Download sample CSV for states
+export const downloadSampleStateExcel = async (): Promise<void> => {
+  try {
+    const token = getToken();
+
+    const response: AxiosResponse = await apiClient.get('/states/sample/excel', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      responseType: 'blob',
+    });
+
+    const uniqueFilename = generateUniqueFilename('states_sample', 'csv');
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', uniqueFilename);
+    document.body.appendChild(link);
+    link.click();
+
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Error downloading sample CSV:', error);
+    throw new Error('Failed to download sample CSV');
+  }
+};
+
+
+// Fetch all cities with optional pagination
+export const fetchAllCities = async (page: number = 1, size: number = 10) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get("/cities", {
+      params: { page, size },
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (response.data.status) {
+      return response.data;
+    } else {
+      throw new Error(response.data.message || "Failed to fetch cities.");
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch cities.");
+  }
+};
+
+// Fetch all cities without pagination
+export const fetchAllCitiesWithoutPagination = async (): Promise<City[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get("/cities/all", {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || "Failed to fetch cities.");
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch cities.");
+  }
+};
+
+// Fetch a specific city by ID
+export const fetchCityById = async (id: string): Promise<City> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/cities/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || "Failed to fetch city.");
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch city.");
+  }
+};
+
+
+
+
+// Create a new city
+export const createCity = async (city: City): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post("/cities", city, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to create city.");
+  }
+};
+
+// Update an existing city
+export const updateCity = async (id: string, city: City): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/cities/${id}`, city, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to update city.");
+  }
+};
+
+// Delete (soft-delete) a city by ID
+export const deleteCity = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/cities/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to delete city.");
+  }
+};
+
+// Export cities to an Excel file
+export const exportCitiesToXLS = async (): Promise<void> => {
+  try {
+    const token = getToken();
+
+    const response: AxiosResponse = await apiClient.get("/cities/export/xls", {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+      responseType: "blob",
+    });
+
+    const uniqueFilename = generateUniqueFilename("cities", "xlsx");
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", uniqueFilename);
+    document.body.appendChild(link);
+    link.click();
+
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error("Error exporting cities:", error);
+    throw new Error("Failed to export cities");
+  }
+};
+
+// Import cities from a CSV file
+export const importCitiesFromCSV = async (file: File): Promise<void> => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const token = getToken();
+
+    const response: AxiosResponse<{ message: string }> = await apiClient.post("/cities/import/csv", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (response.status === 200) {
+      console.log(response.data.message || "Cities imported successfully.");
+    } else {
+      throw new Error(response.data.message || "Failed to import cities.");
+    }
+  } catch (error: any) {
+    console.error("Error importing cities:", error.message || error);
+    throw new Error(error.response?.data?.message || "Failed to import cities.");
+  }
+};
+
+// Download sample CSV for cities
+export const downloadSampleCityExcel = async (): Promise<void> => {
+  try {
+    const token = getToken();
+
+    const response: AxiosResponse = await apiClient.get("/cities/sample/excel", {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+      responseType: "blob",
+    });
+
+    const uniqueFilename = generateUniqueFilename("cities_sample", "csv");
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", uniqueFilename);
+    document.body.appendChild(link);
+    link.click();
+
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error("Error downloading sample CSV:", error);
+    throw new Error("Failed to download sample CSV");
+  }
+};
+
+
+// Fetch all cities with optional pagination
+export const fetchAllHubs = async (page: number = 1, size: number = 10) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get("/hubs", {
+      params: { page, size },
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (response.data.status) {
+      return response.data;
+    } else {
+      throw new Error(response.data.message || "Failed to fetch hubs.");
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch hubs.");
+  }
+};
+
+// Fetch all cities without pagination
+export const fetchAllHubsWithoutPagination = async (): Promise<Hub[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get("/hubs/all", {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || "Failed to fetch hubs.");
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch hubs.");
+  }
+};
+
+// Create a new hub
+export const createHub = async (hub: Hub): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post("/hubs", hub, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to create hub.");
+  }
+};
+
+
+// Fetch a specific city by ID
+export const fetchHubById = async (id: string): Promise<Hub> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/hubs/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || "Failed to fetch hub.");
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch hub.");
+  }
+};
+// Update an existing hub
+export const updateHub = async (id: string, hub: Hub): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/hubs/${id}`, hub, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to update hub.");
+  }
+};
+
+// Delete (soft-delete) a hub by ID
+export const deleteHub = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/hubs/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to delete hub.");
+  }
+};
+
+// Export hubs to an Excel file
+export const exportHubsToXLS = async (): Promise<void> => {
+  try {
+    const token = getToken();
+
+    const response: AxiosResponse = await apiClient.get("/hubs/export/xls", {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+      responseType: "blob",
+    });
+
+    const uniqueFilename = generateUniqueFilename("hubs", "xlsx");
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", uniqueFilename);
+    document.body.appendChild(link);
+    link.click();
+
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error("Error exporting hubs:", error);
+    throw new Error("Failed to export hubs");
+  }
+};
+
+// Import hubs from a CSV file
+export const importHubsFromCSV = async (file: File): Promise<void> => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const token = getToken();
+
+    const response: AxiosResponse<{ message: string }> = await apiClient.post("/hubs/import/csv", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (response.status === 200) {
+      console.log(response.data.message || "Hubs imported successfully.");
+    } else {
+      throw new Error(response.data.message || "Failed to import hubs.");
+    }
+  } catch (error: any) {
+    console.error("Error importing hubs:", error.message || error);
+    throw new Error(error.response?.data?.message || "Failed to import hubs.");
+  }
+};
+
+// Download sample CSV for hubs
+export const downloadSampleHubExcel = async (): Promise<void> => {
+  try {
+    const token = getToken();
+
+    const response: AxiosResponse = await apiClient.get("/hubs/sample/excel", {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+      responseType: "blob",
+    });
+
+    const uniqueFilename = generateUniqueFilename("hubs_sample", "csv");
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", uniqueFilename);
+    document.body.appendChild(link);
+    link.click();
+
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error("Error downloading sample CSV:", error);
+    throw new Error("Failed to download sample CSV");
   }
 };
