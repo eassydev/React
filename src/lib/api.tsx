@@ -539,6 +539,31 @@ export interface Hub {
   is_active: boolean;
 }
 
+
+export interface HubPincode {
+  id?: number;
+  hub_id: number;
+  pincode: string;
+  is_active?: boolean;
+}
+
+
+export interface SpHub {
+  id?: number;
+  hub_id: number;
+  city_id: number;
+  category_id?: number | null; // Allow null or undefined
+  subcategory_id?: number;
+  filter_attribute_id?: number;
+  filter_option_id?: number;
+  staff: number;
+  weightage: number;
+  is_active: boolean;
+  created_at?: string;
+  updated_at?: string;
+  deleted_at?: string | null;
+}
+
 // Define the structure of the API response
 interface ApiResponse {
   status: boolean;
@@ -5045,5 +5070,403 @@ export const downloadSampleHubExcel = async (): Promise<void> => {
   } catch (error) {
     console.error("Error downloading sample CSV:", error);
     throw new Error("Failed to download sample CSV");
+  }
+};
+
+
+// Fetch all hub pincodes with optional pagination
+export const fetchAllHubPincodes = async (
+  page: number = 1,
+  size: number = 10
+): Promise<{ data: HubPincode[]; meta: { totalPages: number } }> => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get("/hub-pincodes", {
+      params: { page, size },
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (response.data.status) {
+      return response.data;
+    } else {
+      throw new Error(response.data.message || "Failed to fetch hub pincodes.");
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch hub pincodes.");
+  }
+};
+
+// Fetch all hub pincodes without pagination
+export const fetchAllHubPincodesWithoutPagination = async (): Promise<HubPincode[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get("/hub-pincodes/all", {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || "Failed to fetch hub pincodes.");
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch hub pincodes.");
+  }
+};
+
+// Fetch a specific hub pincode by ID
+export const fetchHubPincodeById = async (id: string): Promise<HubPincode> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/hub-pincodes/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || "Failed to fetch hub pincode.");
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch hub pincode.");
+  }
+};
+
+// Create a new hub pincode
+export const createHubPincode = async (hubPincode: HubPincode): Promise<void> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post("/hub-pincodes", hubPincode, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (!response.data.status) {
+      throw new Error(response.data.message || "Failed to create hub pincode.");
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to create hub pincode.");
+  }
+};
+
+// Update an existing hub pincode
+export const updateHubPincode = async (id: string, hubPincode: HubPincode): Promise<void> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.put(`/hub-pincodes/${id}`, hubPincode, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (!response.data.status) {
+      throw new Error(response.data.message || "Failed to update hub pincode.");
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to update hub pincode.");
+  }
+};
+
+// Delete a hub pincode by ID
+export const deleteHubPincode = async (id: string): Promise<void> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.delete(`/hub-pincodes/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (!response.data.status) {
+      throw new Error(response.data.message || "Failed to delete hub pincode.");
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to delete hub pincode.");
+  }
+};
+
+// Export hub pincodes to an Excel file
+export const exportHubPincodesToXLS = async (): Promise<void> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get("/hub-pincodes/export/xls", {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+      responseType: "blob",
+    });
+
+    const uniqueFilename = generateUniqueFilename("hub_pincodes", "xlsx");
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", uniqueFilename);
+    document.body.appendChild(link);
+    link.click();
+
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error("Error exporting hub pincodes:", error);
+    throw new Error("Failed to export hub pincodes");
+  }
+};
+
+// Import hub pincodes from a CSV file
+export const importHubPincodesFromCSV = async (file: File): Promise<void> => {
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    const token = getToken();
+
+    const response: AxiosResponse = await apiClient.post("/hub-pincodes/import/csv", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (!response.data.status) {
+      throw new Error(response.data.message || "Failed to import hub pincodes.");
+    }
+  } catch (error: any) {
+    console.error("Error importing hub pincodes:", error.message || error);
+    throw new Error(error.response?.data?.message || "Failed to import hub pincodes.");
+  }
+};
+
+// Download sample CSV for hub pincodes
+export const downloadSampleHubPincodeExcel = async (): Promise<void> => {
+  try {
+    const token = getToken();
+
+    const response: AxiosResponse = await apiClient.get("/hub-pincodes/sample/excel", {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+      responseType: "blob",
+    });
+
+    const uniqueFilename = generateUniqueFilename("hub_pincodes_sample", "csv");
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement("a");
+    link.href = url;
+    link.setAttribute("download", uniqueFilename);
+    document.body.appendChild(link);
+    link.click();
+
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error("Error downloading sample CSV:", error);
+    throw new Error("Failed to download sample CSV");
+  }
+};
+
+
+// Fetch all SpHubs with optional pagination
+export const fetchAllSpHubs = async (
+  page: number = 1,
+  size: number = 10
+): Promise<{ data: SpHub[]; meta: { totalPages: number } }> => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/sp-hubs', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch SpHubs.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch SpHubs.');
+  }
+};
+
+// Fetch all SpHubs without pagination
+export const fetchAllSpHubsWithoutPagination = async (): Promise<SpHub[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/sp-hubs/all', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch SpHubs.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch SpHubs.');
+  }
+};
+
+// Fetch a specific SpHub by ID
+export const fetchSpHubById = async (id: string): Promise<SpHub> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/sp-hubs/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch SpHub.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch SpHub.');
+  }
+};
+
+// Create a new SpHub
+export const createSpHub = async (spHub: SpHub): Promise<void> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post('/sp-hubs', spHub, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (!response.data.status) {
+      throw new Error(response.data.message || 'Failed to create SpHub.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create SpHub.');
+  }
+};
+
+// Update an existing SpHub
+export const updateSpHub = async (id: string, spHub: SpHub): Promise<void> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.put(`/sp-hubs/${id}`, spHub, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (!response.data.status) {
+      throw new Error(response.data.message || 'Failed to update SpHub.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update SpHub.');
+  }
+};
+
+// Delete a SpHub by ID
+export const deleteSpHub = async (id: string): Promise<void> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.delete(`/sp-hubs/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (!response.data.status) {
+      throw new Error(response.data.message || 'Failed to delete SpHub.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete SpHub.');
+  }
+};
+
+// Export SpHubs to an Excel file
+export const exportSpHubsToXLS = async (): Promise<void> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/sp-hubs/export/xls', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      responseType: 'blob',
+    });
+
+    const uniqueFilename = generateUniqueFilename('sp_hubs', 'xlsx');
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', uniqueFilename);
+    document.body.appendChild(link);
+    link.click();
+
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Error exporting SpHubs:', error);
+    throw new Error('Failed to export SpHubs');
+  }
+};
+
+// Import SpHubs from a CSV file
+export const importSpHubsFromCSV = async (file: File): Promise<void> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = getToken();
+
+    const response: AxiosResponse = await apiClient.post('/sp-hubs/import/csv', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (!response.data.status) {
+      throw new Error(response.data.message || 'Failed to import SpHubs.');
+    }
+  } catch (error: any) {
+    console.error('Error importing SpHubs:', error.message || error);
+    throw new Error(error.response?.data?.message || 'Failed to import SpHubs.');
+  }
+};
+
+// Download sample CSV for SpHubs
+export const downloadSampleSpHubExcel = async (): Promise<void> => {
+  try {
+    const token = getToken();
+
+    const response: AxiosResponse = await apiClient.get('/sp-hubs/sample/csv', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      responseType: 'blob',
+    });
+
+    const uniqueFilename = generateUniqueFilename('sp_hubs_sample', 'csv');
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', uniqueFilename);
+    document.body.appendChild(link);
+    link.click();
+
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Error downloading sample CSV:', error);
+    throw new Error('Failed to download sample CSV');
   }
 };
