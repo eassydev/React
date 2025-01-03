@@ -1,216 +1,302 @@
 "use client";
-import React, { useState, useEffect, FormEvent } from 'react';
-import dynamic from 'next/dynamic';
-import { useRouter, usePathname } from 'next/navigation';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Button } from '@/components/ui/button';
-import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@/components/ui/select';
-import { Switch } from '@/components/ui/switch';
-import { Save, Loader2, Type, Globe2 } from 'lucide-react';
+import React, { useState, useEffect, FormEvent } from "react";
+import dynamic from "next/dynamic";
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import {
+  Select,
+  SelectItem,
+  SelectTrigger,
+  SelectContent,
+  SelectValue,
+} from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
+import { Save, FileText, Loader2, Type, Globe2 } from "lucide-react";
 import {
   fetchAllCategories,
   fetchSubCategoriesByCategoryId,
+  fetchProviders,
+  fetchFilterOptionsByAttributeId,
   fetchFilterAttributes,
-  fetchRateCardById,
-  updateRateCard,
+  createRateCard,
   Category,
   Subcategory,
   Attribute,
-  fetchProviders, Provider,
-  fetchFilterOptionsByAttributeId, AttributeOption
-} from '@/lib/api';
+  fetchRateCardById,
+  Provider,
+} from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
+import { useRouter, usePathname } from 'next/navigation';
 
-// Importing React-Quill dynamically
-const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
-import 'react-quill/dist/quill.snow.css';
+// Import React-Quill dynamically
+const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
+import "react-quill/dist/quill.snow.css";
 
-// Custom toolbar configuration for React-Quill
 const quillModules = {
   toolbar: [
-    [{ 'header': '1' }, { 'header': '2' }, { 'font': [] }],
-    [{ 'size': [] }],
-    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-    [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
-    ['link', 'image', 'video'],
-    ['clean'],
+    [{ header: "1" }, { header: "2" }, { font: [] }],
+    [{ size: [] }],
+    ["bold", "italic", "underline", "strike", "blockquote"],
+    [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
+    ["link", "image", "video"],
+    ["clean"],
   ],
 };
 
-const RateCardEditForm: React.FC = () => {
-  const router = useRouter();
-  const pathname = usePathname();
-  const rateCardId = pathname?.split('/').pop();
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+interface FilterAttributeOption {
+  attributeId: string;
+  optionId: string;
+  options?: { id: string; value: string }[];
+}
+
+const RateCardForm: React.FC = () => {
+  const { toast } = useToast();
+
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [filterAttributes, setFilterAttributes] = useState<Attribute[]>([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
-  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>('');
-  const [selectedFilterAttributeId, setSelectedFilterAttributeId] = useState<string>('');
-  const [rateCardName, setRateCardName] = useState<string>('');
-  const [price, setPrice] = useState<string>('');
-  const [description, setDescription] = useState<string>('');
-  const [isActive, setIsActive] = useState<boolean>(true);
-  const { toast } = useToast();
+  const [filterAttributeOptions, setFilterAttributeOptions] = useState<
+    FilterAttributeOption[]
+  >([]);
+  const [rateCardName, setRateCardName] = useState("");
+  const [price, setPrice] = useState("");
+  const [isActive, setIsActive] = useState(true);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>("");
   const [providers, setProviders] = useState<Provider[]>([]);
-  const [selectedProviderId, setSelectedProviderId] = useState<string>('');
-  const [filterOptions, setFilterOptions] = useState<AttributeOption[]>([]);
-  const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>('');
-    const [priceError, setPriceError] = useState<string>('');
-  
-  // Fetch categories and rate card details once on component mount
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        // Fetch all categories
-        const fetchedCategories = await fetchAllCategories();
-        setCategories(fetchedCategories);
+  const [selectedProviderId, setSelectedProviderId] = useState<string>("");
+  const [priceError, setPriceError] = useState("");
+  const [isRecommended, setIsRecommended] = useState(false);
+  const [isBestDeal, setIsBestDeal] = useState(false);
+  const router = useRouter();
+  const pathname = usePathname();
+  const rateCardId = pathname?.split('/').pop();
+ // Fetch categories and rate card details once on component mount
+useEffect(() => {
+  const fetchData = async () => {
+    try {
+      // Fetch all categories
+      const fetchedCategories = await fetchAllCategories();
+      setCategories(fetchedCategories);
 
-        // Fetch all providers
-        const fetchedProviders = await fetchProviders();
-        setProviders(fetchedProviders);
+      // Fetch all providers
+      const fetchedProviders = await fetchProviders();
+      setProviders(fetchedProviders);
 
-        // Fetch rate card details if the rateCardId exists
-        if (rateCardId) {
-          const rateCardData = await fetchRateCardById(rateCardId.toString());
+      // Fetch rate card details if the rateCardId exists
+      if (rateCardId) {
+        const rateCardData = await fetchRateCardById(rateCardId.toString());
 
-          // Set initial values including category, subcategory, and provider
-          setRateCardName(rateCardData.name);
-          setDescription(rateCardData.description || '');
-          setSelectedCategoryId(rateCardData.category_id?.toString() || '');
-          setSelectedSubcategoryId(rateCardData.subcategory_id?.toString() || '');
-          setSelectedFilterAttributeId(rateCardData.filter_attribute_id?.toString() || '');
-          setSelectedFilterOptionId(rateCardData.filter_option_id?.toString() || '');
-          setPrice(rateCardData.price?.toString() || '');
-          setIsActive(rateCardData.active);
-          setSelectedProviderId(rateCardData.provider_id?.toString() || ''); // Set initial provider
+        // Set initial values including category, subcategory, and provider
+        setRateCardName(rateCardData.name);
+        setSelectedCategoryId(rateCardData.category_id?.toString() || '');
+        setSelectedSubcategoryId(rateCardData.subcategory_id?.toString() || '');
+        setPrice(rateCardData.price?.toString() || '');
+        setIsActive(rateCardData.active);
+        setSelectedProviderId(rateCardData.provider_id?.toString() || ''); // Set initial provider
+        setIsRecommended(rateCardData.recommended)
+        setIsBestDeal(rateCardData.best_deal)
 
-          // Fetch subcategories for the selected category
-          if (rateCardData.category_id) {
-            await fetchSubcategories(rateCardData.category_id.toString());
-          }
-
-          // Fetch filter attributes based on category or subcategory
-          const subcategoryId = rateCardData.subcategory_id !== null ? rateCardData.subcategory_id : undefined;
-          await fetchFilters(rateCardData.category_id, subcategoryId);
+        if (rateCardData.attributes && Array.isArray(rateCardData.attributes)) {
+          const dynamicAttributes = await Promise.all(
+            rateCardData.attributes.map(async (attr: any) => {
+              try {
+                const options = await fetchFilterOptionsByAttributeId(attr.filter_attribute_id);
+                return {
+                  attributeId: attr.filter_attribute_id.toString(),
+                  optionId: attr.filter_option_id?.toString() || '',
+                  options: options.map((option: any) => ({
+                    id: option.id.toString(),
+                    value: option.value,
+                  })),
+                };
+              } catch (error) {
+                console.error(`Error fetching options for attribute ${attr.filter_attribute_id}:`, error);
+                return {
+                  attributeId: attr.filter_attribute_id.toString(),
+                  optionId: attr.filter_option_id?.toString() || '',
+                  options: [],
+                };
+              }
+            })
+          );
+          setFilterAttributeOptions(dynamicAttributes);
         }
-      } catch (error) {
-        toast({
-          variant: 'error',
-          title: 'Error',
-          description: 'Failed to load data.',
-        });
+        
+
+        // Fetch subcategories for the selected category
+        if (rateCardData.category_id) {
+          await fetchSubcategories(rateCardData.category_id.toString());
+        }
+
+        // Fetch filter attributes based on category or subcategory
+        const subcategoryId = rateCardData.subcategory_id !== null ? rateCardData.subcategory_id : undefined;
+        await fetchFilters(rateCardData.category_id, subcategoryId);
       }
-    };
-
-    fetchData();
-  }, [rateCardId]);
-
-  useEffect(() => {
-    if (selectedFilterAttributeId) {
-      const loadFilterOptions = async () => {
-        try {
-          const options = await fetchFilterOptionsByAttributeId(parseInt(selectedFilterAttributeId));
-          setFilterOptions(options);
-        } catch (error) {
-          setFilterOptions([]);
-        }
-      };
-      loadFilterOptions();
-    } else {
-      setFilterOptions([]);
+    } catch (error) {
+      toast({
+        variant: 'error',
+        title: 'Error',
+        description: 'Failed to load data.',
+      });
     }
-  }, [selectedFilterAttributeId]);
+  };
+
+  fetchData();
+}, [rateCardId]);
 
 
-  // Fetch subcategories when the selected category changes
+
+const fetchSubcategories = async (categoryId: string) => {
+  try {
+    const fetchedSubcategories = await fetchSubCategoriesByCategoryId(parseInt(categoryId));
+    setSubcategories(fetchedSubcategories);
+  } catch (error) {
+    setSubcategories([]);
+    setSelectedSubcategoryId('');
+  }
+};
+
+
+const fetchFilters = async (categoryId: number, subcategoryId?: number) => {
+  try {
+    const filters = await fetchFilterAttributes(categoryId, subcategoryId || null);
+    setFilterAttributes(filters);
+  } catch (error) {
+    setFilterAttributes([]);
+  }
+};
+
+
+ 
+
+  // Fetch subcategories when a category is selected
   useEffect(() => {
     if (selectedCategoryId) {
-      fetchSubcategories(selectedCategoryId);
-      fetchFilters(parseInt(selectedCategoryId)); // Fetch filters based on category
-
-
+      const loadSubcategories = async () => {
+        try {
+          const subcategoryData = await fetchSubCategoriesByCategoryId(parseInt(selectedCategoryId));
+          setSubcategories(subcategoryData);
+        } catch (error) {
+          setSubcategories([]);
+        }
+      };
+      loadSubcategories();
     } else {
-      setSubcategories([]); // Clear subcategories if no category selected
-      setFilterAttributes([]); // Clear filters if no category selected
+      setSubcategories([]);
     }
   }, [selectedCategoryId]);
 
-  // Fetch filter attributes when the subcategory changes
+  // Fetch filter attributes when a category or subcategory is selected
   useEffect(() => {
-    if (selectedSubcategoryId) {
-      fetchFilters(parseInt(selectedCategoryId), parseInt(selectedSubcategoryId)); // Fetch filters based on subcategory
-    } else {
-      fetchFilters(parseInt(selectedCategoryId)); // Fetch filters based on category only
+    if (selectedCategoryId || selectedSubcategoryId) {
+      const loadFilterAttributes = async () => {
+        try {
+          const attributeData = await fetchFilterAttributes(
+            parseInt(selectedCategoryId),
+            selectedSubcategoryId ? parseInt(selectedSubcategoryId) : null
+          );
+          setFilterAttributes(attributeData);
+        } catch (error) {
+          setFilterAttributes([]);
+        }
+      };
+      loadFilterAttributes();
     }
-  }, [selectedSubcategoryId]);
+  }, [selectedCategoryId, selectedSubcategoryId]);
 
-  // Fetch subcategories based on selected category
-  const fetchSubcategories = async (categoryId: string) => {
-    try {
-      const fetchedSubcategories = await fetchSubCategoriesByCategoryId(parseInt(categoryId));
-      setSubcategories(fetchedSubcategories);
-    } catch (error) {
-      setSubcategories([]);
-      setSelectedSubcategoryId('')
-    }
+
+  const handleAddFilterAttributeOption = () => {
+    setFilterAttributeOptions([
+      ...filterAttributeOptions,
+      { attributeId: "", optionId: "" },
+    ]);
   };
 
-  // Fetch filters based on category or subcategory
-  const fetchFilters = async (categoryId: number, subcategoryId?: number) => {
-    try {
-      const filters = await fetchFilterAttributes(categoryId, subcategoryId || null);
-      setFilterAttributes(filters);
-    } catch (error) {
-      setFilterAttributes([]);
-    }
+  const handleRemoveFilterAttributeOption = (index: number) => {
+    setFilterAttributeOptions((prev) =>
+      prev.filter((_, i) => i !== index)
+    );
   };
-
-  // Handle form submission
+  const handleUpdateFilterAttributeOption = async (
+    index: number,
+    key: "attributeId" | "optionId",
+    value: string
+  ) => {
+    console.log("Updating attribute option");
+    
+    const updated = [...filterAttributeOptions];
+    updated[index][key] = value;
+  
+    if (key === "attributeId") {
+      try {
+        const options = await fetchFilterOptionsByAttributeId(parseInt(value));
+        updated[index].options = options.map((option) => ({
+          id: option.id!.toString(),
+          value: option.value,
+        }));
+      } catch (error) {
+        console.error("Error fetching filter options:", error);
+        updated[index].options = [];
+      }
+    }
+  
+    setFilterAttributeOptions(updated);
+  };
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
     const rateCardData = {
       name: rateCardName,
-      description,
       category_id: parseInt(selectedCategoryId),
       subcategory_id: selectedSubcategoryId ? parseInt(selectedSubcategoryId) : null,
-      provider_id: selectedProviderId ? parseInt(selectedProviderId) : null,
-      filter_attribute_id: selectedFilterAttributeId ? parseInt(selectedFilterAttributeId) : null,
-      filter_option_id: selectedFilterOptionId ? parseInt(selectedFilterOptionId) : null,
+      attributes: filterAttributeOptions.map((pair) => ({
+        attribute_id: parseInt(pair.attributeId),
+        option_id: parseInt(pair.optionId),
+      })),
       price: parseFloat(price),
       active: isActive,
+      recommended: isRecommended,
+      best_deal: isBestDeal,
+      provider_id: parseInt(selectedProviderId),
     };
 
     try {
-      await updateRateCard(rateCardId!.toString(), rateCardData);
+      const response = await createRateCard(rateCardData);
       toast({
-        variant: 'success',
-        title: 'Success',
-        description: 'Rate Card updated successfully.',
+        variant: "success",
+        title: "Success",
+        description: response.message,
       });
-      setIsSubmitting(false);
-      router.push('/admin/rate-card'); // Redirect after successful update
-
+      //router.push("/admin/rate-card");
     } catch (error) {
       toast({
-        variant: 'error',
-        title: 'Error',
-        description: 'Failed to update rate card.',
+        variant: "error",
+        title: "Error",
+        description: `${error}`,
       });
+    } finally {
       setIsSubmitting(false);
     }
   };
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-12xl mx-auto space-y-6">
         <div className="text-left space-y-2">
-          <h1 className="text-3xl font-bold text-gray-900">Edit Rate Card</h1>
-          <p className="text-gray-500">Modify the existing rate card details</p>
+          <h1 className="text-3xl font-bold text-gray-900">Rate Card Management</h1>
+          <p className="text-gray-500">Create a new rate card</p>
         </div>
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
@@ -218,9 +304,9 @@ const RateCardEditForm: React.FC = () => {
             <div className="flex items-center space-x-2">
               <div className="h-8 w-1 bg-blue-600 rounded-full" />
               <div>
-                <CardTitle className="text-xl text-gray-800">Edit Rate Card</CardTitle>
+                <CardTitle className="text-xl text-gray-800">New Rate Card</CardTitle>
                 <CardDescription className="text-gray-500">
-                  Update the fields below to modify the rate card
+                  Fill in the details below to create a new rate card
                 </CardDescription>
               </div>
             </div>
@@ -251,11 +337,8 @@ const RateCardEditForm: React.FC = () => {
                 </label>
                 <Select
                   value={selectedCategoryId}
-                  onValueChange={(value) => {
-                    setSelectedCategoryId(value);
-                    setSelectedSubcategoryId('')
-                    setSelectedFilterAttributeId('');
-                  }}                >
+                  onValueChange={(value) => setSelectedCategoryId(value)}
+                >
                   <SelectTrigger className="bg-white border-gray-200">
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
@@ -280,10 +363,7 @@ const RateCardEditForm: React.FC = () => {
                   </label>
                   <Select
                     value={selectedSubcategoryId}
-                    onValueChange={(value) => {
-                      setSelectedSubcategoryId(value)
-                      setSelectedFilterAttributeId('');
-                    }}
+                    onValueChange={(value) => setSelectedSubcategoryId(value)}
                   >
                     <SelectTrigger className="bg-white border-gray-200">
                       <SelectValue placeholder="Select a subcategory" />
@@ -300,58 +380,63 @@ const RateCardEditForm: React.FC = () => {
                   </Select>
                 </div>
               )}
-
-              {/* Filter Attribute Selector */}
+              {/* Dynamic Filter Attribute Options */}
               {filterAttributes.length > 0 && (
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                    <Globe2 className="w-4 h-4 text-blue-500" />
-                    <span>Select Filter Attributes</span>
-                  </label>
-                  <Select
-                    value={selectedFilterAttributeId}
-                    onValueChange={(value) => setSelectedFilterAttributeId(value)}
-                  >
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select filter attributes" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {filterAttributes.map((attribute) =>
-                        attribute?.id && attribute?.name ? (
-                          <SelectItem key={attribute.id} value={attribute.id.toString()}>
-                            {attribute.name}
-                          </SelectItem>
-                        ) : null
-                      )}
-                    </SelectContent>
-                  </Select>
+                <div>
+                  {filterAttributeOptions.map((pair, index) => (
+                    <div key={index} className="flex items-center space-x-4">
+                      <Select
+                        value={pair.attributeId}
+                        onValueChange={(value) =>
+                          handleUpdateFilterAttributeOption(index, "attributeId", value)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Attribute" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {filterAttributes.map((attr) => (
+                            <SelectItem key={attr.id} value={attr.id!.toString()}>
+                              {attr.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select
+                        value={pair.optionId}
+                        onValueChange={(value) =>
+                          handleUpdateFilterAttributeOption(index, "optionId", value)
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select Option" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {pair.options?.map((opt) => (
+                            <SelectItem key={opt.id} value={opt.id}>
+                              {opt.value}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Button
+                        type="button"
+                        onClick={() => handleRemoveFilterAttributeOption(index)}
+                        variant="destructive"
+                        size="sm"
+                      >
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+                  <Button type="button" onClick={handleAddFilterAttributeOption}>
+                    Add Attribute
+                  </Button>
                 </div>
               )}
 
 
-
-              {filterOptions.length > 0 && (
-                <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Select Filter Option</label>
-                  <Select
-                    value={selectedFilterOptionId}
-                    onValueChange={(value) => setSelectedFilterOptionId(value)}
-                  >
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select a filter option" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {filterOptions.map((option) => (
-                        <SelectItem key={option.id} value={option.id!.toString()}>
-                          {option.value}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-<div className="space-y-2">
+              <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <span>Price</span>
                 </label>
@@ -374,26 +459,10 @@ const RateCardEditForm: React.FC = () => {
                 />
                 {priceError && <p className="text-red-500 text-sm">{priceError}</p>}
               </div>
-              {/* Description Field with React-Quill */}
+
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <span>Description</span>
-                </label>
-                <ReactQuill
-                  value={description}
-                  onChange={setDescription}
-                  theme="snow"
-                  modules={quillModules}
-                  style={{ height: '200px' }}
-                />
-              </div>
-
-            
-
-
-              {/* Provider Selector */}
-              <div className="space-y-2">
-                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <Globe2 className="w-4 h-4 text-blue-500" />
                   <span>Select Provider</span>
                 </label>
                 <Select
@@ -405,9 +474,9 @@ const RateCardEditForm: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {providers.map((provider) =>
-                      provider?.id ? (
+                      provider?.id && provider?.first_name ? (
                         <SelectItem key={provider.id} value={provider.id.toString()}>
-                          {provider.first_name} {provider.last_name}
+                          {provider.first_name}
                         </SelectItem>
                       ) : null
                     )}
@@ -415,6 +484,35 @@ const RateCardEditForm: React.FC = () => {
                 </Select>
               </div>
 
+              <div className="space-y-2">
+  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+    <span>Recommended</span>
+  </label>
+  <div className="flex items-center space-x-3">
+    <span className="text-sm text-gray-600">No</span>
+    <Switch
+      checked={isRecommended}
+      onCheckedChange={setIsRecommended}
+      className="data-[state=checked]:bg-blue-500"
+    />
+    <span className="text-sm text-gray-600">Yes</span>
+  </div>
+</div>
+
+<div className="space-y-2">
+  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+    <span>Best Deal</span>
+  </label>
+  <div className="flex items-center space-x-3">
+    <span className="text-sm text-gray-600">No</span>
+    <Switch
+      checked={isBestDeal}
+      onCheckedChange={setIsBestDeal}
+      className="data-[state=checked]:bg-blue-500"
+    />
+    <span className="text-sm text-gray-600">Yes</span>
+  </div>
+</div>
 
               {/* Active/Inactive Switch */}
               <div className="space-y-2">
@@ -437,12 +535,12 @@ const RateCardEditForm: React.FC = () => {
                   {isSubmitting ? (
                     <div className="flex items-center justify-center space-x-2">
                       <Loader2 className="w-4 h-4 animate-spin" />
-                      <span>Updating...</span>
+                      <span>Saving...</span>
                     </div>
                   ) : (
                     <div className="flex items-center justify-center space-x-2">
                       <Save className="w-4 h-4" />
-                      <span>Update Rate Card</span>
+                      <span>Save Rate Card</span>
                     </div>
                   )}
                 </Button>
@@ -455,4 +553,4 @@ const RateCardEditForm: React.FC = () => {
   );
 };
 
-export default RateCardEditForm;
+export default RateCardForm;

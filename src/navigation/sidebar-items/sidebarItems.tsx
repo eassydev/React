@@ -86,6 +86,35 @@ export const sidebarItems: SidebarItem[] = [
     route: `${basePath}/package`,
   },
   {
+    title: "Country",
+    icon: ListCheckIcon,
+    route: `${basePath}/country`,
+  },
+  {
+    title: "State",
+    icon: ListCheckIcon,
+    route: `${basePath}/state`,
+  },
+  {
+    title: "City",
+    icon: ListCheckIcon,
+    route: `${basePath}/city`,
+  },
+  {
+    title: "Hub",
+    icon: ListCheckIcon,
+    route: `${basePath}/hub`,
+  },
+  {
+    title: "Hub Pincode",
+    icon: ListCheckIcon,
+    route: `${basePath}/hub-pincode`,
+  }, {
+    title: "Sp Hub",
+    icon: ListCheckIcon,
+    route: `${basePath}/sp-hub`,
+  },
+  {
     title: "Pages",
     icon: ListCheckIcon,
     route: `${basePath}/pages`,

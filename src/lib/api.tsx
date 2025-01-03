@@ -153,19 +153,22 @@ export interface ExcludeImage {
   image_path: File; // Image file for the exclude section
 }
 
-// Define the structure of the RateCard object
 export interface RateCard {
   id?: string;
   category_id: number;
-  subcategory_id: number | null;
-  filter_attribute_id: number | null;
-  filter_option_id: number | null;
-  provider_id: number | null; // Change here to allow null values
+  subcategory_id?: number | null;
+  provider_id?: number | null;
   name: string;
-  description?: string;
   price: number;
   active: boolean;
+  best_deal: boolean; // Added best_deal
+  recommended: boolean; // Added recommended
+  attributes: {
+    attribute_id: number;
+    option_id: number;
+  }[]; // Dynamic filter attributes and options
 }
+
 
 export interface Addon {
   id?: string;
@@ -1191,23 +1194,22 @@ export const deleteSubcategory = async (id: string): Promise<ApiResponse> => {
 };
 
 
-
-// Function to create a new rate card
 export const createRateCard = async (rateCard: RateCard): Promise<ApiResponse> => {
-
   const payload = {
     name: rateCard.name,
     category_id: rateCard.category_id,
-    provider_id: rateCard.provider_id || null,
+    provider_id: rateCard.provider_id ?? null,
     price: rateCard.price,
-    active: rateCard.active ? 0 : 1,
-    subcategory_id: rateCard.subcategory_id || null,
-    filter_attribute_id: rateCard.filter_attribute_id || null,
-    filter_option_id: rateCard.filter_option_id || null,
-    description: rateCard.description || '',
+    active: rateCard.active ? 1 : 0,
+    subcategory_id: rateCard.subcategory_id ?? null,
+    best_deal: rateCard.best_deal, // Added best_deal
+    recommended: rateCard.recommended, // Added recommended
+    filter_attributes: rateCard.attributes.map((attr) => ({
+      attribute_id: attr.attribute_id,
+      option_id: attr.option_id,
+    })), // Include dynamic filter attributes
   };
-  
- 
+
   try {
     const token = getToken();
     const response: AxiosResponse<ApiResponse> = await apiClient.post('/rate-card', payload, {
@@ -1277,34 +1279,37 @@ export const fetchRateCardById = async (id: string): Promise<RateCard> => {
   }
 };
 
-// Function to update an existing rate card
 export const updateRateCard = async (id: string, rateCard: RateCard): Promise<ApiResponse> => {
   // Build the JSON payload
   const payload = {
     name: rateCard.name,
     category_id: rateCard.category_id,
-    provider_id: rateCard.provider_id || null,
+    provider_id: rateCard.provider_id ?? null,
     price: rateCard.price,
-    active: rateCard.active ? 0 : 1,
-    subcategory_id: rateCard.subcategory_id || null,
-    filter_attribute_id: rateCard.filter_attribute_id || null,
-    filter_option_id: rateCard.filter_option_id || null,
-    description: rateCard.description || '',
+    active: rateCard.active ? 1 : 0,
+    subcategory_id: rateCard.subcategory_id ?? null,
+    best_deal: rateCard.best_deal, // Added best_deal
+    recommended: rateCard.recommended, // Added recommended
+    filter_attributes: rateCard.attributes.map((attr) => ({
+      attribute_id: attr.attribute_id,
+      option_id: attr.option_id,
+    })), // Include dynamic filter attributes
   };
 
   try {
     const token = getToken();
     const response: AxiosResponse<ApiResponse> = await apiClient.put(`/rate-card/${id}`, payload, {
       headers: {
-        'Content-Type': 'application/json',
-        'admin-auth-token': token || '',
+        "Content-Type": "application/json",
+        "admin-auth-token": token || "",
       },
     });
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to update rate card.');
+    throw new Error(error.response?.data?.message || "Failed to update rate card.");
   }
 };
+
 
 // Function to delete a rate card
 export const deleteRateCard = async (id: string): Promise<ApiResponse> => {
