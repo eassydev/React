@@ -14,7 +14,7 @@ import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@
 import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from 'lucide-react';
 import { fetchBanners, deleteBanner } from '@/lib/api';
 import Link from 'next/link';
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter,AlertDialogCancel } from '@/components/ui/alert-dialog';
 import { useToast } from "@/hooks/use-toast";
 
 const BannerList = () => {
@@ -127,8 +127,8 @@ const BannerList = () => {
                 <Button variant="secondary" onClick={() => handleBannerDelete(row.original)}>
                   Yes, Delete
                 </Button>
-                <Button variant="outline">Cancel</Button>
-              </AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>   
+                    </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
         </div>

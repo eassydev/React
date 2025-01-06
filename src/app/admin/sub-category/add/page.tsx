@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Save, ImageIcon, Type, FileText, Loader2, Plus, Trash2, Globe2 } from 'lucide-react';
-import { createSubcategory, fetchAllGstRates, fetchAllCategories, Subcategory, Attribute, ServiceDetail, ExcludeImage, IncludeItem, Category } from '@/lib/api';
+import { createSubcategory, fetchAllGstRates, fetchAllCategories, Subcategory, ServiceSegment, Attribute, ServiceDetail, ExcludeImage, IncludeItem, Category } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
 
@@ -28,7 +28,7 @@ const quillModules = {
 };
 
 const SubcategoryForm: React.FC = () => {
-    const router = useRouter();
+  const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [subcategoryImage, setSubcategoryImage] = useState<File | null>(null);
@@ -47,7 +47,7 @@ const SubcategoryForm: React.FC = () => {
   const { toast } = useToast();
   const [optionalHeading, setOptionalHeading] = useState<string>('');
   const [attributes, setAttributes] = useState<Attribute[]>([]);
-  const [serviceDetails, setServiceDetails] = useState<ServiceDetail[]>([]);
+  const [serviceSegments, setServiceSegments] = useState<ServiceSegment[]>([]);
   const [showExcludeSection, setShowExcludeSection] = useState<boolean>(false);
   const [excludeHeading, setExcludeHeading] = useState<string>("");
   const [excludeDescription, setExcludeDescription] = useState<string>("");
@@ -199,22 +199,6 @@ const SubcategoryForm: React.FC = () => {
     setAttributes((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Add a new service detail
-  const addServiceDetail = () => {
-    setServiceDetails((prev) => [...prev, { title: "", description: "" }]);
-  };
-
-  // Update a service detail field
-  const updateServiceDetail = (index: number, field: string, value: string) => {
-    const updatedServiceDetails = [...serviceDetails];
-    updatedServiceDetails[index] = { ...updatedServiceDetails[index], [field]: value };
-    setServiceDetails(updatedServiceDetails);
-  };
-
-  // Remove a service detail
-  const removeServiceDetail = (index: number) => {
-    setServiceDetails((prev) => prev.filter((_, i) => i !== index));
-  };
   const handleDropdownChange = (value: string, setter: (value: number) => void) => {
     setter(parseFloat(value));
   };
@@ -241,7 +225,7 @@ const SubcategoryForm: React.FC = () => {
       service_time: serviceTime,
       active: isActive,
       attributes: attributes,
-      serviceDetails: serviceDetails,
+      serviceSegments: serviceSegments, // Use serviceSegments here
       excludeItems: formattedExcludeItems, // Add exclude items
       includeItems: includeItems,
       excludedImages: formattedExcludeImages,
@@ -584,43 +568,47 @@ const SubcategoryForm: React.FC = () => {
                 </Button>
               </div>
 
-              {/* Service Details Section */}
+              {/* Service Segments Section */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Service Details</h3>
-                {serviceDetails.map((service, serviceIndex) => (
-                  <div key={serviceIndex} className="space-y-2 border p-4 rounded-md bg-gray-50">
-                    {/* Service Title */}
+                <h3 className="text-lg font-semibold">Service Segments</h3>
+                {serviceSegments.map((segment, segmentIndex) => (
+                  <div key={segmentIndex} className="space-y-2 border p-4 rounded-md bg-gray-50">
+                    {/* Segment Name */}
                     <Input
-                      placeholder="Service Title"
-                      value={service.title}
-                      onChange={(e) => updateServiceDetail(serviceIndex, "title", e.target.value)}
+                      placeholder="Segment Name"
+                      value={segment.segment_name}
+                      onChange={(e) => {
+                        const updatedSegments = [...serviceSegments];
+                        updatedSegments[segmentIndex].segment_name = e.target.value;
+                        setServiceSegments(updatedSegments);
+                      }}
                       className="h-10"
                     />
 
-<div className="space-y-2" style={{ height: "250px" }}>
-                    <ReactQuill
-                   value={service.description}
-                   onChange={(value) => updateServiceDetail(serviceIndex, "description", value)}
-                  theme="snow"
-                  style={{ height: "200px" }}
-                />
-                </div>
-                    {/* Remove Service Detail */}
+                    {/* Remove Service Segment */}
                     <Button
                       type="button"
                       variant="ghost"
                       className="mt-4 flex items-center text-red-500"
-                      onClick={() => removeServiceDetail(serviceIndex)}
+                      onClick={() =>
+                        setServiceSegments((prev) => prev.filter((_, i) => i !== segmentIndex))
+                      }
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
-                      Remove Service Detail
+                      Remove Segment
                     </Button>
                   </div>
                 ))}
 
-                <Button type="button" variant="outline" onClick={addServiceDetail}>
+                {/* Add Service Segment Button */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setServiceSegments((prev) => [...prev, { segment_name: "" }])}
+                  className="flex items-center"
+                >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Service Detail
+                  Add Segment
                 </Button>
               </div>
               <div className="space-y-4">

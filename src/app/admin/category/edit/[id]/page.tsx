@@ -11,7 +11,7 @@ import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { Save, ImageIcon, Globe2, Type, FileInput, MapPin, Download, FileText, Loader2, Plus, Trash2 } from 'lucide-react';
 import {
-  fetchCategoryById, fetchAllGstRates, updateCategory, Category, Location, ExcludeImage, Attribute, ServiceDetail, IncludeItem
+  fetchCategoryById, fetchAllGstRates, updateCategory, Category, ServiceSegment, Location, ExcludeImage, Attribute, ServiceDetail, IncludeItem
 } from '@/lib/api'; // Import interfaces and API functions
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
@@ -54,11 +54,11 @@ const CategoryEdit: React.FC = () => {
   const [serviceTime, setServiceTime] = useState<string>('');
   const [sgst, setSgst] = useState<number | null>(null);
   const [cgst, setCgst] = useState<number | null>(null);
-  const [igstTax, setIgstTax] = useState<number | null>(null);
+  const [igst, setIgst] = useState<number | null>(null);
   const [sacCode, setSacCode] = useState<string>('');
   const [hstRates, setHstRates] = useState<any[]>([]);
   const [attributes, setAttributes] = useState<Attribute[]>([]);
-  const [serviceDetails, setServiceDetails] = useState<ServiceDetail[]>([]);
+  const [serviceSegments, setServiceSegments] = useState<ServiceSegment[]>([]);
   const [showExcludeSection, setShowExcludeSection] = useState<boolean>(false);
   const [excludeHeading, setExcludeHeading] = useState<string>("");
   const [excludeDescription, setExcludeDescription] = useState<string>("");
@@ -102,11 +102,11 @@ const CategoryEdit: React.FC = () => {
       setIsActive(categoryData.active || true);
       setLocations(categoryData.locations || []);
       setAttributes(categoryData.attributes || []);
-      setServiceDetails(categoryData.serviceDetails || []);
+      setServiceSegments(categoryData.serviceSegments || []);
       setServiceTime(categoryData.service_time || '');
       setSgst(categoryData.sgst_tax || null);
       setCgst(categoryData.cgst_tax || null);
-      setIgstTax(categoryData.igst_tax ?? null); // Set IGST tax field
+      setIgst(categoryData.igst_tax ?? null); // Set IGST tax field
       console.log("categoryData.igst_tax", categoryData.igst_tax)
       setSacCode(categoryData.sac_code || ''); // Set SAC code field
       setExcludeHeading(categoryData.exclude_heading || '');
@@ -185,8 +185,8 @@ const CategoryEdit: React.FC = () => {
     setAttributes(updatedAttributes);
   };
 
-  const addServiceDetail = () => {
-    setServiceDetails((prev) => [...prev, { title: "", description: "" }]);
+  const addServiceSegment = () => {
+    setServiceSegments((prev) => [...prev, { segment_name: "" }]);
   };
 
   // Add an option to a specific attribute
@@ -221,21 +221,17 @@ const CategoryEdit: React.FC = () => {
   };
 
 
-  const updateServiceDetail = (index: number, field: keyof ServiceDetail, value: string) => {
-    setServiceDetails((prev) => {
-      const updatedServiceDetails = [...prev];
-      if (updatedServiceDetails[index][field] !== value) {
-        updatedServiceDetails[index] = { ...updatedServiceDetails[index], [field]: value };
-      }
-      return updatedServiceDetails;
+  const updateServiceSegment = (index: number, value: string) => {
+    setServiceSegments((prev) => {
+      const updatedSegments = [...prev];
+      updatedSegments[index] = { ...updatedSegments[index], segment_name: value };
+      return updatedSegments;
     });
   };
 
-
-  const removeServiceDetail = (index: number) => {
-    setServiceDetails((prev) => prev.filter((_, i) => i !== index));
+  const removeServiceSegment = (index: number) => {
+    setServiceSegments((prev) => prev.filter((_, i) => i !== index));
   };
-
 
   const addIncludeItem = () => {
     setIncludeItems((prev) => [...prev, { title: "", description: "" }]);
@@ -361,9 +357,9 @@ const CategoryEdit: React.FC = () => {
       service_time: serviceTime,
       active: isActive,
       attributes: attributes,
-      serviceDetails: serviceDetails,
+      serviceSegments: serviceSegments,
       location_method: locationMethod,
-      igst_tax: igstTax,
+      igst_tax: igst,
       sgst_tax: sgst,
       cgst_tax: cgst,
       sac_code: sacCode,
@@ -483,8 +479,8 @@ const CategoryEdit: React.FC = () => {
                     <span>IGST (%)</span>
                   </label>
                   <Select
-                    value={igstTax !== null ? igstTax.toString() : ""}
-                    onValueChange={(value) => setIgstTax(parseInt(value))}
+                    value={igst !== null ? igst.toString() : ""}
+                    onValueChange={(value) => setIgst(parseInt(value))}
                   >
                     <SelectTrigger className="bg-white border-gray-200">
                       <SelectValue placeholder="Select IGST" />
@@ -650,40 +646,30 @@ const CategoryEdit: React.FC = () => {
               </div>
 
 
-              {/* Service Details */}
+              {/* Service Segments */}
               <div className="space-y-4">
-                <h3 className="text-lg font-medium">Service Details</h3>
-                {serviceDetails.map((service, index) => (
+                <h3 className="text-lg font-medium">Service Segments</h3>
+                {serviceSegments.map((segment, index) => (
                   <div key={index} className="space-y-2">
                     <Input
-                      placeholder="Service Title"
-                      value={service.title}
-                      onChange={(e) => updateServiceDetail(index, "title", e.target.value)}
+                      placeholder="Segment Name"
+                      value={segment.segment_name}
+                      onChange={(e) => updateServiceSegment(index, e.target.value)}
                     />
-                     <div className="space-y-2" style={{ height: "250px" }}>
-                    <ReactQuill
-                      value={service.description}
-                      onChange={(value) => updateServiceDetail(index, "description", value)}
-                      modules={quillModules}
-                      theme="snow"
-                  style={{ height: "200px" }}
-                    />
-                    </div>
-                    {/* Remove Service Detail */}
                     <Button
                       type="button"
                       variant="ghost"
                       className="mt-4 flex items-center text-red-500"
-                      onClick={() => removeServiceDetail(index)}
+                      onClick={() => removeServiceSegment(index)}
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
-                      Remove Service Detail
+                      Remove Segment
                     </Button>
                   </div>
-
                 ))}
-                <Button type="button" onClick={addServiceDetail}>Add Service Detail</Button>
+                <Button type="button" onClick={addServiceSegment}>Add Service Segment</Button>
               </div>
+
 
               <div className="space-y-4">
 

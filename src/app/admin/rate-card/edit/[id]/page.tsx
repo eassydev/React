@@ -25,12 +25,15 @@ import {
   fetchProviders,
   fetchFilterOptionsByAttributeId,
   fetchFilterAttributes,
-  createRateCard,
+  updateRateCard,
   Category,
   Subcategory,
   Attribute,
   fetchRateCardById,
   Provider,
+  ServiceDetail,
+  fetchServiceSegments,
+  ServiceSegment
 } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, usePathname } from 'next/navigation';
@@ -74,8 +77,13 @@ const RateCardForm: React.FC = () => {
   const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedProviderId, setSelectedProviderId] = useState<string>("");
   const [priceError, setPriceError] = useState("");
+    const [strikePrice, setStrikePrice] = useState("");
+    const [strikePriceError, setStrikePriceError] = useState("");
   const [isRecommended, setIsRecommended] = useState(false);
   const [isBestDeal, setIsBestDeal] = useState(false);
+   const [serviceDescriptions, setServiceDescriptions] = useState<ServiceDetail[]>([]);
+    const [segments, setSegments] = useState<ServiceSegment[]>([]);
+  
   const router = useRouter();
   const pathname = usePathname();
   const rateCardId = pathname?.split('/').pop();
@@ -100,6 +108,8 @@ useEffect(() => {
         setSelectedCategoryId(rateCardData.category_id?.toString() || '');
         setSelectedSubcategoryId(rateCardData.subcategory_id?.toString() || '');
         setPrice(rateCardData.price?.toString() || '');
+        setStrikePrice(rateCardData.strike_price?.toString() || '');
+
         setIsActive(rateCardData.active);
         setSelectedProviderId(rateCardData.provider_id?.toString() || ''); // Set initial provider
         setIsRecommended(rateCardData.recommended)
@@ -131,6 +141,14 @@ useEffect(() => {
           setFilterAttributeOptions(dynamicAttributes);
         }
         
+        if (rateCardData.serviceDescriptions && Array.isArray(rateCardData.serviceDescriptions)) {
+          const formattedServiceDescriptions = rateCardData.serviceDescriptions.map((detail: any) => ({
+            segment_id: detail.segment_id?.toString() || '',
+            title: detail.title || '',
+            description: detail.description || '',
+          }));
+          setServiceDescriptions(formattedServiceDescriptions);
+        }
 
         // Fetch subcategories for the selected category
         if (rateCardData.category_id) {
@@ -210,6 +228,16 @@ const fetchFilters = async (categoryId: number, subcategoryId?: number) => {
         }
       };
       loadFilterAttributes();
+            const loadServiceDetails = async () => {
+              try {
+                const segmentData = await fetchServiceSegments(parseInt(selectedCategoryId),
+                  selectedSubcategoryId ? parseInt(selectedSubcategoryId) : null);
+                setSegments(segmentData);
+              } catch (error) {
+                setSegments([]);
+              }
+            };
+            loadServiceDetails();
     }
   }, [selectedCategoryId, selectedSubcategoryId]);
 
@@ -264,21 +292,29 @@ const fetchFilters = async (categoryId: number, subcategoryId?: number) => {
         option_id: parseInt(pair.optionId),
       })),
       price: parseFloat(price),
+      strike_price:parseFloat(strikePrice),
       active: isActive,
       recommended: isRecommended,
       best_deal: isBestDeal,
       provider_id: parseInt(selectedProviderId),
+      serviceDescriptions: serviceDescriptions.map((desc) => ({
+        segment_id: desc.segment_id,
+        title: desc.title,
+        description: desc.description,
+      })),
     };
 
     try {
-      const response = await createRateCard(rateCardData);
+      const response = await updateRateCard(rateCardId!.toString(),rateCardData);
       toast({
         variant: "success",
         title: "Success",
         description: response.message,
       });
-      //router.push("/admin/rate-card");
+      router.push("/admin/rate-card");
     } catch (error) {
+      console.log("rateCardData",error)
+
       toast({
         variant: "error",
         title: "Error",
@@ -289,6 +325,29 @@ const fetchFilters = async (categoryId: number, subcategoryId?: number) => {
     }
   };
 
+
+  
+  const handleAddServiceDescription = () => {
+    setServiceDescriptions((prev) => [
+      ...prev,
+      { segment_id: "", title: "", description: "" },
+    ]);
+  };
+
+  const handleUpdateServiceDescription = (
+    index: number,
+    key: "segment_id" | "title" | "description",
+    value: string
+  ) => {
+    const updated = [...serviceDescriptions];
+    updated[index][key] = value;
+    setServiceDescriptions(updated);
+  };
+
+  
+  const handleRemoveServiceDescription = (index: number) => {
+    setServiceDescriptions((prev) => prev.filter((_, i) => i !== index));
+  };
 
 
   return (
@@ -460,6 +519,91 @@ const fetchFilters = async (categoryId: number, subcategoryId?: number) => {
                 {priceError && <p className="text-red-500 text-sm">{priceError}</p>}
               </div>
 
+ <div className="space-y-2">
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <span>Discount Price</span>
+                </label>
+                <Input
+                  type="number"
+                  placeholder="Enter discount price"
+                  value={strikePrice}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (parseFloat(value) < 0) {
+                      setStrikePriceError('Price cannot be negative.');
+                      setStrikePrice(value);
+                    } else {
+                      setStrikePriceError('');
+                      setStrikePrice(value);
+                    }
+                  }}
+                  className="h-11"
+                  required
+                />
+                {priceError && <p className="text-red-500 text-sm">{priceError}</p>}
+              </div>
+<div className="space-y-4">
+                <h3 className="text-lg font-medium">Service Descriptions</h3>
+                {serviceDescriptions.map((service, index) => (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Segment Selector */}
+                    <Select
+                      value={service.segment_id}
+                      onValueChange={(value) =>
+                        handleUpdateServiceDescription(index, "segment_id", value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Segment" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {segments.map((attr) => (
+                          <SelectItem key={attr.id} value={attr.id!.toString()}>
+                            {attr.segment_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Title Input */}
+                    <Input
+                      placeholder="Enter Title"
+                      value={service.title}
+                      onChange={(e) =>
+                        handleUpdateServiceDescription(index, "title", e.target.value)
+                      }
+                      className="h-11"
+                    />
+
+                    {/* Description Input */}
+
+
+                    <ReactQuill
+                      value={service.description}
+                      onChange={(value) =>
+                        handleUpdateServiceDescription(index, "description", value)
+                      }
+                      theme="snow"
+                      style={{ height: "200px" }}
+                    />
+
+                    {/* Remove Button */}
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleRemoveServiceDescription(index)}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+
+                {/* Add Service Description Button */}
+                <Button type="button" onClick={handleAddServiceDescription}>
+                  Add Service Description
+                </Button>
+              </div>
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <Globe2 className="w-4 h-4 text-blue-500" />

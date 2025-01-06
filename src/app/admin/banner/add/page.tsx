@@ -125,14 +125,7 @@ const [radiusError, setRadiusError] = useState<string>("");
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!title || !description || !selectionType || !selectedItemId || !price) {
-      toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Please fill in all required fields.",
-      });
-      return;
-    }
+    
 
     setIsSubmitting(true);
     try {
@@ -235,7 +228,7 @@ const [radiusError, setRadiusError] = useState<string>("");
 
               <div className="space-x-2">
                 <label className="text-sm font-medium text-gray-700">Selection Type</label>
-                <Select value={selectionType} onValueChange={(value) => setSelectionType(value)}>
+                <Select value={selectionType} onValueChange={(value) => setSelectionType(value)} required>
                   <SelectTrigger className="bg-white border-gray-200">
                     <SelectValue placeholder="Select Type" />
                   </SelectTrigger>
@@ -251,7 +244,7 @@ const [radiusError, setRadiusError] = useState<string>("");
               {selectionType && (
                 <div>
                   <label className="text-sm font-medium text-gray-700">Select {selectionType}</label>
-                  <Select value={String(selectedItemId)} onValueChange={(value) => setSelectedItemId(Number(value))}>
+                  <Select value={String(selectedItemId)} onValueChange={(value) => setSelectedItemId(Number(value))} required>
                     <SelectTrigger className="bg-white border-gray-200">
                       <SelectValue placeholder={`Select ${selectionType}`} />
                     </SelectTrigger>
@@ -352,7 +345,7 @@ const [radiusError, setRadiusError] = useState<string>("");
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Media Type</label>
-                <Select value={mediaType} onValueChange={(value) => setMediaType(value as "image" | "video")}>
+                <Select value={mediaType} onValueChange={(value) => setMediaType(value as "image" | "video")} required>
                   <SelectTrigger className="bg-white border-gray-200">
                     <SelectValue placeholder="Select Media Type" />
                   </SelectTrigger>
@@ -364,7 +357,7 @@ const [radiusError, setRadiusError] = useState<string>("");
               </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Upload Image</label>
-                <input type="file" accept="image/*" onChange={handleImageChange} />
+                <input type="file" accept="image/*" onChange={handleImageChange} required/>
               </div>
 
               <div className="flex items-center space-x-2">

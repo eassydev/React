@@ -63,16 +63,18 @@ export interface Category {
   location_method: string;
   active: boolean;
   attributes?: Attribute[];
-  serviceDetails?: ServiceDetail[]; // Includes service details
-  igst_tax?: number | null;   // IGST percentage
-  sgst_tax?: number | null;   // SGST percentage
-  cgst_tax?: number | null;   // CGST percentage
-  sac_code?: string | null;   // SAC code
+  serviceSegments?: ServiceSegment[]; // Includes service segments
+  igst_tax?: number | null; // IGST percentage
+  sgst_tax?: number | null; // SGST percentage
+  cgst_tax?: number | null; // CGST percentage
+  sac_code?: string | null; // SAC code
   excludeItems?: ExcludeItem[]; // Array of excluded items
   excludedImages?: ExcludeImage[]; // Array of excluded images
   includeItems?: IncludeItem[]; // Array of excluded items
-
 }
+
+
+
 
 
 // Define the structure of the Subcategory object
@@ -87,7 +89,8 @@ export interface Subcategory {
   exclude_description?: string;
   active: boolean;
   attributes?: Attribute[];
-  serviceDetails?: ServiceDetail[]; // Includes service details
+  serviceSegments?: ServiceSegment[]; // Includes service segments
+
   igst_tax?: number | null;   // IGST percentage
   sgst_tax?: number | null;   // SGST percentage
   cgst_tax?: number | null;   // CGST percentage
@@ -128,9 +131,18 @@ export interface AttributeOption {
 
 export type ServiceDetail = {
   id?: number;
+  segment_id: string;
   title: string;
   description: string;
 };
+
+
+export interface ServiceSegment {
+  id?: string; // Optional for editing
+  category_id?: string; // ID of the associated category
+  subcategory_id?: string; // ID of the associated subcategory
+  segment_name: string; // Name of the service segment
+}
 
 export interface ExcludeItem {
   id?: number; // Auto-incremented primary key
@@ -160,8 +172,10 @@ export interface RateCard {
   provider_id?: number | null;
   name: string;
   price: number;
+  strike_price: number;
   active: boolean;
   best_deal: boolean; // Added best_deal
+  serviceDescriptions?: ServiceDetail[]; // Includes service details
   recommended: boolean; // Added recommended
   attributes: {
     attribute_id: number;
@@ -707,10 +721,11 @@ export const createCategory = async (category: Category): Promise<ApiResponse> =
     formData.append('attributes', JSON.stringify(attributes));
   }
 
-  // Service Details
-  if (category.serviceDetails && category.serviceDetails.length > 0) {
-    formData.append('serviceDetails', JSON.stringify(category.serviceDetails));
-  }
+ // Service Segments
+if (category.serviceSegments && category.serviceSegments.length > 0) {
+  formData.append('serviceSegments', JSON.stringify(category.serviceSegments));
+}
+
 
   // Exclude Items
   if (category.excludeItems && category.excludeItems.length > 0) {
@@ -810,10 +825,11 @@ export const updateCategory = async (id: string, category: Category): Promise<Ap
     formData.append('attributes', JSON.stringify(attributes));
   }
 
-  // Service Details
-  if (category.serviceDetails && category.serviceDetails.length > 0) {
-    formData.append('serviceDetails', JSON.stringify(category.serviceDetails));
-  }
+  // Service Segments
+if (category.serviceSegments && category.serviceSegments.length > 0) {
+  formData.append('serviceSegments', JSON.stringify(category.serviceSegments));
+}
+
 
   // Exclude Items
   if (category.excludeItems && category.excludeItems.length > 0) {
@@ -926,11 +942,9 @@ export const createSubcategory = async (subcategory: Subcategory): Promise<ApiRe
     formData.append('attributes', JSON.stringify(attributes));
   }
 
-  // Service Details
-  if (subcategory.serviceDetails && subcategory.serviceDetails.length > 0) {
-    formData.append('serviceDetails', JSON.stringify(subcategory.serviceDetails));
+  if (subcategory.serviceSegments && subcategory.serviceSegments.length > 0) {
+    formData.append('serviceSegments', JSON.stringify(subcategory.serviceSegments));
   }
-
   // Exclude Items
   if (subcategory.excludeItems && subcategory.excludeItems.length > 0) {
     const excludeItems = subcategory.excludeItems.map((item) => ({
@@ -1126,9 +1140,10 @@ export const updateSubcategory = async (id: string, subcategory: Subcategory): P
   }
 
   // Service Details
-  if (subcategory.serviceDetails && subcategory.serviceDetails.length > 0) {
-    formData.append('serviceDetails', JSON.stringify(subcategory.serviceDetails));
-  }
+   // Service Segments
+if (subcategory.serviceSegments && subcategory.serviceSegments.length > 0) {
+  formData.append('serviceSegments', JSON.stringify(subcategory.serviceSegments));
+}
 
   // Exclude Items
   if (subcategory.excludeItems && subcategory.excludeItems.length > 0) {
@@ -1202,6 +1217,7 @@ export const createRateCard = async (rateCard: RateCard): Promise<ApiResponse> =
     category_id: rateCard.category_id,
     provider_id: rateCard.provider_id ?? null,
     price: rateCard.price,
+    strike_price: rateCard.strike_price,
     active: rateCard.active ? 1 : 0,
     subcategory_id: rateCard.subcategory_id ?? null,
     best_deal: rateCard.best_deal, // Added best_deal
@@ -1210,6 +1226,11 @@ export const createRateCard = async (rateCard: RateCard): Promise<ApiResponse> =
       attribute_id: attr.attribute_id,
       option_id: attr.option_id,
     })), // Include dynamic filter attributes
+    service_descriptions: rateCard.serviceDescriptions!.map((desc) => ({
+      segment_id: desc.segment_id,
+      title: desc.title,
+      description: desc.description,
+    })), // Include service descriptions
   };
 
   try {
@@ -1225,6 +1246,7 @@ export const createRateCard = async (rateCard: RateCard): Promise<ApiResponse> =
     throw new Error(error.response?.data?.message || 'Failed to create rate card.');
   }
 };
+
 
 // Function to fetch all rate cards with pagination
 export const fetchRateCards = async (page = 1, size = 10,  status: string = "all") => {
@@ -1288,6 +1310,7 @@ export const updateRateCard = async (id: string, rateCard: RateCard): Promise<Ap
     category_id: rateCard.category_id,
     provider_id: rateCard.provider_id ?? null,
     price: rateCard.price,
+    strike_price: rateCard.strike_price,
     active: rateCard.active ? 1 : 0,
     subcategory_id: rateCard.subcategory_id ?? null,
     best_deal: rateCard.best_deal, // Added best_deal
@@ -1370,6 +1393,34 @@ export const fetchFilterAttributes = async (
     }
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch filter attributes.');
+  }
+};
+
+
+export const fetchServiceSegments = async (
+  categoryId: number | null,
+  subcategoryId: number | null
+): Promise<ServiceSegment[]> => {
+  try {
+    const token = getToken();
+    const params: any = {};
+    if (categoryId) params.category_id = categoryId;
+    if (subcategoryId) params.subcategory_id = subcategoryId;
+
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/filter/segment', {
+      params,
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch service segments.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch service segments.');
   }
 };
 
@@ -4271,7 +4322,7 @@ export const downloadSampleCSV = async (): Promise<void> => {
     });
 
     // Generate a unique filename for the sample file
-    const uniqueFilename = generateUniqueFilename('rate_card_sample', 'xlsx');
+    const uniqueFilename = generateUniqueFilename('rate_card_sample', 'csv');
 
     // Create a downloadable link
     const url = window.URL.createObjectURL(new Blob([response.data]));

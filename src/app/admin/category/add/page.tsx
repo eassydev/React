@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Save, ImageIcon, Globe2, Type, FileInput, MapPin, Download, FileText, Loader2, Plus, Trash2 } from 'lucide-react';
-import { createCategory, fetchAllGstRates, Category, Location, Attribute, ServiceDetail, ExcludeImage, IncludeItem } from '@/lib/api'; // Import the API function
+import { createCategory, fetchAllGstRates, Category, Location, Attribute, ServiceSegment, ExcludeImage, IncludeItem } from '@/lib/api'; // Import the API function
 import * as XLSX from 'xlsx';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from 'next/navigation';
@@ -70,7 +70,7 @@ const CategoryForm: React.FC = () => {
   const [hstRates, setHstRates] = useState<any[]>([]);
   const [sacCode, setSacCode] = useState<string>('');
   const [attributes, setAttributes] = useState<Attribute[]>([]);
-  const [serviceDetails, setServiceDetails] = useState<ServiceDetail[]>([]);
+  const [serviceSegments, setServiceSegments] = useState<ServiceSegment[]>([]);
   const [showExcludeSection, setShowExcludeSection] = useState<boolean>(false);
   const [excludeHeading, setExcludeHeading] = useState<string>("");
   const [excludeDescription, setExcludeDescription] = useState<string>("");
@@ -280,16 +280,17 @@ const CategoryForm: React.FC = () => {
       service_time: serviceTime,
       active: isActive,
       attributes: attributes,
-      serviceDetails: serviceDetails,
+      serviceSegments: serviceSegments, // Use serviceSegments here
       location_method: locationMethod,
       igst_tax: igst,
       sgst_tax: sgst,
       cgst_tax: cgst,
       sac_code: sacCode,
-      excludeItems: formattedExcludeItems, // Add exclude items
+      excludeItems: formattedExcludeItems,
       includeItems: includeItems,
-      excludedImages: formattedExcludeImages, // Add exclude images as ExcludeImage[]
+      excludedImages: formattedExcludeImages,
     };
+
 
     try {
       const catdata = await createCategory(categoryData);
@@ -298,14 +299,14 @@ const CategoryForm: React.FC = () => {
         title: 'Success.',
         description: catdata.message,
       });
-      router.push('/admin/category'); // Redirect after successful update
+      //  router.push('/admin/category'); // Redirect after successful update
 
       setIsSubmitting(false);
-    } catch (error) {
+    } catch (error: any) {
       toast({
         variant: 'error',
         title: 'Error.',
-        description: ` ${error}`,
+        description: ` ${error.message}`,
       });
       setIsSubmitting(false);
     }
@@ -367,22 +368,7 @@ const CategoryForm: React.FC = () => {
     setAttributes((prev) => prev.filter((_, i) => i !== index));
   };
 
-  // Add a new service detail
-  const addServiceDetail = () => {
-    setServiceDetails((prev) => [...prev, { title: "", description: "" }]);
-  };
 
-  // Update a service detail field
-  const updateServiceDetail = (index: number, field: string, value: string) => {
-    const updatedServiceDetails = [...serviceDetails];
-    updatedServiceDetails[index] = { ...updatedServiceDetails[index], [field]: value };
-    setServiceDetails(updatedServiceDetails);
-  };
-
-  // Remove a service detail
-  const removeServiceDetail = (index: number) => {
-    setServiceDetails((prev) => prev.filter((_, i) => i !== index));
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
@@ -461,7 +447,7 @@ const CategoryForm: React.FC = () => {
                   <ImageIcon className="w-4 h-4 text-blue-500" />
                   <span>Category Image</span>
                 </label>
-                <Input type="file" accept="image/*" onChange={handleImageUpload} className="h-11" />
+                <Input type="file" accept="image/*" onChange={handleImageUpload} className="h-11" required />
                 {imagePreview && (
                   <div className="mt-2">
                     <img src={imagePreview} alt="Category Preview" className="h-32 w-32 object-cover rounded-md" />
@@ -478,7 +464,7 @@ const CategoryForm: React.FC = () => {
                   <Select
                     value={igst?.toString() || ""}
                     onValueChange={(value) => handleDropdownChange(value, setIgst)}
-                  >
+                    required>
                     <SelectTrigger className="bg-white border-gray-200">
                       <SelectValue placeholder="Select IGST" />
                     </SelectTrigger>
@@ -500,7 +486,7 @@ const CategoryForm: React.FC = () => {
                   <Select
                     value={sgst?.toString() || ""}
                     onValueChange={(value) => handleDropdownChange(value, setSgst)}
-                  >
+                    required>
                     <SelectTrigger className="bg-white border-gray-200">
                       <SelectValue placeholder="Select IGST" />
                     </SelectTrigger>
@@ -522,7 +508,7 @@ const CategoryForm: React.FC = () => {
                   <Select
                     value={cgst?.toString() || ""}
                     onValueChange={(value) => handleDropdownChange(value, setCgst)}
-                  >
+                    required>
                     <SelectTrigger className="bg-white border-gray-200">
                       <SelectValue placeholder="Select IGST" />
                     </SelectTrigger>
@@ -549,7 +535,7 @@ const CategoryForm: React.FC = () => {
                   value={sacCode}
                   onChange={(e) => setSacCode(e.target.value)}
                   className="h-11"
-                />
+                  required />
               </div>
 
               {/* Active/Inactive Switch */}
@@ -643,52 +629,50 @@ const CategoryForm: React.FC = () => {
                 </Button>
               </div>
 
-              {/* Service Details Section */}
+              {/* Service Segments Section */}
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Service Details</h3>
-                {serviceDetails.map((service, serviceIndex) => (
-                  <div key={serviceIndex} className="space-y-2 border p-4 rounded-md bg-gray-50">
-                    {/* Service Title */}
+                <h3 className="text-lg font-semibold">Service Segments</h3>
+                {serviceSegments.map((segment, segmentIndex) => (
+                  <div key={segmentIndex} className="space-y-2 border p-4 rounded-md bg-gray-50">
+                    {/* Segment Name */}
                     <Input
-                      placeholder="Service Title"
-                      value={service.title}
-                      onChange={(e) => updateServiceDetail(serviceIndex, "title", e.target.value)}
+                      placeholder="Segment Name"
+                      value={segment.segment_name}
+                      onChange={(e) => {
+                        const updatedSegments = [...serviceSegments];
+                        updatedSegments[segmentIndex].segment_name = e.target.value;
+                        setServiceSegments(updatedSegments);
+                      }}
                       className="h-10"
                     />
 
-                    {/* Service Description */}
-
-                    <div className="space-y-2" style={{ height: "250px" }}>
-                    <ReactQuill
-                   value={service.description}
-                   onChange={(value) => updateServiceDetail(serviceIndex, "description", value)}
-                  theme="snow"
-                  style={{ height: "200px" }}
-                />
-                </div>
-
-                    
-
-                    {/* Remove Service Detail */}
-                    <div className="space-y-5">
+                    {/* Remove Service Segment */}
                     <Button
                       type="button"
                       variant="ghost"
-                      className="mt-5 flex items-center text-red-500"
-                      onClick={() => removeServiceDetail(serviceIndex)}
+                      className="mt-4 flex items-center text-red-500"
+                      onClick={() =>
+                        setServiceSegments((prev) => prev.filter((_, i) => i !== segmentIndex))
+                      }
                     >
                       <Trash2 className="w-4 h-4 mr-2" />
-                      Remove Service Detail
+                      Remove Segment
                     </Button>
-                  </div>
                   </div>
                 ))}
 
-                <Button type="button" variant="outline" onClick={addServiceDetail}>
+                {/* Add Service Segment Button */}
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setServiceSegments((prev) => [...prev, { segment_name: "" }])}
+                  className="flex items-center"
+                >
                   <Plus className="w-4 h-4 mr-2" />
-                  Add Service Detail
+                  Add Segment
                 </Button>
               </div>
+
               <div className="space-y-4">
 
                 <Button type="button" onClick={() => setShowExcludeSection(!showExcludeSection)} className="mb-4">

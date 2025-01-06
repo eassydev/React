@@ -29,8 +29,10 @@ import {
   Category,
   Subcategory,
   Attribute,
-  AttributeOption,
+  ServiceSegment,
   Provider,
+  ServiceDetail,
+  fetchServiceSegments
 } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
@@ -74,14 +76,21 @@ const RateCardForm: React.FC = () => {
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>("");
   const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedProviderId, setSelectedProviderId] = useState<string>("");
+  const [strikePrice, setStrikePrice] = useState("");
+  const [strikePriceError, setStrikePriceError] = useState("");
   const [priceError, setPriceError] = useState("");
   const [isRecommended, setIsRecommended] = useState(false);
   const [isBestDeal, setIsBestDeal] = useState(false);
+  const [serviceDescriptions, setServiceDescriptions] = useState<ServiceDetail[]>([]);
+  const [segments, setSegments] = useState<ServiceSegment[]>([]);
+
   useEffect(() => {
     const loadCategories = async () => {
       try {
         const categoryData = await fetchAllCategories();
         setCategories(categoryData);
+         const fetchedProviders = await fetchProviders();
+              setProviders(fetchedProviders);
       } catch {
         toast({
           variant: "error",
@@ -120,11 +129,23 @@ const RateCardForm: React.FC = () => {
             selectedSubcategoryId ? parseInt(selectedSubcategoryId) : null
           );
           setFilterAttributes(attributeData);
+
+
         } catch (error) {
           setFilterAttributes([]);
         }
       };
       loadFilterAttributes();
+      const loadServiceDetails = async () => {
+        try {
+          const segmentData = await fetchServiceSegments(parseInt(selectedCategoryId),
+            selectedSubcategoryId ? parseInt(selectedSubcategoryId) : null);
+          setSegments(segmentData);
+        } catch (error) {
+          setSegments([]);
+        }
+      };
+      loadServiceDetails();
     }
   }, [selectedCategoryId, selectedSubcategoryId]);
 
@@ -147,10 +168,10 @@ const RateCardForm: React.FC = () => {
     value: string
   ) => {
     console.log("Updating attribute option");
-    
+
     const updated = [...filterAttributeOptions];
     updated[index][key] = value;
-  
+
     if (key === "attributeId") {
       try {
         const options = await fetchFilterOptionsByAttributeId(parseInt(value));
@@ -163,7 +184,7 @@ const RateCardForm: React.FC = () => {
         updated[index].options = [];
       }
     }
-  
+
     setFilterAttributeOptions(updated);
   };
   const onSubmit = async (e: FormEvent) => {
@@ -179,11 +200,18 @@ const RateCardForm: React.FC = () => {
         option_id: parseInt(pair.optionId),
       })),
       price: parseFloat(price),
+      strike_price:parseFloat(strikePrice),
       active: isActive,
       recommended: isRecommended,
       best_deal: isBestDeal,
       provider_id: parseInt(selectedProviderId),
+      serviceDescriptions: serviceDescriptions.map((desc) => ({
+        segment_id: desc.segment_id,
+        title: desc.title,
+        description: desc.description,
+      })),
     };
+
 
     try {
       const response = await createRateCard(rateCardData);
@@ -192,8 +220,10 @@ const RateCardForm: React.FC = () => {
         title: "Success",
         description: response.message,
       });
-      //router.push("/admin/rate-card");
+      router.push("/admin/rate-card");
     } catch (error) {
+      console.log("rateCardData",error)
+
       toast({
         variant: "error",
         title: "Error",
@@ -205,6 +235,27 @@ const RateCardForm: React.FC = () => {
   };
 
 
+  const handleAddServiceDescription = () => {
+    setServiceDescriptions((prev) => [
+      ...prev,
+      { segment_id: "", title: "", description: "" },
+    ]);
+  };
+
+  const handleUpdateServiceDescription = (
+    index: number,
+    key: "segment_id" | "title" | "description",
+    value: string
+  ) => {
+    const updated = [...serviceDescriptions];
+    updated[index][key] = value;
+    setServiceDescriptions(updated);
+  };
+
+  
+  const handleRemoveServiceDescription = (index: number) => {
+    setServiceDescriptions((prev) => prev.filter((_, i) => i !== index));
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
@@ -377,6 +428,94 @@ const RateCardForm: React.FC = () => {
 
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <span>Discount Price</span>
+                </label>
+                <Input
+                  type="number"
+                  placeholder="Enter discount price"
+                  value={strikePrice}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (parseFloat(value) < 0) {
+                      setStrikePriceError('Price cannot be negative.');
+                      setStrikePrice(value);
+                    } else {
+                      setStrikePriceError('');
+                      setStrikePrice(value);
+                    }
+                  }}
+                  className="h-11"
+                  required
+                />
+                {priceError && <p className="text-red-500 text-sm">{priceError}</p>}
+              </div>
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Service Descriptions</h3>
+                {serviceDescriptions.map((service, index) => (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Segment Selector */}
+                    <Select
+                      value={service.segment_id}
+                      onValueChange={(value) =>
+                        handleUpdateServiceDescription(index, "segment_id", value)
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select Segment" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {segments.map((attr) => (
+                          <SelectItem key={attr.id} value={attr.id!.toString()}>
+                            {attr.segment_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+
+                    {/* Title Input */}
+                    <Input
+                      placeholder="Enter Title"
+                      value={service.title}
+                      onChange={(e) =>
+                        handleUpdateServiceDescription(index, "title", e.target.value)
+                      }
+                      className="h-11"
+                    />
+
+                    {/* Description Input */}
+
+
+                    <ReactQuill
+                      value={service.description}
+                      onChange={(value) =>
+                        handleUpdateServiceDescription(index, "description", value)
+                      }
+                      theme="snow"
+                      style={{ height: "200px" }}
+                    />
+
+                    {/* Remove Button */}
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleRemoveServiceDescription(index)}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+
+                {/* Add Service Description Button */}
+                <Button type="button" onClick={handleAddServiceDescription}>
+                  Add Service Description
+                </Button>
+              </div>
+
+
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <Globe2 className="w-4 h-4 text-blue-500" />
                   <span>Select Provider</span>
                 </label>
@@ -400,34 +539,34 @@ const RateCardForm: React.FC = () => {
               </div>
 
               <div className="space-y-2">
-  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-    <span>Recommended</span>
-  </label>
-  <div className="flex items-center space-x-3">
-    <span className="text-sm text-gray-600">No</span>
-    <Switch
-      checked={isRecommended}
-      onCheckedChange={setIsRecommended}
-      className="data-[state=checked]:bg-blue-500"
-    />
-    <span className="text-sm text-gray-600">Yes</span>
-  </div>
-</div>
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <span>Recommended</span>
+                </label>
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm text-gray-600">No</span>
+                  <Switch
+                    checked={isRecommended}
+                    onCheckedChange={setIsRecommended}
+                    className="data-[state=checked]:bg-blue-500"
+                  />
+                  <span className="text-sm text-gray-600">Yes</span>
+                </div>
+              </div>
 
-<div className="space-y-2">
-  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-    <span>Best Deal</span>
-  </label>
-  <div className="flex items-center space-x-3">
-    <span className="text-sm text-gray-600">No</span>
-    <Switch
-      checked={isBestDeal}
-      onCheckedChange={setIsBestDeal}
-      className="data-[state=checked]:bg-blue-500"
-    />
-    <span className="text-sm text-gray-600">Yes</span>
-  </div>
-</div>
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <span>Best Deal</span>
+                </label>
+                <div className="flex items-center space-x-3">
+                  <span className="text-sm text-gray-600">No</span>
+                  <Switch
+                    checked={isBestDeal}
+                    onCheckedChange={setIsBestDeal}
+                    className="data-[state=checked]:bg-blue-500"
+                  />
+                  <span className="text-sm text-gray-600">Yes</span>
+                </div>
+              </div>
 
               {/* Active/Inactive Switch */}
               <div className="space-y-2">
