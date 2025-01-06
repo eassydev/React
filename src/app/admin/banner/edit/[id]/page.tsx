@@ -191,7 +191,7 @@ const EditBannerForm: React.FC = () => {
         title: "Success",
         description: "Banner updated successfully.",
       });
-     // router.push("/admin/banner");
+      router.push("/admin/banner");
     } catch (error) {
       toast({
         variant: "error",

@@ -71,12 +71,37 @@ const BannerList = () => {
     {
       accessorKey: 'is_active',
       header: 'Status',
-      cell: (info) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${info.getValue() ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
-          {info.getValue() ? 'Active' : 'Inactive'}
-        </span>
-      ),
+      cell: (info) => {
+        const status = info.getValue();
+        let statusText = '';
+        let statusClass = '';
+    
+        switch (status) {
+          case 0:
+            statusText = 'Inactive';
+            statusClass = 'bg-red-100 text-red-600';
+            break;
+          case 1:
+            statusText = 'Active';
+            statusClass = 'bg-green-100 text-green-600';
+            break;
+          case 2:
+            statusText = 'Deleted';
+            statusClass = 'bg-gray-100 text-gray-600';
+            break;
+          default:
+            statusText = 'Unknown';
+            statusClass = 'bg-yellow-100 text-yellow-600';
+        }
+    
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusClass}`}>
+            {statusText}
+          </span>
+        );
+      },
     },
+    
     {
       id: 'actions',
       header: 'Actions',
