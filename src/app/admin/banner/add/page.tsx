@@ -4,13 +4,15 @@ import React, { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import dynamic from "next/dynamic";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from "@/components/ui/select";
+import ReactSelect from "react-select";
+
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
 import { Save, Loader2, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { createBanner, Banner, fetchAllCategories, fetchAllSubCategories, fetchAllRatecard, fetchAllpackages } from "@/lib/api";
-import { useRouter } from 'next/navigation';
+import { createBanner, Banner, Hub, fetchAllCategories, fetchAllSubCategories, fetchAllRatecard, fetchAllpackages, fetchAllHubsWithoutPagination } from "@/lib/api";
+import { useRouter } from "next/navigation";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
@@ -27,14 +29,14 @@ const quillModules = {
 };
 
 const AddBannerForm: React.FC = () => {
-    const router = useRouter();
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectionType, setSelectionType] = useState<string>("");
   const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
   const [options, setOptions] = useState<{ id: number; name: string }[]>([]);
-  const [mediaType, setMediaType] = useState<"image" | "video">("image"); // Updated type
-  const [displayOrder, setDisplayOrder] = useState<number>(1); // Set type to number
+  const [mediaType, setMediaType] = useState<"image" | "video">("image");
+  const [displayOrder, setDisplayOrder] = useState<number>(1);
   const [deepLink, setDeepLink] = useState<string>("");
   const [image, setImage] = useState<File | null>(null);
   const [latitude, setLatitude] = useState<string>("");
@@ -44,6 +46,13 @@ const AddBannerForm: React.FC = () => {
   const [endDate, setEndDate] = useState<string>("");
   const [isActive, setIsActive] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [price, setPrice] = useState<number | null>(null);
+  const [addToCart, setAddToCart] = useState(false);
+  const [hubOptions, setHubOptions] = useState<Hub[]>([]);
+  const [hubIds, setHubIds] = useState<number[]>([]);
+const [priceError, setPriceError] = useState<string>("");
+const [displayOrderError, setDisplayOrderError] = useState<string>("");
+const [radiusError, setRadiusError] = useState<string>("");
   const { toast } = useToast();
   const today = new Date().toISOString().split("T")[0];
 
@@ -94,6 +103,19 @@ const AddBannerForm: React.FC = () => {
     if (selectionType) loadOptions();
   }, [selectionType, toast]);
 
+  useEffect(() => {
+    const loadHubs = async () => {
+      try {
+        const hubs = await fetchAllHubsWithoutPagination();
+
+        setHubOptions(hubs);
+      } catch (error) {
+        toast({ variant: "error", title: "Error", description: "Failed to load hubs." });
+      }
+    };
+    loadHubs();
+  }, [toast]);
+
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setImage(e.target.files[0]);
@@ -103,7 +125,7 @@ const AddBannerForm: React.FC = () => {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!title || !description || !selectedItemId || !selectionType) {
+    if (!title || !description || !selectionType || !selectedItemId || !price) {
       toast({
         variant: "error",
         title: "Validation Error",
@@ -129,6 +151,9 @@ const AddBannerForm: React.FC = () => {
         end_date: endDate,
         is_active: isActive,
         image,
+        price,
+        add_to_cart: addToCart,
+        hub_ids: hubIds,
       };
 
       await createBanner(bannerData);
@@ -139,8 +164,7 @@ const AddBannerForm: React.FC = () => {
         description: "Banner created successfully.",
       });
       setIsSubmitting(false);
-      router.push('/admin/banner'); // Redirect after successful update
-
+      router.push("/admin/banner");
     } catch (error) {
       toast({
         variant: "error",
@@ -173,24 +197,43 @@ const AddBannerForm: React.FC = () => {
                 />
               </div>
 
+              <div className="space-y-2" style={{ height: "270px" }}>
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <FileText className="w-4 h-5 text-blue-500" />
+                  <span>Description</span>
+                </label>
+                <ReactQuill
+                  value={description}
+                  onChange={setDescription}
+                  theme="snow"
+                  modules={quillModules}
+                  style={{ height: "200px" }}
+                />
+              </div>
 
-                            <div className="space-y-2" style={{ height: "270px" }}>
-                              <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                                <FileText className="w-4 h-5 text-blue-500" />
-                                <span>Description</span>
-                              </label>
-                              <ReactQuill
-                                value={description}
-                                onChange={setDescription}
-                                theme="snow"
-                                modules={quillModules}
-                                style={{ height: "200px" }}
-                              />
-                            </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Price</label>
+                <Input
+                  type="number"
+                  placeholder="Enter price"
+                  value={price || ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (parseFloat(value) < 0) {
+                      setPriceError("Price cannot be negative.");
+                      setPrice(parseFloat(value) || null);
+                    } else {
+                      setPriceError("");
+                      setPrice(parseFloat(value) || null);
+                    }
+                  }}
+                  className="h-11"
+                  required
+                />
+                {priceError && <p className="text-red-500 text-sm">{priceError}</p>}
+              </div>
 
-                            
-
-              <div  className="space-x-2">
+              <div className="space-x-2">
                 <label className="text-sm font-medium text-gray-700">Selection Type</label>
                 <Select value={selectionType} onValueChange={(value) => setSelectionType(value)}>
                   <SelectTrigger className="bg-white border-gray-200">
@@ -223,6 +266,90 @@ const AddBannerForm: React.FC = () => {
                 </div>
               )}
 
+<div>
+  <label className="text-sm font-medium text-gray-700">Display Order</label>
+  <Input
+    type="number"
+    placeholder="Enter display order"
+    value={displayOrder || ""}
+    onChange={(e) => {
+      const value = e.target.value;
+      if (parseFloat(value) < 0) {
+        setDisplayOrderError("Display Order cannot be negative.");
+        setDisplayOrder(parseFloat(value));
+      } else {
+        setDisplayOrderError("");
+        setDisplayOrder(parseFloat(value));
+      }
+    }}
+    className="h-11"
+    required
+  />
+  {displayOrderError && <p className="text-red-500 text-sm">{displayOrderError}</p>}
+</div>
+
+
+              <div>
+                <label className="text-sm font-medium text-gray-700">Deep Link URL</label>
+                <Input
+                  value={deepLink}
+                  onChange={(e) => setDeepLink(e.target.value)}
+                  placeholder="Enter deep link URL"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Hubs</label>
+                <ReactSelect
+                  isMulti
+                  options={hubOptions.map((hub) => ({ value: parseInt(hub.id!.toString()), label: hub.hub_name }))}
+                  value={hubIds.map((id) => ({ value: id, label: hubOptions.find((hub) => hub.id?.toString() === id.toString())?.hub_name }))}
+                  onChange={(selectedOptions) => setHubIds(selectedOptions.map((option) => option.value))}
+                  placeholder="Select Hubs"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700">Add to Cart</label>
+                <Switch checked={addToCart} onCheckedChange={setAddToCart} className="bg-primary" />
+              </div>
+
+              <div>
+                <label>Latitude</label>
+                <Input type="number" value={latitude} onChange={(e) => setLatitude(e.target.value)} />
+              </div>
+              <div>
+                <label>Longitude</label>
+                <Input type="number" value={longitude} onChange={(e) => setLongitude(e.target.value)} />
+              </div>
+              <div>
+  <label className="text-sm font-medium text-gray-700">Radius (in km)</label>
+  <Input
+    type="number"
+    placeholder="Enter radius"
+    value={radius || ""}
+    onChange={(e) => {
+      const value = e.target.value;
+      if (parseFloat(value) < 0) {
+        setRadiusError("Radius cannot be negative.");
+        setRadius(parseFloat(value));
+      } else {
+        setRadiusError("");
+        setRadius(parseFloat(value));
+      }
+    }}
+    className="h-11"
+    required
+  />
+  {radiusError && <p className="text-red-500 text-sm">{radiusError}</p>}
+</div>
+              <div>
+                <label>Start Date</label>
+                <Input type="date" value={startDate} min={today} onChange={(e) => setStartDate(e.target.value)} />
+              </div>
+              <div>
+                <label>End Date</label>
+                <Input type="date" value={endDate} min={startDate || today} onChange={(e) => setEndDate(e.target.value)} />
+              </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Media Type</label>
                 <Select value={mediaType} onValueChange={(value) => setMediaType(value as "image" | "video")}>
@@ -235,48 +362,6 @@ const AddBannerForm: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700">Display Order</label>
-                <Input
-                  type="number"
-                  value={displayOrder}
-                  onChange={(e) => setDisplayOrder(Number(e.target.value))}
-                  placeholder="Enter display order"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700">Deep Link URL</label>
-                <Input
-                  value={deepLink}
-                  onChange={(e) => setDeepLink(e.target.value)}
-                  placeholder="Enter deep link URL"
-                />
-              </div>
-
-              <div>
-                <label>Latitude</label>
-                <Input type="number" value={latitude} onChange={(e) => setLatitude(e.target.value)} />
-
-              </div>
-              <div>
-                <label>Longitude</label>
-                <Input type="number" value={longitude} onChange={(e) => setLongitude(e.target.value)} />
-              </div>
-              <div>
-                <label>Radius (in km)</label>
-                <Input type="number" value={radius || ""} onChange={(e) => setRadius(Number(e.target.value))} />
-              </div>
-              <div>
-                <label>Start Date</label>
-                <Input type="date" value={startDate} min={today} onChange={(e) => setStartDate(e.target.value)} />
-              </div>
-              <div>
-                <label>End Date</label>
-                <Input type="date" value={endDate} min={startDate || today} onChange={(e) => setEndDate(e.target.value)} />
-              </div>
-
               <div>
                 <label className="text-sm font-medium text-gray-700">Upload Image</label>
                 <input type="file" accept="image/*" onChange={handleImageChange} />

@@ -2,15 +2,17 @@
 
 import React, { useState, useEffect, FormEvent, ChangeEvent } from "react";
 import dynamic from "next/dynamic";
-import { useRouter, useParams } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from "@/components/ui/select";
+import ReactSelect from "react-select";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
 import { Save, Loader2, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { getBanner, updateBanner, Banner, fetchAllCategories, fetchAllSubCategories, fetchAllRatecard, fetchAllpackages } from "@/lib/api";
+import { getBanner, updateBanner, Banner, Hub, fetchAllCategories, fetchAllSubCategories, fetchAllRatecard, fetchAllpackages, fetchAllHubsWithoutPagination } from "@/lib/api";
+import { useRouter, useParams } from "next/navigation";
+import { format } from "date-fns";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
@@ -27,6 +29,8 @@ const quillModules = {
 };
 
 const EditBannerForm: React.FC = () => {
+  const { id } = useParams();
+  const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectionType, setSelectionType] = useState<string>("");
@@ -37,48 +41,61 @@ const EditBannerForm: React.FC = () => {
   const [deepLink, setDeepLink] = useState<string>("");
   const [image, setImage] = useState<File | null>(null);
   const [latitude, setLatitude] = useState<string>("");
+  const [mediaName, setMediaName] = useState<string>("");
   const [longitude, setLongitude] = useState<string>("");
   const [radius, setRadius] = useState<number | null>(null);
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
   const [isActive, setIsActive] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [price, setPrice] = useState<number | null>(null);
+  const [addToCart, setAddToCart] = useState(false);
+  const [hubOptions, setHubOptions] = useState<Hub[]>([]);
+  const [hubIds, setHubIds] = useState<number[]>([]);
+  const [priceError, setPriceError] = useState<string>("");
+  const [displayOrderError, setDisplayOrderError] = useState<string>("");
+  const [radiusError, setRadiusError] = useState<string>("");
+  const { toast } = useToast();
   const today = new Date().toISOString().split("T")[0];
 
-  const { id } = useParams();
-  const { toast } = useToast();
-  const router = useRouter();
-
   useEffect(() => {
-    // Load existing banner data
-    const fetchBanner = async () => {
+    const fetchBannerData = async () => {
+      if (!id) return;
       try {
-        const existingBanner = await getBanner(id.toString());
-        setTitle(existingBanner.title);
-        setDescription(existingBanner.description);
-        setSelectionType(existingBanner.selection_type || "");
-        setSelectedItemId(existingBanner.selection_id || null);
-        setMediaType(existingBanner.media_type);
-        setDisplayOrder(existingBanner.display_order || 0);
-        setDeepLink(existingBanner.deep_link || "");
-        setIsActive(existingBanner.is_active);
-       setLatitude(existingBanner.latitude!.toString() || "");
-        setLongitude(existingBanner.longitude!.toString()  || "");
-        setRadius(existingBanner.radius !== undefined && existingBanner.radius !== null
-          ? Number(existingBanner.radius)
-          : null
-        );      
-        setStartDate(existingBanner.start_date ? existingBanner.start_date.split("T")[0] : "");
-        setEndDate(existingBanner.end_date ? existingBanner.end_date.split("T")[0] : "");
-        // Trigger options loading for selectionType
-        if (existingBanner.selection_type) {
-          setSelectionType(existingBanner.selection_type);
-        }
+        const banner: Banner = await getBanner(id.toString());
+        setTitle(banner.title);
+        setDescription(banner.description);
+        setSelectionType(banner.selection_type);
+        setSelectedItemId(banner.selection_id);
+        setMediaType(banner.media_type);
+        setDisplayOrder(banner.display_order || 1);
+        setDeepLink(banner.deep_link || "");
+        setLatitude(banner.latitude?.toString() || "");
+        setLongitude(banner.longitude?.toString() || "");
+        setRadius(banner.radius || null);
+        setStartDate(banner.start_date ? format(new Date(banner.start_date), "yyyy-MM-dd") : "");
+        setEndDate(banner.end_date ? format(new Date(banner.end_date), "yyyy-MM-dd") : "");
+        setIsActive(banner.is_active);
+        setPrice(banner.price || null);
+        setAddToCart(banner.add_to_cart || false);
+        setHubIds(banner.hub_ids || []);
+        setMediaName(banner.media_name|| "");
       } catch (error) {
-        toast({ variant: "error", title: "Error", description: "Failed to load banner." });
+        toast({ variant: "error", title: "Error", description: "Failed to load banner data." });
       }
     };
-    fetchBanner();
+
+    const loadHubs = async () => {
+      try {
+        const hubs = await fetchAllHubsWithoutPagination();
+        setHubOptions(hubs);
+      } catch (error) {
+        toast({ variant: "error", title: "Error", description: "Failed to load hubs." });
+      }
+    };
+
+    fetchBannerData();
+    loadHubs();
   }, [id, toast]);
 
   useEffect(() => {
@@ -87,16 +104,32 @@ const EditBannerForm: React.FC = () => {
         let data: { id: number; name: string }[] = [];
         switch (selectionType) {
           case "Category":
-            data = (await fetchAllCategories()).map((item) => ({ id: parseInt(item.id || ''), name: item.name.toString() }));
+            const categories = await fetchAllCategories();
+            data = categories.map((category) => ({
+              id: Number(category.id) || 0,
+              name: category.name || "Unnamed Category",
+            }));
             break;
           case "Subcategory":
-            data = (await fetchAllSubCategories()).map((item) => ({ id: parseInt(item.id || ''), name: item.name.toString() }));
+            const subcategories = await fetchAllSubCategories();
+            data = subcategories.map((subcategory) => ({
+              id: Number(subcategory.id) || 0,
+              name: subcategory.name || "Unnamed Subcategory",
+            }));
             break;
           case "Ratecard":
-            data = (await fetchAllRatecard()).map((item) => ({ id: parseInt(item.id || ''), name: item.name.toString() }));
+            const ratecards = await fetchAllRatecard();
+            data = ratecards.map((ratecard) => ({
+              id: Number(ratecard.id) || 0,
+              name: ratecard.name || "Unnamed Ratecard",
+            }));
             break;
           case "Package":
-            data = (await fetchAllpackages()).map((item) => ({ id: parseInt(item.id || ''), name: item.name.toString() }));
+            const packages = await fetchAllpackages();
+            data = packages.map((pkg) => ({
+              id: Number(pkg.id) || 0,
+              name: pkg.name || "Unnamed Package",
+            }));
             break;
           default:
             setOptions([]);
@@ -119,10 +152,19 @@ const EditBannerForm: React.FC = () => {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+
+    if (!title || !description || !selectionType || !selectedItemId || !price) {
+      toast({
+        variant: "error",
+        title: "Validation Error",
+        description: "Please fill in all required fields.",
+      });
+      return;
+    }
+
     setIsSubmitting(true);
     try {
-      const updatedBanner: Banner = {
-        id: id ? id.toString() : '',
+      const bannerData: Banner = {
         title,
         description,
         selection_type: selectionType,
@@ -136,14 +178,26 @@ const EditBannerForm: React.FC = () => {
         start_date: startDate,
         end_date: endDate,
         is_active: isActive,
-        image: image || undefined,
+        image,
+        price,
+        add_to_cart: addToCart,
+        hub_ids: hubIds,
       };
-      await updateBanner(id.toString(), updatedBanner);
 
-      toast({ variant: "success", title: "Success", description: "Banner updated successfully." });
-      router.push("/admin/banner");
+      await updateBanner(id!.toString(), bannerData);
+
+      toast({
+        variant: "success",
+        title: "Success",
+        description: "Banner updated successfully.",
+      });
+     // router.push("/admin/banner");
     } catch (error) {
-      toast({ variant: "error", title: "Error", description: "Failed to update banner." });
+      toast({
+        variant: "error",
+        title: "Error",
+        description: `${error}`,
+      });
     } finally {
       setIsSubmitting(false);
     }
@@ -156,45 +210,70 @@ const EditBannerForm: React.FC = () => {
           <form onSubmit={onSubmit} className="space-y-6">
             <CardHeader>
               <CardTitle>Edit Banner</CardTitle>
-              <CardDescription>Modify the details of this banner</CardDescription>
+              <CardDescription>Update the details below to edit the banner</CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-6">
               <div>
                 <label className="text-sm font-medium text-gray-700">Banner Title</label>
-                <Input value={title} onChange={(e) => setTitle(e.target.value)} required />
+                <Input
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  placeholder="Enter banner title"
+                  required
+                />
               </div>
 
               <div className="space-y-2" style={{ height: "270px" }}>
-                                            <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                                              <FileText className="w-4 h-5 text-blue-500" />
-                                              <span>Description</span>
-                                            </label>
-                                            <ReactQuill
-                                              value={description}
-                                              onChange={setDescription}
-                                              theme="snow"
-                                              modules={quillModules}
-                                              style={{ height: "200px" }}
-                                            />
-                                          </div>
-              
-                                          
-              
-                            <div  className="space-x-2">
-                              <label className="text-sm font-medium text-gray-700">Selection Type</label>
-                              <Select value={selectionType} onValueChange={(value) => setSelectionType(value)}>
-                                <SelectTrigger className="bg-white border-gray-200">
-                                  <SelectValue placeholder="Select Type" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                  <SelectItem value="Category">Category</SelectItem>
-                                  <SelectItem value="Subcategory">Subcategory</SelectItem>
-                                  <SelectItem value="Ratecard">Ratecard</SelectItem>
-                                  <SelectItem value="Package">Package</SelectItem>
-                                </SelectContent>
-                              </Select>
-                            </div>
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <FileText className="w-4 h-5 text-blue-500" />
+                  <span>Description</span>
+                </label>
+                <ReactQuill
+                  value={description}
+                  onChange={setDescription}
+                  theme="snow"
+                  modules={quillModules}
+                  style={{ height: "200px" }}
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700">Price</label>
+                <Input
+                  type="number"
+                  placeholder="Enter price"
+                  value={price || ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (parseFloat(value) < 0) {
+                      setPriceError("Price cannot be negative.");
+                      setPrice(parseFloat(value) || null);
+                    } else {
+                      setPriceError("");
+                      setPrice(parseFloat(value) || null);
+                    }
+                  }}
+                  className="h-11"
+                  required
+                />
+                {priceError && <p className="text-red-500 text-sm">{priceError}</p>}
+              </div>
+
+              <div className="space-x-2">
+                <label className="text-sm font-medium text-gray-700">Selection Type</label>
+                <Select value={selectionType} onValueChange={(value) => setSelectionType(value)}>
+                  <SelectTrigger className="bg-white border-gray-200">
+                    <SelectValue placeholder="Select Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Category">Category</SelectItem>
+                    <SelectItem value="Subcategory">Subcategory</SelectItem>
+                    <SelectItem value="Ratecard">Ratecard</SelectItem>
+                    <SelectItem value="Package">Package</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
               {selectionType && (
                 <div>
@@ -215,6 +294,89 @@ const EditBannerForm: React.FC = () => {
               )}
 
               <div>
+                <label className="text-sm font-medium text-gray-700">Display Order</label>
+                <Input
+                  type="number"
+                  placeholder="Enter display order"
+                  value={displayOrder || ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (parseFloat(value) < 0) {
+                      setDisplayOrderError("Display Order cannot be negative.");
+                      setDisplayOrder(parseFloat(value));
+                    } else {
+                      setDisplayOrderError("");
+                      setDisplayOrder(parseFloat(value));
+                    }
+                  }}
+                  className="h-11"
+                  required
+                />
+                {displayOrderError && <p className="text-red-500 text-sm">{displayOrderError}</p>}
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700">Deep Link URL</label>
+                <Input
+                  value={deepLink}
+                  onChange={(e) => setDeepLink(e.target.value)}
+                  placeholder="Enter deep link URL"
+                />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Hubs</label>
+                <ReactSelect
+                  isMulti
+                  options={hubOptions.map((hub) => ({ value: parseInt(hub.id!.toString()), label: hub.hub_name }))}
+                  value={hubIds.map((id) => ({ value: id, label: hubOptions.find((hub) => hub.id?.toString() === id.toString())?.hub_name }))}
+                  onChange={(selectedOptions) => setHubIds(selectedOptions.map((option) => option.value))}
+                  placeholder="Select Hubs"
+                />
+              </div>
+
+              <div>
+                <label className="text-sm font-medium text-gray-700">Add to Cart</label>
+                <Switch checked={addToCart} onCheckedChange={setAddToCart} className="bg-primary" />
+              </div>
+
+              <div>
+                <label>Latitude</label>
+                <Input type="number" value={latitude} onChange={(e) => setLatitude(e.target.value)} />
+              </div>
+              <div>
+                <label>Longitude</label>
+                <Input type="number" value={longitude} onChange={(e) => setLongitude(e.target.value)} />
+              </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">Radius (in km)</label>
+                <Input
+                  type="number"
+                  placeholder="Enter radius"
+                  value={radius || ""}
+                  onChange={(e) => {
+                    const value = e.target.value;
+                    if (parseFloat(value) < 0) {
+                      setRadiusError("Radius cannot be negative.");
+                      setRadius(parseFloat(value));
+                    } else {
+                      setRadiusError("");
+                      setRadius(parseFloat(value));
+                    }
+                  }}
+                  className="h-11"
+                  required
+                />
+  {radiusError && <p className="text-red-500 text-sm">{radiusError}</p>}
+</div>
+              <div>
+                <label>Start Date</label>
+                <Input type="date" value={startDate} min={today} onChange={(e) => setStartDate(e.target.value)} />
+              </div>
+              <div>
+                <label>End Date</label>
+                <Input type="date" value={endDate} min={startDate || today} onChange={(e) => setEndDate(e.target.value)} />
+              </div>
+              <div>
                 <label className="text-sm font-medium text-gray-700">Media Type</label>
                 <Select value={mediaType} onValueChange={(value) => setMediaType(value as "image" | "video")}>
                   <SelectTrigger className="bg-white border-gray-200">
@@ -226,42 +388,23 @@ const EditBannerForm: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700">Display Order</label>
-                <Input type="number" value={displayOrder} onChange={(e) => setDisplayOrder(Number(e.target.value))} />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700">Deep Link URL</label>
-                <Input value={deepLink} onChange={(e) => setDeepLink(e.target.value)} />
-              </div>
-              <div>
-                <label>Latitude</label>
-                <Input type="number" value={latitude} onChange={(e) => setLatitude(e.target.value)} />
-
-              </div>
-              <div>
-                <label>Longitude</label>
-                <Input type="number" value={longitude} onChange={(e) => setLongitude(e.target.value)} />
-              </div>
-              <div>
-                <label>Radius (in km)</label>
-                <Input type="number" value={radius || ""} onChange={(e) => setRadius(Number(e.target.value))} />
-              </div>
-              <div>
-                <label>Start Date</label>
-                <Input type="date" value={startDate} min={today} onChange={(e) => setStartDate(e.target.value)} />
-              </div>
-              <div>
-                <label>End Date</label>
-                <Input type="date" value={endDate} min={startDate || today} onChange={(e) => setEndDate(e.target.value)} />
-              </div>
               <div>
                 <label className="text-sm font-medium text-gray-700">Upload Image</label>
                 <input type="file" accept="image/*" onChange={handleImageChange} />
               </div>
 
+              <div>
+  <label className="text-sm font-medium text-gray-700">Media Preview</label>
+  {mediaType === "image" && mediaName && (
+    <img src={mediaName} alt="Banner Media" className="w-32 h-32 object-cover" />
+  )}
+  {mediaType === "video" && mediaName && (
+    <video controls className="w-32 h-32">
+      <source src={mediaName} type="video/mp4" />
+      Your browser does not support the video tag.
+    </video>
+  )}
+</div>
               <div className="flex items-center space-x-2">
                 <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
                 <span>Active</span>
@@ -270,8 +413,12 @@ const EditBannerForm: React.FC = () => {
 
             <CardFooter>
               <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                Save Changes
+                {isSubmitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                Save Banner
               </Button>
             </CardFooter>
           </form>

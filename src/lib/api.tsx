@@ -293,8 +293,6 @@ export interface VIPPlan {
   platform_fees: boolean; // Boolean for platform fees
   no_of_bookings: number; // Number of bookings included in the plan
 }
-
-
 export interface Banner {
   id?: string; // Optional for editing
   title: string; // Banner title
@@ -304,6 +302,7 @@ export interface Banner {
   is_active: boolean; // Banner active status
   media_type: "image" | "video"; // Type of media (image or video)
   display_order?: number; // Optional order of display
+  media_name?: string; // Optional link for deeper navigation
   deep_link?: string; // Optional link for deeper navigation
   image?: File | null; // Optional file input for the banner image
   latitude?: number | null; // Latitude for geo-targeting
@@ -311,6 +310,9 @@ export interface Banner {
   radius?: number | null; // Radius for targeting in kilometers
   start_date?: string; // Start date for banner visibility (ISO format: YYYY-MM-DD)
   end_date?: string; // End date for banner visibility (ISO format: YYYY-MM-DD)
+  price?: number | null; // Price associated with the banner
+  add_to_cart?: boolean; // Flag to indicate if the banner is for a cart item
+  hub_ids?: number[]; // Array of hub IDs associated with the banner
 }
 
 
@@ -2344,6 +2346,18 @@ export const createBanner = async (bannerData: Banner) => {
     formData.append("end_date", bannerData.end_date);
   }
 
+  if (bannerData.price !== undefined) {
+    formData.append("price", bannerData.price!.toString());
+  }
+
+  if (bannerData.add_to_cart !== undefined) {
+    formData.append("add_to_cart", bannerData.add_to_cart ? "1" : "0");
+  }
+
+  if (bannerData.hub_ids && bannerData.hub_ids.length > 0) {
+    formData.append("hub_ids", JSON.stringify(bannerData.hub_ids)); // Send hub_ids as JSON array
+  }
+
   if (bannerData.image) {
     formData.append("media_file", bannerData.image); // The image file
   }
@@ -2362,9 +2376,7 @@ export const createBanner = async (bannerData: Banner) => {
   }
 };
 
-
-
-// Function to update a specific banner by ID
+// Update a specific banner by ID
 export const updateBanner = async (id: string | number, bannerData: Banner): Promise<ApiResponse> => {
   const formData = new FormData();
   formData.append("title", bannerData.title);
@@ -2406,6 +2418,18 @@ export const updateBanner = async (id: string | number, bannerData: Banner): Pro
 
   if (bannerData.end_date) {
     formData.append("end_date", bannerData.end_date);
+  }
+
+  if (bannerData.price !== undefined) {
+    formData.append("price", bannerData.price!.toString());
+  }
+
+  if (bannerData.add_to_cart !== undefined) {
+    formData.append("add_to_cart", bannerData.add_to_cart ? "1" : "0");
+  }
+
+  if (bannerData.hub_ids && bannerData.hub_ids.length > 0) {
+    formData.append("hub_ids", JSON.stringify(bannerData.hub_ids)); // Send hub_ids as JSON array
   }
 
   if (bannerData.image) {
