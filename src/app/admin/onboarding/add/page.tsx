@@ -16,6 +16,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { Save, Loader2, FileImage, FileText } from "lucide-react";
 import { createOnboarding, Onboarding } from "@/lib/api"; // Import the API function and Onboarding interface
+import { useRouter } from 'next/navigation';
 
 // Import React-Quill dynamically for client-side rendering
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -37,8 +38,10 @@ const AddOnboardingForm: React.FC = () => {
   const [title, setTitle] = useState<string>("");
   const [description, setDescription] = useState<string>("");
   const [image, setImage] = useState<File | null>(null);
+  const [type, setType] = useState<"splash" | "onboarding">("onboarding"); // Restrict to valid values
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+    const router = useRouter();
 
   const { toast } = useToast();
 
@@ -54,21 +57,13 @@ const AddOnboardingForm: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    if (!title || !description || !image) {
-      toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "All fields, including image, are required.",
-      });
-      setIsSubmitting(false);
-      return;
-    }
-
+   
     // Construct the Onboarding object
     const onboarding: Onboarding = {
       title,
       description,
       image,
+      type, // Add type to the API request
       is_active: isActive,
     };
 
@@ -79,12 +74,14 @@ const AddOnboardingForm: React.FC = () => {
         title: "Success",
         description: "Onboarding page created successfully.",
       });
+      router.push('/admin/onboarding'); // Redirect after successful update
 
       // Reset form fields after successful submission
-      setTitle("");
-      setDescription("");
-      setImage(null);
-      setIsActive(true);
+      // setTitle("");
+      // setDescription("");
+      // setImage(null);
+      // setType("onboarding"); // Reset type
+      // setIsActive(true);
     } catch (error: any) {
       toast({
         variant: "error",
@@ -145,13 +142,28 @@ const AddOnboardingForm: React.FC = () => {
                 />
               </div>
 
+              {/* Type Select Field */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Type</label>
+                <select
+                  value={type}
+                  onChange={(e) => setType(e.target.value as "splash" | "onboarding")} // Type assertion added here
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  required
+                >
+                  <option value="onboarding">Onboarding</option>
+                  <option value="splash">Splash</option>
+                </select>
+              </div>
+
+
               {/* Image Upload Field */}
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <FileImage className="w-4 h-5 text-blue-500" />
                   <span>Image</span>
                 </label>
-                <Input type="file" accept="image/*" onChange={handleImageChange} />
+                <Input type="file" accept="image/*" onChange={handleImageChange} required/>
               </div>
 
               {/* Active Status */}

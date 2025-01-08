@@ -34,6 +34,7 @@ const EditOnboardingForm: React.FC = () => {
   const [existingImage, setExistingImage] = useState<string>("");
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [type, setType] = useState<"splash" | "onboarding">("onboarding"); // Restrict to valid values
 
   const { toast } = useToast();
   const router = useRouter();
@@ -55,6 +56,7 @@ const EditOnboardingForm: React.FC = () => {
       setTitle(onboarding.title);
       setDescription(onboarding.description || "");
       setIsActive(onboarding.is_active);
+      setType(onboarding.type)
       if (typeof onboarding.image === "string") {
         setExistingImage(onboarding.image); // Set existing image URL
       } else {
@@ -91,14 +93,14 @@ const EditOnboardingForm: React.FC = () => {
       return;
     }
 
-    // Construct the updated Onboarding object
-    const updatedOnboarding: Onboarding = {
-      title,
-      description,
-      image: image || null, // Send a new image if uploaded
-      is_active: isActive,
-    };
-
+     const updatedOnboarding: Onboarding = {
+         title,
+         description,
+         image,
+         type, // Add type to the API request
+         is_active: isActive,
+       };
+   
     try {
       await updateOnboarding(onboardingId!, updatedOnboarding); // Submit the updated onboarding object to the API
       toast({
@@ -167,6 +169,19 @@ const EditOnboardingForm: React.FC = () => {
                 />
               </div>
 
+ {/* Type Select Field */}
+ <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Type</label>
+                <select
+                  value={type}
+                  onChange={(e) => setType(e.target.value as "splash" | "onboarding")} // Type assertion added here
+                  className="w-full p-2 border border-gray-300 rounded-md"
+                  required
+                >
+                  <option value="onboarding">Onboarding</option>
+                  <option value="splash">Splash</option>
+                </select>
+              </div>
               {/* Image Upload Field */}
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">

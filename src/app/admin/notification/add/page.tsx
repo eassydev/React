@@ -20,6 +20,7 @@ import {
   fetchSubCategoriesByCategoryId,
   fetchAllProvidersWithoupagination,
   fetchAllUsersWithouPagination,
+  getAllNotifications,
   Notification,
 } from "@/lib/api";
 
@@ -33,6 +34,7 @@ const AddNotificationForm: React.FC = () => {
     send_to_all: true,
     category_id: undefined,
     subcategory_id: undefined,
+    notification_type_id: undefined,
     recipients: [],
     inner_image: null,
     outer_image: null,
@@ -40,9 +42,23 @@ const AddNotificationForm: React.FC = () => {
 
   const [categories, setCategories] = useState<any[]>([]);
   const [subcategories, setSubcategories] = useState<any[]>([]);
+  const [notificationTypes, setNotificationTypes] = useState<any[]>([]);
   const [recipients, setRecipients] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+
+  // Fetch Notification Types
+  useEffect(() => {
+    const loadNotificationTypes = async () => {
+      try {
+        const data = await getAllNotifications();
+        setNotificationTypes(data || []);
+      } catch (error) {
+        toast({ title: "Error", description: "Failed to load notification types." });
+      }
+    };
+    loadNotificationTypes();
+  }, [toast]);
 
   // Fetch Categories
   useEffect(() => {
@@ -74,11 +90,12 @@ const AddNotificationForm: React.FC = () => {
     }
   }, [notification.category_id, toast]);
 
+  // Fetch Recipients
   useEffect(() => {
     const loadRecipients = async () => {
       if (!notification.send_to_all) {
         try {
-          let data: any[] = []; // Initialize data as an empty array
+          let data: any[] = [];
           if (notification.type === "provider") {
             data = await fetchAllProvidersWithoupagination();
           } else if (notification.type === "customer") {
@@ -94,7 +111,7 @@ const AddNotificationForm: React.FC = () => {
     };
     loadRecipients();
   }, [notification.type, notification.send_to_all, toast]);
-  
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNotification({ ...notification, [e.target.name]: e.target.value });
   };
@@ -123,20 +140,6 @@ const AddNotificationForm: React.FC = () => {
         title: "Success",
         description: "Notification created successfully!",
       });
-      // Reset Form
-      // setNotification({
-      //   title: "",
-      //   message: "",
-      //   redirect_screen: "",
-      //   type: "customer",
-      //   is_active: true,
-      //   send_to_all: true,
-      //   category_id: undefined,
-      //   subcategory_id: undefined,
-      //   recipients: [],
-      //   inner_image: null,
-      //   outer_image: null,
-      // });
     } catch (error: any) {
       toast({
         title: "Error",
@@ -157,42 +160,84 @@ const AddNotificationForm: React.FC = () => {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-6">
-            <Input name="title" placeholder="Title" value={notification.title} onChange={handleChange} required />
+            <div>
+              <label className="block text-sm font-medium">Title</label>
+              <Input
+                name="title"
+                placeholder="Title"
+                value={notification.title}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-            <Input name="message" placeholder="Message" value={notification.message} onChange={handleChange} required />
+            <div>
+              <label className="block text-sm font-medium">Message</label>
+              <Input
+                name="message"
+                placeholder="Message"
+                value={notification.message}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-            <Input
-              name="redirect_screen"
-              placeholder="Redirect Screen"
-              value={notification.redirect_screen}
-              onChange={handleChange}
-            />
+            <div>
+              <label className="block text-sm font-medium">Redirect Screen</label>
+              <Input
+                name="redirect_screen"
+                placeholder="Redirect Screen"
+                value={notification.redirect_screen}
+                onChange={handleChange}
+              />
+            </div>
 
-            {/* Category */}
-            <Select
-              onValueChange={(value) =>
-                setNotification({ ...notification, category_id: parseInt(value), subcategory_id: undefined })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select Category" />
-              </SelectTrigger>
-              <SelectContent>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id.toString()}>
-                    {category.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <div>
+              <label className="block text-sm font-medium">Notification Type</label>
+              <Select
+                onValueChange={(value) =>
+                  setNotification({ ...notification, notification_type_id: value })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Notification Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  {notificationTypes.map((type) => (
+                    <SelectItem key={type.id} value={type.id.toString()}>
+                      {type.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-            {/* Subcategory */}
+            <div>
+              <label className="block text-sm font-medium">Category</label>
+              <Select
+                onValueChange={(value) =>
+                  setNotification({ ...notification, category_id: value, subcategory_id: undefined })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((category) => (
+                    <SelectItem key={category.id} value={category.id.toString()}>
+                      {category.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
             {notification.category_id && (
               <div>
-                <label>Subcategory</label>
+                <label className="block text-sm font-medium">Subcategory</label>
                 <Select
                   onValueChange={(value) =>
-                    setNotification({ ...notification, subcategory_id: parseInt(value) })
+                    setNotification({ ...notification, subcategory_id: value })
                   }
                 >
                   <SelectTrigger>
@@ -209,35 +254,40 @@ const AddNotificationForm: React.FC = () => {
               </div>
             )}
 
-
- {/* Type */}
-            <Select
-              value={notification.type}
-              onValueChange={(value) =>
-                setNotification({ ...notification, type: value as "customer" | "provider" })
-              }
-            >
-              <SelectTrigger>
-                <SelectValue placeholder="Select Notification Type" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="customer">Customer</SelectItem>
-                <SelectItem value="provider">Provider</SelectItem>
-              </SelectContent>
-            </Select>
-            {/* Send to All */}
-            <div className="flex items-center space-x-2">
-              <Switch
-                checked={notification.send_to_all}
-                onCheckedChange={(checked) => setNotification({ ...notification, send_to_all: checked })}
-              />
-              <span>Send to All</span>
+            <div>
+              <label className="block text-sm font-medium">Type</label>
+              <Select
+                value={notification.type}
+                onValueChange={(value) =>
+                  setNotification({ ...notification, type: value as "customer" | "provider" })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Notification Type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="customer">Customer</SelectItem>
+                  <SelectItem value="provider">Provider</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
-            {/* Recipients */}
+            <div>
+              <label className="block text-sm font-medium">Send to All</label>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  checked={notification.send_to_all}
+                  onCheckedChange={(checked) =>
+                    setNotification({ ...notification, send_to_all: checked })
+                  }
+                />
+                <span>Send to All</span>
+              </div>
+            </div>
+
             {!notification.send_to_all && recipients.length > 0 && (
               <div>
-                <label>Select Recipients</label>
+                <label className="block text-sm font-medium">Recipients</label>
                 <ReactSelect
                   isMulti
                   options={recipients.map((recipient) => ({
@@ -249,9 +299,15 @@ const AddNotificationForm: React.FC = () => {
               </div>
             )}
 
-            {/* Images */}
-            <Input type="file" name="inner_image" onChange={handleFileChange} />
-            <Input type="file" name="outer_image" onChange={handleFileChange} />
+            <div>
+              <label className="block text-sm font-medium">Inner Image</label>
+              <Input type="file" name="inner_image" onChange={handleFileChange} />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium">Outer Image</label>
+              <Input type="file" name="outer_image" onChange={handleFileChange} />
+            </div>
 
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? "Submitting..." : "Create Notification"}

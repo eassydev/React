@@ -11,8 +11,11 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from "lucide-react";
-import { fetchOnboardings, deleteOnboarding } from "@/lib/api";
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Download, Upload } from "lucide-react";
+import {
+  getNotifications,
+  deleteNotificationType,
+} from "@/lib/api";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -23,78 +26,57 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 
-const OnboardingList = () => {
-  const [onboardings, setOnboardings] = useState<any[]>([]);
+const NotificationTypeList = () => {
+  const [notificationTypes, setNotificationTypes] = useState<any[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
   const [totalPages, setTotalPages] = useState(0);
-  const [totalItems, setTotalItems] = useState(0);
 
   const { toast } = useToast();
 
-  // Fetch onboardings from the backend with pagination
-  const fetchOnboardingsData = async (page = 1, size = 5) => {
+  // Fetch notification types from backend with pagination
+  const fetchNotificationTypesData = async (page = 1, size = 5) => {
     try {
-      const { data, meta } = await fetchOnboardings(page, size); // Adjust API function
-      setOnboardings(data);
+      const { data, meta } = await getNotifications(page, size);
+      setNotificationTypes(data);
       setTotalPages(meta.totalPages);
-      setTotalItems(meta.totalItems);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.error("Error fetching onboardings:", error);
+      console.error("Error fetching notification types:", error);
     }
   };
 
   useEffect(() => {
-    fetchOnboardingsData(pagination.pageIndex + 1, pagination.pageSize);
+    fetchNotificationTypesData(pagination.pageIndex + 1, pagination.pageSize);
   }, [pagination.pageIndex, pagination.pageSize]);
 
-  const handleOnboardingDelete = async (onboarding: any) => {
+  const handleNotificationTypeDelete = async (notificationType: any) => {
     try {
-      await deleteOnboarding(onboarding.id); // Adjust delete API function
+      await deleteNotificationType(notificationType.id);
       toast({
         title: "Success",
-        description: `Onboarding "${onboarding.title}" deleted successfully`,
+        description: `Notification Type "${notificationType.title}" deleted successfully`,
         variant: "success",
       });
-      fetchOnboardingsData(pagination.pageIndex + 1, pagination.pageSize);
+      fetchNotificationTypesData(pagination.pageIndex + 1, pagination.pageSize);
     } catch (error) {
       toast({
         title: "Error",
-        description: `Failed to delete onboarding: ${error}`,
+        description: `Failed to delete notification type: ${error}`,
         variant: "destructive",
       });
     }
   };
 
-  const onboardingColumns: ColumnDef<any>[] = [
+
+
+  const notificationTypeColumns: ColumnDef<any>[] = [
     {
       accessorKey: "sno", // Placeholder key for S.No
       header: "S.No",
       cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
     },
         { accessorKey: "title", header: "Title" },
-        { accessorKey: "type", header: "Type" },
-    {
-      accessorKey: "description",
-      header: "Description",
-      cell: ({ getValue }) => {
-        const rawDescription = getValue() as string;
-    
-        // Function to strip HTML tags
-        const stripHtmlTags = (html: string) => {
-          const doc = new DOMParser().parseFromString(html, "text/html");
-          return doc.body.textContent || "";
-        };
-    
-        const plainText = stripHtmlTags(rawDescription);
-    
-        return (
-          <span>
-            {plainText.length > 50 ? `${plainText.slice(0, 50)}...` : plainText}
-          </span>
-        );
-      },
-    },
+    { accessorKey: "type", header: "Type" },
     {
       accessorKey: "is_active",
       header: "Status",
@@ -114,7 +96,7 @@ const OnboardingList = () => {
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="icon">
-            <Link href={`/admin/onboarding/edit/${row.original.id}`} passHref>
+            <Link href={`/admin/notification-type/edit/${row.original.id}`} passHref>
               <Edit className="w-4 h-4 text-blue-600" />
             </Link>
           </Button>
@@ -127,10 +109,10 @@ const OnboardingList = () => {
             <AlertDialogContent>
               <AlertDialogHeader>
                 <h2 className="text-xl font-bold">Confirm Delete</h2>
-                <p>Are you sure you want to delete onboarding: {row.original.title}?</p>
+                <p>Are you sure you want to delete notification: {row.original.title}?</p>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <Button variant="secondary" onClick={() => handleOnboardingDelete(row.original)}>
+                <Button variant="secondary" onClick={() => handleNotificationTypeDelete(row.original)}>
                   Yes, Delete
                 </Button>
                 <Button variant="outline">Cancel</Button>
@@ -142,9 +124,9 @@ const OnboardingList = () => {
     },
   ];
 
-  const onboardingTable = useReactTable({
-    data: onboardings,
-    columns: onboardingColumns,
+  const notificationTypeTable = useReactTable({
+    data: notificationTypes,
+    columns: notificationTypeColumns,
     state: { pagination },
     pageCount: totalPages,
     onPaginationChange: setPagination,
@@ -156,24 +138,27 @@ const OnboardingList = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-12xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900">Onboarding List</h1>
-          <Button asChild variant="default" className="flex items-center space-x-2">
-            <Link href="/admin/onboarding/add">
-              <Plus className="w-4 h-4 mr-1" />
-              <span>Add Onboarding</span>
-            </Link>
-          </Button>
+          <h1 className="text-3xl font-bold text-gray-900">Notification Type List</h1>
+          <div className="flex space-x-2">
+            <Button asChild variant="default" className="flex items-center space-x-2">
+              <Link href="/admin/notification-type/add">
+                <Plus className="w-4 h-4 mr-1" />
+                <span>Add Notification</span>
+              </Link>
+            </Button>
+           
+          </div>
         </div>
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
           <CardHeader className="border-b border-gray-100 pb-4">
-            <CardTitle className="text-xl text-gray-800">Onboardings</CardTitle>
+            <CardTitle className="text-xl text-gray-800">Notification Types</CardTitle>
           </CardHeader>
 
           <CardContent className="overflow-x-auto">
             <Table>
               <TableHeader>
-                {onboardingTable.getHeaderGroups().map((headerGroup) => (
+                {notificationTypeTable.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
                       <TableHead key={header.id} className="text-left">
@@ -187,8 +172,8 @@ const OnboardingList = () => {
               </TableHeader>
 
               <TableBody>
-                {onboardingTable.getRowModel().rows.length ? (
-                  onboardingTable.getRowModel().rows.map((row) => (
+                {notificationTypeTable.getRowModel().rows.length ? (
+                  notificationTypeTable.getRowModel().rows.map((row) => (
                     <TableRow key={row.id}>
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
@@ -199,8 +184,8 @@ const OnboardingList = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={onboardingColumns.length} className="h-24 text-center">
-                      No onboardings found.
+                    <TableCell colSpan={notificationTypeColumns.length} className="h-24 text-center">
+                      No notification types found.
                     </TableCell>
                   </TableRow>
                 )}
@@ -211,8 +196,8 @@ const OnboardingList = () => {
           <div className="flex justify-between items-center p-4">
             <Button
               variant="outline"
-              onClick={() => onboardingTable.previousPage()}
-              disabled={!onboardingTable.getCanPreviousPage()}
+              onClick={() => notificationTypeTable.previousPage()}
+              disabled={!notificationTypeTable.getCanPreviousPage()}
               className="flex items-center"
             >
               <ChevronLeft className="w-4 h-4 mr-2" />
@@ -225,8 +210,8 @@ const OnboardingList = () => {
 
             <Button
               variant="outline"
-              onClick={() => onboardingTable.nextPage()}
-              disabled={!onboardingTable.getCanNextPage()}
+              onClick={() => notificationTypeTable.nextPage()}
+              disabled={!notificationTypeTable.getCanNextPage()}
               className="flex items-center"
             >
               Next
@@ -239,4 +224,4 @@ const OnboardingList = () => {
   );
 };
 
-export default OnboardingList;
+export default NotificationTypeList;

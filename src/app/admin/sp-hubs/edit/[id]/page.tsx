@@ -90,7 +90,7 @@ const EditSpHubForm: React.FC = () => {
     if (selectedCategoryId) {
       const loadSubcategories = async () => {
         try {
-          const subcategoryData = await fetchSubCategoriesByCategoryId(parseInt(selectedCategoryId));
+          const subcategoryData = await fetchSubCategoriesByCategoryId(selectedCategoryId);
           setSubcategories(subcategoryData);
         } catch (error) {
           setSubcategories([]);

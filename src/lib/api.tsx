@@ -347,9 +347,11 @@ export interface Onboarding {
   description: string;
   is_active: boolean;
   image?: File | null; // Optional image upload
+  type: 'splash' | 'onboarding'; // Enum type for splash or onboarding
   created_at?: number; // UNIX timestamp
   updated_at?: number; // UNIX timestamp
 }
+
 
 
 export interface GstRate {
@@ -441,8 +443,9 @@ export interface Notification {
   message: string;
   type: "customer" | "provider";
   redirect_screen?:string;
-  category_id?: number;
-  subcategory_id?: number;
+  category_id?: string;
+  notification_type_id?: string;
+  subcategory_id?: string;
   recipients?: { id: number; name: string }[];
   inner_image?: File | null;
   outer_image?: File | null;
@@ -582,6 +585,23 @@ export interface SpHub {
   updated_at?: string;
   deleted_at?: string | null;
 }
+
+
+export interface NotificationType {
+  id?: string; // Optional for update
+  title: string;
+  message: string;
+  type: 'timer' | 'image' | 'carousel' | 'normal' | 'sound';
+  image_url?: File | string | null; // File upload or URL from the server
+  sound_url?: File | string | null; // File upload or URL from the server
+  carousel_data?: (File | { image_url: string })[]; // Array of files or API response objects
+  timer_duration?: number | null; // Optional for timer notifications
+  action_type: 'internal_link' | 'external_link' | 'order_related' | 'promo';
+  action_data?: string | null; // Optional action URL or data
+  isActive: boolean;
+}
+
+
 
 // Define the structure of the API response
 interface ApiResponse {
@@ -1046,7 +1066,7 @@ if (status !== "all") {
 
 
 // Function to fetch categories with attributes
-export const fetchSubCategoriesByCategoryId = async (categoryId: number): Promise<Subcategory[]> => {
+export const fetchSubCategoriesByCategoryId = async (categoryId: string): Promise<Subcategory[]> => {
   try {
     const token = getToken();
     const response: AxiosResponse<ApiResponse> = await apiClient.get(`/sub-category/category/${categoryId}`, {
@@ -2750,7 +2770,9 @@ export const createOnboarding = async (onboarding: Onboarding): Promise<ApiRespo
   if (onboarding.image) {
     formData.append("image", onboarding.image);
   }
-
+  if (onboarding.type) {
+    formData.append("type", onboarding.type);
+  }
   // Add the active status field
   formData.append("is_active", onboarding.is_active ? "1" : "0");
 
@@ -2779,7 +2801,9 @@ export const updateOnboarding = async (id: string, onboarding: Onboarding): Prom
   if (onboarding.image) {
     formData.append("image", onboarding.image);
   }
-
+  if (onboarding.type) {
+    formData.append("type", onboarding.type);
+  }
   // Add the active status field
   formData.append("is_active", onboarding.is_active ? "1" : "0");
 
@@ -3310,7 +3334,9 @@ export const createNotification = async (notification: Notification) => {
   formData.append("is_active", notification.is_active ? "1" : "0");
   formData.append("send_to_all", notification.send_to_all ? "1" : "0");
   if (notification.recipients) formData.append("recipients", JSON.stringify(notification.recipients));
+  formData.append("notification_type_id", notification.notification_type_id!.toString());
 
+  
   // const response = await apiClient.post("/notification", formData);
   const token = getToken();
 
@@ -5548,5 +5574,214 @@ export const downloadSampleSpHubExcel = async (): Promise<void> => {
   } catch (error) {
     console.error('Error downloading sample CSV:', error);
     throw new Error('Failed to download sample CSV');
+  }
+};
+
+
+
+export const getNotifications = async (page = 1, size = 10,) => {
+  try {
+    const token = getToken(); // Retrieve the token
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+    const response: AxiosResponse = await apiClient.get("/notification-type", {
+      params, // Query params (page, size, status)
+      headers: {
+        "admin-auth-token": token || "", // Add the token to the request headers
+      },
+    });
+    return response.data; // Return the data
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
+  }
+};
+
+
+// Fetch All Notifications
+// export const getAllNotifications = async (): Promise<ApiResponse> => {
+//   try {
+//     const token = getToken();
+//     const response: AxiosResponse<ApiResponse> = await apiClient.get('/notification-type', {
+//       headers: {
+//         'admin-auth-token': token || '',
+//       },
+//     });
+//     return response.data.data;
+//   } catch (error: any) {
+//     throw new Error(error.response?.data?.message || 'Failed to fetch notifications.');
+//   }
+// };
+
+
+// Function to fetch categories with attributes
+export const getAllNotifications = async (): Promise<NotificationType[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/notification-type/all', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch notification.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch notification.');
+  }
+};
+// Fetch Notification by ID
+export const getNotificationById = async (id: string): Promise<NotificationType> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/notification-type/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch notification details.');
+  }
+};
+
+// Create a NotificationType
+export const createNotificationType = async (
+  notification: NotificationType
+): Promise<ApiResponse> => {
+  const formData = new FormData();
+
+  // Basic Notification Details
+  formData.append('title', notification.title);
+  formData.append('message', notification.message);
+  formData.append('type', notification.type);
+  formData.append('action_type', notification.action_type);
+  formData.append('is_active', notification.isActive ? '1' : '0');
+
+  if (notification.action_data) {
+    formData.append('action_data', notification.action_data);
+  }
+
+  // Timer Duration
+  if (notification.timer_duration !== null && notification.timer_duration !== undefined) {
+    formData.append('timer_duration', notification.timer_duration.toString());
+  }
+
+  // Image
+  if (notification.image_url instanceof File) {
+    formData.append('image', notification.image_url);
+  }
+
+  // Sound
+  if (notification.sound_url instanceof File) {
+    formData.append('sound', notification.sound_url);
+  }
+
+  // Append carousel images
+  if (notification.carousel_data && notification.carousel_data.length > 0) {
+    notification.carousel_data.forEach((image) => {
+      if (image instanceof File) {
+        formData.append(`carouselImages`, image);
+      } else if (typeof image === 'object' && 'image_url' in image) {
+        console.log(`Skipping existing image URL: ${image.image_url}`);
+      }
+    });
+  }
+
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/notification-type', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create notification.');
+  }
+};
+
+// Update a NotificationType
+export const updateNotificationType = async (
+  id: string,
+  notification: NotificationType
+): Promise<ApiResponse> => {
+  const formData = new FormData();
+
+  // Basic Notification Details
+  formData.append('title', notification.title);
+  formData.append('message', notification.message);
+  formData.append('type', notification.type);
+  formData.append('action_type', notification.action_type);
+  formData.append('is_active', notification.isActive ? '1' : '0');
+
+  if (notification.action_data) {
+    formData.append('action_data', notification.action_data);
+  }
+
+  // Timer Duration
+  if (notification.timer_duration !== null && notification.timer_duration !== undefined) {
+    formData.append('timer_duration', notification.timer_duration.toString());
+  }
+
+  // Image
+  if (notification.image_url instanceof File) {
+    formData.append('image', notification.image_url);
+  }
+
+  // Sound
+  if (notification.sound_url instanceof File) {
+    formData.append('sound', notification.sound_url);
+  }
+
+  // Append carousel images
+  if (notification.carousel_data && notification.carousel_data.length > 0) {
+    notification.carousel_data.forEach((image) => {
+      if (image instanceof File) {
+        formData.append(`carouselImages`, image);
+      } else if (typeof image === 'object' && 'image_url' in image) {
+        console.log(`Skipping existing image URL: ${image.image_url}`);
+      }
+    });
+  }
+
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(
+      `/notification-type/${id}`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'admin-auth-token': token || '',
+        },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update notification.');
+  }
+};
+
+
+
+// Delete a NotificationType
+export const deleteNotificationType = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/notification-type/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete notification.');
   }
 };
