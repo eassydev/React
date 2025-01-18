@@ -67,7 +67,7 @@ const EditBookingForm: React.FC = () => {
     if (selectedCategoryId) {
       const loadSubcategoriesAndFilters = async () => {
         try {
-          const subcategoryData = await fetchSubCategoriesByCategoryId(parseInt(selectedCategoryId));
+          const subcategoryData = await fetchSubCategoriesByCategoryId(selectedCategoryId);
           setSubcategories(subcategoryData);
           try {
            
@@ -92,7 +92,7 @@ const EditBookingForm: React.FC = () => {
       if (selectedCategoryId || selectedSubcategoryId ) {
         const loadFilterAttributes = async () => {
           try {
-            const filterAttributeData = await fetchFilterAttributes(parseInt(selectedCategoryId), parseInt(selectedSubcategoryId));
+            const filterAttributeData = await fetchFilterAttributes(selectedCategoryId, selectedSubcategoryId);
             setFilterAttributes(filterAttributeData);
           } catch (error) {
             setFilterAttributes([]);
@@ -107,7 +107,7 @@ const EditBookingForm: React.FC = () => {
     if (selectedFilterAttributesId) {
       const loadFilterOptions = async () => {
         try {
-          const options = await fetchFilterOptionsByAttributeId(parseInt(selectedFilterAttributesId));
+          const options = await fetchFilterOptionsByAttributeId(selectedFilterAttributesId);
           setFilterOptions(options);
         } catch (error) {
           setFilterOptions([]);
@@ -166,7 +166,7 @@ const EditBookingForm: React.FC = () => {
           setSelectedCategoryId(booking.category_id.toString());
           
           // Load and set subcategories
-          const subcategoryData = await fetchSubCategoriesByCategoryId(booking.category_id);
+          const subcategoryData = await fetchSubCategoriesByCategoryId(booking.category_id.toString());
           setSubcategories(subcategoryData);
           
           if (booking.subcategory_id) {
@@ -174,8 +174,8 @@ const EditBookingForm: React.FC = () => {
             
             // Load and set filter attributes
             const filterAttributeData = await fetchFilterAttributes(
-              booking.category_id,
-              booking.subcategory_id
+              booking.category_id.toString(),
+              booking.subcategory_id.toString()
             );
             setFilterAttributes(filterAttributeData);
             
@@ -183,7 +183,7 @@ const EditBookingForm: React.FC = () => {
               setSelectedFilterAttributesId(booking.filter_attribute_id.toString());
               
               // Load and set filter options
-              const optionsData = await fetchFilterOptionsByAttributeId(booking.filter_attribute_id);
+              const optionsData = await fetchFilterOptionsByAttributeId(booking.filter_attribute_id.toString());
               setFilterOptions(optionsData);
               
               if (booking.filter_option_id) {

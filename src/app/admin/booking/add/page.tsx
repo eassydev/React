@@ -63,10 +63,10 @@ const AddBookingForm: React.FC = () => {
     if (selectedCategoryId) {
       const loadSubcategoriesAndFilters = async () => {
         try {
-          const subcategoryData = await fetchSubCategoriesByCategoryId(parseInt(selectedCategoryId));
+          const subcategoryData = await fetchSubCategoriesByCategoryId(selectedCategoryId);
           setSubcategories(subcategoryData);
           try {
-            const filterAttributeData = await fetchFilterAttributes(parseInt(selectedCategoryId), null);
+            const filterAttributeData = await fetchFilterAttributes(selectedCategoryId, null);
             setFilterAttributes(filterAttributeData);
           } catch (error) {
             setFilterAttributes([]);
@@ -89,7 +89,7 @@ const AddBookingForm: React.FC = () => {
       if (selectedSubcategoryId) {
         const loadFilterAttributes = async () => {
           try {
-            const filterAttributeData = await fetchFilterAttributes(parseInt(selectedCategoryId), parseInt(selectedSubcategoryId));
+            const filterAttributeData = await fetchFilterAttributes(selectedCategoryId, selectedSubcategoryId);
             setFilterAttributes(filterAttributeData);
           } catch (error) {
             setFilterAttributes([]);
@@ -104,7 +104,7 @@ const AddBookingForm: React.FC = () => {
     if (selectedFilterAttributesId) {
       const loadFilterOptions = async () => {
         try {
-          const options = await fetchFilterOptionsByAttributeId(parseInt(selectedFilterAttributesId));
+          const options = await fetchFilterOptionsByAttributeId(selectedFilterAttributesId);
           setFilterOptions(options);
         } catch (error) {
           setFilterOptions([]);
