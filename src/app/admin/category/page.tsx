@@ -117,7 +117,11 @@ const CategoryList = () => {
     }
   };
   const categoryColumns: ColumnDef<any>[] = [
-    { accessorKey: "id", header: "ID", size: 100 },
+    {
+      accessorKey: "sno", // Placeholder key for S.No
+      header: "S.No",
+      cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
+    },
     { accessorKey: "name", header: "Name", size: 200 },
     {
       accessorKey: "status",

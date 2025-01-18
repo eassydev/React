@@ -62,7 +62,7 @@ const AddSpHubForm: React.FC = () => {
     if (selectedCategoryId) {
       const loadSubcategories = async () => {
         try {
-          const subcategoryData = await fetchSubCategoriesByCategoryId(parseInt(selectedCategoryId));
+          const subcategoryData = await fetchSubCategoriesByCategoryId(selectedCategoryId);
           setSubcategories(subcategoryData);
         } catch (error) {
           setSubcategories([]);
@@ -80,8 +80,8 @@ const AddSpHubForm: React.FC = () => {
       const loadFilterAttributes = async () => {
         try {
           const attributeData = await fetchFilterAttributes(
-            parseInt(selectedCategoryId),
-            selectedSubcategoryId ? parseInt(selectedSubcategoryId) : null
+            selectedCategoryId,
+            selectedSubcategoryId ? selectedSubcategoryId : null
           );
           setFilterAttributes(attributeData);
         } catch (error) {
@@ -97,7 +97,7 @@ const AddSpHubForm: React.FC = () => {
     if (selectedFilterAttributeId) {
       const loadFilterOptions = async () => {
         try {
-          const optionData = await fetchFilterOptionsByAttributeId(parseInt(selectedFilterAttributeId));
+          const optionData = await fetchFilterOptionsByAttributeId(selectedFilterAttributeId);
           setFilterOptions(optionData);
         } catch (error) {
           setFilterOptions([]);
@@ -114,12 +114,12 @@ const AddSpHubForm: React.FC = () => {
     setIsSubmitting(true);
 
     const spHubData = {
-      hub_id: parseInt(selectedHubId),
-      city_id: parseInt(selectedCityId),
-      category_id: selectedCategoryId ? parseInt(selectedCategoryId) : undefined,
-      subcategory_id: selectedSubcategoryId ? parseInt(selectedSubcategoryId) : undefined,
-      filter_attribute_id: selectedFilterAttributeId ? parseInt(selectedFilterAttributeId) : undefined,
-      filter_option_id: selectedFilterOptionId ? parseInt(selectedFilterOptionId) : undefined,
+      hub_id: selectedHubId,
+      city_id: selectedCityId,
+      category_id: selectedCategoryId ? selectedCategoryId : undefined,
+      subcategory_id: selectedSubcategoryId ? selectedSubcategoryId : undefined,
+      filter_attribute_id: selectedFilterAttributeId ? selectedFilterAttributeId : undefined,
+      filter_option_id: selectedFilterOptionId ? selectedFilterOptionId: undefined,
       staff: parseInt(staff),
       weightage: parseFloat(weightage),
       is_active: isActive,

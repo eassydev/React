@@ -218,7 +218,7 @@ const SubcategoryForm: React.FC = () => {
     const subcategoryData: Subcategory = {
       name: subcategoryName,
       image: subcategoryImage,
-      category_id: parseInt(selectedCategoryId),
+      category_id: selectedCategoryId,
       optional_heading: optionalHeading,
       exclude_heading: excludeHeading,
       exclude_description: excludeDescription,
@@ -245,7 +245,7 @@ const SubcategoryForm: React.FC = () => {
         description: response.message,
       });
       setIsSubmitting(false);
-      router.push('/admin/sub-category'); // Redirect after successful update
+    //  router.push('/admin/sub-category'); // Redirect after successful update
 
     } catch (error) {
       toast({

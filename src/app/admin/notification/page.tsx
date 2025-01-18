@@ -52,7 +52,11 @@ const NotificationList = () => {
 
   
   const notificationColumns: ColumnDef<any>[] = [
-    { accessorKey: "id", header: "ID" },
+    {
+      accessorKey: "sno", // Placeholder key for S.No
+      header: "S.No",
+      cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
+    },
     { accessorKey: "title", header: "Title" },
     { accessorKey: "message", header: "Message" },
     {

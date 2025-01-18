@@ -83,6 +83,7 @@ const RateCardForm: React.FC = () => {
   const [isBestDeal, setIsBestDeal] = useState(false);
   const [serviceDescriptions, setServiceDescriptions] = useState<ServiceDetail[]>([]);
   const [segments, setSegments] = useState<ServiceSegment[]>([]);
+  const [segmentsId, setsegmentsId] = useState<string>("");
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -107,7 +108,7 @@ const RateCardForm: React.FC = () => {
     if (selectedCategoryId) {
       const loadSubcategories = async () => {
         try {
-          const subcategoryData = await fetchSubCategoriesByCategoryId(parseInt(selectedCategoryId));
+          const subcategoryData = await fetchSubCategoriesByCategoryId(selectedCategoryId);
           setSubcategories(subcategoryData);
         } catch (error) {
           setSubcategories([]);
@@ -125,8 +126,8 @@ const RateCardForm: React.FC = () => {
       const loadFilterAttributes = async () => {
         try {
           const attributeData = await fetchFilterAttributes(
-            parseInt(selectedCategoryId),
-            selectedSubcategoryId ? parseInt(selectedSubcategoryId) : null
+            selectedCategoryId,
+            selectedSubcategoryId ? selectedSubcategoryId : null
           );
           setFilterAttributes(attributeData);
 
@@ -138,8 +139,8 @@ const RateCardForm: React.FC = () => {
       loadFilterAttributes();
       const loadServiceDetails = async () => {
         try {
-          const segmentData = await fetchServiceSegments(parseInt(selectedCategoryId),
-            selectedSubcategoryId ? parseInt(selectedSubcategoryId) : null);
+          const segmentData = await fetchServiceSegments(selectedCategoryId,
+            selectedSubcategoryId ? selectedSubcategoryId : null);
           setSegments(segmentData);
         } catch (error) {
           setSegments([]);
@@ -174,7 +175,7 @@ const RateCardForm: React.FC = () => {
 
     if (key === "attributeId") {
       try {
-        const options = await fetchFilterOptionsByAttributeId(parseInt(value));
+        const options = await fetchFilterOptionsByAttributeId(value);
         updated[index].options = options.map((option) => ({
           id: option.id!.toString(),
           value: option.value,
@@ -193,20 +194,20 @@ const RateCardForm: React.FC = () => {
 
     const rateCardData = {
       name: rateCardName,
-      category_id: parseInt(selectedCategoryId),
-      subcategory_id: selectedSubcategoryId ? parseInt(selectedSubcategoryId) : null,
+      category_id: selectedCategoryId,
+      subcategory_id: selectedSubcategoryId ? selectedSubcategoryId : null,
       attributes: filterAttributeOptions.map((pair) => ({
-        attribute_id: parseInt(pair.attributeId),
-        option_id: parseInt(pair.optionId),
+        attribute_id: pair.attributeId,
+        option_id: pair.optionId,
       })),
+      segment_id: segmentsId,
       price: parseFloat(price),
       strike_price:parseFloat(strikePrice),
       active: isActive,
       recommended: isRecommended,
       best_deal: isBestDeal,
-      provider_id: parseInt(selectedProviderId),
+      provider_id: selectedProviderId,
       serviceDescriptions: serviceDescriptions.map((desc) => ({
-        segment_id: desc.segment_id,
         title: desc.title,
         description: desc.description,
       })),
@@ -220,7 +221,7 @@ const RateCardForm: React.FC = () => {
         title: "Success",
         description: response.message,
       });
-      router.push("/admin/rate-card");
+    //  router.push("/admin/rate-card");
     } catch (error) {
       console.log("rateCardData",error)
 
@@ -238,13 +239,13 @@ const RateCardForm: React.FC = () => {
   const handleAddServiceDescription = () => {
     setServiceDescriptions((prev) => [
       ...prev,
-      { segment_id: "", title: "", description: "" },
+      { title: "", description: "" },
     ]);
   };
 
   const handleUpdateServiceDescription = (
     index: number,
-    key: "segment_id" | "title" | "description",
+    key: "title" | "description",
     value: string
   ) => {
     const updated = [...serviceDescriptions];
@@ -450,15 +451,11 @@ const RateCardForm: React.FC = () => {
                 {priceError && <p className="text-red-500 text-sm">{priceError}</p>}
               </div>
 
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Service Descriptions</h3>
-                {serviceDescriptions.map((service, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Segment Selector */}
-                    <Select
-                      value={service.segment_id}
+              <div className="space-y-2">
+              <Select
+                      value={segmentsId}
                       onValueChange={(value) =>
-                        handleUpdateServiceDescription(index, "segment_id", value)
+                        setsegmentsId(value)
                       }
                     >
                       <SelectTrigger>
@@ -472,6 +469,14 @@ const RateCardForm: React.FC = () => {
                         ))}
                       </SelectContent>
                     </Select>
+                    </div>
+
+              <div className="space-y-4">
+                <h3 className="text-lg font-medium">Service Descriptions</h3>
+                {serviceDescriptions.map((service, index) => (
+                  <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    {/* Segment Selector */}
+                  
 
                     {/* Title Input */}
                     <Input

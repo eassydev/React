@@ -34,8 +34,8 @@ const EditBannerForm: React.FC = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectionType, setSelectionType] = useState<string>("");
-  const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
-  const [options, setOptions] = useState<{ id: number; name: string }[]>([]);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [options, setOptions] = useState<{ id: string; name: string }[]>([]);
   const [mediaType, setMediaType] = useState<"image" | "video">("image");
   const [displayOrder, setDisplayOrder] = useState<number>(1);
   const [deepLink, setDeepLink] = useState<string>("");
@@ -51,7 +51,7 @@ const EditBannerForm: React.FC = () => {
   const [price, setPrice] = useState<number | null>(null);
   const [addToCart, setAddToCart] = useState(false);
   const [hubOptions, setHubOptions] = useState<Hub[]>([]);
-  const [hubIds, setHubIds] = useState<number[]>([]);
+  const [hubIds, setHubIds] = useState<string[]>([]);
   const [priceError, setPriceError] = useState<string>("");
   const [displayOrderError, setDisplayOrderError] = useState<string>("");
   const [radiusError, setRadiusError] = useState<string>("");
@@ -79,7 +79,7 @@ const EditBannerForm: React.FC = () => {
         setPrice(banner.price || null);
         setAddToCart(banner.add_to_cart || false);
         setHubIds(banner.hub_ids || []);
-        setMediaName(banner.media_name|| "");
+        setMediaName(banner.media_name || "");
       } catch (error) {
         toast({ variant: "error", title: "Error", description: "Failed to load banner data." });
       }
@@ -101,33 +101,33 @@ const EditBannerForm: React.FC = () => {
   useEffect(() => {
     const loadOptions = async () => {
       try {
-        let data: { id: number; name: string }[] = [];
+        let data: { id: string; name: string }[] = [];
         switch (selectionType) {
           case "Category":
             const categories = await fetchAllCategories();
             data = categories.map((category) => ({
-              id: Number(category.id) || 0,
+              id: category.id || '',
               name: category.name || "Unnamed Category",
             }));
             break;
           case "Subcategory":
             const subcategories = await fetchAllSubCategories();
             data = subcategories.map((subcategory) => ({
-              id: Number(subcategory.id) || 0,
+              id: subcategory.id || '',
               name: subcategory.name || "Unnamed Subcategory",
             }));
             break;
           case "Ratecard":
             const ratecards = await fetchAllRatecard();
             data = ratecards.map((ratecard) => ({
-              id: Number(ratecard.id) || 0,
+              id: ratecard.id || '',
               name: ratecard.name || "Unnamed Ratecard",
             }));
             break;
           case "Package":
             const packages = await fetchAllpackages();
             data = packages.map((pkg) => ({
-              id: Number(pkg.id) || 0,
+              id: pkg.id || '',
               name: pkg.name || "Unnamed Package",
             }));
             break;
@@ -152,6 +152,11 @@ const EditBannerForm: React.FC = () => {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    console.log("title", title)
+    console.log("description", description)
+    console.log("selectionType", selectionType)
+    console.log("selectedItemId", selectedItemId)
+    console.log("price", price)
 
     if (!title || !description || !selectionType || !selectedItemId || !price) {
       toast({
@@ -191,7 +196,7 @@ const EditBannerForm: React.FC = () => {
         title: "Success",
         description: "Banner updated successfully.",
       });
-      router.push("/admin/banner");
+       router.push("/admin/banner");
     } catch (error) {
       toast({
         variant: "error",
@@ -278,7 +283,7 @@ const EditBannerForm: React.FC = () => {
               {selectionType && (
                 <div>
                   <label className="text-sm font-medium text-gray-700">Select {selectionType}</label>
-                  <Select value={String(selectedItemId)} onValueChange={(value) => setSelectedItemId(Number(value))}>
+                  <Select value={String(selectedItemId)} onValueChange={(value) => setSelectedItemId(value)}>
                     <SelectTrigger className="bg-white border-gray-200">
                       <SelectValue placeholder={`Select ${selectionType}`} />
                     </SelectTrigger>
@@ -327,9 +332,19 @@ const EditBannerForm: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Hubs</label>
                 <ReactSelect
                   isMulti
-                  options={hubOptions.map((hub) => ({ value: parseInt(hub.id!.toString()), label: hub.hub_name }))}
-                  value={hubIds.map((id) => ({ value: id, label: hubOptions.find((hub) => hub.id?.toString() === id.toString())?.hub_name }))}
-                  onChange={(selectedOptions) => setHubIds(selectedOptions.map((option) => option.value))}
+                  options={hubOptions.map((hub) => ({
+                    value: hub.id,
+                    label: hub.hub_name || `Unnamed Hub (ID: ${hub.id})`,
+                  }))}
+                  value={hubIds.map((id) => {
+                    const hub = hubOptions.find((hub) => hub.id === id);
+                    return hub
+                      ? { value: hub.id, label: hub.hub_name || `Unnamed Hub (ID: ${hub.id})` }
+                      : null;
+                  }).filter(Boolean)} // Filter out null values to avoid invalid entries
+                  onChange={(selectedOptions) =>
+                    setHubIds(selectedOptions.map((option) => option?.value!.toString() ?? ''))
+                  }
                   placeholder="Select Hubs"
                 />
               </div>
@@ -366,8 +381,8 @@ const EditBannerForm: React.FC = () => {
                   className="h-11"
                   required
                 />
-  {radiusError && <p className="text-red-500 text-sm">{radiusError}</p>}
-</div>
+                {radiusError && <p className="text-red-500 text-sm">{radiusError}</p>}
+              </div>
               <div>
                 <label>Start Date</label>
                 <Input type="date" value={startDate} min={today} onChange={(e) => setStartDate(e.target.value)} />
@@ -394,17 +409,17 @@ const EditBannerForm: React.FC = () => {
               </div>
 
               <div>
-  <label className="text-sm font-medium text-gray-700">Media Preview</label>
-  {mediaType === "image" && mediaName && (
-    <img src={mediaName} alt="Banner Media" className="w-32 h-32 object-cover" />
-  )}
-  {mediaType === "video" && mediaName && (
-    <video controls className="w-32 h-32">
-      <source src={mediaName} type="video/mp4" />
-      Your browser does not support the video tag.
-    </video>
-  )}
-</div>
+                <label className="text-sm font-medium text-gray-700">Media Preview</label>
+                {mediaType === "image" && mediaName && (
+                  <img src={mediaName} alt="Banner Media" className="w-32 h-32 object-cover" />
+                )}
+                {mediaType === "video" && mediaName && (
+                  <video controls className="w-32 h-32">
+                    <source src={mediaName} type="video/mp4" />
+                    Your browser does not support the video tag.
+                  </video>
+                )}
+              </div>
               <div className="flex items-center space-x-2">
                 <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
                 <span>Active</span>

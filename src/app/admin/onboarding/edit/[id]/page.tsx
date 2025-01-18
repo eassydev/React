@@ -56,7 +56,7 @@ const EditOnboardingForm: React.FC = () => {
       setTitle(onboarding.title);
       setDescription(onboarding.description || "");
       setIsActive(onboarding.is_active);
-      setType(onboarding.type)
+      setType(onboarding.type);
       if (typeof onboarding.image === "string") {
         setExistingImage(onboarding.image); // Set existing image URL
       } else {
@@ -93,14 +93,14 @@ const EditOnboardingForm: React.FC = () => {
       return;
     }
 
-     const updatedOnboarding: Onboarding = {
-         title,
-         description,
-         image,
-         type, // Add type to the API request
-         is_active: isActive,
-       };
-   
+    const updatedOnboarding: Onboarding = {
+      title,
+      description,
+      image,
+      type, // Add type to the API request
+      is_active: isActive,
+    };
+
     try {
       await updateOnboarding(onboardingId!, updatedOnboarding); // Submit the updated onboarding object to the API
       toast({
@@ -143,14 +143,18 @@ const EditOnboardingForm: React.FC = () => {
 
           <CardContent className="pt-6">
             <form onSubmit={onSubmit} className="space-y-6">
-              {/* Title Field */}
+              {/* Title Field with React-Quill */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Title</label>
-                <Input
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <FileText className="w-4 h-5 text-blue-500" />
+                  <span>Title</span>
+                </label>
+                <ReactQuill
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter onboarding title"
-                  required
+                  onChange={setTitle}
+                  theme="snow"
+                  modules={quillModules}
+                  style={{ height: "100px" }}
                 />
               </div>
 
@@ -169,8 +173,8 @@ const EditOnboardingForm: React.FC = () => {
                 />
               </div>
 
- {/* Type Select Field */}
- <div className="space-y-2">
+              {/* Type Select Field */}
+              <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Type</label>
                 <select
                   value={type}
@@ -182,6 +186,7 @@ const EditOnboardingForm: React.FC = () => {
                   <option value="splash">Splash</option>
                 </select>
               </div>
+
               {/* Image Upload Field */}
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">

@@ -299,7 +299,7 @@ const CategoryForm: React.FC = () => {
         title: 'Success.',
         description: catdata.message,
       });
-      //  router.push('/admin/category'); // Redirect after successful update
+        router.push('/admin/category'); // Redirect after successful update
 
       setIsSubmitting(false);
     } catch (error: any) {

@@ -82,7 +82,7 @@ export interface Subcategory {
   id?: string; // Optional for editing
   name: string;
   image: File | null;
-  category_id: number; // Associated category ID  // Field for SAC code
+  category_id: string; // Associated category ID  // Field for SAC code
   service_time?: string;
   optional_heading?: string;
   exclude_heading?: string;
@@ -131,7 +131,6 @@ export interface AttributeOption {
 
 export type ServiceDetail = {
   id?: number;
-  segment_id: string;
   title: string;
   description: string;
 };
@@ -167,9 +166,10 @@ export interface ExcludeImage {
 
 export interface RateCard {
   id?: string;
-  category_id: number;
-  subcategory_id?: number | null;
-  provider_id?: number | null;
+  category_id: string;
+  subcategory_id?: string | null;
+  segment_id?: string | null;
+  provider_id?: string | null;
   name: string;
   price: number;
   strike_price: number;
@@ -178,8 +178,8 @@ export interface RateCard {
   serviceDescriptions?: ServiceDetail[]; // Includes service details
   recommended: boolean; // Added recommended
   attributes: {
-    attribute_id: number;
-    option_id: number;
+    attribute_id: string;
+    option_id: string;
   }[]; // Dynamic filter attributes and options
 }
 
@@ -312,7 +312,7 @@ export interface Banner {
   title: string; // Banner title
   description: string; // Banner description
   selection_type: string; // Specific selection type options
-  selection_id: number | null; // ID of the selected item (category, subcategory, etc.)
+  selection_id: string | null; // ID of the selected item (category, subcategory, etc.)
   is_active: boolean; // Banner active status
   media_type: "image" | "video"; // Type of media (image or video)
   display_order?: number; // Optional order of display
@@ -326,7 +326,7 @@ export interface Banner {
   end_date?: string; // End date for banner visibility (ISO format: YYYY-MM-DD)
   price?: number | null; // Price associated with the banner
   add_to_cart?: boolean; // Flag to indicate if the banner is for a cart item
-  hub_ids?: number[]; // Array of hub IDs associated with the banner
+  hub_ids?: string[]; // Array of hub IDs associated with the banner
 }
 
 
@@ -420,12 +420,15 @@ export interface Promocode {
   end_date: string; // Required end date
   status: "active" | "inactive" | "expired"; // Enum for promocode status
   selection_type: string; // Specific selection type options (Category, Subcategory, etc.)
-  selection_id: number | null; // ID of the selected item (category, subcategory, etc.)
+  selection_id: string | null; // ID of the selected item (category, subcategory, etc.)
   is_global: boolean; // Indicates if the promocode is global
   display_to_customer: boolean; // Indicates if the promocode is visible to customers
   is_active: boolean; // Indicates if the promocode is active
   provider_id: string; // ID of the associated provider
   image?: File; // Optional image file for the promocode
+  is_free: boolean; 
+  rate_card_id: string | null; 
+
 }
 
 
@@ -564,7 +567,7 @@ export interface Hub {
 
 export interface HubPincode {
   id?: number;
-  hub_id: number;
+  hub_id: string;
   pincode: string;
   is_active?: boolean;
 }
@@ -572,12 +575,12 @@ export interface HubPincode {
 
 export interface SpHub {
   id?: number;
-  hub_id: number;
-  city_id: number;
-  category_id?: number | null; // Allow null or undefined
-  subcategory_id?: number;
-  filter_attribute_id?: number;
-  filter_option_id?: number;
+  hub_id: string;
+  city_id: string;
+  category_id?: string | null; // Allow null or undefined
+  subcategory_id?: string;
+  filter_attribute_id?: string;
+  filter_option_id?: string;
   staff: number;
   weightage: number;
   is_active: boolean;
@@ -1236,6 +1239,7 @@ export const createRateCard = async (rateCard: RateCard): Promise<ApiResponse> =
     name: rateCard.name,
     category_id: rateCard.category_id,
     provider_id: rateCard.provider_id ?? null,
+    segment_id: rateCard.segment_id ?? null,
     price: rateCard.price,
     strike_price: rateCard.strike_price,
     active: rateCard.active ? 1 : 0,
@@ -1247,7 +1251,6 @@ export const createRateCard = async (rateCard: RateCard): Promise<ApiResponse> =
       option_id: attr.option_id,
     })), // Include dynamic filter attributes
     service_descriptions: rateCard.serviceDescriptions!.map((desc) => ({
-      segment_id: desc.segment_id,
       title: desc.title,
       description: desc.description,
     })), // Include service descriptions
@@ -1329,6 +1332,7 @@ export const updateRateCard = async (id: string, rateCard: RateCard): Promise<Ap
     name: rateCard.name,
     category_id: rateCard.category_id,
     provider_id: rateCard.provider_id ?? null,
+    segment_id: rateCard.segment_id ?? null,
     price: rateCard.price,
     strike_price: rateCard.strike_price,
     active: rateCard.active ? 1 : 0,
@@ -1390,8 +1394,8 @@ export const restoreRateCard = async (id: string): Promise<ApiResponse> => {
 
 // Fetch filter attributes by category and/or subcategory ID
 export const fetchFilterAttributes = async (
-  categoryId: number | null,
-  subcategoryId: number | null
+  categoryId: string | null,
+  subcategoryId: string | null
 ): Promise<Attribute[]> => {
   try {
     const token = getToken();
@@ -1418,8 +1422,8 @@ export const fetchFilterAttributes = async (
 
 
 export const fetchServiceSegments = async (
-  categoryId: number | null,
-  subcategoryId: number | null
+  categoryId: string | null,
+  subcategoryId: string | null
 ): Promise<ServiceSegment[]> => {
   try {
     const token = getToken();
@@ -3081,6 +3085,8 @@ formData.append("min_order_value", minOrderValue ? minOrderValue.toString() : "0
   formData.append("display_to_customer", promocode.display_to_customer ? "1" : "0");
   formData.append("is_active", promocode.is_active ? "1" : "0");
   formData.append("provider_id", promocode.provider_id);
+  formData.append("is_free", promocode.is_free ? "1" : "0");
+  formData.append("rate_card_id", promocode.rate_card_id?.toString() || "");
 
   // Add image if provided
   if (promocode.image) {
@@ -3139,6 +3145,8 @@ formData.append("min_order_value", minOrderValue ? minOrderValue.toString() : "0
   formData.append("display_to_customer", promocode.display_to_customer ? "1" : "0");
   formData.append("is_active", promocode.is_active ? "1" : "0");
   formData.append("provider_id", promocode.provider_id);
+  formData.append("is_free", promocode.is_free ? "1" : "0");
+  formData.append("rate_card_id", promocode.rate_card_id?.toString() || "");
 
   // Add image if provided
   if (promocode.image) {
@@ -3467,7 +3475,7 @@ export const restoreWalletOffer = async (id: number): Promise<ApiResponse> => {
 
 
 // Fetch options for a specific filter attribute
-export const fetchFilterOptionsByAttributeId = async (attributeId: number): Promise<AttributeOption[]> => {
+export const fetchFilterOptionsByAttributeId = async (attributeId: string): Promise<AttributeOption[]> => {
   try {
     const token = getToken();
     const response: AxiosResponse<ApiResponse> = await apiClient.get(`/filter/attribute-options/${attributeId}`, {
@@ -5783,5 +5791,57 @@ export const deleteNotificationType = async (id: string): Promise<ApiResponse> =
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to delete notification.');
+  }
+};
+
+
+export const updateBookingStatus = async (id: string, status: string): Promise<void> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.put(`/booking/${id}/status`, { status }, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (!response.data.status) {
+      throw new Error(response.data.message || 'Failed to update status.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update status.');
+  }
+};
+
+export const updateBookingProvider = async (id: string, provider_id: string): Promise<void> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.put(`/booking/${id}/provider`, { provider_id }, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (!response.data.status) {
+      throw new Error(response.data.message || 'Failed to update provider.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update provider.');
+  }
+};
+
+export const initiateRefund = async (id: string): Promise<void> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post(`/booking/${id}/refund`, {}, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (!response.data.status) {
+      throw new Error(response.data.message || 'Failed to initiate refund.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to initiate refund.');
   }
 };

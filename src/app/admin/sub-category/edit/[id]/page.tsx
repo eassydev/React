@@ -303,7 +303,7 @@ const SubcategoryEdit: React.FC = () => {
     const subcategoryData: Subcategory = {
       name: subcategoryName,
       image: subcategoryImage,
-      category_id: parseInt(selectedCategoryId),
+      category_id: selectedCategoryId,
       optional_heading: optionalHeading,
       exclude_heading: excludeHeading,
       exclude_description: excludeDescription,

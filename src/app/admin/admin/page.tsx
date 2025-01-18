@@ -80,7 +80,11 @@ const AdminList = () => {
   };
 
   const adminColumns: ColumnDef<any>[] = [
-    { accessorKey: "id", header: "ID" },
+    {
+      accessorKey: "sno", // Placeholder key for S.No
+      header: "S.No",
+      cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
+    },
     { accessorKey: "full_name", header: "Full Name" },
     { accessorKey: "email", header: "Email" },
     {

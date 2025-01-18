@@ -65,7 +65,7 @@ const EditHubPincodeForm: React.FC = () => {
     try {
       // Construct the updated hub pincode object
       const updatedHubPincode: HubPincode = {
-        hub_id: parseInt(hub_id),
+        hub_id: hub_id,
         pincode,
         is_active,
       };

@@ -83,6 +83,7 @@ const RateCardForm: React.FC = () => {
   const [isBestDeal, setIsBestDeal] = useState(false);
    const [serviceDescriptions, setServiceDescriptions] = useState<ServiceDetail[]>([]);
     const [segments, setSegments] = useState<ServiceSegment[]>([]);
+    const [segmentsId, setsegmentsId] = useState<string>("");
   
   const router = useRouter();
   const pathname = usePathname();
@@ -114,7 +115,6 @@ useEffect(() => {
         setSelectedProviderId(rateCardData.provider_id?.toString() || ''); // Set initial provider
         setIsRecommended(rateCardData.recommended)
         setIsBestDeal(rateCardData.best_deal)
-
         if (rateCardData.attributes && Array.isArray(rateCardData.attributes)) {
           const dynamicAttributes = await Promise.all(
             rateCardData.attributes.map(async (attr: any) => {
@@ -143,7 +143,6 @@ useEffect(() => {
         
         if (rateCardData.serviceDescriptions && Array.isArray(rateCardData.serviceDescriptions)) {
           const formattedServiceDescriptions = rateCardData.serviceDescriptions.map((detail: any) => ({
-            segment_id: detail.segment_id?.toString() || '',
             title: detail.title || '',
             description: detail.description || '',
           }));
@@ -158,7 +157,18 @@ useEffect(() => {
         // Fetch filter attributes based on category or subcategory
         const subcategoryId = rateCardData.subcategory_id !== null ? rateCardData.subcategory_id : undefined;
         await fetchFilters(rateCardData.category_id, subcategoryId);
+
+        if (rateCardData.segment_id) {
+          const segmentData = await fetchServiceSegments(rateCardData.category_id,
+            rateCardData.subcategory_id ? rateCardData.subcategory_id  : null);
+
+            setSegments(segmentData);
+        }
+        setsegmentsId(rateCardData.segment_id?.toString() || '');
+
       }
+
+      
     } catch (error) {
       toast({
         variant: 'error',
@@ -175,7 +185,7 @@ useEffect(() => {
 
 const fetchSubcategories = async (categoryId: string) => {
   try {
-    const fetchedSubcategories = await fetchSubCategoriesByCategoryId(parseInt(categoryId));
+    const fetchedSubcategories = await fetchSubCategoriesByCategoryId(categoryId);
     setSubcategories(fetchedSubcategories);
   } catch (error) {
     setSubcategories([]);
@@ -184,7 +194,7 @@ const fetchSubcategories = async (categoryId: string) => {
 };
 
 
-const fetchFilters = async (categoryId: number, subcategoryId?: number) => {
+const fetchFilters = async (categoryId: string, subcategoryId?: string) => {
   try {
     const filters = await fetchFilterAttributes(categoryId, subcategoryId || null);
     setFilterAttributes(filters);
@@ -201,7 +211,7 @@ const fetchFilters = async (categoryId: number, subcategoryId?: number) => {
     if (selectedCategoryId) {
       const loadSubcategories = async () => {
         try {
-          const subcategoryData = await fetchSubCategoriesByCategoryId(parseInt(selectedCategoryId));
+          const subcategoryData = await fetchSubCategoriesByCategoryId(selectedCategoryId);
           setSubcategories(subcategoryData);
         } catch (error) {
           setSubcategories([]);
@@ -219,8 +229,8 @@ const fetchFilters = async (categoryId: number, subcategoryId?: number) => {
       const loadFilterAttributes = async () => {
         try {
           const attributeData = await fetchFilterAttributes(
-            parseInt(selectedCategoryId),
-            selectedSubcategoryId ? parseInt(selectedSubcategoryId) : null
+            selectedCategoryId,
+            selectedSubcategoryId ? selectedSubcategoryId : null
           );
           setFilterAttributes(attributeData);
         } catch (error) {
@@ -230,8 +240,8 @@ const fetchFilters = async (categoryId: number, subcategoryId?: number) => {
       loadFilterAttributes();
             const loadServiceDetails = async () => {
               try {
-                const segmentData = await fetchServiceSegments(parseInt(selectedCategoryId),
-                  selectedSubcategoryId ? parseInt(selectedSubcategoryId) : null);
+                const segmentData = await fetchServiceSegments(selectedCategoryId,
+                  selectedSubcategoryId ? selectedSubcategoryId : null);
                 setSegments(segmentData);
               } catch (error) {
                 setSegments([]);
@@ -266,7 +276,7 @@ const fetchFilters = async (categoryId: number, subcategoryId?: number) => {
   
     if (key === "attributeId") {
       try {
-        const options = await fetchFilterOptionsByAttributeId(parseInt(value));
+        const options = await fetchFilterOptionsByAttributeId(value);
         updated[index].options = options.map((option) => ({
           id: option.id!.toString(),
           value: option.value,
@@ -285,20 +295,20 @@ const fetchFilters = async (categoryId: number, subcategoryId?: number) => {
 
     const rateCardData = {
       name: rateCardName,
-      category_id: parseInt(selectedCategoryId),
-      subcategory_id: selectedSubcategoryId ? parseInt(selectedSubcategoryId) : null,
+      category_id: selectedCategoryId,
+      subcategory_id: selectedSubcategoryId ? selectedSubcategoryId : null,
       attributes: filterAttributeOptions.map((pair) => ({
-        attribute_id: parseInt(pair.attributeId),
-        option_id: parseInt(pair.optionId),
+        attribute_id: pair.attributeId,
+        option_id: pair.optionId,
       })),
       price: parseFloat(price),
+      segment_id: segmentsId,
       strike_price:parseFloat(strikePrice),
       active: isActive,
       recommended: isRecommended,
       best_deal: isBestDeal,
-      provider_id: parseInt(selectedProviderId),
+      provider_id: selectedProviderId,
       serviceDescriptions: serviceDescriptions.map((desc) => ({
-        segment_id: desc.segment_id,
         title: desc.title,
         description: desc.description,
       })),
@@ -330,13 +340,13 @@ const fetchFilters = async (categoryId: number, subcategoryId?: number) => {
   const handleAddServiceDescription = () => {
     setServiceDescriptions((prev) => [
       ...prev,
-      { segment_id: "", title: "", description: "" },
+      {  title: "", description: "" },
     ]);
   };
 
   const handleUpdateServiceDescription = (
     index: number,
-    key: "segment_id" | "title" | "description",
+    key:  "title" | "description",
     value: string
   ) => {
     const updated = [...serviceDescriptions];
@@ -542,28 +552,32 @@ const fetchFilters = async (categoryId: number, subcategoryId?: number) => {
                 />
                 {priceError && <p className="text-red-500 text-sm">{priceError}</p>}
               </div>
+
+               <div className="space-y-2">
+                            <Select
+                                    value={segmentsId}
+                                    onValueChange={(value) =>
+                                      setsegmentsId(value)
+                                    }
+                                  >
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select Segment" />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {segments.map((attr) => (
+                                        <SelectItem key={attr.id} value={attr.id!.toString()}>
+                                          {attr.segment_name}
+                                        </SelectItem>
+                                      ))}
+                                    </SelectContent>
+                                  </Select>
+                                  </div>
 <div className="space-y-4">
                 <h3 className="text-lg font-medium">Service Descriptions</h3>
                 {serviceDescriptions.map((service, index) => (
                   <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4">
                     {/* Segment Selector */}
-                    <Select
-                      value={service.segment_id}
-                      onValueChange={(value) =>
-                        handleUpdateServiceDescription(index, "segment_id", value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Segment" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {segments.map((attr) => (
-                          <SelectItem key={attr.id} value={attr.id!.toString()}>
-                            {attr.segment_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                    
 
                     {/* Title Input */}
                     <Input

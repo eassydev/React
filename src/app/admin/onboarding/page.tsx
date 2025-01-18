@@ -72,7 +72,27 @@ const OnboardingList = () => {
       header: "S.No",
       cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
     },
-        { accessorKey: "title", header: "Title" },
+    {
+      accessorKey: "title",
+      header: "Title",
+      cell: ({ getValue }) => {
+        const rawDescription = getValue() as string;
+    
+        // Function to strip HTML tags
+        const stripHtmlTags = (html: string) => {
+          const doc = new DOMParser().parseFromString(html, "text/html");
+          return doc.body.textContent || "";
+        };
+    
+        const plainText = stripHtmlTags(rawDescription);
+    
+        return (
+          <span>
+            {plainText.length > 50 ? `${plainText.slice(0, 50)}...` : plainText}
+          </span>
+        );
+      },
+    },
         { accessorKey: "type", header: "Type" },
     {
       accessorKey: "description",

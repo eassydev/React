@@ -41,7 +41,7 @@ const AddOnboardingForm: React.FC = () => {
   const [type, setType] = useState<"splash" | "onboarding">("onboarding"); // Restrict to valid values
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-    const router = useRouter();
+  const router = useRouter();
 
   const { toast } = useToast();
 
@@ -57,13 +57,12 @@ const AddOnboardingForm: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-   
     // Construct the Onboarding object
     const onboarding: Onboarding = {
       title,
       description,
       image,
-      type, // Add type to the API request
+      type,
       is_active: isActive,
     };
 
@@ -75,13 +74,6 @@ const AddOnboardingForm: React.FC = () => {
         description: "Onboarding page created successfully.",
       });
       router.push('/admin/onboarding'); // Redirect after successful update
-
-      // Reset form fields after successful submission
-      // setTitle("");
-      // setDescription("");
-      // setImage(null);
-      // setType("onboarding"); // Reset type
-      // setIsActive(true);
     } catch (error: any) {
       toast({
         variant: "error",
@@ -116,14 +108,18 @@ const AddOnboardingForm: React.FC = () => {
 
           <CardContent className="pt-6">
             <form onSubmit={onSubmit} className="space-y-6">
-              {/* Title Field */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Title</label>
-                <Input
+              {/* Title Field with React-Quill */}
+              <div className="space-y-2" style={{ height: "150px" }}>
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <FileText className="w-4 h-5 text-blue-500" />
+                  <span>Title</span>
+                </label>
+                <ReactQuill
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Enter onboarding title"
-                  required
+                  onChange={setTitle}
+                  theme="snow"
+                  modules={quillModules}
+                  style={{ height: "100px" }}
                 />
               </div>
 
@@ -155,7 +151,6 @@ const AddOnboardingForm: React.FC = () => {
                   <option value="splash">Splash</option>
                 </select>
               </div>
-
 
               {/* Image Upload Field */}
               <div className="space-y-2">

@@ -31,15 +31,19 @@ const EditPromocodeForm: React.FC = () => {
   const [endDate, setEndDate] = useState<string>("");
   const [status, setStatus] = useState<"active" | "inactive" | "expired">("active");
   const [selectionType, setSelectionType] = useState<string>("");
-  const [selectedItemId, setSelectedItemId] = useState<number | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const [providerId, setProviderId] = useState<string | null>(null);
   const [image, setImage] = useState<File | null>(null);
-  const [options, setOptions] = useState<{ id: number; name: string }[]>([]);
+  const [options, setOptions] = useState<{ id: string; name: string }[]>([]);
   const [providers, setProviders] = useState<{ id: string; first_name: string }[]>([]);
   const [isGlobal, setIsGlobal] = useState<boolean>(false);
   const [displayToCustomer, setDisplayToCustomer] = useState<boolean>(true);
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isFree, setIsFree] = useState<boolean>(false); // New state for is_free
+    const [rateCardId, setRateCardId] = useState<string | null>(null); // New state for selected rate card ID
+    const [rateCardOptions, setRateCardOptions] = useState<{ id: string; name: string }[]>([]); // Options for rate cards
+    
   const { toast } = useToast();
 
   const { id } = useParams();
@@ -58,7 +62,6 @@ const EditPromocodeForm: React.FC = () => {
     loadProviders();
   }, []);
   useEffect(() => {
-    // Fetch promocode details
     const loadPromocode = async () => {
       try {
         const promocode = await fetchPromocodeById(id.toString());
@@ -71,49 +74,51 @@ const EditPromocodeForm: React.FC = () => {
         setEndDate(promocode.end_date);
         setStatus(promocode.status);
         setSelectionType(promocode.selection_type);
-        setSelectedItemId(promocode.selection_id || null);
-        setProviderId(promocode.provider_id || null);
+        setSelectedItemId(promocode.selection_id?.toString() || null); // Ensure it's a string
+        setProviderId(promocode.provider_id?.toString() || null); // Ensure it's a string
         setIsGlobal(promocode.is_global);
         setDisplayToCustomer(promocode.display_to_customer);
         setIsActive(promocode.is_active);
+        setIsFree(promocode.is_free);
+        setRateCardId(promocode.rate_card_id?.toString() || null); // Ensure it's a string
       } catch (error) {
         toast({ variant: "error", title: "Error", description: "Failed to load promocode details." });
       }
     };
-
+  
     loadPromocode();
   }, [id.toString(), toast]);
-
+  
   useEffect(() => {
     const loadOptions = async () => {
       try {
-        let data: { id: number; name: string }[] = [];
+        let data: { id: string; name: string }[] = [];
         switch (selectionType) {
           case "Category":
             const categories = await fetchAllCategories();
             data = categories.map((category) => ({
-              id: Number(category.id) || 0,
+              id: category.id || '',
               name: category.name || "Unnamed Category",
             }));
             break;
           case "Subcategory":
             const subcategories = await fetchAllSubCategories();
             data = subcategories.map((subcategory) => ({
-              id: Number(subcategory.id) || 0,
+              id: subcategory.id || '',
               name: subcategory.name || "Unnamed Subcategory",
             }));
             break;
           case "Ratecard":
             const ratecards = await fetchAllRatecard();
             data = ratecards.map((ratecard) => ({
-              id: Number(ratecard.id) || 0,
+              id: ratecard.id || '',
               name: ratecard.name || "Unnamed Ratecard",
             }));
             break;
           case "Package":
             const packages = await fetchAllpackages();
-            data = packages.map((pkg) => ({
-              id: Number(pkg.id) || 0,
+            data = packages.map((pkg:any) => ({
+              id: pkg.id || '',
               name: pkg.name || "Unnamed Package",
             }));
             break;
@@ -132,6 +137,26 @@ const EditPromocodeForm: React.FC = () => {
 
  
 
+  useEffect(() => {
+    const loadRateCards = async () => {
+      try {
+        const rateCards = await fetchAllRatecard(); // New API for fetching rate cards
+        const options = rateCards.map((rateCard) => ({
+          id: rateCard.id || '',
+          name: rateCard.name || "Unnamed Ratecard",
+        }));
+        setRateCardOptions(options);
+      } catch (error) {
+        toast({
+          variant: "error",
+          title: "Error",
+          description: "Failed to load rate cards for free promocode.",
+        });
+      }
+    };
+  
+    if (isFree) loadRateCards(); // Fetch only if isFree is true
+  }, [isFree, toast]);
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -161,6 +186,8 @@ const EditPromocodeForm: React.FC = () => {
         is_global: isGlobal,
         display_to_customer: displayToCustomer,
         provider_id: providerId,
+        is_free: isFree, // New field
+        rate_card_id: isFree ? rateCardId : null,
       };
 
       if (image) {
@@ -332,22 +359,23 @@ const EditPromocodeForm: React.FC = () => {
               </div>
 
               {selectionType && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Select {selectionType}</label>
-                  <Select value={String(selectedItemId)} onValueChange={(value) => setSelectedItemId(Number(value))}>
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder={`Select ${selectionType}`} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {options.map((option) => (
-                        <SelectItem key={option.id} value={String(option.id)}>
-                          {option.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+  <div>
+    <label className="text-sm font-medium text-gray-700">Select {selectionType}</label>
+    <Select value={selectedItemId || ""} onValueChange={(value) => setSelectedItemId(value)}>
+      <SelectTrigger className="bg-white border-gray-200">
+        <SelectValue placeholder={`Select ${selectionType}`} />
+      </SelectTrigger>
+      <SelectContent>
+        {options.map((option) => (
+          <SelectItem key={option.id} value={String(option.id)}>
+            {option.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
+)}
+
 
               <div>
                 <label className="text-sm font-medium text-gray-700">Global Promocode</label>
@@ -358,6 +386,28 @@ const EditPromocodeForm: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Display to Customer</label>
                 <Switch checked={displayToCustomer} onCheckedChange={setDisplayToCustomer} />
               </div>
+   <div>
+  <label className="text-sm font-medium text-gray-700">Is Free</label>
+  <Switch checked={isFree} onCheckedChange={setIsFree} />
+</div>
+
+{isFree && (
+  <div>
+    <label className="text-sm font-medium text-gray-700">Select Ratecard</label>
+    <Select value={rateCardId || ""} onValueChange={(value) => setRateCardId(value)}>
+      <SelectTrigger className="bg-white border-gray-200">
+        <SelectValue placeholder="Select Ratecard" />
+      </SelectTrigger>
+      <SelectContent>
+        {rateCardOptions.map((option) => (
+          <SelectItem key={option.id} value={String(option.id)}>
+            {option.name}
+          </SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  </div>
+)}
 
               <div>
                 <label className="text-sm font-medium text-gray-700">Active/Inactive</label>

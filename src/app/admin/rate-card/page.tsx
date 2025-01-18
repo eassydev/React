@@ -129,7 +129,11 @@ const RateCardList = () => {
   
 
   const rateCardColumns: ColumnDef<any>[] = [
-    { accessorKey: 'id', header: 'ID' },
+    {
+      accessorKey: "sno", // Placeholder key for S.No
+      header: "S.No",
+      cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
+    },
     { accessorKey: 'name', header: 'Name' },
     { accessorKey: 'category_name', header: 'Category' },
     { accessorKey: 'subcategory_name', header: 'Subcategory' },

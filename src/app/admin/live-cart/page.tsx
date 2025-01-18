@@ -108,7 +108,11 @@ const CartList = () => {
 
 
   const cartColumns: ColumnDef<any>[] = [
-    { accessorKey: "id", header: "ID" },
+    {
+      accessorKey: "sno", // Placeholder key for S.No
+      header: "S.No",
+      cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
+    },
     {
       accessorKey: "user.first_name",
       header: "User Name",

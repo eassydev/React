@@ -105,7 +105,7 @@ const PackageEditForm: React.FC = () => {
         const preSelectedAddons = packageData.addons?.map((addon: any) => addon.category_id.toString());
         setSelectedCategories(preSelectedAddons ?? []);
 
-        if (packageData.image) setImagePreview(`/uploads/${packageData.image}`);
+        if (packageData.image) setImagePreview(`${packageData.image}`);
       } catch (error) {
         console.log('Failed to load package details.', error);
         toast({

@@ -61,8 +61,12 @@ const PromocodeList = () => {
   };
 
   const promocodeColumns: ColumnDef<any>[] = [
-    { accessorKey: 'id', header: 'ID' },
-    { accessorKey: 'code', header: 'Code' },
+    {
+      accessorKey: "sno", // Placeholder key for S.No
+      header: "S.No",
+      cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
+    },
+        { accessorKey: 'code', header: 'Code' },
     { accessorKey: 'discount_type', header: 'Discount Type' },
     { accessorKey: 'discount_value', header: 'Discount Value' },
     { accessorKey: 'start_date', header: 'Start Date' },

@@ -123,7 +123,11 @@ const SpHubList = () => {
   };
 
   const spHubColumns: ColumnDef<any>[] = [
-    { accessorKey: "id", header: "ID" },
+    {
+      accessorKey: "sno", // Placeholder key for S.No
+      header: "S.No",
+      cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
+    },
     { accessorKey: "hub.hub_name", header: "Hub Name" },
     { accessorKey: "city.name", header: "City" },
     { accessorKey: "category.name", header: "Category" },
