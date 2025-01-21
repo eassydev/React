@@ -162,63 +162,70 @@ const CategoryEdit: React.FC = () => {
     }
   };
 
-  // Remove an entire attribute
-  const removeAttribute = (index: number) => {
-    setAttributes((prev) => prev.filter((_, i) => i !== index));
-  };
+ // Add a new attribute
+const addAttribute = () => {
+  setAttributes((prev) => [
+    ...prev,
+    {
+      id: "", // New attributes will have an empty `id`
+      name: "",
+      type: "list",
+      options: [{ id: "", value: "" }], // Initialize options
+    },
+  ]);
+};
 
-  const addAttribute = () => {
-    setAttributes((prev) => [
-      ...prev,
-      {
-        name: "",
-        type: "list",
-        options: [{ id: Date.now(), value: "" }], // Initialize options with a valid object
-      },
-    ]);
-  };
+// Update an attribute (existing or new)
+const updateAttribute = (index: any, field: string, value: string) => {
+  setAttributes((prev) => {
+    const updated = [...prev];
+    updated[index] = { ...updated[index], [field]: value };
+    return updated;
+  });
+};
 
+// Remove an attribute
+const removeAttribute = (index: any) => {
+  setAttributes((prev) => prev.filter((_, i) => i !== index));
+};
 
-  const updateAttribute = (index: number, field: string, value: string) => {
-    const updatedAttributes = [...attributes];
-    updatedAttributes[index] = { ...updatedAttributes[index], [field]: value };
-    setAttributes(updatedAttributes);
-  };
+// Add an option to an attribute
+const addOption = (attrIndex: any) => {
+  setAttributes((prev) => {
+    const updated = [...prev];
+    updated[attrIndex].options.push({ id: "", value: "" });
+    return updated;
+  });
+};
+
+// Update an option for an attribute
+const updateOption = (attrIndex: number, optIndex: number, value: string) => {
+  setAttributes((prev) => {
+    const updated = [...prev];
+    updated[attrIndex].options[optIndex] = {
+      ...updated[attrIndex].options[optIndex],
+      value,
+    };
+    return updated;
+  });
+};
+
+// Remove an option from an attribute
+const removeOption = (attrIndex: number, optIndex: number) => {
+  setAttributes((prev) => {
+    const updated = [...prev];
+    updated[attrIndex].options = updated[attrIndex].options.filter(
+      (_, i) => i !== optIndex
+    );
+    return updated;
+  });
+};
 
   const addServiceSegment = () => {
     setServiceSegments((prev) => [...prev, { segment_name: "" }]);
   };
 
-  // Add an option to a specific attribute
-  const addOption = (attrIndex: number) => {
-    const updatedAttributes = [...attributes];
-    updatedAttributes[attrIndex].options.push({
-      id: Date.now(), // Assign a unique ID
-      value: "", // Initialize an empty value
-    });
-    setAttributes(updatedAttributes);
-  };
-
-
-  // Update an option for a specific attribute
-  const updateOption = (attrIndex: number, optIndex: number, value: string) => {
-    const updatedAttributes = [...attributes];
-    updatedAttributes[attrIndex].options[optIndex] = {
-      ...updatedAttributes[attrIndex].options[optIndex], // Retain the existing `id`
-      value, // Update only the value
-    };
-    setAttributes(updatedAttributes);
-  };
-
-
-  // Remove an option from a specific attribute
-  const removeOption = (attrIndex: number, optIndex: number) => {
-    const updatedAttributes = [...attributes];
-    updatedAttributes[attrIndex].options = updatedAttributes[attrIndex].options.filter(
-      (_, i) => i !== optIndex
-    );
-    setAttributes(updatedAttributes);
-  };
+  
 
 
   const updateServiceSegment = (index: number, value: string) => {
@@ -375,7 +382,7 @@ const CategoryEdit: React.FC = () => {
         title: 'Success.',
         description: 'Category updated successfully',
       });
-      router.push('/admin/category'); // Redirect after successful update
+     // router.push('/admin/category'); // Redirect after successful update
     } catch (error) {
       toast({
         variant: 'error',
@@ -565,85 +572,88 @@ const CategoryEdit: React.FC = () => {
                 </div>
               </div>
 
-              {/* Attributes Section */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Attributes</h3>
-                {attributes.map((attribute, attrIndex) => (
-                  <div key={attrIndex} className="space-y-2 border p-4 rounded-md bg-gray-50">
-                    {/* Attribute Name */}
-                    <Input
-                      placeholder="Attribute Name"
-                      value={attribute.name}
-                      onChange={(e) => updateAttribute(attrIndex, "name", e.target.value)}
-                      className="h-10"
-                    />
+            <div className="space-y-4">
+  <h3 className="text-lg font-semibold">Attributes</h3>
+  {attributes.map((attribute, attrIndex) => (
+    <div
+      key={attribute.id || `new-${attrIndex}`} // Use `id` if available, else generate a unique key
+      className="space-y-2 border p-4 rounded-md bg-gray-50"
+    >
+      {/* Attribute Name */}
+      <Input
+        placeholder="Attribute Name"
+        value={attribute.name}
+        onChange={(e) => updateAttribute(attrIndex, "name", e.target.value)}
+        className="h-10"
+      />
 
-                    {/* Attribute Type */}
-                    <Select
-                      value={attribute.type}
-                      onValueChange={(value) => updateAttribute(attrIndex, "type", value)}
-                    >
-                      <SelectTrigger className="bg-white border-gray-200">
-                        <SelectValue placeholder="Select Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="list">List</SelectItem>
-                        <SelectItem value="dropdown">Dropdown</SelectItem>
-                        <SelectItem value="search">Search</SelectItem>
-                      </SelectContent>
-                    </Select>
+      {/* Attribute Type */}
+      <Select
+        value={attribute.type}
+        onValueChange={(value) => updateAttribute(attrIndex, "type", value)}
+      >
+        <SelectTrigger className="bg-white border-gray-200">
+          <SelectValue placeholder="Select Type" />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="list">List</SelectItem>
+          <SelectItem value="dropdown">Dropdown</SelectItem>
+          <SelectItem value="search">Search</SelectItem>
+        </SelectContent>
+      </Select>
 
-                    {/* Options Management */}
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium">Options</h4>
-                      {attribute.options.map((option, optIndex) => (
-                        <div key={optIndex} className="flex items-center space-x-2">
-                          <Input
-                            placeholder={`Option ${optIndex + 1}`}
-                            value={option.value || ''} // Safely access the `value` property
-                            onChange={(e) => updateOption(attrIndex, optIndex, e.target.value)}
-                            className="h-10 flex-1"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="p-2 text-red-500"
-                            onClick={() => removeOption(attrIndex, optIndex)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ))}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="mt-2 flex items-center"
-                        onClick={() => addOption(attrIndex)}
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Option
-                      </Button>
-                    </div>
+      {/* Options Management */}
+      <div className="space-y-2">
+        <h4 className="text-sm font-medium">Options</h4>
+        {attribute.options.map((option, optIndex) => (
+          <div key={option.id || `new-opt-${optIndex}`} className="flex items-center space-x-2">
+            <Input
+              placeholder={`Option ${optIndex + 1}`}
+              value={option.value || ""}
+              onChange={(e) => updateOption(attrIndex, optIndex, e.target.value)}
+              className="h-10 flex-1"
+            />
+            <Button
+              type="button"
+              variant="ghost"
+              className="p-2 text-red-500"
+              onClick={() => removeOption(attrIndex, optIndex)}
+            >
+              <Trash2 className="w-4 h-4" />
+            </Button>
+          </div>
+        ))}
+        <Button
+          type="button"
+          variant="outline"
+          className="mt-2 flex items-center"
+          onClick={() => addOption(attrIndex)}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Add Option
+        </Button>
+      </div>
+
+      {/* Remove Attribute */}
+      <Button
+        type="button"
+        variant="ghost"
+        className="mt-4 flex items-center text-red-500"
+        onClick={() => removeAttribute(attrIndex)}
+      >
+        <Trash2 className="w-4 h-4 mr-2" />
+        Remove Attribute
+      </Button>
+    </div>
+  ))}
+
+  <Button type="button" variant="outline" onClick={addAttribute}>
+    <Plus className="w-4 h-4 mr-2" />
+    Add Attribute
+  </Button>
+</div>
 
 
-                    {/* Remove Attribute */}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="mt-4 flex items-center text-red-500"
-                      onClick={() => removeAttribute(attrIndex)}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Remove Attribute
-                    </Button>
-                  </div>
-                ))}
-
-                <Button type="button" variant="outline" onClick={addAttribute}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Attribute
-                </Button>
-              </div>
 
 
               {/* Service Segments */}

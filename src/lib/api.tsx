@@ -117,7 +117,7 @@ export interface Location {
 
 
 export type Attribute = {
-  id?: number;
+  id?: string;
   name: string;
   type: string;
   options: AttributeOption[];
@@ -125,12 +125,12 @@ export type Attribute = {
 
 
 export interface AttributeOption {
-  id?: number;
+  id?: string;
   value: string;
 }
 
 export type ServiceDetail = {
-  id?: number;
+  id?: string;
   title: string;
   description: string;
 };
@@ -841,6 +841,7 @@ export const updateCategory = async (id: string, category: Category): Promise<Ap
   // Attributes and Options
   if (category.attributes && category.attributes.length > 0) {
     const attributes = category.attributes.map((attr) => ({
+      id: attr.id,
       attribute_name: attr.name,
       attribute_type: attr.type,
       options: attr.options,

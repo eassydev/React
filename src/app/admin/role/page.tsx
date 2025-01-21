@@ -70,7 +70,11 @@ const RoleList = () => {
   };
 
   const roleColumns: ColumnDef<Role>[] = [
-    { accessorKey: "id", header: "ID" },
+    {
+      accessorKey: "sno", // Placeholder key for S.No
+      header: "S.No",
+      cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
+    },
     { accessorKey: "role_name", header: "Role Name" },
     {
       id: "actions",
