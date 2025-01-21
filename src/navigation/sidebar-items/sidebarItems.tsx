@@ -112,7 +112,7 @@ export const sidebarItems: SidebarItem[] = [
   }, {
     title: "Sp Hub",
     icon: ListCheckIcon,
-    route: `${basePath}/sp-hub`,
+    route: `${basePath}/sp-hubs`,
   },
   {
     title: "Pages",

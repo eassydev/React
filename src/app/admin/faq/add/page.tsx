@@ -65,9 +65,9 @@ const AddFAQForm: React.FC = () => {
       });
 
       // Reset form fields after successful submission
-      setQuestion("");
-      setAnswer("");
-      setIsActive(true);
+      // setQuestion("");
+      // setAnswer("");
+      // setIsActive(true);
     } catch (error: any) {
       toast({
         variant: "error",

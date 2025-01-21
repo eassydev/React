@@ -26,6 +26,8 @@ const EditProviderForm: React.FC = () => {
   const [city, setCity] = useState<string>("");
   const [postalCode, setPostalCode] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+const [gstError, setGstError] = useState("");
+  const [panError, setPanError] = useState("");
 
   const { toast } = useToast();
   const router = useRouter();
@@ -111,6 +113,26 @@ const EditProviderForm: React.FC = () => {
     }
   };
 
+  const validateGST = (value: string) => {
+    const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[A-Z0-9]{1}[Z]{1}[A-Z0-9]{1}$/;
+    setGstNumber(value); // Allow updating the input value
+    if (!gstRegex.test(value) && value !== "") {
+      setGstError("Invalid GST number format. Example: 22AAAAA0000A1Z5");
+    } else {
+      setGstError("");
+    }
+  };
+  
+  const validatePAN = (value: string) => {
+    const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
+    setPanNumber(value); // Allow updating the input value
+    if (!panRegex.test(value) && value !== "") {
+      setPanError("Invalid PAN number format. Example: ABCDE1234F");
+    } else {
+      setPanError("");
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-12xl mx-auto space-y-6">
@@ -192,23 +214,27 @@ const EditProviderForm: React.FC = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">GST Number</label>
-                <Input
-                  value={gstNumber}
-                  onChange={(e) => setGstNumber(e.target.value)}
-                  placeholder="Enter GST number"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">PAN Number</label>
-                <Input
-                  value={panNumber}
-                  onChange={(e) => setPanNumber(e.target.value)}
-                  placeholder="Enter PAN number"
-                />
-              </div>
+               {/* GST Number */}
+             <div className="space-y-2">
+               <label className="text-sm font-medium text-gray-700">GST Number</label>
+               <Input
+                 value={gstNumber}
+                 onChange={(e) => validateGST(e.target.value)}
+                 placeholder="Enter GST number"
+               />
+               {gstError && <p className="text-sm text-red-500">{gstError}</p>}
+             </div>
+             
+             {/* PAN Number */}
+             <div className="space-y-2">
+               <label className="text-sm font-medium text-gray-700">PAN Number</label>
+               <Input
+                 value={panNumber}
+                 onChange={(e) => validatePAN(e.target.value)}
+                 placeholder="Enter PAN number"
+               />
+               {panError && <p className="text-sm text-red-500">{panError}</p>}
+             </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Country</label>

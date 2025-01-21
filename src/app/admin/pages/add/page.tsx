@@ -75,10 +75,10 @@ const AddPageForm: React.FC = () => {
       });
 
       // Reset form fields after successful submission
-      setTitle("");
-      setSlug("");
-      setDescription("");
-      setIsActive(true);
+      // setTitle("");
+      // setSlug("");
+      // setDescription("");
+      // setIsActive(true);
     } catch (error: any) {
       toast({
         variant: "error",

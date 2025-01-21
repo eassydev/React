@@ -213,13 +213,16 @@ const fetchFilters = async (categoryId: string, subcategoryId?: string) => {
         try {
           const subcategoryData = await fetchSubCategoriesByCategoryId(selectedCategoryId);
           setSubcategories(subcategoryData);
+          setSelectedSubcategoryId("");
         } catch (error) {
           setSubcategories([]);
+          setSelectedSubcategoryId("");
         }
       };
       loadSubcategories();
     } else {
       setSubcategories([]);
+      setSelectedSubcategoryId("");
     }
   }, [selectedCategoryId]);
 
@@ -553,6 +556,7 @@ const fetchFilters = async (categoryId: string, subcategoryId?: string) => {
                 {priceError && <p className="text-red-500 text-sm">{priceError}</p>}
               </div>
 
+              {segments.length > 0 && (
                <div className="space-y-2">
                             <Select
                                     value={segmentsId}
@@ -572,6 +576,8 @@ const fetchFilters = async (categoryId: string, subcategoryId?: string) => {
                                     </SelectContent>
                                   </Select>
                                   </div>
+              )}
+                {segments.length > 0 && (
 <div className="space-y-4">
                 <h3 className="text-lg font-medium">Service Descriptions</h3>
                 {serviceDescriptions.map((service, index) => (
@@ -618,6 +624,7 @@ const fetchFilters = async (categoryId: string, subcategoryId?: string) => {
                   Add Service Description
                 </Button>
               </div>
+              )}
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <Globe2 className="w-4 h-4 text-blue-500" />

@@ -110,13 +110,16 @@ const RateCardForm: React.FC = () => {
         try {
           const subcategoryData = await fetchSubCategoriesByCategoryId(selectedCategoryId);
           setSubcategories(subcategoryData);
+          setSelectedSubcategoryId("");
         } catch (error) {
           setSubcategories([]);
+          setSelectedSubcategoryId("");
         }
       };
       loadSubcategories();
     } else {
       setSubcategories([]);
+      setSelectedSubcategoryId("");
     }
   }, [selectedCategoryId]);
 
@@ -451,6 +454,8 @@ const RateCardForm: React.FC = () => {
                 {priceError && <p className="text-red-500 text-sm">{priceError}</p>}
               </div>
 
+
+              {segments.length > 0 && (
               <div className="space-y-2">
               <Select
                       value={segmentsId}
@@ -470,7 +475,9 @@ const RateCardForm: React.FC = () => {
                       </SelectContent>
                     </Select>
                     </div>
+                      )}
 
+{segments.length > 0 && (
               <div className="space-y-4">
                 <h3 className="text-lg font-medium">Service Descriptions</h3>
                 {serviceDescriptions.map((service, index) => (
@@ -517,6 +524,7 @@ const RateCardForm: React.FC = () => {
                   Add Service Description
                 </Button>
               </div>
+  )}
 
 
               <div className="space-y-2">
