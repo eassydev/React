@@ -7,8 +7,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Save, Loader2, ImageIcon, FileText, ChevronDown } from 'lucide-react';
-import { fetchAllRatecard, fetchAllCategories, fetchPackageById, updatePackage, Package } from '@/lib/api';
+import { Save, Loader2, ImageIcon, FileText, ChevronDown,Globe2 } from 'lucide-react';
+import { fetchAllRatecard, fetchAllCategories, fetchPackageById, updatePackage, Package,Provider,fetchProviders } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -36,8 +36,9 @@ const PackageEditForm: React.FC = () => {
   const [packageName, setPackageName] = useState<string>('');
   const [packageType, setPackageType] = useState<string>('regular');
   const [createdBy, setCreatedBy] = useState<string>('admin');
-  const [providerId, setProviderId] = useState<string | null>(null);
-  const [discountType, setDiscountType] = useState<string>('flat');
+const [providers, setProviders] = useState<Provider[]>([]);
+  const [providerId, setProviderId] = useState<string>("");
+    const [discountType, setDiscountType] = useState<string>('flat');
   const [discountValue, setDiscountValue] = useState<number| null>(0);
   const [validityPeriod, setValidityPeriod] = useState<number | null>(null);
   const [renewalOptions, setRenewalOptions] = useState<boolean>(false);
@@ -85,6 +86,8 @@ const PackageEditForm: React.FC = () => {
     const loadPackageData = async () => {
       if (!id) return;
       try {
+         const fetchedProviders = await fetchProviders();
+            setProviders(fetchedProviders);
         const packageData = await fetchPackageById(id.toString());
 
         // Set package details
@@ -92,7 +95,7 @@ const PackageEditForm: React.FC = () => {
         setDescription(packageData.description || '');
         setPackageType(packageData.package_type);
         setCreatedBy(packageData.created_by);
-        setProviderId(packageData.provider_id || null);
+        setProviderId(packageData.provider_id || '');
         setDiscountType(packageData.discount_type);
         setDiscountValue(Number(packageData.discount_value));
         setValidityPeriod(packageData.validity_period || null);
@@ -183,6 +186,22 @@ const PackageEditForm: React.FC = () => {
     }
   };
 
+
+  useEffect(() => {
+        const loadProvider = async () => {
+          try {
+             const fetchedProviders = await fetchProviders();
+                  setProviders(fetchedProviders);
+          } catch {
+            toast({
+              variant: "error",
+              title: "Error",
+              description: "Failed to load provider.",
+            });
+          }
+        };
+        loadProvider();
+      }, []);
   // Handle rate card selection
   const handleRateCardSelection = (rateCardId: string, isChecked: boolean) => {
     if (isChecked) {
@@ -405,6 +424,31 @@ const PackageEditForm: React.FC = () => {
                 </div>
               )}
 
+
+
+<div className="space-y-2">
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <Globe2 className="w-4 h-4 text-blue-500" />
+                  <span>Select Provider</span>
+                </label>
+                <Select
+                  value={providerId}
+                  onValueChange={(value) => setProviderId(value)}
+                >
+                  <SelectTrigger className="bg-white border-gray-200">
+                    <SelectValue placeholder="Select a provider" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {providers.map((provider) =>
+                      provider?.id && provider?.first_name ? (
+                        <SelectItem key={provider.id} value={provider.id.toString()}>
+                          {provider.first_name}
+                        </SelectItem>
+                      ) : null
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
               {/* Renewal Options */}
               <div className="flex items-center space-x-2">
                 <Switch checked={renewalOptions} onCheckedChange={setRenewalOptions} />

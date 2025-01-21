@@ -6,8 +6,8 @@ import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Save, Loader2, ImageIcon, FileText, ChevronDown } from 'lucide-react';
-import { fetchAllRatecard, fetchAllCategories, createPackage, Package } from '@/lib/api';
+import { Save, Loader2, ImageIcon, FileText, ChevronDown,Globe2 } from 'lucide-react';
+import { fetchAllRatecard, fetchAllCategories, createPackage, Package,Provider,fetchProviders } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from 'next/navigation';
@@ -38,8 +38,9 @@ const PackageCreateForm: React.FC = () => {
   const [packageName, setPackageName] = useState<string>('');
   const [packageType, setPackageType] = useState<string>('regular');
   const [createdBy, setCreatedBy] = useState<string>('admin');
-  const [providerId, setProviderId] = useState<string | null>(null);
-  const [discountType, setDiscountType] = useState<string>('flat');
+const [providers, setProviders] = useState<Provider[]>([]);
+  const [providerId, setProviderId] = useState<string>("");
+    const [discountType, setDiscountType] = useState<string>('flat');
   const [discountValue, setDiscountValue] = useState<number | null>(0);
   const [validityPeriod, setValidityPeriod] = useState<number | null>(null);
   const [renewalOptions, setRenewalOptions] = useState<boolean>(false);
@@ -77,6 +78,22 @@ const PackageCreateForm: React.FC = () => {
     };
     fetchInitialData();
   }, []);
+
+  useEffect(() => {
+      const loadProvider = async () => {
+        try {
+           const fetchedProviders = await fetchProviders();
+                setProviders(fetchedProviders);
+        } catch {
+          toast({
+            variant: "error",
+            title: "Error",
+            description: "Failed to load provider.",
+          });
+        }
+      };
+      loadProvider();
+    }, []);
 
   // Handle image upload
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
@@ -370,6 +387,30 @@ const PackageCreateForm: React.FC = () => {
                 </div>
               )}
 
+
+<div className="space-y-2">
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <Globe2 className="w-4 h-4 text-blue-500" />
+                  <span>Select Provider</span>
+                </label>
+                <Select
+                  value={providerId}
+                  onValueChange={(value) => setProviderId(value)}
+                >
+                  <SelectTrigger className="bg-white border-gray-200">
+                    <SelectValue placeholder="Select a provider" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {providers.map((provider) =>
+                      provider?.id && provider?.first_name ? (
+                        <SelectItem key={provider.id} value={provider.id.toString()}>
+                          {provider.first_name}
+                        </SelectItem>
+                      ) : null
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
               {/* Renewal Options */}
               <div className="flex items-center space-x-2">
                 <Switch checked={renewalOptions} onCheckedChange={setRenewalOptions} />
