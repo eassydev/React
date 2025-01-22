@@ -1156,6 +1156,7 @@ export const updateSubcategory = async (id: string, subcategory: Subcategory): P
   // Attributes and Options
   if (subcategory.attributes && subcategory.attributes.length > 0) {
     const attributes = subcategory.attributes.map((attr) => ({
+      id: attr.id,
       attribute_name: attr.name,
       attribute_type: attr.type,
       options: attr.options,

@@ -171,75 +171,86 @@ const SubcategoryEdit: React.FC = () => {
     }
   };
 
-
-  // Remove an entire attribute
-  const removeAttribute = (index: number) => {
-    setAttributes((prev) => prev.filter((_, i) => i !== index));
-  };
-
   const addAttribute = () => {
     setAttributes((prev) => [
       ...prev,
       {
+        id: "", // New attributes will have an empty `id`
         name: "",
         type: "list",
-        options: [{ value: "" }], // Initialize options with a valid object
+        options: [{ id: "", value: "" }], // Initialize options
       },
     ]);
   };
-  const updateAttribute = (index: number, field: string, value: string) => {
-    const updatedAttributes = [...attributes];
-    updatedAttributes[index] = { ...updatedAttributes[index], [field]: value };
-    setAttributes(updatedAttributes);
-  };
-
-
-  const addServiceSegment = () => {
-    setServiceSegments((prev) => [...prev, { segment_name: "" }]);
-  };
-
-
-  const addOption = (attrIndex: number) => {
-    const updatedAttributes = [...attributes];
-    updatedAttributes[attrIndex].options.push({
-      value: "", // Initialize an empty value
+  
+  // Update an attribute (existing or new)
+  const updateAttribute = (index: any, field: string, value: string) => {
+    setAttributes((prev) => {
+      const updated = [...prev];
+      updated[index] = { ...updated[index], [field]: value };
+      return updated;
     });
-    setAttributes(updatedAttributes);
   };
-
-
-  // Update an option for a specific attribute
+  
+  // Remove an attribute
+  const removeAttribute = (index: any) => {
+    setAttributes((prev) => prev.filter((_, i) => i !== index));
+  };
+  
+  // Add an option to an attribute
+  const addOption = (attrIndex: any) => {
+    setAttributes((prev) => {
+      const updated = [...prev];
+      updated[attrIndex].options.push({ id: "", value: "" });
+      return updated;
+    });
+  };
+  
+  // Update an option for an attribute
   const updateOption = (attrIndex: number, optIndex: number, value: string) => {
-    const updatedAttributes = [...attributes];
-    updatedAttributes[attrIndex].options[optIndex] = {
-      ...updatedAttributes[attrIndex].options[optIndex], // Retain the existing `id`
-      value, // Update only the value
-    };
-    setAttributes(updatedAttributes);
-  };
-  // Remove an option from a specific attribute
-  const removeOption = (attrIndex: number, optIndex: number) => {
-    const updatedAttributes = [...attributes];
-    updatedAttributes[attrIndex].options = updatedAttributes[attrIndex].options.filter(
-      (_, i) => i !== optIndex
-    );
-    setAttributes(updatedAttributes);
-  };
-
-
-
-  const updateServiceSegment = (index: number, value: string) => {
-    setServiceSegments((prev) => {
-      const updatedSegments = [...prev];
-      updatedSegments[index] = { ...updatedSegments[index], segment_name: value };
-      return updatedSegments;
+    setAttributes((prev) => {
+      const updated = [...prev];
+      updated[attrIndex].options[optIndex] = {
+        ...updated[attrIndex].options[optIndex],
+        value,
+      };
+      return updated;
     });
   };
-
-  const removeServiceSegment = (index: number) => {
-    setServiceSegments((prev) => prev.filter((_, i) => i !== index));
+  
+  // Remove an option from an attribute
+  const removeOption = (attrIndex: number, optIndex: number) => {
+    setAttributes((prev) => {
+      const updated = [...prev];
+      updated[attrIndex].options = updated[attrIndex].options.filter(
+        (_, i) => i !== optIndex
+      );
+      return updated;
+    });
   };
+  
+    const addServiceSegment = () => {
+      setServiceSegments((prev) => [...prev, { segment_name: "" }]);
+    };
+  
+    
+  
+  
+    const updateServiceSegment = (index: number, value: string) => {
+      setServiceSegments((prev) => {
+        const updatedSegments = [...prev];
+        updatedSegments[index] = { ...updatedSegments[index], segment_name: value };
+        return updatedSegments;
+      });
+    };
+  
+    const removeServiceSegment = (index: number) => {
+      setServiceSegments((prev) => prev.filter((_, i) => i !== index));
+    };
 
+
+
+  
   const addIncludeItem = () => {
     setIncludeItems((prev) => [...prev, { title: "", description: "" }]);
   };
@@ -329,7 +340,7 @@ const SubcategoryEdit: React.FC = () => {
         title: 'Success',
         description: 'Subcategory updated successfully',
       });
-      router.push('/admin/sub-category'); // Redirect after successful update
+    //  router.push('/admin/sub-category'); // Redirect after successful update
     } catch (error) {
       toast({
         variant: 'error',
