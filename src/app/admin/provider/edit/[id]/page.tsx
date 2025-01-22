@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
+import { Save, Loader2 ,FileImage} from "lucide-react";
 import { fetchProviderById, updateProvider, Provider } from "@/lib/api";
 import { useRouter, useParams } from "next/navigation";
 
@@ -18,12 +18,15 @@ const EditProviderForm: React.FC = () => {
   const [phone, setPhone] = useState<string>("");
   const [companyName, setCompanyName] = useState<string>("");
   const [gstNumber, setGstNumber] = useState<string>("");
+  const [image, setImage] = useState<File | null>(null);
   const [panNumber, setPanNumber] = useState<string>("");
   const [isActive, setIsActive] = useState<boolean>(true);
   const [rating, setRating] = useState<string>("0.0");
   const [country, setCountry] = useState<string>("");
   const [state, setState] = useState<string>("");
   const [city, setCity] = useState<string>("");
+    const [existingImage, setExistingImage] = useState<string>("");
+  
   const [postalCode, setPostalCode] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 const [gstError, setGstError] = useState("");
@@ -45,6 +48,11 @@ const [gstError, setGstError] = useState("");
         setCompanyName(providerData.company_name || "");
         setGstNumber(providerData.gst_number || "");
         setPanNumber(providerData.pan_number || "");
+        if (typeof providerData.image === "string") {
+          setExistingImage(providerData.image); // Set existing image URL
+        } else {
+          setExistingImage(""); // Handle unexpected values gracefully
+        }
         setIsActive(providerData.active === 1);
         setRating(providerData.rating?.toString() || "0.0");
         setCountry(providerData.country || "");
@@ -63,6 +71,13 @@ const [gstError, setGstError] = useState("");
     fetchProviderData();
   }, [id, toast]);
 
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+      if (e.target.files && e.target.files[0]) {
+        setImage(e.target.files[0]);
+      }
+    };
+  
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -82,6 +97,7 @@ const [gstError, setGstError] = useState("");
       last_name: lastName,
       gender,
       email,
+      image,
       phone,
       company_name: companyName,
       gst_number: gstNumber,
@@ -101,7 +117,7 @@ const [gstError, setGstError] = useState("");
         title: "Success",
         description: "Provider updated successfully.",
       });
-      router.push("/admin/provider");
+     // router.push("/admin/provider");
     } catch (error: any) {
       toast({
         variant: "error",
@@ -263,6 +279,23 @@ const [gstError, setGstError] = useState("");
                 />
               </div>
 
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <FileImage className="w-4 h-5 text-blue-500" />
+                  <span>Image</span>
+                </label>
+                <Input type="file" accept="image/*" onChange={handleImageChange} />
+                {existingImage && (
+                  <div className="mt-2">
+                    <span className="text-sm text-gray-600">Current Image:</span>
+                    <img
+                      src={existingImage}
+                      alt="Existing Onboarding"
+                      className="mt-2 max-h-32 rounded-md"
+                    />
+                  </div>
+                )}
+              </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Postal Code</label>
                 <Input

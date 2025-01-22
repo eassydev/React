@@ -235,6 +235,7 @@ export interface Provider {
   company_name?: string;
   gst_number?: string;
   pan_number?: string;
+  image?: File | null; // Optional image upload
   active: number;
   rating?: number;
   country?: string;
@@ -1966,27 +1967,74 @@ export const fetchProviderById = async (id: string): Promise<Provider> => {
 
 // Create a new provider
 export const createProvider = async (provider: Provider): Promise<ApiResponse> => {
+  const formData = new FormData();
+
+  // Append individual fields to the FormData object
+  formData.append("first_name", provider.first_name);
+  formData.append("last_name", provider.last_name);
+  formData.append("gender", provider.gender || "");
+  formData.append("email", provider.email);
+  formData.append("phone", provider.phone);
+  formData.append("company_name", provider.company_name ?? '');
+  formData.append("gst_number", provider.gst_number?? '');
+  formData.append("pan_number", provider.pan_number ?? '');
+  formData.append("active", provider.active ? "1" : "0");
+  formData.append("rating", provider.rating!.toString() ?? '');
+  formData.append("country", provider.country ??'');
+  formData.append("state", provider.state ??'');
+  formData.append("city", provider.city ?? '');
+  formData.append("postal_code", provider.postal_code ??'');
+
+  // Append optional fields only if they exist
+  if (provider.image) {
+    formData.append("image", provider.image);
+  }
+
   try {
     const token = getToken();
-    const response: AxiosResponse<ApiResponse> = await apiClient.post('/provider', provider, {
+    const response: AxiosResponse<ApiResponse> = await apiClient.post("/provider", formData, {
       headers: {
-        'Content-Type': 'application/json',
-        'admin-auth-token': token || '',
+        "Content-Type": "multipart/form-data",
+        "admin-auth-token": token || "",
       },
     });
+
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to create provider.');
+    throw new Error(error.response?.data?.message || "Failed to create provider.");
   }
 };
 
+
 // Update an existing provider
 export const updateProvider = async (id: string, provider: Provider): Promise<ApiResponse> => {
+  const formData = new FormData();
+
+  // Append individual fields to the FormData object
+  formData.append("first_name", provider.first_name);
+  formData.append("last_name", provider.last_name);
+  formData.append("gender", provider.gender || "");
+  formData.append("email", provider.email);
+  formData.append("phone", provider.phone);
+  formData.append("company_name", provider.company_name ?? '');
+  formData.append("gst_number", provider.gst_number?? '');
+  formData.append("pan_number", provider.pan_number ?? '');
+  formData.append("active", provider.active ? "1" : "0");
+  formData.append("rating", provider.rating!.toString() ?? '');
+  formData.append("country", provider.country ??'');
+  formData.append("state", provider.state ??'');
+  formData.append("city", provider.city ?? '');
+  formData.append("postal_code", provider.postal_code ??'');
+
+  // Append optional fields only if they exist
+  if (provider.image) {
+    formData.append("image", provider.image);
+  }
   try {
     const token = getToken();
-    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/provider/${id}`, provider, {
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/provider/${id}`, formData, {
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "multipart/form-data",
         'admin-auth-token': token || '',
       },
     });

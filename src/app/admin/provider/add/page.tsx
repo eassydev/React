@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
+import { Save, Loader2, FileImage } from "lucide-react";
 import { createProvider, Provider } from "@/lib/api";
 import { useRouter, useParams } from "next/navigation";
 
@@ -55,6 +55,12 @@ const AddProviderForm: React.FC = () => {
   };
   
  
+const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setImage(e.target.files[0]);
+    }
+  };
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -75,6 +81,7 @@ const AddProviderForm: React.FC = () => {
       gender: validGenders.includes(gender as any) ? (gender as "male" | "female" | "other") : undefined,
       email,
       phone,
+      image,
       company_name: companyName,
       gst_number: gstNumber,
       pan_number: panNumber,
@@ -93,7 +100,7 @@ const AddProviderForm: React.FC = () => {
         title: "Success",
         description: "Provider created successfully.",
       });
-       router.push("/admin/provider");
+       //router.push("/admin/provider");
 
     } catch (error: any) {
       console.log()
@@ -182,6 +189,15 @@ const AddProviderForm: React.FC = () => {
                   placeholder="Enter phone number"
                   required
                 />
+              </div>
+
+               {/* Image Upload Field */}
+               <div className="space-y-2">
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <FileImage className="w-4 h-5 text-blue-500" />
+                  <span>Image</span>
+                </label>
+                <Input type="file" accept="image/*" onChange={handleImageChange} required/>
               </div>
 
               {/* Company Name */}
