@@ -210,10 +210,7 @@ const RateCardForm: React.FC = () => {
       recommended: isRecommended,
       best_deal: isBestDeal,
       provider_id: selectedProviderId,
-      serviceDescriptions: serviceDescriptions.map((desc) => ({
-        title: desc.title,
-        description: desc.description,
-      })),
+      
     };
 
 
@@ -239,27 +236,6 @@ const RateCardForm: React.FC = () => {
   };
 
 
-  const handleAddServiceDescription = () => {
-    setServiceDescriptions((prev) => [
-      ...prev,
-      { title: "", description: "" },
-    ]);
-  };
-
-  const handleUpdateServiceDescription = (
-    index: number,
-    key: "title" | "description",
-    value: string
-  ) => {
-    const updated = [...serviceDescriptions];
-    updated[index][key] = value;
-    setServiceDescriptions(updated);
-  };
-
-  
-  const handleRemoveServiceDescription = (index: number) => {
-    setServiceDescriptions((prev) => prev.filter((_, i) => i !== index));
-  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
@@ -477,54 +453,7 @@ const RateCardForm: React.FC = () => {
                     </div>
                       )}
 
-{segments.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Service Descriptions</h3>
-                {serviceDescriptions.map((service, index) => (
-                  <div key={index} className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    {/* Segment Selector */}
-                  
 
-                    {/* Title Input */}
-                    <Input
-                      placeholder="Enter Title"
-                      value={service.title}
-                      onChange={(e) =>
-                        handleUpdateServiceDescription(index, "title", e.target.value)
-                      }
-                      className="h-11"
-                    />
-
-                    {/* Description Input */}
-
-
-                    <ReactQuill
-                      value={service.description}
-                      onChange={(value) =>
-                        handleUpdateServiceDescription(index, "description", value)
-                      }
-                      theme="snow"
-                      style={{ height: "200px" }}
-                    />
-
-                    {/* Remove Button */}
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleRemoveServiceDescription(index)}
-                    >
-                      Remove
-                    </Button>
-                  </div>
-                ))}
-
-                {/* Add Service Description Button */}
-                <Button type="button" onClick={handleAddServiceDescription}>
-                  Add Service Description
-                </Button>
-              </div>
-  )}
 
 
               <div className="space-y-2">

@@ -66,6 +66,11 @@ export const sidebarItems: SidebarItem[] = [
     route: `${basePath}/live-cart`,
   },
   {
+    title: "Service",
+    icon: Receipt,
+    children: [{ title: "Catgeory", route: `${basePath}/category/list` }, { title: "Sub category", route: `${basePath}/subcategory` }, { title: "Description", route: `${basePath}/description` }],
+  },
+  {
     title: "Category",
     icon: ListCheckIcon,
     route: `${basePath}/category`,
