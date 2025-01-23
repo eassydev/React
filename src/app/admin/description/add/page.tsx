@@ -100,25 +100,39 @@ const ServiceDescriptionForm: React.FC = () => {
   }, [selectedCategoryId]);
 
   useEffect(() => {
-    const loadAttributesAndSegments = async () => {
-      try {
-        const attributeData = await fetchFilterAttributes(
-          selectedCategoryId,
-          selectedSubcategoryId || null
-        );
-        setFilterAttributes(attributeData);
-
-        const segmentData = await fetchServiceSegments(
-          selectedCategoryId,
-          selectedSubcategoryId || null
-        );
-        setSegments(segmentData);
-      } catch {
-        setFilterAttributes([]);
-        setSegments([]);
+    const loadAttributes = async () => {
+      if (selectedCategoryId || selectedSubcategoryId) {
+        try {
+          const attributeData = await fetchFilterAttributes(
+            selectedCategoryId,
+            selectedSubcategoryId || null
+          );
+          setFilterAttributes(attributeData);
+        } catch {
+          setFilterAttributes([]);
+        }
       }
     };
-    if (selectedCategoryId || selectedSubcategoryId) loadAttributesAndSegments();
+    loadAttributes();
+  }, [selectedCategoryId, selectedSubcategoryId]);
+
+
+
+  useEffect(() => {
+    const loadSegments = async () => {
+      if (selectedCategoryId || selectedSubcategoryId) {
+        try {   
+       const segmentData = await fetchServiceSegments(
+            selectedCategoryId,
+            selectedSubcategoryId || null
+          );
+          setSegments(segmentData);
+        } catch {
+          setSegments([]);
+        }
+      }
+    };
+    loadSegments();
   }, [selectedCategoryId, selectedSubcategoryId]);
 
   const handleFilterAttributeChange = async (attributeId: string) => {
@@ -155,33 +169,29 @@ const ServiceDescriptionForm: React.FC = () => {
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    //setIsSubmitting(true);
+    setIsSubmitting(true);
 
     const serviceDetailsData = {
       category_id: selectedCategoryId,
-      subcategory_id: selectedSubcategoryId || '',
-      filter_attribute_id: filterAttributesId || '',
-      filter_option_id: filterAttributeOptionsId || '',
-      segment_id: segmentsId || '',
+      subcategory_id: selectedSubcategoryId || "",
+      filter_attribute_id: filterAttributesId || "",
+      filter_option_id: filterAttributeOptionsId || "",
+      segment_id: segmentsId || "",
       serviceDescriptions: serviceDescriptions.map((desc) => ({
         name: desc.name.toString(),
         description: desc.description.toString(),
       })),
     };
-      const response = await createServiceDetail(serviceDetailsData);
 
-    
     try {
-      console.log("Submitted Data:", serviceDetailsData); // Replace with actual API call
+      const response = await createServiceDetail(serviceDetailsData);
       toast({
         variant: "success",
         title: "Success",
         description: response.message,
       });
-      //router.push("/admin/service-details"); // Navigate to the desired page
-    } catch (error) {
-      setIsSubmitting(false);
-
+      router.push("/admin/description");
+    } catch {
       toast({
         variant: "error",
         title: "Error",
