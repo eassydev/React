@@ -42,23 +42,18 @@ const CategoryEdit: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [categoryImage, setCategoryImage] = useState<File | null>(null);
-  const [optionalHeading, setOptionalHeading] = useState<string>('');
-
   const [locations, setLocations] = useState<Location[]>([]);
   const [locationInput, setLocationInput] = useState<string>('');
   const [locationType, setLocationType] = useState<string>('specific');
   const [locationMethod, setLocationMethod] = useState<string>('google');
-  const [description, setDescription] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
+  const [isHome, setIsHome] = useState<boolean>(true);
+  const [weight, setWeight] = useState<number>(0);
   const [categoryName, setCategoryName] = useState<string>('');
   const [serviceTime, setServiceTime] = useState<string>('');
-  const [sgst, setSgst] = useState<number | null>(null);
-  const [cgst, setCgst] = useState<number | null>(null);
-  const [igst, setIgst] = useState<number | null>(null);
   const [sacCode, setSacCode] = useState<string>('');
   const [hstRates, setHstRates] = useState<any[]>([]);
   const [attributes, setAttributes] = useState<Attribute[]>([]);
-  const [serviceSegments, setServiceSegments] = useState<ServiceSegment[]>([]);
   const [showExcludeSection, setShowExcludeSection] = useState<boolean>(false);
   const [excludeHeading, setExcludeHeading] = useState<string>("");
   const [excludeDescription, setExcludeDescription] = useState<string>("");
@@ -98,16 +93,12 @@ const CategoryEdit: React.FC = () => {
 
       // Set all fields from API response
       setCategoryName(categoryData.name || '');
-      setOptionalHeading(categoryData.optional_heading || '');
       setIsActive(categoryData.active || true);
+      setIsHome(categoryData.is_home || true);
       setLocations(categoryData.locations || []);
       setAttributes(categoryData.attributes || []);
-      setServiceSegments(categoryData.serviceSegments || []);
       setServiceTime(categoryData.service_time || '');
-      setSgst(categoryData.sgst_tax || null);
-      setCgst(categoryData.cgst_tax || null);
-      setIgst(categoryData.igst_tax ?? null); // Set IGST tax field
-      console.log("categoryData.igst_tax", categoryData.igst_tax)
+      setWeight(Number(categoryData.weight) || 0);
       setSacCode(categoryData.sac_code || ''); // Set SAC code field
       setExcludeHeading(categoryData.exclude_heading || '');
       setExcludeDescription(categoryData.exclude_description || '');
@@ -162,83 +153,70 @@ const CategoryEdit: React.FC = () => {
     }
   };
 
- // Add a new attribute
+
+// Add a new attribute
 const addAttribute = () => {
   setAttributes((prev) => [
     ...prev,
     {
-      id: "", // New attributes will have an empty `id`
       name: "",
+      title: "", // Added title field
+      weight: 0, // Added weight field
       type: "list",
-      options: [{ id: "", value: "" }], // Initialize options
+      options: [{ title:"",value: "", weight: 0}], // Initialize options with weight
     },
   ]);
 };
 
-// Update an attribute (existing or new)
-const updateAttribute = (index: any, field: string, value: string) => {
+// Update attribute fields
+const updateAttribute = (index: number, field: string, value: string) => {
+  const updatedAttributes = [...attributes];
+  updatedAttributes[index] = { ...updatedAttributes[index], [field]: value };
+  setAttributes(updatedAttributes);
+};
+
+// Add a new option to a specific attribute
+const addOption = (attrIndex: number) => {
   setAttributes((prev) => {
-    const updated = [...prev];
-    updated[index] = { ...updated[index], [field]: value };
-    return updated;
+    const updatedAttributes = [...prev];
+    updatedAttributes[attrIndex].options.push({
+      title: "", // Initialize with an empty title
+      value: "", // Initialize with an empty value
+      weight: 0, // Changed from 0 to "" to maintain consistency in form inputs
+    });
+    return updatedAttributes;
   });
 };
 
-// Remove an attribute
-const removeAttribute = (index: any) => {
+// Update an option for a specific attribute
+const updateOption = (attrIndex: number, optIndex: number, field: string, value: string | number) => {
+  setAttributes((prev) => {
+    const updatedAttributes = [...prev];
+    updatedAttributes[attrIndex].options[optIndex] = {
+      ...updatedAttributes[attrIndex].options[optIndex], // Retain existing properties
+      [field]: value, // Update only the specific field dynamically
+    };
+    return updatedAttributes;
+  });
+};
+
+// Remove an option from a specific attribute
+const removeOption = (attrIndex: number, optIndex: number) => {
+  setAttributes((prev) => {
+    const updatedAttributes = [...prev];
+    updatedAttributes[attrIndex].options = updatedAttributes[attrIndex].options.filter(
+      (_, i) => i !== optIndex
+    );
+    return updatedAttributes;
+  });
+};
+
+// Remove an entire attribute
+const removeAttribute = (index: number) => {
   setAttributes((prev) => prev.filter((_, i) => i !== index));
 };
 
-// Add an option to an attribute
-const addOption = (attrIndex: any) => {
-  setAttributes((prev) => {
-    const updated = [...prev];
-    updated[attrIndex].options.push({ id: "", value: "" });
-    return updated;
-  });
-};
 
-// Update an option for an attribute
-const updateOption = (attrIndex: number, optIndex: number, value: string) => {
-  setAttributes((prev) => {
-    const updated = [...prev];
-    updated[attrIndex].options[optIndex] = {
-      ...updated[attrIndex].options[optIndex],
-      value,
-    };
-    return updated;
-  });
-};
-
-// Remove an option from an attribute
-const removeOption = (attrIndex: number, optIndex: number) => {
-  setAttributes((prev) => {
-    const updated = [...prev];
-    updated[attrIndex].options = updated[attrIndex].options.filter(
-      (_, i) => i !== optIndex
-    );
-    return updated;
-  });
-};
-
-  const addServiceSegment = () => {
-    setServiceSegments((prev) => [...prev, { segment_name: "" }]);
-  };
-
-  
-
-
-  const updateServiceSegment = (index: number, value: string) => {
-    setServiceSegments((prev) => {
-      const updatedSegments = [...prev];
-      updatedSegments[index] = { ...updatedSegments[index], segment_name: value };
-      return updatedSegments;
-    });
-  };
-
-  const removeServiceSegment = (index: number) => {
-    setServiceSegments((prev) => prev.filter((_, i) => i !== index));
-  };
 
   const addIncludeItem = () => {
     setIncludeItems((prev) => [...prev, { title: "", description: "" }]);
@@ -356,19 +334,15 @@ const removeOption = (attrIndex: number, optIndex: number) => {
     const categoryData: Category = {
       name: categoryName,
       image: categoryImage,
-      optional_heading: optionalHeading,
       locations,
       exclude_heading: excludeHeading,
       exclude_description: excludeDescription,
       location_type: locationType,
       service_time: serviceTime,
       active: isActive,
+      is_home: isHome,
       attributes: attributes,
-      serviceSegments: serviceSegments,
       location_method: locationMethod,
-      igst_tax: igst,
-      sgst_tax: sgst,
-      cgst_tax: cgst,
       sac_code: sacCode,
       excludeItems: formattedExcludeItems, // Add exclude items
       includeItems: includeItems,
@@ -382,7 +356,7 @@ const removeOption = (attrIndex: number, optIndex: number) => {
         title: 'Success.',
         description: 'Category updated successfully',
       });
-     // router.push('/admin/category'); // Redirect after successful update
+      router.push('/admin/category'); // Redirect after successful update
     } catch (error) {
       toast({
         variant: 'error',
@@ -432,20 +406,7 @@ const removeOption = (attrIndex: number, optIndex: number) => {
                 />
               </div>
 
-              {/* OPTIONAL Field */}
-              <div className="space-y-2">
-                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <Type className="w-4 h-4 text-blue-500" />
-                  <span>Optional heading</span>
-                </label>
-                <Input
-                  placeholder="Eg:- No of AC. service"
-                  value={optionalHeading}
-                  onChange={(e) => setOptionalHeading(e.target.value)}
-                  className="h-11"
-                  required
-                />
-              </div>
+            
 
 
               <div className="space-y-2">
@@ -478,74 +439,9 @@ const removeOption = (attrIndex: number, optIndex: number) => {
                 )}
               </div>
 
-              {/* GST Dropdowns */}
-              <div className="grid grid-cols-3 gap-4">
-                {/* IGST Dropdown */}
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                    <span>IGST (%)</span>
-                  </label>
-                  <Select
-                    value={igst !== null ? igst.toString() : ""}
-                    onValueChange={(value) => setIgst(parseInt(value))}
-                  >
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select IGST" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {hstRates.map((rate) => (
-                        <SelectItem key={`igst-${rate.id}`} value={rate.IGST.toString()}>
-                          {rate.IGST}%
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+             
 
-                {/* SGST Dropdown */}
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                    <span>SGST (%)</span>
-                  </label>
-                  <Select
-                    value={sgst?.toString() || ""}
-                    onValueChange={(value) => setSgst(parseInt(value))}
-                  >
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select SGST" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {hstRates.map((rate) => (
-                        <SelectItem key={`sgst-${rate.id}`} value={rate.SGST.toString()}>
-                          {rate.SGST}%
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* CGST Dropdown */}
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                    <span>CGST (%)</span>
-                  </label>
-                  <Select
-                    value={cgst?.toString() || ""}
-                    onValueChange={(value) => setCgst(parseInt(value))}
-                  >
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select CGST" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {hstRates.map((rate) => (
-                        <SelectItem key={`cgst-${rate.id}`} value={rate.CGST.toString()}>
-                          {rate.CGST}%
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
+              
               {/* SAC Code Field */}
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
@@ -572,47 +468,102 @@ const removeOption = (attrIndex: number, optIndex: number) => {
                 </div>
               </div>
 
-            <div className="space-y-4">
+              <div className="space-y-4">
   <h3 className="text-lg font-semibold">Attributes</h3>
   {attributes.map((attribute, attrIndex) => (
-    <div
-      key={attribute.id || `new-${attrIndex}`} // Use `id` if available, else generate a unique key
-      className="space-y-2 border p-4 rounded-md bg-gray-50"
-    >
+    <div key={attribute.id || `attr-${attrIndex}`} className="space-y-2 border p-4 rounded-md bg-gray-50">
+      
       {/* Attribute Name */}
-      <Input
-        placeholder="Attribute Name"
-        value={attribute.name}
-        onChange={(e) => updateAttribute(attrIndex, "name", e.target.value)}
-        className="h-10"
-      />
+      <div>
+        <label className="block text-sm font-medium">Attribute Name</label>
+        <Input
+          placeholder="Attribute Name"
+          value={attribute.name}
+          onChange={(e) => updateAttribute(attrIndex, "name", e.target.value)}
+          className="h-10"
+        />
+      </div>
+
+      {/* Attribute Title */}
+      <div>
+        <label className="block text-sm font-medium">Attribute Title</label>
+        <Input
+          placeholder="Attribute Title"
+          value={attribute.title}
+          onChange={(e) => updateAttribute(attrIndex, "title", e.target.value)}
+          className="h-10"
+        />
+      </div>
+
+      {/* Attribute Weight */}
+      <div>
+        <label className="block text-sm font-medium">Attribute Weight</label>
+        <Input
+          placeholder="Attribute Weight"
+          type="number"
+          value={attribute.weight}
+          onChange={(e) => updateAttribute(attrIndex, "weight", e.target.value)}
+          className="h-10"
+        />
+      </div>
 
       {/* Attribute Type */}
-      <Select
-        value={attribute.type}
-        onValueChange={(value) => updateAttribute(attrIndex, "type", value)}
-      >
-        <SelectTrigger className="bg-white border-gray-200">
-          <SelectValue placeholder="Select Type" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="list">List</SelectItem>
-          <SelectItem value="dropdown">Dropdown</SelectItem>
-          <SelectItem value="search">Search</SelectItem>
-        </SelectContent>
-      </Select>
+      <div>
+        <label className="block text-sm font-medium">Attribute Type</label>
+        <Select
+          value={attribute.type}
+          onValueChange={(value) => updateAttribute(attrIndex, "type", value)}
+        >
+          <SelectTrigger className="bg-white border-gray-200">
+            <SelectValue placeholder="Select Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="list">List</SelectItem>
+            <SelectItem value="dropdown">Dropdown</SelectItem>
+            <SelectItem value="search">Search</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-      {/* Options Management */}
+      {/* Options Section */}
       <div className="space-y-2">
         <h4 className="text-sm font-medium">Options</h4>
         {attribute.options.map((option, optIndex) => (
-          <div key={option.id || `new-opt-${optIndex}`} className="flex items-center space-x-2">
-            <Input
-              placeholder={`Option ${optIndex + 1}`}
-              value={option.value || ""}
-              onChange={(e) => updateOption(attrIndex, optIndex, e.target.value)}
-              className="h-10 flex-1"
-            />
+          <div key={optIndex} className="flex items-center space-x-2">
+            {/* Option Title */}
+            <div className="flex-1">
+              <label className="block text-sm font-medium">Option Title</label>
+              <Input
+                placeholder="Option Title"
+                value={option.title}
+                onChange={(e) => updateOption(attrIndex, optIndex, "title", e.target.value)}
+                className="h-10"
+              />
+            </div>
+
+            {/* Option Value */}
+            <div className="flex-1">
+              <label className="block text-sm font-medium">Option Value</label>
+              <Input
+                placeholder={`Option ${optIndex + 1}`}
+                value={option.value}
+                onChange={(e) => updateOption(attrIndex, optIndex, "value", e.target.value)}
+                className="h-10"
+              />
+            </div>
+
+            {/* Option Weight */}
+            <div className="w-24">
+              <label className="block text-sm font-medium">Weight</label>
+              <Input
+                placeholder="Weight"
+                type="number"
+                value={option.weight}
+                onChange={(e) => updateOption(attrIndex, optIndex, "weight", e.target.value)}
+                className="h-10"
+              />
+            </div>
+
             <Button
               type="button"
               variant="ghost"
@@ -623,6 +574,8 @@ const removeOption = (attrIndex: number, optIndex: number) => {
             </Button>
           </div>
         ))}
+        
+        {/* Add Option Button */}
         <Button
           type="button"
           variant="outline"
@@ -647,6 +600,7 @@ const removeOption = (attrIndex: number, optIndex: number) => {
     </div>
   ))}
 
+  {/* Add Attribute Button */}
   <Button type="button" variant="outline" onClick={addAttribute}>
     <Plus className="w-4 h-4 mr-2" />
     Add Attribute
@@ -654,31 +608,6 @@ const removeOption = (attrIndex: number, optIndex: number) => {
 </div>
 
 
-
-
-              {/* Service Segments */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Service Segments</h3>
-                {serviceSegments.map((segment, index) => (
-                  <div key={index} className="space-y-2">
-                    <Input
-                      placeholder="Segment Name"
-                      value={segment.segment_name}
-                      onChange={(e) => updateServiceSegment(index, e.target.value)}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="mt-4 flex items-center text-red-500"
-                      onClick={() => removeServiceSegment(index)}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Remove Segment
-                    </Button>
-                  </div>
-                ))}
-                <Button type="button" onClick={addServiceSegment}>Add Service Segment</Button>
-              </div>
 
 
               <div className="space-y-4">

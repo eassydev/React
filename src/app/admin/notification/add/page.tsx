@@ -14,6 +14,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import ReactSelect from "react-select";
+import { useRouter } from 'next/navigation';
+
 import {
   createNotification,
   fetchAllCategories,
@@ -46,6 +48,7 @@ const AddNotificationForm: React.FC = () => {
   const [recipients, setRecipients] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { toast } = useToast();
+  const router = useRouter();
 
   // Fetch Notification Types
   useEffect(() => {
@@ -149,6 +152,9 @@ const AddNotificationForm: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
+
+    router.push('/admin/notification'); // Redirect after successful update
+
   };
 
   return (

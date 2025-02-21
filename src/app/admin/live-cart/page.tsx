@@ -133,8 +133,49 @@ const CartList = () => {
           : "N/A";
       },
     },
-    { accessorKey: "type", header: "Type" },
     { accessorKey: "service_type", header: "Service Type" },
+    {
+      accessorKey: "service",
+      header: "Service",
+      cell: ({ row }) => {
+        const rateCard = row.original.rateCard;
+        if (!rateCard) return "N/A";
+    
+        const categoryName = rateCard.category?.name || "Unknown Category";
+        const subcategoryName = rateCard.subcategory?.name || "Unknown Subcategory";
+    
+        // Extract filter attributes
+        const attributes =
+          rateCard.attributes?.map(
+            (attr:any) =>
+              `${attr.filterAttribute?.name || "Unknown"}: ${attr.filterOption?.value || "N/A"}`
+          ) || [];
+    
+        return (
+          <div className="space-y-1">
+            <p>
+              <span className="font-bold">Category:</span> {categoryName}
+            </p>
+            <p>
+              <span className="font-bold">Subcategory:</span> {subcategoryName}
+            </p>
+            {attributes.length > 0 && (
+              <div>
+                <span className="font-bold">Attributes:</span>
+                <ul className="list-disc list-inside">
+                  {attributes.map((attr:any, index:any) => (
+                    <li key={index} className="text-sm text-gray-600">
+                      {attr}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
+    
     {
       accessorKey: "quantity",
       header: "Quantity",

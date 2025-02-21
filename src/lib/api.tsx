@@ -57,16 +57,13 @@ export interface Category {
   locations: Location[];
   location_type: string;
   service_time?: string;
-  optional_heading?: string;
   exclude_heading?: string;
   exclude_description?: string;
   location_method: string;
   active: boolean;
+  weight?: Number;
+  is_home: boolean;
   attributes?: Attribute[];
-  serviceSegments?: ServiceSegment[]; // Includes service segments
-  igst_tax?: number | null; // IGST percentage
-  sgst_tax?: number | null; // SGST percentage
-  cgst_tax?: number | null; // CGST percentage
   sac_code?: string | null; // SAC code
   excludeItems?: ExcludeItem[]; // Array of excluded items
   excludedImages?: ExcludeImage[]; // Array of excluded images
@@ -84,16 +81,11 @@ export interface Subcategory {
   image: File | null;
   category_id: string; // Associated category ID  // Field for SAC code
   service_time?: string;
-  optional_heading?: string;
   exclude_heading?: string;
   exclude_description?: string;
   active: boolean;
+  weight?: Number;
   attributes?: Attribute[];
-  serviceSegments?: ServiceSegment[]; // Includes service segments
-
-  igst_tax?: number | null;   // IGST percentage
-  sgst_tax?: number | null;   // SGST percentage
-  cgst_tax?: number | null;   // CGST percentage
   sac_code?: string | null;   // SAC code
   excludeItems?: ExcludeItem[]; // Array of excluded items
   excludedImages?: ExcludeImage[]; // Array of excluded images
@@ -119,7 +111,9 @@ export interface Location {
 export type Attribute = {
   id?: string;
   name: string;
+  title:string;
   type: string;
+  weight?:number;
   options: AttributeOption[];
 };
 
@@ -127,6 +121,8 @@ export type Attribute = {
 export interface AttributeOption {
   id?: string;
   value: string;
+  title: string;
+  weight?:number;
 }
 
 // export type ServiceDetail = {
@@ -158,12 +154,13 @@ export interface ServiceDescription {
 
 
 export interface ServiceSegment {
-  id?: string; // Optional for editing
-  category_id?: string; // ID of the associated category
-  subcategory_id?: string; // ID of the associated subcategory
-  segment_name: string; // Name of the service segment
+  id?: string;
+  category_id?: string | null; // Allow null for category_id
+  subcategory_id?: string | null; // Allow null for subcategory_id
+  filter_attribute_id?: string | null; // Allow null for filter_attribute_id
+  segment_name: string; // Make segment_name an array of strings
+  is_active?: boolean; // is_active can be undefined
 }
-
 export interface ExcludeItem {
   id?: number; // Auto-incremented primary key
   category_id?: number | null; // Foreign key for the category, nullable
@@ -193,11 +190,10 @@ export interface RateCard {
   provider_id?: string | null;
   name: string;
   price: number;
+  weight?: Number;
   strike_price: number;
-  active: boolean;
-  best_deal: boolean; // Added best_deal
+  active: boolean;// Added best_deal
   serviceDescriptions?: ServiceDetail[]; // Includes service details
-  recommended: boolean; // Added recommended
   attributes: {
     attribute_id: string;
     option_id: string;
@@ -239,6 +235,23 @@ export interface Page {
   title: string;
   slug: string;
   description: string;
+  is_active: boolean;
+  created_at?: number; // UNIX timestamp
+  updated_at?: number; // UNIX timestamp
+}
+
+
+export interface Donation {
+  id?: string; // Optional for editing
+  name: string;
+  description?: string;
+  logo_image?: File | null;
+  image?: File | null;
+  bank_id?: string;
+  account_no: string;
+  ifsc_code: string;
+  bank_name?: string;
+  branch_name?: string;
   is_active: boolean;
   created_at?: number; // UNIX timestamp
   updated_at?: number; // UNIX timestamp
@@ -627,6 +640,13 @@ export interface NotificationType {
 }
 
 
+export interface ServiceVideo {
+  id?: string;
+  category_id?: string | null;
+  subcategory_id?: string | null;
+  video_url?: File | null; // Make video_url optional and nullable
+  is_active?: boolean;// Add the image property
+}
 
 // Define the structure of the API response
 interface ApiResponse {
@@ -719,20 +739,22 @@ export const createCategory = async (category: Category): Promise<ApiResponse> =
 
   // Basic Category Details
   formData.append('name', category.name);
-  formData.append('active', category.active ? '0' : '1');
+  formData.append('active', category.active ? '1' : '0');
 
   // Image
   if (category.image) {
     formData.append('image', category.image);
   }
 
+  if (category.weight) {
+    formData.append('weight', category.weight?.toString());
+  }
+
   // Locations
   formData.append('locationType', category.location_type);
   formData.append('locationMethod', category.location_method);
   formData.append('locations', JSON.stringify(category.locations));
-  if (category.optional_heading !== null && category.optional_heading !== undefined) {
-    formData.append('optional_heading', category.optional_heading.toString());
-  }
+ 
   if (category.service_time !== null && category.service_time !== undefined) {
     formData.append('service_time', category.service_time.toString());
   }
@@ -742,16 +764,6 @@ export const createCategory = async (category: Category): Promise<ApiResponse> =
   if (category.exclude_description !== null && category.exclude_description !== undefined) {
     formData.append('exclude_description', category.exclude_description.toString());
   }
-  // GST and SAC Code
-  if (category.sgst_tax !== null && category.sgst_tax !== undefined) {
-    formData.append('sgst_tax', category.sgst_tax.toString());
-  }
-  if (category.cgst_tax !== null && category.cgst_tax !== undefined) {
-    formData.append('cgst_tax', category.cgst_tax.toString());
-  }
-  if (category.igst_tax !== null && category.igst_tax !== undefined) {
-    formData.append('igst_tax', category.igst_tax.toString());
-  }
   if (category.sac_code) {
     formData.append('sac_code', category.sac_code);
   }
@@ -759,19 +771,14 @@ export const createCategory = async (category: Category): Promise<ApiResponse> =
   // Attributes and Options
   if (category.attributes && category.attributes.length > 0) {
     const attributes = category.attributes.map((attr) => ({
+      attribute_title:attr.title,
       attribute_name: attr.name,
       attribute_type: attr.type,
+      attribute_weight:attr.weight,
       options: attr.options,
     }));
     formData.append('attributes', JSON.stringify(attributes));
   }
-
- // Service Segments
-if (category.serviceSegments && category.serviceSegments.length > 0) {
-  formData.append('serviceSegments', JSON.stringify(category.serviceSegments));
-}
-
-
   // Exclude Items
   if (category.excludeItems && category.excludeItems.length > 0) {
     const excludeItems = category.excludeItems.map((item) => ({
@@ -823,20 +830,22 @@ export const updateCategory = async (id: string, category: Category): Promise<Ap
 
   // Basic Category Details
   formData.append('name', category.name);
-  formData.append('active', category.active ? '0' : '1');
+  formData.append('active', category.active ? '1' : '0');
 
   // Image
   if (category.image) {
     formData.append('image', category.image);
   }
 
+
+  if (category.weight) {
+    formData.append('weight', category.weight?.toString());
+  }
   // Locations
   formData.append('locationType', category.location_type);
   formData.append('locationMethod', category.location_method);
   formData.append('locations', JSON.stringify(category.locations));
-  if (category.optional_heading !== null && category.optional_heading !== undefined) {
-    formData.append('optional_heading', category.optional_heading.toString());
-  }
+ 
   if (category.service_time !== null && category.service_time !== undefined) {
     formData.append('service_time', category.service_time.toString());
   }
@@ -846,16 +855,7 @@ export const updateCategory = async (id: string, category: Category): Promise<Ap
   if (category.exclude_description !== null && category.exclude_description !== undefined) {
     formData.append('exclude_description', category.exclude_description.toString());
   }
-  // GST and SAC Code
-  if (category.sgst_tax !== null && category.sgst_tax !== undefined) {
-    formData.append('sgst_tax', category.sgst_tax.toString());
-  }
-  if (category.cgst_tax !== null && category.cgst_tax !== undefined) {
-    formData.append('cgst_tax', category.cgst_tax.toString());
-  }
-  if (category.igst_tax !== null && category.igst_tax !== undefined) {
-    formData.append('igst_tax', category.igst_tax.toString());
-  }
+
   if (category.sac_code) {
     formData.append('sac_code', category.sac_code);
   }
@@ -864,17 +864,16 @@ export const updateCategory = async (id: string, category: Category): Promise<Ap
   if (category.attributes && category.attributes.length > 0) {
     const attributes = category.attributes.map((attr) => ({
       id: attr.id,
+      attribute_title:attr.title,
       attribute_name: attr.name,
       attribute_type: attr.type,
+      attribute_weight:attr.weight,
       options: attr.options,
     }));
     formData.append('attributes', JSON.stringify(attributes));
   }
 
-  // Service Segments
-if (category.serviceSegments && category.serviceSegments.length > 0) {
-  formData.append('serviceSegments', JSON.stringify(category.serviceSegments));
-}
+ 
 
 
   // Exclude Items
@@ -945,15 +944,14 @@ export const createSubcategory = async (subcategory: Subcategory): Promise<ApiRe
   // Add required fields
   formData.append('name', subcategory.name);
   formData.append('category_id', subcategory.category_id.toString());
-  formData.append('active', subcategory.active ? '0' : '1');
+  formData.append('active', subcategory.active ? '1' : '0');
 
   // Add optional image field
   if (subcategory.image) {
     formData.append('image', subcategory.image);
   }
-
-  if (subcategory.optional_heading !== null && subcategory.optional_heading !== undefined) {
-    formData.append('optional_heading', subcategory.optional_heading.toString());
+  if (subcategory.weight) {
+    formData.append('weight', subcategory.weight?.toString());
   }
   if (subcategory.service_time !== null && subcategory.service_time !== undefined) {
     formData.append('service_time', subcategory.service_time.toString());
@@ -964,16 +962,6 @@ export const createSubcategory = async (subcategory: Subcategory): Promise<ApiRe
   if (subcategory.exclude_description !== null && subcategory.exclude_description !== undefined) {
     formData.append('exclude_description', subcategory.exclude_description.toString());
   }
-  // GST and SAC Code
-  if (subcategory.sgst_tax !== null && subcategory.sgst_tax !== undefined) {
-    formData.append('sgst_tax', subcategory.sgst_tax.toString());
-  }
-  if (subcategory.cgst_tax !== null && subcategory.cgst_tax !== undefined) {
-    formData.append('cgst_tax', subcategory.cgst_tax.toString());
-  }
-  if (subcategory.igst_tax !== null && subcategory.igst_tax !== undefined) {
-    formData.append('igst_tax', subcategory.igst_tax.toString());
-  }
   if (subcategory.sac_code) {
     formData.append('sac_code', subcategory.sac_code);
   }
@@ -981,16 +969,15 @@ export const createSubcategory = async (subcategory: Subcategory): Promise<ApiRe
   // Attributes and Options
   if (subcategory.attributes && subcategory.attributes.length > 0) {
     const attributes = subcategory.attributes.map((attr) => ({
+      attribute_title:attr.title,
       attribute_name: attr.name,
       attribute_type: attr.type,
+      attribute_weight:attr.weight,
       options: attr.options,
     }));
     formData.append('attributes', JSON.stringify(attributes));
   }
 
-  if (subcategory.serviceSegments && subcategory.serviceSegments.length > 0) {
-    formData.append('serviceSegments', JSON.stringify(subcategory.serviceSegments));
-  }
   // Exclude Items
   if (subcategory.excludeItems && subcategory.excludeItems.length > 0) {
     const excludeItems = subcategory.excludeItems.map((item) => ({
@@ -1142,16 +1129,14 @@ export const updateSubcategory = async (id: string, subcategory: Subcategory): P
   // Add required fields
   formData.append('name', subcategory.name);
   formData.append('category_id', subcategory.category_id.toString());
-  formData.append('active', subcategory.active ? '0' : '1');
+  formData.append('active', subcategory.active ? '1' : '0');
 
-  // Add optional image field
   if (subcategory.image) {
     formData.append('image', subcategory.image);
   }
-
-  if (subcategory.optional_heading !== null && subcategory.optional_heading !== undefined) {
-    formData.append('optional_heading', subcategory.optional_heading.toString());
-  }
+  if (subcategory.weight) {
+    formData.append('weight', subcategory.weight?.toString());
+  } 
   if (subcategory.service_time !== null && subcategory.service_time !== undefined) {
     formData.append('service_time', subcategory.service_time.toString());
   }
@@ -1161,16 +1146,7 @@ export const updateSubcategory = async (id: string, subcategory: Subcategory): P
   if (subcategory.exclude_description !== null && subcategory.exclude_description !== undefined) {
     formData.append('exclude_description', subcategory.exclude_description.toString());
   }
-  // GST and SAC Code
-  if (subcategory.sgst_tax !== null && subcategory.sgst_tax !== undefined) {
-    formData.append('sgst_tax', subcategory.sgst_tax.toString());
-  }
-  if (subcategory.cgst_tax !== null && subcategory.cgst_tax !== undefined) {
-    formData.append('cgst_tax', subcategory.cgst_tax.toString());
-  }
-  if (subcategory.igst_tax !== null && subcategory.igst_tax !== undefined) {
-    formData.append('igst_tax', subcategory.igst_tax.toString());
-  }
+
   if (subcategory.sac_code) {
     formData.append('sac_code', subcategory.sac_code);
   }
@@ -1179,19 +1155,14 @@ export const updateSubcategory = async (id: string, subcategory: Subcategory): P
   if (subcategory.attributes && subcategory.attributes.length > 0) {
     const attributes = subcategory.attributes.map((attr) => ({
       id: attr.id,
+      attribute_title:attr.title,
       attribute_name: attr.name,
       attribute_type: attr.type,
+      attribute_weight:attr.weight,
       options: attr.options,
     }));
     formData.append('attributes', JSON.stringify(attributes));
   }
-
-  // Service Details
-   // Service Segments
-if (subcategory.serviceSegments && subcategory.serviceSegments.length > 0) {
-  formData.append('serviceSegments', JSON.stringify(subcategory.serviceSegments));
-}
-
   // Exclude Items
   if (subcategory.excludeItems && subcategory.excludeItems.length > 0) {
     const excludeItems = subcategory.excludeItems.map((item) => ({
@@ -1265,11 +1236,10 @@ export const createRateCard = async (rateCard: RateCard): Promise<ApiResponse> =
     provider_id: rateCard.provider_id ?? null,
     segment_id: rateCard.segment_id ?? null,
     price: rateCard.price,
+    weight: rateCard.weight,
     strike_price: rateCard.strike_price,
     active: rateCard.active ? 1 : 0,
-    subcategory_id: rateCard.subcategory_id ?? null,
-    best_deal: rateCard.best_deal, // Added best_deal
-    recommended: rateCard.recommended, // Added recommended
+    subcategory_id: rateCard.subcategory_id ?? null, // Added recommended
     filter_attributes: rateCard.attributes.map((attr) => ({
       attribute_id: attr.attribute_id,
       option_id: attr.option_id,
@@ -1357,8 +1327,6 @@ export const updateRateCard = async (id: string, rateCard: RateCard): Promise<Ap
     strike_price: rateCard.strike_price,
     active: rateCard.active ? 1 : 0,
     subcategory_id: rateCard.subcategory_id ?? null,
-    best_deal: rateCard.best_deal, // Added best_deal
-    recommended: rateCard.recommended, // Added recommended
     filter_attributes: rateCard.attributes.map((attr) => ({
       attribute_id: attr.attribute_id,
       option_id: attr.option_id,
@@ -1747,27 +1715,6 @@ export const restorePage = async (id: string): Promise<ApiResponse> => {
   }
 };
 
-// Function to fetch all providers
-export const fetchProviders = async (): Promise<Provider[]> => {
-  try {
-    const token = getToken(); // Assume getToken() retrieves the auth token
-
-    const response: AxiosResponse<ApiResponse> = await apiClient.get('/provider/all', {
-      headers: {
-        'admin-auth-token': token || '',
-      },
-    });
-
-    if (response.data.status) {
-      return response.data.data; // Return the array of providers
-    } else {
-      throw new Error(response.data.message || 'Failed to fetch providers.');
-    }
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch providers.');
-  }
-};
-
 
 // Fetch all users with optional pagination
 
@@ -1961,6 +1908,36 @@ export const fetchAllProvidersWithoupagination = async (): Promise<Provider[]> =
 
 
 
+
+export const fetchProviders = async (
+  searchQuery: string = "", // Optional search term
+  page: number = 1, // Page number for pagination
+  limit: number = 10 // Limit providers per page
+): Promise<Provider[]> => {
+  try {
+    const token = getToken(); // Assume getToken() retrieves the auth token
+
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/provider/all', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      params: {
+        search: searchQuery, // Search providers by name, email, etc.
+        page, // Page number for pagination
+        limit, // Number of providers per request
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data; // Return the paginated array of providers
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch providers.');
+    }
+  } catch (error: any) {
+    console.error("Error fetching providers:", error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch providers.');
+  }
+};
 
 // Fetch a specific provider by ID
 export const fetchProviderById = async (id: string): Promise<Provider> => {
@@ -6041,5 +6018,319 @@ export const deleteServiceDetail = async (id: string): Promise<ApiResponse> => {
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to delete rate card.');
+  }
+};
+
+
+
+// Function to create a new donation
+export const createDonation = async (donation: Donation): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const formData = new FormData();
+
+    formData.append('name', donation.name);
+    if (donation.description) formData.append('description', donation.description);
+    if (donation.logo_image) formData.append('logo_image', donation.logo_image);
+    if (donation.image) formData.append('image', donation.image);
+    if (donation.bank_id) formData.append('bank_id', donation.bank_id);
+    formData.append('account_no', donation.account_no);
+    formData.append('ifsc_code', donation.ifsc_code);
+    if (donation.bank_name) formData.append('bank_name', donation.bank_name);
+    if (donation.branch_name) formData.append('branch_name', donation.branch_name);
+    formData.append('is_active', donation.is_active.toString());
+
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/donation', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create donation.');
+  }
+};
+
+// Function to fetch all donations with pagination
+export const fetchDonations = async (page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/donation', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error('Failed to fetch donations.');
+  }
+};
+
+// Function to fetch a specific donation by ID
+export const fetchDonationById = async (id: string): Promise<Donation> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/donation/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch donation.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch donation.');
+  }
+};
+
+// Function to update an existing donation
+export const updateDonation = async (id: string, donation: Donation): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const formData = new FormData();
+
+    formData.append('name', donation.name);
+    if (donation.description) formData.append('description', donation.description);
+    if (donation.logo_image) formData.append('logo_image', donation.logo_image);
+    if (donation.image) formData.append('image', donation.image);
+    if (donation.bank_id) formData.append('bank_id', donation.bank_id);
+    formData.append('account_no', donation.account_no);
+    formData.append('ifsc_code', donation.ifsc_code);
+    if (donation.bank_name) formData.append('bank_name', donation.bank_name);
+    if (donation.branch_name) formData.append('branch_name', donation.branch_name);
+    formData.append('is_active', donation.is_active.toString());
+
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/donation/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update donation.');
+  }
+};
+
+
+// Fetch all service segments with optional pagination
+export const fetchServiceSegmentsAll = async (page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/service-segment', { // Correct route
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data; // Assumes your API returns data in .data
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch service segments.');
+  }
+};
+
+// Fetch all service segments without pagination
+export const fetchAllServiceSegments = async () => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/service-segment/all', { // Correct route
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch all service segments.');
+  }
+};
+
+
+// Fetch a single service segment by ID
+export const fetchServiceSegmentById = async (id: string): Promise<ServiceSegment> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<{ status: boolean; data: ServiceSegment }> = await apiClient.get(`/service-segment/${id}`, { // Correct route
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch service segment.');
+  }
+};
+
+// Create a new service segment
+export const createServiceSegment = async (serviceSegment: ServiceSegment) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.post('/service-segment', serviceSegment, { // Correct route
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create service segment.');
+  }
+};
+
+// Update an existing service segment
+export const updateServiceSegment = async (id: string, serviceSegment: ServiceSegment) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.put(`/service-segment/${id}`, serviceSegment, { // Correct route
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update service segment.');
+  }
+};
+
+// Delete a service segment
+export const deleteServiceSegment = async (id: string) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.delete(`/service-segment/${id}`, { // Correct route
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete service segment.');
+  }
+};
+
+// Fetch all service videos (paginated)
+export const fetchServiceVideosAll = async (page = 1, size = 10): Promise<any> => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/service-video', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch service videos.');
+  }
+};
+
+// Fetch all service videos (without pagination)
+export const fetchAllServiceVideos = async (): Promise<any> => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/service-video/all', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch all service videos.');
+  }
+};
+
+// Fetch a single service video by ID
+export const fetchServiceVideoById = async (id: string): Promise<ServiceVideo> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<{ status: boolean; data: ServiceVideo }> = await apiClient.get(`/service-video/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch service video.');
+  }
+};
+
+// Create a new service video (handles video and image upload)
+export const createServiceVideo = async (serviceVideo: Omit<ServiceVideo, 'video_url' >, videoFile: File | null): Promise<any> => {
+  try {
+    const token = getToken();
+    const formData = new FormData();
+
+    // Append other service video data
+    for (const key in serviceVideo) {
+      if (serviceVideo.hasOwnProperty(key)) {
+        formData.append(key, serviceVideo[key as keyof Omit<ServiceVideo, 'video_url' | 'image_url'>] as string);
+      }
+    }
+
+    if (videoFile) {
+      formData.append('video_file', videoFile);
+    }
+   
+
+    const response = await apiClient.post('/service-video', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create service video.');
+  }
+};
+
+// Update an existing service video (handles video and image upload)
+export const updateServiceVideo = async (id: string, serviceVideo: Omit<ServiceVideo, 'video_url' >, videoFile: File| null): Promise<any> => {
+  try {
+    const token = getToken();
+    const formData = new FormData();
+
+    // Append other service video data
+    for (const key in serviceVideo) {
+      if (serviceVideo.hasOwnProperty(key)) {
+        formData.append(key, serviceVideo[key as keyof Omit<ServiceVideo, 'video_url' | 'image_url'>] as string);
+      }
+    }
+
+    if (videoFile) {
+      formData.append('video_file', videoFile);
+    }
+   
+
+    const response = await apiClient.put(`/service-video/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update service video.');
+  }
+};
+
+// Delete a service video
+export const deleteServiceVideo = async (id: string): Promise<any> => {
+  try {
+    const token = getToken();
+    const response = await apiClient.delete(`/service-video/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete service video.');
   }
 };

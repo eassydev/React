@@ -7,10 +7,11 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Save, Loader2, ImageIcon, FileText, ChevronDown,Globe2 } from 'lucide-react';
-import { fetchAllRatecard, fetchAllCategories, createPackage, Package,Provider,fetchProviders } from '@/lib/api';
+import { fetchAllRatecard, fetchAllCategories, fetchProviderById,createPackage, Package,Provider,fetchProviders } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from 'next/navigation';
+import { useDebounce } from "use-debounce"; // Install: npm install use-debounce
 
 // Import React-Quill dynamically
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
@@ -51,10 +52,17 @@ const [providers, setProviders] = useState<Provider[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // Addon Category IDs
   const [noService, setNoService] = useState<number | null>(null);
+    const [selectedProviderId, setSelectedProviderId] = useState<string>("");
+  
   const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); // **[Added state for Addon dropdown toggle]**
   const [discountError, setDiscountError] = useState<string | null>(null); // State for error message
-
-
+const [searchTerm, setSearchTerm] = useState<string>("");
+const [debouncedSearch] = useDebounce(searchTerm, 300); // Debounced input
+const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
+const [isLoadingProviders, setIsLoadingProviders] = useState(false);
+const [page, setPage] = useState(1);
+const [hasMore, setHasMore] = useState(true); // Indicates if more data exists
+  const [weight, setWeight] = useState<number>(0);
   const { toast } = useToast();
 
   // Fetch rate cards on component mount
@@ -80,21 +88,37 @@ const [providers, setProviders] = useState<Provider[]>([]);
   }, []);
 
   useEffect(() => {
-      const loadProvider = async () => {
-        try {
-           const fetchedProviders = await fetchProviders();
-                setProviders(fetchedProviders);
-        } catch {
-          toast({
-            variant: "error",
-            title: "Error",
-            description: "Failed to load provider.",
-          });
+    const loadProviders = async () => {
+      if (!debouncedSearch && !selectedProvider) return; // Don't fetch unless searching or editing
+  
+      setIsLoadingProviders(true);
+      try {
+        const fetchedProviders = await fetchProviders(debouncedSearch, page, 10); // Fetch 10 at a time
+        setProviders((prev) => (page === 1 ? fetchedProviders : [...prev, ...fetchedProviders])); // Append on new pages
+        setHasMore(fetchedProviders.length === 10); // If less than 10, no more pages
+      } catch (error) {
+        console.error("Failed to load providers:", error);
+      } finally {
+        setIsLoadingProviders(false);
+      }
+    };
+  
+    loadProviders();
+  }, [debouncedSearch, page]);
+    useEffect(() => {
+      const loadSelectedProvider = async () => {
+        if (selectedProviderId) {
+          try {
+            const provider = await fetchProviderById(selectedProviderId);
+            setSelectedProvider(provider);
+          } catch (error) {
+            console.error("Failed to load selected provider:", error);
+          }
         }
       };
-      loadProvider();
-    }, []);
-
+    
+      loadSelectedProvider();
+    }, [selectedProviderId]);
   // Handle image upload
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -389,28 +413,59 @@ const [providers, setProviders] = useState<Provider[]>([]);
 
 
 <div className="space-y-2">
-                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <Globe2 className="w-4 h-4 text-blue-500" />
-                  <span>Select Provider</span>
-                </label>
-                <Select
-                  value={providerId}
-                  onValueChange={(value) => setProviderId(value)}
-                >
-                  <SelectTrigger className="bg-white border-gray-200">
-                    <SelectValue placeholder="Select a provider" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {providers.map((provider) =>
-                      provider?.id && provider?.first_name ? (
-                        <SelectItem key={provider.id} value={provider.id.toString()}>
-                          {provider.first_name}
-                        </SelectItem>
-                      ) : null
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
+      <label className="text-sm font-medium text-gray-700">Select Provider</label>
+      <Select
+        value={selectedProviderId}
+        onValueChange={(value) => setSelectedProviderId(value)}
+      >
+        <SelectTrigger className="bg-white border-gray-200">
+          <SelectValue placeholder="Select a provider" />
+        </SelectTrigger>
+
+        <SelectContent className="w-full p-2">
+          {/* Search Input Inside Dropdown */}
+          <div className="p-2">
+            <Input
+              placeholder="Search provider..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPage(1); // Reset page on new search
+              }}
+              className="h-11"
+            />
+          </div>
+
+          {/* Providers List */}
+          {isLoadingProviders && page === 1 ? (
+            <div className="p-4 text-center">Loading...</div>
+          ) : providers.length > 0 ? (
+            providers.map((provider) =>
+              provider?.id && provider?.first_name ? (
+                <SelectItem key={provider.id} value={provider.id.toString()}>
+                  {provider.first_name} {provider.last_name || ""}
+                </SelectItem>
+              ) : null
+            )
+          ) : (
+            <div className="p-4 text-center">No providers found</div>
+          )}
+
+          {/* Load More Button for Pagination */}
+          {hasMore && !isLoadingProviders && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                setPage((prev) => prev + 1);
+              }}
+              className="w-full text-center py-2 text-blue-600 hover:underline"
+            >
+              Load More
+            </button>
+          )}
+        </SelectContent>
+      </Select>
+    </div>
               {/* Renewal Options */}
               <div className="flex items-center space-x-2">
                 <Switch checked={renewalOptions} onCheckedChange={setRenewalOptions} />

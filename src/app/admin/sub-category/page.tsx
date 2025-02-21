@@ -139,11 +139,11 @@ const SubcategoryList = () => {
         let statusClass = "";
 
         switch (statusValue) {
-          case 0:
+          case 1:
             statusLabel = "Active";
             statusClass = "bg-green-200 text-green-800";
             break;
-          case 1:
+          case 0:
             statusLabel = "Inactive";
             statusClass = "bg-yellow-200 text-yellow-800";
             break;

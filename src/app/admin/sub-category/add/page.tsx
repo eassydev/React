@@ -37,15 +37,11 @@ const SubcategoryForm: React.FC = () => {
   const [description, setDescription] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
   const [subcategoryName, setSubcategoryName] = useState<string>('');
-  const [igst, setIgst] = useState<number | null>(null);
-  const [sgst, setSgst] = useState<number | null>(null);
-  const [cgst, setCgst] = useState<number | null>(null);
   const [hstRates, setHstRates] = useState<any[]>([]);
   const [sacCode, setSacCode] = useState<string>('');
   const [metaDescription, setMetaDescription] = useState<string>('');
   const [metaKeyword, setMetaKeyword] = useState<string>('');
   const { toast } = useToast();
-  const [optionalHeading, setOptionalHeading] = useState<string>('');
   const [attributes, setAttributes] = useState<Attribute[]>([]);
   const [serviceSegments, setServiceSegments] = useState<ServiceSegment[]>([]);
   const [showExcludeSection, setShowExcludeSection] = useState<boolean>(false);
@@ -56,6 +52,7 @@ const SubcategoryForm: React.FC = () => {
   const [includeItems, setIncludeItems] = useState<IncludeItem[]>([]);
   const [showIncludeSection, setShowIncludeSection] = useState(false);
   const [serviceTime, setServiceTime] = useState<string>('');
+  const [weight, setWeight] = useState<number>(0);
 
   // Fetch categories for selection
   useEffect(() => {
@@ -147,57 +144,67 @@ const SubcategoryForm: React.FC = () => {
   const removeImage = (index: number) => {
     setExcludeImages((prev) => prev.filter((_, i) => i !== index));
   };
+// Add a new attribute
+const addAttribute = () => {
+  setAttributes((prev) => [
+    ...prev,
+    {
+      name: "",
+      title: "", // Added title field
+      weight: 0, // Added weight field
+      type: "list",
+      options: [{ title:"",value: "", weight: 0}], // Initialize options with weight
+    },
+  ]);
+};
 
-  const addAttribute = () => {
-    setAttributes((prev) => [
-      ...prev,
-      {
-        name: "",
-        type: "list",
-        options: [{ value: "" }], // Initialize options with a valid object
-      },
-    ]);
-  };
+// Update attribute fields
+const updateAttribute = (index: number, field: string, value: string) => {
+  const updatedAttributes = [...attributes];
+  updatedAttributes[index] = { ...updatedAttributes[index], [field]: value };
+  setAttributes(updatedAttributes);
+};
 
-  // Update attribute fields
-  const updateAttribute = (index: number, field: string, value: string) => {
-    const updatedAttributes = [...attributes];
-    updatedAttributes[index] = { ...updatedAttributes[index], [field]: value };
-    setAttributes(updatedAttributes);
-  };
-
-  const addOption = (attrIndex: number) => {
-    const updatedAttributes = [...attributes];
+// Add a new option to a specific attribute
+const addOption = (attrIndex: number) => {
+  setAttributes((prev) => {
+    const updatedAttributes = [...prev];
     updatedAttributes[attrIndex].options.push({
-      value: "", // Initialize an empty value
+      title: "", // Initialize with an empty title
+      value: "", // Initialize with an empty value
+      weight: 0, // Changed from 0 to "" to maintain consistency in form inputs
     });
-    setAttributes(updatedAttributes);
-  };
+    return updatedAttributes;
+  });
+};
 
-
-  // Update an option for a specific attribute
-  const updateOption = (attrIndex: number, optIndex: number, value: string) => {
-    const updatedAttributes = [...attributes];
+// Update an option for a specific attribute
+const updateOption = (attrIndex: number, optIndex: number, field: string, value: string | number) => {
+  setAttributes((prev) => {
+    const updatedAttributes = [...prev];
     updatedAttributes[attrIndex].options[optIndex] = {
-      ...updatedAttributes[attrIndex].options[optIndex], // Retain the existing `id`
-      value, // Update only the value
+      ...updatedAttributes[attrIndex].options[optIndex], // Retain existing properties
+      [field]: value, // Update only the specific field dynamically
     };
-    setAttributes(updatedAttributes);
-  };
+    return updatedAttributes;
+  });
+};
 
-  // Remove an option from a specific attribute
-  const removeOption = (attrIndex: number, optIndex: number) => {
-    const updatedAttributes = [...attributes];
+// Remove an option from a specific attribute
+const removeOption = (attrIndex: number, optIndex: number) => {
+  setAttributes((prev) => {
+    const updatedAttributes = [...prev];
     updatedAttributes[attrIndex].options = updatedAttributes[attrIndex].options.filter(
       (_, i) => i !== optIndex
     );
-    setAttributes(updatedAttributes);
-  };
+    return updatedAttributes;
+  });
+};
 
-  // Remove an entire attribute
-  const removeAttribute = (index: number) => {
-    setAttributes((prev) => prev.filter((_, i) => i !== index));
-  };
+// Remove an entire attribute
+const removeAttribute = (index: number) => {
+  setAttributes((prev) => prev.filter((_, i) => i !== index));
+};
 
   const handleDropdownChange = (value: string, setter: (value: number) => void) => {
     setter(parseFloat(value));
@@ -219,19 +226,15 @@ const SubcategoryForm: React.FC = () => {
       name: subcategoryName,
       image: subcategoryImage,
       category_id: selectedCategoryId,
-      optional_heading: optionalHeading,
       exclude_heading: excludeHeading,
+      weight:weight,
       exclude_description: excludeDescription,
       service_time: serviceTime,
       active: isActive,
       attributes: attributes,
-      serviceSegments: serviceSegments, // Use serviceSegments here
       excludeItems: formattedExcludeItems, // Add exclude items
       includeItems: includeItems,
       excludedImages: formattedExcludeImages,
-      igst_tax: igst,
-      sgst_tax: sgst,
-      cgst_tax: cgst,
       sac_code: sacCode,
       meta_description: metaDescription,
       meta_keyword: metaKeyword,
@@ -245,7 +248,7 @@ const SubcategoryForm: React.FC = () => {
         description: response.message,
       });
       setIsSubmitting(false);
-    //  router.push('/admin/sub-category'); // Redirect after successful update
+      router.push('/admin/sub-category'); // Redirect after successful update
 
     } catch (error) {
       toast({
@@ -295,20 +298,7 @@ const SubcategoryForm: React.FC = () => {
                 />
               </div>
 
-              {/* OPTIONAL Field */}
-              <div className="space-y-2">
-                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <Type className="w-4 h-4 text-blue-500" />
-                  <span>Optional heading</span>
-                </label>
-                <Input
-                  placeholder="Eg:- No of AC. service"
-                  value={optionalHeading}
-                  onChange={(e) => setOptionalHeading(e.target.value)}
-                  className="h-11"
-                  required
-                />
-              </div>
+            
 
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
@@ -368,74 +358,6 @@ const SubcategoryForm: React.FC = () => {
                 )}
               </div>
 
-              {/* GST Dropdowns */}
-              <div className="grid grid-cols-3 gap-4">
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                    <span>IGST (%)</span>
-                  </label>
-                  <Select
-                    value={igst?.toString() || ""}
-                    onValueChange={(value) => handleDropdownChange(value, setIgst)}
-                  >
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select IGST" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {hstRates.map((rate) =>
-                        <SelectItem key={rate.id} value={rate.IGST.toString()}>
-                          {rate.IGST}
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                    <span>SGST (%)</span>
-                  </label>
-                  <Select
-                    value={sgst?.toString() || ""}
-                    onValueChange={(value) => handleDropdownChange(value, setSgst)}
-                  >
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select IGST" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {hstRates.map((rate) =>
-                        <SelectItem key={rate.id} value={rate.SGST.toString()}>
-                          {rate.SGST}
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                    <span>CGST (%)</span>
-                  </label>
-                  <Select
-                    value={cgst?.toString() || ""}
-                    onValueChange={(value) => handleDropdownChange(value, setCgst)}
-                  >
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select IGST" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {hstRates.map((rate) =>
-                        <SelectItem key={rate.id} value={rate.CGST.toString()}>
-                          {rate.CGST}
-                        </SelectItem>
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-              </div>
 
               {/* SAC Code Field */}
               <div className="space-y-2">
@@ -476,7 +398,16 @@ const SubcategoryForm: React.FC = () => {
                   className="h-11"
                 />
               </div>
-
+   <div className="space-y-4">
+        <label className="block text-sm font-medium">Sub Category Weight</label>
+        <Input
+          placeholder="Subcategory Weight"
+          type="number"
+          value={weight}
+          onChange={(e) => setWeight(Number(e.target.value))}
+          className="h-10"
+        />
+      </div>
               {/* Active/Inactive Switch */}
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
@@ -489,45 +420,104 @@ const SubcategoryForm: React.FC = () => {
                 </div>
               </div>
 
-              {/* Attributes Section */}
+                {/* Attributes Section */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Attributes</h3>
                 {attributes.map((attribute, attrIndex) => (
                   <div key={attrIndex} className="space-y-2 border p-4 rounded-md bg-gray-50">
+                    
                     {/* Attribute Name */}
-                    <Input
-                      placeholder="Attribute Name"
-                      value={attribute.name}
-                      onChange={(e) => updateAttribute(attrIndex, "name", e.target.value)}
-                      className="h-10"
-                    />
-
+                    <div>
+                      <label className="block text-sm font-medium">Attribute Name</label>
+                      <Input
+                        placeholder="Attribute Name"
+                        value={attribute.name}
+                        onChange={(e) => updateAttribute(attrIndex, "name", e.target.value)}
+                        className="h-10"
+                      />
+                    </div>
+              
+                    {/* Attribute Title */}
+                    <div>
+                      <label className="block text-sm font-medium">Attribute Title</label>
+                      <Input
+                        placeholder="Attribute Title"
+                        value={attribute.title}
+                        onChange={(e) => updateAttribute(attrIndex, "title", e.target.value)}
+                        className="h-10"
+                      />
+                    </div>
+              
+                    {/* Attribute Weight */}
+                    <div>
+                      <label className="block text-sm font-medium">Attribute Weight</label>
+                      <Input
+                        placeholder="Attribute Weight"
+                        type="number"
+                        value={attribute.weight}
+                        onChange={(e) => updateAttribute(attrIndex, "weight", e.target.value)}
+                        className="h-10"
+                      />
+                    </div>
+              
                     {/* Attribute Type */}
-                    <Select
-                      value={attribute.type}
-                      onValueChange={(value) => updateAttribute(attrIndex, "type", value)}
-                    >
-                      <SelectTrigger className="bg-white border-gray-200">
-                        <SelectValue placeholder="Select Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="list">List</SelectItem>
-                        <SelectItem value="dropdown">Dropdown</SelectItem>
-                        <SelectItem value="search">Search</SelectItem>
-                      </SelectContent>
-                    </Select>
-
+                    <div>
+                      <label className="block text-sm font-medium">Attribute Type</label>
+                      <Select
+                        value={attribute.type}
+                        onValueChange={(value) => updateAttribute(attrIndex, "type", value)}
+                      >
+                        <SelectTrigger className="bg-white border-gray-200">
+                          <SelectValue placeholder="Select Type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="list">List</SelectItem>
+                          <SelectItem value="dropdown">Dropdown</SelectItem>
+                          <SelectItem value="search">Search</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+              
                     {/* Options Management */}
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium">Options</h4>
                       {attribute.options.map((option, optIndex) => (
                         <div key={optIndex} className="flex items-center space-x-2">
-                          <Input
-                            placeholder={`Option ${optIndex + 1}`}
-                            value={option.value}
-                            onChange={(e) => updateOption(attrIndex, optIndex, e.target.value)}
-                            className="h-10 flex-1"
-                          />
+                          {/* Option Value */}
+                          {/* Option Title */}
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium">Option Title</label>
+                            <Input
+                              placeholder="Option Title"
+                              value={option.title}
+                              onChange={(e) => updateOption(attrIndex, optIndex, "title", e.target.value)}
+                              className="h-10"
+                            />
+                          </div>
+              
+                          <div className="flex-1">
+                            <label className="block text-sm font-medium">Option {optIndex + 1}</label>
+                            <Input
+                              placeholder={`Option ${optIndex + 1}`}
+                              value={option.value}
+                              onChange={(e) => updateOption(attrIndex, optIndex, "value", e.target.value)}
+                              className="h-10"
+                            />
+                          </div>
+              
+                          
+                          {/* Option Weight */}
+                          <div className="w-24">
+                            <label className="block text-sm font-medium">Weight</label>
+                            <Input
+                              placeholder="Weight"
+                              type="number"
+                              value={option.weight}
+                              onChange={(e) => updateOption(attrIndex, optIndex, "weight", e.target.value)}
+                              className="h-10"
+                            />
+                          </div>
+              
                           <Button
                             type="button"
                             variant="ghost"
@@ -548,7 +538,7 @@ const SubcategoryForm: React.FC = () => {
                         Add Option
                       </Button>
                     </div>
-
+              
                     {/* Remove Attribute */}
                     <Button
                       type="button"
@@ -561,56 +551,14 @@ const SubcategoryForm: React.FC = () => {
                     </Button>
                   </div>
                 ))}
-
+              
                 <Button type="button" variant="outline" onClick={addAttribute}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Attribute
                 </Button>
               </div>
 
-              {/* Service Segments Section */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Service Segments</h3>
-                {serviceSegments.map((segment, segmentIndex) => (
-                  <div key={segmentIndex} className="space-y-2 border p-4 rounded-md bg-gray-50">
-                    {/* Segment Name */}
-                    <Input
-                      placeholder="Segment Name"
-                      value={segment.segment_name}
-                      onChange={(e) => {
-                        const updatedSegments = [...serviceSegments];
-                        updatedSegments[segmentIndex].segment_name = e.target.value;
-                        setServiceSegments(updatedSegments);
-                      }}
-                      className="h-10"
-                    />
-
-                    {/* Remove Service Segment */}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="mt-4 flex items-center text-red-500"
-                      onClick={() =>
-                        setServiceSegments((prev) => prev.filter((_, i) => i !== segmentIndex))
-                      }
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Remove Segment
-                    </Button>
-                  </div>
-                ))}
-
-                {/* Add Service Segment Button */}
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => setServiceSegments((prev) => [...prev, { segment_name: "" }])}
-                  className="flex items-center"
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Segment
-                </Button>
-              </div>
+              
               <div className="space-y-4">
 
                 <Button type="button" onClick={() => setShowExcludeSection(!showExcludeSection)} className="mb-4">

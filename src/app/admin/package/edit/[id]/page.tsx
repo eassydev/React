@@ -8,9 +8,10 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Save, Loader2, ImageIcon, FileText, ChevronDown,Globe2 } from 'lucide-react';
-import { fetchAllRatecard, fetchAllCategories, fetchPackageById, updatePackage, Package,Provider,fetchProviders } from '@/lib/api';
+import { fetchAllRatecard, fetchAllCategories, fetchPackageById, updatePackage, Package,Provider,fetchProviders,fetchProviderById } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
+import { useDebounce } from "use-debounce";
 
 // Import React-Quill dynamically
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
@@ -49,7 +50,14 @@ const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // **Selected Addon Categories**
   const [categories, setCategories] = useState<any[]>([]); // **Addon Categories**
   const [discountError, setDiscountError] = useState<string | null>(null); // State for error message
-
+// Provider-related state
+  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
+  const [selectedProviderId, setSelectedProviderId] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch] = useDebounce(searchTerm, 300);
+  const [isLoadingProviders, setIsLoadingProviders] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   const [noService, setNoService] = useState<number | null>(null);
   const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); // **Addon Dropdown Toggle**
 
@@ -95,7 +103,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
         setDescription(packageData.description || '');
         setPackageType(packageData.package_type);
         setCreatedBy(packageData.created_by);
-        setProviderId(packageData.provider_id || '');
+        setSelectedProviderId(packageData.provider_id ? packageData.provider_id.toString() : '');
         setDiscountType(packageData.discount_type);
         setDiscountValue(Number(packageData.discount_value));
         setValidityPeriod(packageData.validity_period || null);
@@ -129,6 +137,83 @@ const [providers, setProviders] = useState<Provider[]>([]);
       setImagePreview(URL.createObjectURL(file));
     }
   };
+
+  
+  
+    useEffect(() => {
+      const loadSelectedProvider = async () => {
+        if (selectedProviderId) {
+          try {
+            const provider = await fetchProviderById(selectedProviderId);
+            if (provider && provider.id) {
+              // Convert provider.id to string
+              setSelectedProvider({
+                ...provider,
+                id: provider.id.toString(),
+              });
+            } else {
+              setSelectedProvider(null);
+            }
+          } catch (error) {
+            console.error("Failed to load selected provider:", error);
+          }
+        } else {
+          setSelectedProvider(null);
+        }
+      };
+    
+      loadSelectedProvider();
+    }, [selectedProviderId]);
+  
+    // ------------------------------
+    // 2. Fetch Providers (Search + Pagination)
+    // ------------------------------
+    useEffect(() => {
+      const loadProviders = async () => {
+        setIsLoadingProviders(true);
+    
+        try {
+          // 1. Fetch providers from API
+         // After fetching providers
+  const fetchedProviders = await fetchProviders(debouncedSearch, page, 10);
+  
+  // Convert each provider's id to string
+  const normalizedProviders = fetchedProviders.map((p) => ({
+    ...p,
+    id: p.id?.toString(),
+  }));
+  
+  // Now merge with existing providers
+  let combinedProviders =
+    page === 1 ? normalizedProviders : [...providers, ...normalizedProviders];
+  
+  // If we have a selectedProvider, ensure it's included
+  if (
+    selectedProvider &&
+    !combinedProviders.some((p) => p.id === selectedProvider.id)
+  ) {
+    combinedProviders.unshift(selectedProvider);
+  }
+  
+  // Remove duplicates
+  const uniqueProviders = combinedProviders.reduce<Provider[]>((acc, current) => {
+    if (!acc.some((p) => p.id === current.id)) {
+      acc.push(current);
+    }
+    return acc;
+  }, []);
+  
+  setProviders(uniqueProviders);
+          setHasMore(fetchedProviders.length === 10); // If we got 10, likely more pages exist
+        } catch (error) {
+          console.error("Failed to load providers:", error);
+        } finally {
+          setIsLoadingProviders(false);
+        }
+      };
+    
+      loadProviders();
+    }, [debouncedSearch, page, selectedProvider]);
 
   // Handle form submission
   const onSubmit = async (e: FormEvent) => {
@@ -425,26 +510,49 @@ const [providers, setProviders] = useState<Provider[]>([]);
               )}
 
 
-
-<div className="space-y-2">
-                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <Globe2 className="w-4 h-4 text-blue-500" />
-                  <span>Select Provider</span>
-                </label>
-                <Select
-                  value={providerId}
-                  onValueChange={(value) => setProviderId(value)}
-                >
+  {/* Provider (with Search & Pagination) */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Select Provider</label>
+                <Select value={selectedProviderId} onValueChange={(value) => setSelectedProviderId(value)}>
                   <SelectTrigger className="bg-white border-gray-200">
                     <SelectValue placeholder="Select a provider" />
                   </SelectTrigger>
                   <SelectContent>
-                    {providers.map((provider) =>
-                      provider?.id && provider?.first_name ? (
-                        <SelectItem key={provider.id} value={provider.id.toString()}>
-                          {provider.first_name}
+                    {/* Search Input */}
+                    <div className="p-2">
+                      <Input
+                        placeholder="Search provider..."
+                        value={searchTerm}
+                        onChange={(e) => {
+                          setSearchTerm(e.target.value);
+                          setPage(1);
+                        }}
+                        className="h-11"
+                      />
+                    </div>
+
+                    {/* Provider List */}
+                    {providers.length > 0 ? (
+                      providers.map((provider) => (
+                        <SelectItem key={provider.id} value={provider.id ?? ''}>
+                          {provider.first_name} {provider.last_name || ""}
                         </SelectItem>
-                      ) : null
+                      ))
+                    ) : (
+                      <div className="p-4 text-center">No providers found</div>
+                    )}
+
+                    {/* Load More */}
+                    {hasMore && !isLoadingProviders && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setPage((prev) => prev + 1);
+                        }}
+                        className="w-full text-center py-2 text-blue-600 hover:underline"
+                      >
+                        Load More
+                      </button>
                     )}
                   </SelectContent>
                 </Select>

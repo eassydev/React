@@ -41,17 +41,13 @@ const SubcategoryEdit: React.FC = () => {
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
   const [subcategoryName, setSubcategoryName] = useState<string>('');
-  const [sgst, setSgst] = useState<number | null>(null);
-  const [cgst, setCgst] = useState<number | null>(null);
-  const [igstTax, setIgstTax] = useState<number | null>(null);
+  
   const [sacCode, setSacCode] = useState<string>('');
   const [hstRates, setHstRates] = useState<any[]>([]);
   const [metaDescription, setMetaDescription] = useState<string>('');
   const [metaKeyword, setMetaKeyword] = useState<string>('');
   const { toast } = useToast();
-  const [optionalHeading, setOptionalHeading] = useState<string>('');
   const [attributes, setAttributes] = useState<Attribute[]>([]);
-  const [serviceSegments, setServiceSegments] = useState<ServiceSegment[]>([]);
   const [showExcludeSection, setShowExcludeSection] = useState<boolean>(false);
   const [excludeHeading, setExcludeHeading] = useState<string>("");
   const [excludeDescription, setExcludeDescription] = useState<string>("");
@@ -109,16 +105,10 @@ const SubcategoryEdit: React.FC = () => {
       // Set all fields from API response
       setSubcategoryName(subcategoryData.name || '');
       setIsActive(subcategoryData.active || true);
-      setSgst(subcategoryData.sgst_tax || null);
-      setCgst(subcategoryData.cgst_tax || null);
-      setIgstTax(subcategoryData.igst_tax ?? null); // Set IGST tax field
       setSacCode(subcategoryData.sac_code || '');
       setMetaDescription(subcategoryData.meta_description || '');
       setMetaKeyword(subcategoryData.meta_keyword || '');
-      setOptionalHeading(subcategoryData.optional_heading || '');
-
       setAttributes(subcategoryData.attributes || []);
-      setServiceSegments(subcategoryData.serviceSegments || []);
       setServiceTime(subcategoryData.service_time || '');
       setExcludeHeading(subcategoryData.exclude_heading || '');
       setExcludeDescription(subcategoryData.exclude_description || '');
@@ -171,82 +161,67 @@ const SubcategoryEdit: React.FC = () => {
     }
   };
 
-  const addAttribute = () => {
-    setAttributes((prev) => [
-      ...prev,
-      {
-        id: "", // New attributes will have an empty `id`
-        name: "",
-        type: "list",
-        options: [{ id: "", value: "" }], // Initialize options
-      },
-    ]);
-  };
-  
-  // Update an attribute (existing or new)
-  const updateAttribute = (index: any, field: string, value: string) => {
-    setAttributes((prev) => {
-      const updated = [...prev];
-      updated[index] = { ...updated[index], [field]: value };
-      return updated;
+// Add a new attribute
+const addAttribute = () => {
+  setAttributes((prev) => [
+    ...prev,
+    {
+      name: "",
+      title: "", // Added title field
+      weight: 0, // Added weight field
+      type: "list",
+      options: [{ title:"",value: "", weight: 0}], // Initialize options with weight
+    },
+  ]);
+};
+
+// Update attribute fields
+const updateAttribute = (index: number, field: string, value: string) => {
+  const updatedAttributes = [...attributes];
+  updatedAttributes[index] = { ...updatedAttributes[index], [field]: value };
+  setAttributes(updatedAttributes);
+};
+
+// Add a new option to a specific attribute
+const addOption = (attrIndex: number) => {
+  setAttributes((prev) => {
+    const updatedAttributes = [...prev];
+    updatedAttributes[attrIndex].options.push({
+      title: "", // Initialize with an empty title
+      value: "", // Initialize with an empty value
+      weight: 0, // Changed from 0 to "" to maintain consistency in form inputs
     });
-  };
-  
-  // Remove an attribute
-  const removeAttribute = (index: any) => {
-    setAttributes((prev) => prev.filter((_, i) => i !== index));
-  };
-  
-  // Add an option to an attribute
-  const addOption = (attrIndex: any) => {
-    setAttributes((prev) => {
-      const updated = [...prev];
-      updated[attrIndex].options.push({ id: "", value: "" });
-      return updated;
-    });
-  };
-  
-  // Update an option for an attribute
-  const updateOption = (attrIndex: number, optIndex: number, value: string) => {
-    setAttributes((prev) => {
-      const updated = [...prev];
-      updated[attrIndex].options[optIndex] = {
-        ...updated[attrIndex].options[optIndex],
-        value,
-      };
-      return updated;
-    });
-  };
-  
-  // Remove an option from an attribute
-  const removeOption = (attrIndex: number, optIndex: number) => {
-    setAttributes((prev) => {
-      const updated = [...prev];
-      updated[attrIndex].options = updated[attrIndex].options.filter(
-        (_, i) => i !== optIndex
-      );
-      return updated;
-    });
-  };
-  
-    const addServiceSegment = () => {
-      setServiceSegments((prev) => [...prev, { segment_name: "" }]);
+    return updatedAttributes;
+  });
+};
+
+// Update an option for a specific attribute
+const updateOption = (attrIndex: number, optIndex: number, field: string, value: string | number) => {
+  setAttributes((prev) => {
+    const updatedAttributes = [...prev];
+    updatedAttributes[attrIndex].options[optIndex] = {
+      ...updatedAttributes[attrIndex].options[optIndex], // Retain existing properties
+      [field]: value, // Update only the specific field dynamically
     };
-  
-    
-  
-  
-    const updateServiceSegment = (index: number, value: string) => {
-      setServiceSegments((prev) => {
-        const updatedSegments = [...prev];
-        updatedSegments[index] = { ...updatedSegments[index], segment_name: value };
-        return updatedSegments;
-      });
-    };
-  
-    const removeServiceSegment = (index: number) => {
-      setServiceSegments((prev) => prev.filter((_, i) => i !== index));
-    };
+    return updatedAttributes;
+  });
+};
+
+// Remove an option from a specific attribute
+const removeOption = (attrIndex: number, optIndex: number) => {
+  setAttributes((prev) => {
+    const updatedAttributes = [...prev];
+    updatedAttributes[attrIndex].options = updatedAttributes[attrIndex].options.filter(
+      (_, i) => i !== optIndex
+    );
+    return updatedAttributes;
+  });
+};
+
+// Remove an entire attribute
+const removeAttribute = (index: number) => {
+  setAttributes((prev) => prev.filter((_, i) => i !== index));
+};
 
 
 
@@ -315,19 +290,14 @@ const SubcategoryEdit: React.FC = () => {
       name: subcategoryName,
       image: subcategoryImage,
       category_id: selectedCategoryId,
-      optional_heading: optionalHeading,
       exclude_heading: excludeHeading,
       exclude_description: excludeDescription,
       service_time: serviceTime,
       active: isActive,
       attributes: attributes,
-      serviceSegments: serviceSegments,
       excludeItems: formattedExcludeItems, // Add exclude items
       includeItems: includeItems,
       excludedImages: formattedExcludeImages,
-      igst_tax: igstTax,
-      sgst_tax: sgst,
-      cgst_tax: cgst,
       sac_code: sacCode,
       meta_description: metaDescription,
       meta_keyword: metaKeyword,
@@ -340,7 +310,7 @@ const SubcategoryEdit: React.FC = () => {
         title: 'Success',
         description: 'Subcategory updated successfully',
       });
-    //  router.push('/admin/sub-category'); // Redirect after successful update
+      router.push('/admin/sub-category'); // Redirect after successful update
     } catch (error) {
       toast({
         variant: 'error',
@@ -429,72 +399,7 @@ const SubcategoryEdit: React.FC = () => {
                 )}
               </div>
 
-              <div className="grid grid-cols-3 gap-4">
-                {/* IGST Dropdown */}
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                    <span>IGST (%)</span>
-                  </label>
-                  <Select
-                    value={igstTax !== null ? igstTax.toString() : ""}
-                    onValueChange={(value) => setIgstTax(parseInt(value))}
-                  >
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select IGST" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {hstRates.map((rate) => (
-                        <SelectItem key={`igst-${rate.id}`} value={rate.IGST.toString()}>
-                          {rate.IGST}%
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* SGST Dropdown */}
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                    <span>SGST (%)</span>
-                  </label>
-                  <Select
-                    value={sgst?.toString() || ""}
-                    onValueChange={(value) => setSgst(parseInt(value))}
-                  >
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select SGST" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {hstRates.map((rate) => (
-                        <SelectItem key={`sgst-${rate.id}`} value={rate.SGST.toString()}>
-                          {rate.SGST}%
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-                {/* CGST Dropdown */}
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                    <span>CGST (%)</span>
-                  </label>
-                  <Select
-                    value={cgst?.toString() || ""}
-                    onValueChange={(value) => setCgst(parseInt(value))}
-                  >
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select CGST" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {hstRates.map((rate) => (
-                        <SelectItem key={`cgst-${rate.id}`} value={rate.CGST.toString()}>
-                          {rate.CGST}%
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>              {/* SAC Code Field */}
+                          {/* SAC Code Field */}
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <span>SAC Code</span>
@@ -549,106 +454,146 @@ const SubcategoryEdit: React.FC = () => {
               </div>
 
               <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Attributes</h3>
-                {attributes.map((attribute, attrIndex) => (
-                  <div key={attrIndex} className="space-y-2 border p-4 rounded-md bg-gray-50">
-                    {/* Attribute Name */}
-                    <Input
-                      placeholder="Attribute Name"
-                      value={attribute.name}
-                      onChange={(e) => updateAttribute(attrIndex, "name", e.target.value)}
-                      className="h-10"
-                    />
+               <h3 className="text-lg font-semibold">Attributes</h3>
+               {attributes.map((attribute, attrIndex) => (
+                 <div key={attribute.id || `attr-${attrIndex}`} className="space-y-2 border p-4 rounded-md bg-gray-50">
+                   
+                   {/* Attribute Name */}
+                   <div>
+                     <label className="block text-sm font-medium">Attribute Name</label>
+                     <Input
+                       placeholder="Attribute Name"
+                       value={attribute.name}
+                       onChange={(e) => updateAttribute(attrIndex, "name", e.target.value)}
+                       className="h-10"
+                     />
+                   </div>
+             
+                   {/* Attribute Title */}
+                   <div>
+                     <label className="block text-sm font-medium">Attribute Title</label>
+                     <Input
+                       placeholder="Attribute Title"
+                       value={attribute.title}
+                       onChange={(e) => updateAttribute(attrIndex, "title", e.target.value)}
+                       className="h-10"
+                     />
+                   </div>
+             
+                   {/* Attribute Weight */}
+                   <div>
+                     <label className="block text-sm font-medium">Attribute Weight</label>
+                     <Input
+                       placeholder="Attribute Weight"
+                       type="number"
+                       value={attribute.weight}
+                       onChange={(e) => updateAttribute(attrIndex, "weight", e.target.value)}
+                       className="h-10"
+                     />
+                   </div>
+             
+                   {/* Attribute Type */}
+                   <div>
+                     <label className="block text-sm font-medium">Attribute Type</label>
+                     <Select
+                       value={attribute.type}
+                       onValueChange={(value) => updateAttribute(attrIndex, "type", value)}
+                     >
+                       <SelectTrigger className="bg-white border-gray-200">
+                         <SelectValue placeholder="Select Type" />
+                       </SelectTrigger>
+                       <SelectContent>
+                         <SelectItem value="list">List</SelectItem>
+                         <SelectItem value="dropdown">Dropdown</SelectItem>
+                         <SelectItem value="search">Search</SelectItem>
+                       </SelectContent>
+                     </Select>
+                   </div>
+             
+                   {/* Options Section */}
+                   <div className="space-y-2">
+                     <h4 className="text-sm font-medium">Options</h4>
+                     {attribute.options.map((option, optIndex) => (
+                       <div key={optIndex} className="flex items-center space-x-2">
+                         {/* Option Title */}
+                         <div className="flex-1">
+                           <label className="block text-sm font-medium">Option Title</label>
+                           <Input
+                             placeholder="Option Title"
+                             value={option.title}
+                             onChange={(e) => updateOption(attrIndex, optIndex, "title", e.target.value)}
+                             className="h-10"
+                           />
+                         </div>
+             
+                         {/* Option Value */}
+                         <div className="flex-1">
+                           <label className="block text-sm font-medium">Option Value</label>
+                           <Input
+                             placeholder={`Option ${optIndex + 1}`}
+                             value={option.value}
+                             onChange={(e) => updateOption(attrIndex, optIndex, "value", e.target.value)}
+                             className="h-10"
+                           />
+                         </div>
+             
+                         {/* Option Weight */}
+                         <div className="w-24">
+                           <label className="block text-sm font-medium">Weight</label>
+                           <Input
+                             placeholder="Weight"
+                             type="number"
+                             value={option.weight}
+                             onChange={(e) => updateOption(attrIndex, optIndex, "weight", e.target.value)}
+                             className="h-10"
+                           />
+                         </div>
+             
+                         <Button
+                           type="button"
+                           variant="ghost"
+                           className="p-2 text-red-500"
+                           onClick={() => removeOption(attrIndex, optIndex)}
+                         >
+                           <Trash2 className="w-4 h-4" />
+                         </Button>
+                       </div>
+                     ))}
+                     
+                     {/* Add Option Button */}
+                     <Button
+                       type="button"
+                       variant="outline"
+                       className="mt-2 flex items-center"
+                       onClick={() => addOption(attrIndex)}
+                     >
+                       <Plus className="w-4 h-4 mr-2" />
+                       Add Option
+                     </Button>
+                   </div>
+             
+                   {/* Remove Attribute */}
+                   <Button
+                     type="button"
+                     variant="ghost"
+                     className="mt-4 flex items-center text-red-500"
+                     onClick={() => removeAttribute(attrIndex)}
+                   >
+                     <Trash2 className="w-4 h-4 mr-2" />
+                     Remove Attribute
+                   </Button>
+                 </div>
+               ))}
+             
+               {/* Add Attribute Button */}
+               <Button type="button" variant="outline" onClick={addAttribute}>
+                 <Plus className="w-4 h-4 mr-2" />
+                 Add Attribute
+               </Button>
+             </div>
 
-                    {/* Attribute Type */}
-                    <Select
-                      value={attribute.type}
-                      onValueChange={(value) => updateAttribute(attrIndex, "type", value)}
-                    >
-                      <SelectTrigger className="bg-white border-gray-200">
-                        <SelectValue placeholder="Select Type" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="list">List</SelectItem>
-                        <SelectItem value="dropdown">Dropdown</SelectItem>
-                        <SelectItem value="search">Search</SelectItem>
-                      </SelectContent>
-                    </Select>
 
-                    {/* Options Management */}
-                    <div className="space-y-2">
-                      <h4 className="text-sm font-medium">Options</h4>
-                      {attribute.options.map((option, optIndex) => (
-                        <div key={optIndex} className="flex items-center space-x-2">
-                          <Input
-                            placeholder={`Option ${optIndex + 1}`}
-                            value={option.value.toString() || ''} // Directly use the string
-                            onChange={(e) => updateOption(attrIndex, optIndex, e.target.value)}
-                            className="h-10 flex-1"
-                          />
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            className="p-2 text-red-500"
-                            onClick={() => removeOption(attrIndex, optIndex)}
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </div>
-                      ))}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        className="mt-2 flex items-center"
-                        onClick={() => addOption(attrIndex)}
-                      >
-                        <Plus className="w-4 h-4 mr-2" />
-                        Add Option
-                      </Button>
-                    </div>
-                    {/* Remove Attribute */}
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="mt-4 flex items-center text-red-500"
-                      onClick={() => removeAttribute(attrIndex)}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Remove Attribute
-                    </Button>
-                  </div>
-                ))}
-
-                <Button type="button" variant="outline" onClick={addAttribute}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Attribute
-                </Button>
-              </div>
-
-
-              {/* Service Segments */}
-              <div className="space-y-4">
-                <h3 className="text-lg font-medium">Service Segments</h3>
-                {serviceSegments.map((segment, index) => (
-                  <div key={index} className="space-y-2">
-                    <Input
-                      placeholder="Segment Name"
-                      value={segment.segment_name}
-                      onChange={(e) => updateServiceSegment(index, e.target.value)}
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      className="mt-4 flex items-center text-red-500"
-                      onClick={() => removeServiceSegment(index)}
-                    >
-                      <Trash2 className="w-4 h-4 mr-2" />
-                      Remove Segment
-                    </Button>
-                  </div>
-                ))}
-                <Button type="button" onClick={addServiceSegment}>Add Service Segment</Button>
-              </div>
+            
 
               <div className="space-y-4">
 

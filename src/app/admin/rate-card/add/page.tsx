@@ -22,7 +22,7 @@ import { Save, FileText, Loader2, Type, Globe2 } from "lucide-react";
 import {
   fetchAllCategories,
   fetchSubCategoriesByCategoryId,
-  fetchProviders,
+  fetchProviders, fetchProviderById,
   fetchFilterOptionsByAttributeId,
   fetchFilterAttributes,
   createRateCard,
@@ -36,6 +36,7 @@ import {
 } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { useDebounce } from "use-debounce"; // Install: npm install use-debounce
 
 // Import React-Quill dynamically
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -79,19 +80,23 @@ const RateCardForm: React.FC = () => {
   const [strikePrice, setStrikePrice] = useState("");
   const [strikePriceError, setStrikePriceError] = useState("");
   const [priceError, setPriceError] = useState("");
-  const [isRecommended, setIsRecommended] = useState(false);
-  const [isBestDeal, setIsBestDeal] = useState(false);
   const [serviceDescriptions, setServiceDescriptions] = useState<ServiceDetail[]>([]);
   const [segments, setSegments] = useState<ServiceSegment[]>([]);
   const [segmentsId, setsegmentsId] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>("");
+const [debouncedSearch] = useDebounce(searchTerm, 300); // Debounced input
+const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
+const [isLoadingProviders, setIsLoadingProviders] = useState(false);
+const [page, setPage] = useState(1);
+const [hasMore, setHasMore] = useState(true); // Indicates if more data exists
+  const [weight, setWeight] = useState<number>(0);
 
   useEffect(() => {
     const loadCategories = async () => {
       try {
         const categoryData = await fetchAllCategories();
         setCategories(categoryData);
-         const fetchedProviders = await fetchProviders();
-              setProviders(fetchedProviders);
+        
       } catch {
         toast({
           variant: "error",
@@ -102,6 +107,41 @@ const RateCardForm: React.FC = () => {
     };
     loadCategories();
   }, []);
+
+  useEffect(() => {
+    const loadProviders = async () => {
+      if (!debouncedSearch && !selectedProvider) return; // Don't fetch unless searching or editing
+  
+      setIsLoadingProviders(true);
+      try {
+        const fetchedProviders = await fetchProviders(debouncedSearch, page, 10); // Fetch 10 at a time
+        setProviders((prev) => (page === 1 ? fetchedProviders : [...prev, ...fetchedProviders])); // Append on new pages
+        setHasMore(fetchedProviders.length === 10); // If less than 10, no more pages
+      } catch (error) {
+        console.error("Failed to load providers:", error);
+      } finally {
+        setIsLoadingProviders(false);
+      }
+    };
+  
+    loadProviders();
+  }, [debouncedSearch, page]);
+  
+  // Load selected provider for edit mode
+  useEffect(() => {
+    const loadSelectedProvider = async () => {
+      if (selectedProviderId) {
+        try {
+          const provider = await fetchProviderById(selectedProviderId);
+          setSelectedProvider(provider);
+        } catch (error) {
+          console.error("Failed to load selected provider:", error);
+        }
+      }
+    };
+  
+    loadSelectedProvider();
+  }, [selectedProviderId]);
 
   // Fetch subcategories when a category is selected
   useEffect(() => {
@@ -204,11 +244,10 @@ const RateCardForm: React.FC = () => {
         option_id: pair.optionId,
       })),
       segment_id: segmentsId,
+      weight:weight,
       price: parseFloat(price),
       strike_price:parseFloat(strikePrice),
       active: isActive,
-      recommended: isRecommended,
-      best_deal: isBestDeal,
       provider_id: selectedProviderId,
       
     };
@@ -326,6 +365,17 @@ const RateCardForm: React.FC = () => {
                   </Select>
                 </div>
               )}
+
+              <div className="space-y-4">
+                      <label className="block text-sm font-medium">Ratecard Weightage</label>
+                      <Input
+                        placeholder="Ratecard Weight"
+                        type="number"
+                        value={weight}
+                        onChange={(e) => setWeight(Number(e.target.value))}
+                        className="h-10"
+                      />
+                    </div>
               {/* Dynamic Filter Attribute Options */}
               {filterAttributes.length > 0 && (
                 <div>
@@ -408,7 +458,7 @@ const RateCardForm: React.FC = () => {
 
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <span>Discount Price</span>
+                  <span>Strike Price</span>
                 </label>
                 <Input
                   type="number"
@@ -453,62 +503,62 @@ const RateCardForm: React.FC = () => {
                     </div>
                       )}
 
+<div className="space-y-2">
+      <label className="text-sm font-medium text-gray-700">Select Provider</label>
+      <Select
+        value={selectedProviderId}
+        onValueChange={(value) => setSelectedProviderId(value)}
+      >
+        <SelectTrigger className="bg-white border-gray-200">
+          <SelectValue placeholder="Select a provider" />
+        </SelectTrigger>
 
+        <SelectContent className="w-full p-2">
+          {/* Search Input Inside Dropdown */}
+          <div className="p-2">
+            <Input
+              placeholder="Search provider..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPage(1); // Reset page on new search
+              }}
+              className="h-11"
+            />
+          </div>
 
+          {/* Providers List */}
+          {isLoadingProviders && page === 1 ? (
+            <div className="p-4 text-center">Loading...</div>
+          ) : providers.length > 0 ? (
+            providers.map((provider) =>
+              provider?.id && provider?.first_name ? (
+                <SelectItem key={provider.id} value={provider.id.toString()}>
+                  {provider.first_name} {provider.last_name || ""}
+                </SelectItem>
+              ) : null
+            )
+          ) : (
+            <div className="p-4 text-center">No providers found</div>
+          )}
 
-              <div className="space-y-2">
-                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <Globe2 className="w-4 h-4 text-blue-500" />
-                  <span>Select Provider</span>
-                </label>
-                <Select
-                  value={selectedProviderId}
-                  onValueChange={(value) => setSelectedProviderId(value)}
-                >
-                  <SelectTrigger className="bg-white border-gray-200">
-                    <SelectValue placeholder="Select a provider" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {providers.map((provider) =>
-                      provider?.id && provider?.first_name ? (
-                        <SelectItem key={provider.id} value={provider.id.toString()}>
-                          {provider.first_name}
-                        </SelectItem>
-                      ) : null
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
+          {/* Load More Button for Pagination */}
+          {hasMore && !isLoadingProviders && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                setPage((prev) => prev + 1);
+              }}
+              className="w-full text-center py-2 text-blue-600 hover:underline"
+            >
+              Load More
+            </button>
+          )}
+        </SelectContent>
+      </Select>
+    </div>
 
-              <div className="space-y-2">
-                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <span>Recommended</span>
-                </label>
-                <div className="flex items-center space-x-3">
-                  <span className="text-sm text-gray-600">No</span>
-                  <Switch
-                    checked={isRecommended}
-                    onCheckedChange={setIsRecommended}
-                    className="data-[state=checked]:bg-blue-500"
-                  />
-                  <span className="text-sm text-gray-600">Yes</span>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <span>Best Deal</span>
-                </label>
-                <div className="flex items-center space-x-3">
-                  <span className="text-sm text-gray-600">No</span>
-                  <Switch
-                    checked={isBestDeal}
-                    onCheckedChange={setIsBestDeal}
-                    className="data-[state=checked]:bg-blue-500"
-                  />
-                  <span className="text-sm text-gray-600">Yes</span>
-                </div>
-              </div>
+             
 
               {/* Active/Inactive Switch */}
               <div className="space-y-2">
