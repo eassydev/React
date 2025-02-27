@@ -46,13 +46,15 @@ const AddBannerForm: React.FC = () => {
   const [endDate, setEndDate] = useState<string>("");
   const [isActive, setIsActive] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [price, setPrice] = useState<number | null>(null);
   const [addToCart, setAddToCart] = useState(false);
   const [hubOptions, setHubOptions] = useState<Hub[]>([]);
   const [hubIds, setHubIds] = useState<string[]>([]);
-const [priceError, setPriceError] = useState<string>("");
 const [displayOrderError, setDisplayOrderError] = useState<string>("");
 const [radiusError, setRadiusError] = useState<string>("");
+ const [isFree, setIsFree] = useState<boolean>(false); // New state for is_free
+  const [rateCardId, setRateCardId] = useState<string | null>(null); // New state for selected rate card ID
+  const [rateCardOptions, setRateCardOptions] = useState<{ id: string; name: string }[]>([]); // Options for rate cards
+  
   const { toast } = useToast();
   const today = new Date().toISOString().split("T")[0];
 
@@ -122,6 +124,27 @@ const [radiusError, setRadiusError] = useState<string>("");
     }
   };
 
+
+  useEffect(() => {
+      const loadRateCards = async () => {
+        try {
+          const rateCards = await fetchAllRatecard(); // New API for fetching rate cards
+          const options = rateCards.map((rateCard) => ({
+            id: rateCard.id || '',
+            name: rateCard.name || "Unnamed Ratecard",
+          }));
+          setRateCardOptions(options);
+        } catch (error) {
+          toast({
+            variant: "error",
+            title: "Error",
+            description: "Failed to load rate cards for free promocode.",
+          });
+        }
+      };
+    
+      if (isFree) loadRateCards(); // Fetch only if isFree is true
+    }, [isFree, toast]);
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
@@ -144,9 +167,10 @@ const [radiusError, setRadiusError] = useState<string>("");
         end_date: endDate,
         is_active: isActive,
         image,
-        price,
         add_to_cart: addToCart,
         hub_ids: hubIds,
+        is_free: isFree, // New field
+        rate_card_id: isFree ? rateCardId : null,
       };
 
       await createBanner(bannerData);
@@ -203,29 +227,6 @@ const [radiusError, setRadiusError] = useState<string>("");
                   style={{ height: "200px" }}
                 />
               </div>
-
-              <div>
-                <label className="text-sm font-medium text-gray-700">Price</label>
-                <Input
-                  type="number"
-                  placeholder="Enter price"
-                  value={price || ""}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (parseFloat(value) < 0) {
-                      setPriceError("Price cannot be negative.");
-                      setPrice(parseFloat(value) || null);
-                    } else {
-                      setPriceError("");
-                      setPrice(parseFloat(value) || null);
-                    }
-                  }}
-                  className="h-11"
-                  required
-                />
-                {priceError && <p className="text-red-500 text-sm">{priceError}</p>}
-              </div>
-
               <div className="space-x-2">
                 <label className="text-sm font-medium text-gray-700">Selection Type</label>
                 <Select value={selectionType} onValueChange={(value) => setSelectionType(value)} required>
@@ -375,6 +376,30 @@ const [radiusError, setRadiusError] = useState<string>("");
                 <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
                 <span>Active</span>
               </div>
+
+               <div>
+                <label className="text-sm font-medium text-gray-700">Is Free</label>
+                <Switch checked={isFree} onCheckedChange={setIsFree} />
+              </div>
+              
+              {isFree && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Select Ratecard</label>
+                  <Select value={String(rateCardId)} onValueChange={(value) => setRateCardId(value)}>
+                    <SelectTrigger className="bg-white border-gray-200">
+                      <SelectValue placeholder="Select Ratecard" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {rateCardOptions.map((option) => (
+                        <SelectItem key={option.id} value={String(option.id)}>
+                          {option.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
+              
             </CardContent>
 
             <CardFooter>

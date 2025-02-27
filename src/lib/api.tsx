@@ -359,9 +359,10 @@ export interface Banner {
   radius?: number | null; // Radius for targeting in kilometers
   start_date?: string; // Start date for banner visibility (ISO format: YYYY-MM-DD)
   end_date?: string; // End date for banner visibility (ISO format: YYYY-MM-DD)
-  price?: number | null; // Price associated with the banner
   add_to_cart?: boolean; // Flag to indicate if the banner is for a cart item
   hub_ids?: string[]; // Array of hub IDs associated with the banner
+  is_free: boolean; 
+  rate_card_id: string | null; 
 }
 
 
@@ -2465,9 +2466,9 @@ export const createBanner = async (bannerData: Banner) => {
     formData.append("end_date", bannerData.end_date);
   }
 
-  if (bannerData.price !== undefined) {
-    formData.append("price", bannerData.price!.toString());
-  }
+  formData.append("is_free", bannerData.is_free ? "1" : "0");
+  formData.append("rate_card_id", bannerData.rate_card_id?.toString() || "");
+
 
   if (bannerData.add_to_cart !== undefined) {
     formData.append("add_to_cart", bannerData.add_to_cart ? "1" : "0");
@@ -2537,10 +2538,6 @@ export const updateBanner = async (id: string | number, bannerData: Banner): Pro
 
   if (bannerData.end_date) {
     formData.append("end_date", bannerData.end_date);
-  }
-
-  if (bannerData.price !== undefined) {
-    formData.append("price", bannerData.price!.toString());
   }
 
   if (bannerData.add_to_cart !== undefined) {

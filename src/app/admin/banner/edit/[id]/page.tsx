@@ -48,11 +48,9 @@ const EditBannerForm: React.FC = () => {
   const [endDate, setEndDate] = useState<string>("");
   const [isActive, setIsActive] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [price, setPrice] = useState<number | null>(null);
   const [addToCart, setAddToCart] = useState(false);
   const [hubOptions, setHubOptions] = useState<Hub[]>([]);
   const [hubIds, setHubIds] = useState<string[]>([]);
-  const [priceError, setPriceError] = useState<string>("");
   const [displayOrderError, setDisplayOrderError] = useState<string>("");
   const [radiusError, setRadiusError] = useState<string>("");
   const { toast } = useToast();
@@ -76,7 +74,6 @@ const EditBannerForm: React.FC = () => {
         setStartDate(banner.start_date ? format(new Date(banner.start_date), "yyyy-MM-dd") : "");
         setEndDate(banner.end_date ? format(new Date(banner.end_date), "yyyy-MM-dd") : "");
         setIsActive(banner.is_active);
-        setPrice(banner.price || null);
         setAddToCart(banner.add_to_cart || false);
         setHubIds(banner.hub_ids || []);
         setMediaName(banner.media_name || "");
@@ -156,9 +153,8 @@ const EditBannerForm: React.FC = () => {
     console.log("description", description)
     console.log("selectionType", selectionType)
     console.log("selectedItemId", selectedItemId)
-    console.log("price", price)
 
-    if (!title || !description || !selectionType || !selectedItemId || !price) {
+    if (!title || !description || !selectionType || !selectedItemId) {
       toast({
         variant: "error",
         title: "Validation Error",
@@ -184,7 +180,6 @@ const EditBannerForm: React.FC = () => {
         end_date: endDate,
         is_active: isActive,
         image,
-        price,
         add_to_cart: addToCart,
         hub_ids: hubIds,
       };
@@ -243,27 +238,7 @@ const EditBannerForm: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="text-sm font-medium text-gray-700">Price</label>
-                <Input
-                  type="number"
-                  placeholder="Enter price"
-                  value={price || ""}
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    if (parseFloat(value) < 0) {
-                      setPriceError("Price cannot be negative.");
-                      setPrice(parseFloat(value) || null);
-                    } else {
-                      setPriceError("");
-                      setPrice(parseFloat(value) || null);
-                    }
-                  }}
-                  className="h-11"
-                  required
-                />
-                {priceError && <p className="text-red-500 text-sm">{priceError}</p>}
-              </div>
+            
 
               <div className="space-x-2">
                 <label className="text-sm font-medium text-gray-700">Selection Type</label>
