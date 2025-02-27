@@ -68,18 +68,14 @@ export const sidebarItems: SidebarItem[] = [
   {
     title: "Service",
     icon: Receipt,
-    children: [{ title: "Catgeory", route: `${basePath}/category` }, { title: "Sub category", route: `${basePath}/sub-category` }, { title: "Description", route: `${basePath}/description` }],
+    children: [
+      { title: "Catgeory", route: `${basePath}/category` },
+       { title: "Sub category", route: `${basePath}/sub-category` },
+       { title: "Segment", route: `${basePath}/segment` },
+       { title: "Service Video", route: `${basePath}/video` }, 
+       { title: "Description", route: `${basePath}/description` }
+      ],
   },
-  // {
-  //   title: "Category",
-  //   icon: ListCheckIcon,
-  //   route: `${basePath}/category`,
-  // },
-  // {
-  //   title: "Sub category",
-  //   icon: ListCheckIcon,
-  //   route: `${basePath}/sub-category`,
-  // },
   {
     title: "Rate Card",
     icon: ListCheckIcon,

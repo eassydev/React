@@ -103,7 +103,7 @@ const ServiceSegmentList = () => {
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="icon">
-            <Link href={`/admin/service-segment/edit/${row.original.id}`} passHref> {/* Correct link */}
+            <Link href={`/admin/segment/edit/${row.original.id}`} passHref> {/* Correct link */}
               <Edit className="w-4 h-4 text-blue-600" />
             </Link>
           </Button>
@@ -147,7 +147,7 @@ const ServiceSegmentList = () => {
       <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">Service Segment List</h1>
           <Button asChild variant="default" className="flex items-center space-x-2">
-            <Link href="/admin/service-segment/add"> {/* Correct link */}
+            <Link href="/admin/segment/add"> {/* Correct link */}
               <Plus className="w-4 h-4 mr-1" />
               <span>Add Segment</span>
             </Link>

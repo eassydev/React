@@ -2540,6 +2540,10 @@ export const updateBanner = async (id: string | number, bannerData: Banner): Pro
     formData.append("end_date", bannerData.end_date);
   }
 
+
+  formData.append("is_free", bannerData.is_free ? "1" : "0");
+  formData.append("rate_card_id", bannerData.rate_card_id?.toString() || "");
+
   if (bannerData.add_to_cart !== undefined) {
     formData.append("add_to_cart", bannerData.add_to_cart ? "1" : "0");
   }

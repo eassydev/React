@@ -89,11 +89,11 @@ const ServiceVideoList = () => {
                 let statusClass = "";
 
                 switch (statusValue) {
-                    case 1:
+                    case true:
                         statusLabel = "Active";
                         statusClass = "bg-green-200 text-green-800";
                         break;
-                    case 0:
+                    case false:
                         statusLabel = "Inactive";
                         statusClass = "bg-yellow-200 text-yellow-800";
                         break;
@@ -112,7 +112,7 @@ const ServiceVideoList = () => {
             cell: ({ row }) => (
                 <div className="flex items-center space-x-2">
                     <Button variant="ghost" size="icon">
-                        <Link href={`/admin/service-video/edit/${row.original.id}`} passHref>
+                        <Link href={`/admin/video/edit/${row.original.id}`} passHref>
                             <Edit className="w-4 h-4 text-blue-600" />
                         </Link>
                     </Button>
@@ -156,7 +156,7 @@ const ServiceVideoList = () => {
                 <div className="flex items-center justify-between">
                     <h1 className="text-3xl font-bold text-gray-900">Service Video List</h1>
                     <Button asChild variant="default" className="flex items-center space-x-2">
-                        <Link href="/admin/service-video/add">
+                        <Link href="/admin/video/add">
                             <Plus className="w-4 h-4 mr-1" />
                             <span>Add Video</span>
                         </Link>
