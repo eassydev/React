@@ -94,20 +94,6 @@ const EditPromocodeForm: React.FC = () => {
       try {
         let data: { id: string; name: string }[] = [];
         switch (selectionType) {
-          case "Category":
-            const categories = await fetchAllCategories();
-            data = categories.map((category) => ({
-              id: category.id || '',
-              name: category.name || "Unnamed Category",
-            }));
-            break;
-          case "Subcategory":
-            const subcategories = await fetchAllSubCategories();
-            data = subcategories.map((subcategory) => ({
-              id: subcategory.id || '',
-              name: subcategory.name || "Unnamed Subcategory",
-            }));
-            break;
           case "Ratecard":
             const ratecards = await fetchAllRatecard();
             data = ratecards.map((ratecard) => ({

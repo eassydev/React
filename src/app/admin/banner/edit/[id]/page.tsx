@@ -53,6 +53,10 @@ const EditBannerForm: React.FC = () => {
   const [hubIds, setHubIds] = useState<string[]>([]);
   const [displayOrderError, setDisplayOrderError] = useState<string>("");
   const [radiusError, setRadiusError] = useState<string>("");
+   const [isFree, setIsFree] = useState<boolean>(false); // New state for is_free
+      const [rateCardId, setRateCardId] = useState<string | null>(null); // New state for selected rate card ID
+      const [rateCardOptions, setRateCardOptions] = useState<{ id: string; name: string }[]>([]); // Options for rate cards
+      
   const { toast } = useToast();
   const today = new Date().toISOString().split("T")[0];
 
@@ -77,6 +81,8 @@ const EditBannerForm: React.FC = () => {
         setAddToCart(banner.add_to_cart || false);
         setHubIds(banner.hub_ids || []);
         setMediaName(banner.media_name || "");
+        setIsFree(banner.is_free);
+        setRateCardId(banner.rate_card_id?.toString() || null); // Ensure it's a string
       } catch (error) {
         toast({ variant: "error", title: "Error", description: "Failed to load banner data." });
       }
@@ -94,6 +100,28 @@ const EditBannerForm: React.FC = () => {
     fetchBannerData();
     loadHubs();
   }, [id, toast]);
+
+
+   useEffect(() => {
+      const loadRateCards = async () => {
+        try {
+          const rateCards = await fetchAllRatecard(); // New API for fetching rate cards
+          const options = rateCards.map((rateCard) => ({
+            id: rateCard.id || '',
+            name: rateCard.name || "Unnamed Ratecard",
+          }));
+          setRateCardOptions(options);
+        } catch (error) {
+          toast({
+            variant: "error",
+            title: "Error",
+            description: "Failed to load rate cards for free promocode.",
+          });
+        }
+      };
+    
+      if (isFree) loadRateCards(); // Fetch only if isFree is true
+    }, [isFree, toast]);
 
   useEffect(() => {
     const loadOptions = async () => {
@@ -182,6 +210,8 @@ const EditBannerForm: React.FC = () => {
         image,
         add_to_cart: addToCart,
         hub_ids: hubIds,
+        is_free: isFree, // New field
+        rate_card_id: isFree ? rateCardId : null,
       };
 
       await updateBanner(id!.toString(), bannerData);
@@ -395,6 +425,29 @@ const EditBannerForm: React.FC = () => {
                   </video>
                 )}
               </div>
+
+                <div>
+                <label className="text-sm font-medium text-gray-700">Is Free</label>
+                <Switch checked={isFree} onCheckedChange={setIsFree} />
+              </div>
+              
+              {isFree && (
+                <div>
+                  <label className="text-sm font-medium text-gray-700">Select Ratecard</label>
+                  <Select value={rateCardId || ""} onValueChange={(value) => setRateCardId(value)}>
+                    <SelectTrigger className="bg-white border-gray-200">
+                      <SelectValue placeholder="Select Ratecard" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {rateCardOptions.map((option) => (
+                        <SelectItem key={option.id} value={String(option.id)}>
+                          {option.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               <div className="flex items-center space-x-2">
                 <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
                 <span>Active</span>
