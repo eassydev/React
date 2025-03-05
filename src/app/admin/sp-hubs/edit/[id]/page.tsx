@@ -14,7 +14,10 @@ import {
   fetchSubCategoriesByCategoryId,
   fetchFilterAttributes,
   fetchFilterOptionsByAttributeId,
+  fetchProviderById,
   fetchSpHubById,
+  fetchProviders,
+  Provider,
   updateSpHub,
   Category,
   Subcategory,
@@ -24,6 +27,7 @@ import {
   AttributeOption,
 } from "@/lib/api";
 import { Save, FileText, Loader2, Type, Globe2 } from 'lucide-react';
+import { useDebounce } from "use-debounce";
 
 const EditSpHubForm: React.FC = () => {
   const router = useRouter();
@@ -49,7 +53,15 @@ const EditSpHubForm: React.FC = () => {
   const [weightage, setWeightage] = useState<string>("0");
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-
+// Provider-related state
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
+  const [selectedProviderId, setSelectedProviderId] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [debouncedSearch] = useDebounce(searchTerm, 300);
+  const [isLoadingProviders, setIsLoadingProviders] = useState(false);
+  const [page, setPage] = useState(1);
+  const [hasMore, setHasMore] = useState(true);
   useEffect(() => {
     const loadInitialData = async () => {
       try {
@@ -69,6 +81,8 @@ const EditSpHubForm: React.FC = () => {
           setSelectedCategoryId(spHub.category_id?.toString() || "");
           setSelectedSubcategoryId(spHub.subcategory_id?.toString() || "");
           setSelectedFilterAttributeId(spHub.filter_attribute_id?.toString() || "");
+          setSelectedProviderId(spHub.provider_id?.toString() || "");
+
           setSelectedFilterOptionId(spHub.filter_option_id?.toString() || "");
           setStaff(spHub.staff.toString());
           setWeightage(spHub.weightage.toString());
@@ -119,6 +133,84 @@ const EditSpHubForm: React.FC = () => {
     }
   }, [selectedCategoryId, selectedSubcategoryId]);
 
+
+  
+  
+    useEffect(() => {
+      const loadSelectedProvider = async () => {
+        if (selectedProviderId) {
+          try {
+            const provider = await fetchProviderById(selectedProviderId);
+            if (provider && provider.id) {
+              // Convert provider.id to string
+              setSelectedProvider({
+                ...provider,
+                id: provider.id.toString(),
+              });
+            } else {
+              setSelectedProvider(null);
+            }
+          } catch (error) {
+            console.error("Failed to load selected provider:", error);
+          }
+        } else {
+          setSelectedProvider(null);
+        }
+      };
+    
+      loadSelectedProvider();
+    }, [selectedProviderId]);
+
+    
+      // ------------------------------
+      // 2. Fetch Providers (Search + Pagination)
+      // ------------------------------
+      useEffect(() => {
+        const loadProviders = async () => {
+          setIsLoadingProviders(true);
+      
+          try {
+            // 1. Fetch providers from API
+           // After fetching providers
+    const fetchedProviders = await fetchProviders(debouncedSearch, page, 10);
+    
+    // Convert each provider's id to string
+    const normalizedProviders = fetchedProviders.map((p) => ({
+      ...p,
+      id: p.id?.toString(),
+    }));
+    
+    // Now merge with existing providers
+    let combinedProviders =
+      page === 1 ? normalizedProviders : [...providers, ...normalizedProviders];
+    
+    // If we have a selectedProvider, ensure it's included
+    if (
+      selectedProvider &&
+      !combinedProviders.some((p) => p.id === selectedProvider.id)
+    ) {
+      combinedProviders.unshift(selectedProvider);
+    }
+    
+    // Remove duplicates
+    const uniqueProviders = combinedProviders.reduce<Provider[]>((acc, current) => {
+      if (!acc.some((p) => p.id === current.id)) {
+        acc.push(current);
+      }
+      return acc;
+    }, []);
+    
+    setProviders(uniqueProviders);
+            setHasMore(fetchedProviders.length === 10); // If we got 10, likely more pages exist
+          } catch (error) {
+            console.error("Failed to load providers:", error);
+          } finally {
+            setIsLoadingProviders(false);
+          }
+        };
+      
+        loadProviders();
+      }, [debouncedSearch, page, selectedProvider]);
   useEffect(() => {
     if (selectedFilterAttributeId) {
       const loadFilterOptions = async () => {
@@ -149,6 +241,7 @@ const EditSpHubForm: React.FC = () => {
       staff: parseInt(staff),
       weightage: parseFloat(weightage),
       is_active: isActive,
+      provider_id: selectedProviderId,
     };
 
     try {
@@ -331,6 +424,53 @@ const EditSpHubForm: React.FC = () => {
               />
             </div>
 
+ {/* Provider (with Search & Pagination) */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Select Provider</label>
+                <Select value={selectedProviderId?.toString()} onValueChange={(value) => setSelectedProviderId(value)}>
+                <SelectTrigger className="bg-white border-gray-200">
+                    <SelectValue placeholder="Select a provider" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {/* Search Input */}
+                    <div className="p-2">
+                      <Input
+                        placeholder="Search provider..."
+                        value={searchTerm}
+                        onChange={(e) => {
+                          setSearchTerm(e.target.value);
+                          setPage(1);
+                        }}
+                        className="h-11"
+                      />
+                    </div>
+
+                    {/* Provider List */}
+                    {providers.length > 0 ? (
+                      providers.map((provider) => (
+                        <SelectItem key={provider.id} value={provider.id ?? ''}>
+                          {provider.first_name} {provider.last_name || ""}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="p-4 text-center">No providers found</div>
+                    )}
+
+                    {/* Load More */}
+                    {hasMore && !isLoadingProviders && (
+                      <button
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setPage((prev) => prev + 1);
+                        }}
+                        className="w-full text-center py-2 text-blue-600 hover:underline"
+                      >
+                        Load More
+                      </button>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
             {/* Active Status Switch */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Status</label>

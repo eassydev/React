@@ -151,7 +151,7 @@ const [hasMore, setHasMore] = useState(true); // Indicates if more data exists
       image: packageImage || null,
       package_type: packageType,
       created_by: createdBy,
-      provider_id: providerId,
+      provider_id: selectedProviderId,
       discount_type: discountType,
       discount_value: discountValue,
       validity_period: packageType === 'amc' ? validityPeriod : null,
@@ -414,6 +414,7 @@ const [hasMore, setHasMore] = useState(true); // Indicates if more data exists
 
 <div className="space-y-2">
       <label className="text-sm font-medium text-gray-700">Select Provider</label>
+      
       <Select
         value={selectedProviderId}
         onValueChange={(value) => setSelectedProviderId(value)}

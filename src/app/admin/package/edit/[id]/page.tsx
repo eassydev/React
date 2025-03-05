@@ -102,7 +102,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
         setPackageName(packageData.name);
         setDescription(packageData.description || '');
         setPackageType(packageData.package_type);
-        setCreatedBy(packageData.created_by);
+       // setCreatedBy(packageData.created_by);
         setSelectedProviderId(packageData.provider_id ? packageData.provider_id.toString() : '');
         setDiscountType(packageData.discount_type);
         setDiscountValue(Number(packageData.discount_value));
@@ -239,7 +239,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
       image: packageImage || null,
       package_type: packageType,
       created_by: createdBy,
-      provider_id: providerId,
+      provider_id: selectedProviderId,
       discount_type: discountType,
       discount_value: discountValue,
       validity_period: packageType === 'amc' ? validityPeriod : null,
@@ -261,6 +261,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
 
       router.push('/admin/package'); // Redirect to the packages list after success
     } catch (error: any) {
+      console.log("error.messag",error.messag)
       toast({
         variant: 'error',
         title: 'Error',
@@ -513,10 +514,15 @@ const [providers, setProviders] = useState<Provider[]>([]);
   {/* Provider (with Search & Pagination) */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Select Provider</label>
-                <Select value={selectedProviderId} onValueChange={(value) => setSelectedProviderId(value)}>
-                  <SelectTrigger className="bg-white border-gray-200">
-                    <SelectValue placeholder="Select a provider" />
-                  </SelectTrigger>
+                <Select value={selectedProviderId?.toString()} onValueChange={(value) => setSelectedProviderId(value)}>
+                <SelectTrigger className="bg-white border-gray-200">
+  {selectedProviderId ? (
+    <SelectValue>{providers.find(p => p.id === selectedProviderId)?.first_name || "Select a provider"}</SelectValue>
+  ) : (
+    <SelectValue placeholder="Select a provider" />
+  )}
+</SelectTrigger>
+
                   <SelectContent>
                     {/* Search Input */}
                     <div className="p-2">

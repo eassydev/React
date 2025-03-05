@@ -201,37 +201,25 @@ const RateCardForm: React.FC = () => {
       setIsLoadingProviders(true);
   
       try {
-        // 1. Fetch providers from API
-       // After fetching providers
-const fetchedProviders = await fetchProviders(debouncedSearch, page, 10);
-
-// Convert each provider's id to string
-const normalizedProviders = fetchedProviders.map((p) => ({
-  ...p,
-  id: p.id?.toString(),
-}));
-
-// Now merge with existing providers
-let combinedProviders =
-  page === 1 ? normalizedProviders : [...providers, ...normalizedProviders];
-
-// If we have a selectedProvider, ensure it's included
-if (
-  selectedProvider &&
-  !combinedProviders.some((p) => p.id === selectedProvider.id)
-) {
-  combinedProviders.unshift(selectedProvider);
-}
-
-// Remove duplicates
-const uniqueProviders = combinedProviders.reduce<Provider[]>((acc, current) => {
-  if (!acc.some((p) => p.id === current.id)) {
-    acc.push(current);
-  }
-  return acc;
-}, []);
-
-setProviders(uniqueProviders);
+        const fetchedProviders = await fetchProviders(debouncedSearch, page, 10);
+        const normalizedProviders = fetchedProviders.map((p) => ({
+          ...p,
+          id: p.id?.toString(),
+        }));
+  
+        // Reset providers if it's a new search (page === 1)
+        const combinedProviders =
+          page === 1 ? normalizedProviders : [...providers, ...normalizedProviders];
+  
+        // Ensure no duplicates
+        const uniqueProviders = combinedProviders.reduce<Provider[]>((acc, current) => {
+          if (!acc.some((p) => p.id === current.id)) {
+            acc.push(current);
+          }
+          return acc;
+        }, []);
+  
+        setProviders(uniqueProviders);
         setHasMore(fetchedProviders.length === 10); // If we got 10, likely more pages exist
       } catch (error) {
         console.error("Failed to load providers:", error);
@@ -241,7 +229,7 @@ setProviders(uniqueProviders);
     };
   
     loadProviders();
-  }, [debouncedSearch, page, selectedProvider]);
+  }, [debouncedSearch, page]);
   // ------------------------------
   // 3. Load the Selected Provider (for Edit Preselect)
   // ------------------------------
@@ -255,7 +243,6 @@ setProviders(uniqueProviders);
       setSubcategories(fetchedSubcategories);
     } catch (error) {
       setSubcategories([]);
-      setSelectedSubcategoryId("");
     }
   };
 
@@ -275,9 +262,13 @@ setProviders(uniqueProviders);
         try {
           const subcategoryData = await fetchSubCategoriesByCategoryId(selectedCategoryId);
           setSubcategories(subcategoryData);
-          setSelectedSubcategoryId("");
+          // Only reset selectedSubcategoryId if it doesn't match any subcategory in the new list
+          if (!subcategoryData.some((sub) => sub.id?.toString() === selectedSubcategoryId)) {
+            setSelectedSubcategoryId("");
+          }
         } catch (error) {
           setSubcategories([]);
+          // Only reset selectedSubcategoryId if there's an error and no subcategories are fetched
           setSelectedSubcategoryId("");
         }
       })();
@@ -471,35 +462,36 @@ setProviders(uniqueProviders);
                   </SelectContent>
                 </Select>
               </div>
-
-              {/* Subcategory Selector */}
-              {subcategories.length > 0 && (
-                <div className="space-y-2">
-                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                    <Globe2 className="w-4 h-4 text-blue-500" />
-                    <span>Select Subcategory</span>
-                  </label>
-                  <Select
-                    value={selectedSubcategoryId}
-                    onValueChange={(value) => setSelectedSubcategoryId(value)}
-                  >
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select a subcategory" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {subcategories.map(
-                        (subcategory) =>
-                          subcategory?.id && subcategory?.name && (
-                            <SelectItem key={subcategory.id} value={subcategory.id.toString()}>
-                              {subcategory.name}
-                            </SelectItem>
-                          )
-                      )}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
+{/* Subcategory Selector */}
+{subcategories.length > 0 && (
+  <div className="space-y-2">
+    <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+      <Globe2 className="w-4 h-4 text-blue-500" />
+      <span>Select Subcategory</span>
+    </label>
+    <Select
+      value={selectedSubcategoryId} // Ensure this is a string
+      onValueChange={(value) => setSelectedSubcategoryId(value)} // value is already a string
+    >
+      <SelectTrigger className="bg-white border-gray-200">
+        <SelectValue placeholder="Select a subcategory" />
+      </SelectTrigger>
+      <SelectContent>
+        {subcategories.map(
+          (subcategory) =>
+            subcategory?.id && subcategory?.name && (
+              <SelectItem
+                key={subcategory.id.toString()} // Ensure key is a string
+                value={subcategory.id.toString()} // Ensure value is a string
+              >
+                {subcategory.name}
+              </SelectItem>
+            )
+        )}
+      </SelectContent>
+    </Select>
+  </div>
+)}
               {/* Dynamic Filter Attribute Options */}
               {filterAttributes.length > 0 && (
                 <div className="space-y-2">
@@ -651,7 +643,7 @@ setProviders(uniqueProviders);
                     {/* Provider List */}
                     {providers.length > 0 ? (
                       providers.map((provider) => (
-                        <SelectItem key={provider.id} value={provider.id ?? ''}>
+                        <SelectItem key={provider.id} value={provider.id?.toString() ?? ''}>
                           {provider.first_name} {provider.last_name || ""}
                         </SelectItem>
                       ))

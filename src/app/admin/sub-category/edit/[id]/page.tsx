@@ -698,7 +698,7 @@ const removeAttribute = (index: number) => {
               <div className="space-y-4">
 
                 <Button type="button" onClick={() => setShowIncludeSection((prev) => !prev)} className="mb-4">
-                  {showExcludeSection ? "Hide Include Section" : "Show Include Section"}
+                  {showIncludeSection ? "Hide Include Section" : "Show Include Section"}
                 </Button>
 
 

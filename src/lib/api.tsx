@@ -620,6 +620,7 @@ export interface SpHub {
   staff: number;
   weightage: number;
   is_active: boolean;
+  provider_id?: string | null;
   created_at?: string;
   updated_at?: string;
   deleted_at?: string | null;

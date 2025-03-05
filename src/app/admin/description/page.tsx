@@ -156,7 +156,7 @@ const ServiceDetailList = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-12xl mx-auto space-y-6">
       <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900">FAQ List</h1>
+          <h1 className="text-3xl font-bold text-gray-900">Service Description List</h1>
           <Button asChild variant="default" className="flex items-center space-x-2">
             <Link href="/admin/description/add">
               <Plus className="w-4 h-4 mr-1" />

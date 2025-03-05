@@ -7,8 +7,9 @@ import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { fetchAllHubs,Category,Subcategory,Hub,City,Attribute,AttributeOption, fetchAllCities, fetchAllCategories, fetchSubCategoriesByCategoryId, fetchFilterAttributes, fetchFilterOptionsByAttributeId, createSpHub } from "@/lib/api";
+import { fetchAllHubs,Provider,fetchProviders,Category,Subcategory,Hub,City,Attribute,AttributeOption, fetchAllCities, fetchAllCategories, fetchSubCategoriesByCategoryId, fetchFilterAttributes, fetchFilterOptionsByAttributeId, createSpHub } from "@/lib/api";
 import { Save, FileText, Loader2, Type, Globe2 } from 'lucide-react';
+import { useDebounce } from "use-debounce"; // Install: npm install use-debounce
 
 const AddSpHubForm: React.FC = () => {
   const router = useRouter();
@@ -20,14 +21,20 @@ const AddSpHubForm: React.FC = () => {
    const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
    const [filterAttributes, setFilterAttributes] = useState<Attribute[]>([]);
   const [filterOptions, setFilterOptions] = useState<AttributeOption[]>([]);
-
+const [providers, setProviders] = useState<Provider[]>([]);
+  const [selectedProviderId, setSelectedProviderId] = useState<string>("");
   const [selectedHubId, setSelectedHubId] = useState<string>("");
   const [selectedCityId, setSelectedCityId] = useState<string>("");
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>("");
   const [selectedFilterAttributeId, setSelectedFilterAttributeId] = useState<string>("");
   const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>("");
-  const [selectedFilterAttributesId, setSelectedFilterAttributesId] = useState<string>('');
+const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
+const [isLoadingProviders, setIsLoadingProviders] = useState(false);
+const [page, setPage] = useState(1);
+const [hasMore, setHasMore] = useState(true);
+  const [searchTerm, setSearchTerm] = useState<string>("");
+const [debouncedSearch] = useDebounce(searchTerm, 300); // Debounced input
 
   const [staff, setStaff] = useState<string>("0");
   const [weightage, setWeightage] = useState<string>("0");
@@ -57,6 +64,26 @@ const AddSpHubForm: React.FC = () => {
     loadData();
   }, []);
 
+
+    useEffect(() => {
+      const loadProviders = async () => {
+        if (!debouncedSearch && !selectedProvider) return; // Don't fetch unless searching or editing
+    
+        setIsLoadingProviders(true);
+        try {
+          const fetchedProviders = await fetchProviders(debouncedSearch, page, 10); // Fetch 10 at a time
+          setProviders((prev) => (page === 1 ? fetchedProviders : [...prev, ...fetchedProviders])); // Append on new pages
+          setHasMore(fetchedProviders.length === 10); // If less than 10, no more pages
+        } catch (error) {
+          console.error("Failed to load providers:", error);
+        } finally {
+          setIsLoadingProviders(false);
+        }
+      };
+    
+      loadProviders();
+    }, [debouncedSearch, page]);
+    
   // Fetch subcategories when a category is selected
   useEffect(() => {
     if (selectedCategoryId) {
@@ -123,6 +150,7 @@ const AddSpHubForm: React.FC = () => {
       staff: parseInt(staff),
       weightage: parseFloat(weightage),
       is_active: isActive,
+      provider_id: selectedProviderId,
     };
 
     try {
@@ -253,8 +281,8 @@ const AddSpHubForm: React.FC = () => {
                     <span>Select Filter Attributes</span>
                   </label>
                   <Select
-                    value={selectedFilterAttributesId}
-                    onValueChange={(value) => setSelectedFilterAttributesId(value)}
+                    value={selectedFilterAttributeId}
+                    onValueChange={(value) =>setSelectedFilterAttributeId(value)}
                   >
                     <SelectTrigger className="bg-white border-gray-200">
                       <SelectValue placeholder="Select filter attributes" />
@@ -316,6 +344,61 @@ const AddSpHubForm: React.FC = () => {
     required
   />
 </div>
+
+<div className="space-y-2">
+      <label className="text-sm font-medium text-gray-700">Select Provider</label>
+      <Select
+        value={selectedProviderId}
+        onValueChange={(value) => setSelectedProviderId(value)}
+      >
+        <SelectTrigger className="bg-white border-gray-200">
+          <SelectValue placeholder="Select a provider" />
+        </SelectTrigger>
+
+        <SelectContent className="w-full p-2">
+          {/* Search Input Inside Dropdown */}
+          <div className="p-2">
+            <Input
+              placeholder="Search provider..."
+              value={searchTerm}
+              onChange={(e) => {
+                setSearchTerm(e.target.value);
+                setPage(1); // Reset page on new search
+              }}
+              className="h-11"
+            />
+          </div>
+
+          {/* Providers List */}
+          {isLoadingProviders && page === 1 ? (
+            <div className="p-4 text-center">Loading...</div>
+          ) : providers.length > 0 ? (
+            providers.map((provider) =>
+              provider?.id && provider?.first_name ? (
+                <SelectItem key={provider.id} value={provider.id.toString()}>
+                  {provider.first_name} {provider.last_name || ""}
+                </SelectItem>
+              ) : null
+            )
+          ) : (
+            <div className="p-4 text-center">No providers found</div>
+          )}
+
+          {/* Load More Button for Pagination */}
+          {hasMore && !isLoadingProviders && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                setPage((prev) => prev + 1);
+              }}
+              className="w-full text-center py-2 text-blue-600 hover:underline"
+            >
+              Load More
+            </button>
+          )}
+        </SelectContent>
+      </Select>
+    </div>
 
 {/* Active Status Field */}
 <div className="space-y-2">

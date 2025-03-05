@@ -61,10 +61,14 @@ const BookingList = () => {
   };
 
   const bookingColumns: ColumnDef<any>[] = [
-    { accessorKey: 'id', header: 'ID' },
+    {
+      accessorKey: "sno", // Placeholder key for S.No
+      header: "S.No",
+      cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
+    }, 
     { accessorKey: 'user.first_name', header: 'User' },
-    { accessorKey: 'provider.first_name', header: 'Provider' },
-    { accessorKey: 'service_date', header: 'Service Date' },
+    { accessorKey: 'rateCard.provider.first_name', header: 'Provider' },
+    { accessorKey: 'booking_date', header: 'Service Date' },
     { accessorKey: 'status', header: 'Status' },
     {
       id: 'actions',
