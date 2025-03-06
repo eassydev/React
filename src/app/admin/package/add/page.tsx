@@ -11,7 +11,7 @@ import { fetchAllRatecard, fetchAllCategories, fetchProviderById,createPackage, 
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from 'next/navigation';
-import { useDebounce } from "use-debounce"; // Install: npm install use-debounce
+import { Virtuoso } from "react-virtuoso";
 
 // Import React-Quill dynamically
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
@@ -56,13 +56,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
   
   const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); // **[Added state for Addon dropdown toggle]**
   const [discountError, setDiscountError] = useState<string | null>(null); // State for error message
-const [searchTerm, setSearchTerm] = useState<string>("");
-const [debouncedSearch] = useDebounce(searchTerm, 300); // Debounced input
-const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
-const [isLoadingProviders, setIsLoadingProviders] = useState(false);
-const [page, setPage] = useState(1);
-const [hasMore, setHasMore] = useState(true); // Indicates if more data exists
-  const [weight, setWeight] = useState<number>(0);
+  const [selectedProviderName, setSelectedProviderName] = useState<string>("Select an option");
   const { toast } = useToast();
 
   // Fetch rate cards on component mount
@@ -75,6 +69,7 @@ const [hasMore, setHasMore] = useState(true); // Indicates if more data exists
         ]);
         setRateCards(rateCardResponse || []);
         setCategories(categoryResponse || []);
+        await loadProviders();
       } catch (error) {
         console.log(error)
         toast({
@@ -86,39 +81,17 @@ const [hasMore, setHasMore] = useState(true); // Indicates if more data exists
     };
     fetchInitialData();
   }, []);
-
-  useEffect(() => {
+ 
     const loadProviders = async () => {
-      if (!debouncedSearch && !selectedProvider) return; // Don't fetch unless searching or editing
-  
-      setIsLoadingProviders(true);
-      try {
-        const fetchedProviders = await fetchProviders(debouncedSearch, page, 10); // Fetch 10 at a time
-        setProviders((prev) => (page === 1 ? fetchedProviders : [...prev, ...fetchedProviders])); // Append on new pages
-        setHasMore(fetchedProviders.length === 10); // If less than 10, no more pages
-      } catch (error) {
-        console.error("Failed to load providers:", error);
-      } finally {
-        setIsLoadingProviders(false);
-      }
-    };
-  
-    loadProviders();
-  }, [debouncedSearch, page]);
-    useEffect(() => {
-      const loadSelectedProvider = async () => {
-        if (selectedProviderId) {
-          try {
-            const provider = await fetchProviderById(selectedProviderId);
-            setSelectedProvider(provider);
-          } catch (error) {
-            console.error("Failed to load selected provider:", error);
-          }
+        try {
+          const fetchedProviders = await fetchProviders();
+          setProviders(fetchedProviders);
+    
+        } catch (error) {
+          setProviders([]);
         }
       };
-    
-      loadSelectedProvider();
-    }, [selectedProviderId]);
+  
   // Handle image upload
   const handleImageUpload = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -128,6 +101,16 @@ const [hasMore, setHasMore] = useState(true); // Indicates if more data exists
     }
   };
 
+
+  const handleValueChange = (value: string) => {
+    const selectedProvider = providers.find((provider) => provider.id?.toString() === value);
+    if (selectedProvider) {
+      setSelectedProviderId(value);
+      setSelectedProviderName(`${selectedProvider.first_name} ${selectedProvider.last_name}`);
+    } else {
+      setSelectedProviderName("Select an option");
+    }
+  };
   // Handle form submission
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -412,58 +395,22 @@ const [hasMore, setHasMore] = useState(true); // Indicates if more data exists
               )}
 
 
-<div className="space-y-2">
+ <div className="space-y-2 w-full">
       <label className="text-sm font-medium text-gray-700">Select Provider</label>
-      
-      <Select
-        value={selectedProviderId}
-        onValueChange={(value) => setSelectedProviderId(value)}
-      >
-        <SelectTrigger className="bg-white border-gray-200">
-          <SelectValue placeholder="Select a provider" />
+      <Select value={selectedProviderId || ""} onValueChange={handleValueChange}>
+        <SelectTrigger className="w-full"> {/* Full width */}
+          {selectedProviderName || "Select an option"}
         </SelectTrigger>
-
-        <SelectContent className="w-full p-2">
-          {/* Search Input Inside Dropdown */}
-          <div className="p-2">
-            <Input
-              placeholder="Search provider..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setPage(1); // Reset page on new search
-              }}
-              className="h-11"
-            />
-          </div>
-
-          {/* Providers List */}
-          {isLoadingProviders && page === 1 ? (
-            <div className="p-4 text-center">Loading...</div>
-          ) : providers.length > 0 ? (
-            providers.map((provider) =>
-              provider?.id && provider?.first_name ? (
-                <SelectItem key={provider.id} value={provider.id.toString()}>
-                  {provider.first_name} {provider.last_name || ""}
-                </SelectItem>
-              ) : null
-            )
-          ) : (
-            <div className="p-4 text-center">No providers found</div>
-          )}
-
-          {/* Load More Button for Pagination */}
-          {hasMore && !isLoadingProviders && (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                setPage((prev) => prev + 1);
-              }}
-              className="w-full text-center py-2 text-blue-600 hover:underline"
-            >
-              Load More
-            </button>
-          )}
+        <SelectContent className="w-full"> {/* Full width dropdown */}
+          <Virtuoso
+            style={{ height: "200px", width: "100%" }} // Full width and fixed height
+            totalCount={providers.length}
+            itemContent={(index:any) => (
+              <SelectItem key={providers[index].id} value={providers[index].id?.toString() ?? ''}>
+                {providers[index].first_name} {providers[index].last_name || ""}
+              </SelectItem>
+            )}
+          />
         </SelectContent>
       </Select>
     </div>

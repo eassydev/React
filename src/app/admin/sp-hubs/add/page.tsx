@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { fetchAllHubs,Provider,fetchProviders,Category,Subcategory,Hub,City,Attribute,AttributeOption, fetchAllCities, fetchAllCategories, fetchSubCategoriesByCategoryId, fetchFilterAttributes, fetchFilterOptionsByAttributeId, createSpHub } from "@/lib/api";
 import { Save, FileText, Loader2, Type, Globe2 } from 'lucide-react';
-import { useDebounce } from "use-debounce"; // Install: npm install use-debounce
+import { Virtuoso } from "react-virtuoso";
 
 const AddSpHubForm: React.FC = () => {
   const router = useRouter();
@@ -29,12 +29,8 @@ const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>("");
   const [selectedFilterAttributeId, setSelectedFilterAttributeId] = useState<string>("");
   const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>("");
-const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
-const [isLoadingProviders, setIsLoadingProviders] = useState(false);
-const [page, setPage] = useState(1);
-const [hasMore, setHasMore] = useState(true);
-  const [searchTerm, setSearchTerm] = useState<string>("");
-const [debouncedSearch] = useDebounce(searchTerm, 300); // Debounced input
+
+  const [selectedProviderName, setSelectedProviderName] = useState<string>("Select an option");
 
   const [staff, setStaff] = useState<string>("0");
   const [weightage, setWeightage] = useState<string>("0");
@@ -53,6 +49,7 @@ const [debouncedSearch] = useDebounce(searchTerm, 300); // Debounced input
         setHubs(hubData.data);
         setCities(cityData.data);
         setCategories(categoryData);
+        await loadProviders();
       } catch (error) {
         toast({
           variant: "error",
@@ -64,25 +61,25 @@ const [debouncedSearch] = useDebounce(searchTerm, 300); // Debounced input
     loadData();
   }, []);
 
-
-    useEffect(() => {
-      const loadProviders = async () => {
-        if (!debouncedSearch && !selectedProvider) return; // Don't fetch unless searching or editing
+   const loadProviders = async () => {
+          try {
+            const fetchedProviders = await fetchProviders();
+            setProviders(fetchedProviders);
+      
+          } catch (error) {
+            setProviders([]);
+          }
+        };
     
-        setIsLoadingProviders(true);
-        try {
-          const fetchedProviders = await fetchProviders(debouncedSearch, page, 10); // Fetch 10 at a time
-          setProviders((prev) => (page === 1 ? fetchedProviders : [...prev, ...fetchedProviders])); // Append on new pages
-          setHasMore(fetchedProviders.length === 10); // If less than 10, no more pages
-        } catch (error) {
-          console.error("Failed to load providers:", error);
-        } finally {
-          setIsLoadingProviders(false);
-        }
-      };
-    
-      loadProviders();
-    }, [debouncedSearch, page]);
+  const handleValueChange = (value: string) => {
+    const selectedProvider = providers.find((provider) => provider.id?.toString() === value);
+    if (selectedProvider) {
+      setSelectedProviderId(value);
+      setSelectedProviderName(`${selectedProvider.first_name} ${selectedProvider.last_name}`);
+    } else {
+      setSelectedProviderName("Select an option");
+    }
+  };
     
   // Fetch subcategories when a category is selected
   useEffect(() => {
@@ -345,57 +342,22 @@ const [debouncedSearch] = useDebounce(searchTerm, 300); // Debounced input
   />
 </div>
 
-<div className="space-y-2">
+ <div className="space-y-2 w-full">
       <label className="text-sm font-medium text-gray-700">Select Provider</label>
-      <Select
-        value={selectedProviderId}
-        onValueChange={(value) => setSelectedProviderId(value)}
-      >
-        <SelectTrigger className="bg-white border-gray-200">
-          <SelectValue placeholder="Select a provider" />
+      <Select value={selectedProviderId || ""} onValueChange={handleValueChange}>
+        <SelectTrigger className="w-full"> {/* Full width */}
+          {selectedProviderName || "Select an option"}
         </SelectTrigger>
-
-        <SelectContent className="w-full p-2">
-          {/* Search Input Inside Dropdown */}
-          <div className="p-2">
-            <Input
-              placeholder="Search provider..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setPage(1); // Reset page on new search
-              }}
-              className="h-11"
-            />
-          </div>
-
-          {/* Providers List */}
-          {isLoadingProviders && page === 1 ? (
-            <div className="p-4 text-center">Loading...</div>
-          ) : providers.length > 0 ? (
-            providers.map((provider) =>
-              provider?.id && provider?.first_name ? (
-                <SelectItem key={provider.id} value={provider.id.toString()}>
-                  {provider.first_name} {provider.last_name || ""}
-                </SelectItem>
-              ) : null
-            )
-          ) : (
-            <div className="p-4 text-center">No providers found</div>
-          )}
-
-          {/* Load More Button for Pagination */}
-          {hasMore && !isLoadingProviders && (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                setPage((prev) => prev + 1);
-              }}
-              className="w-full text-center py-2 text-blue-600 hover:underline"
-            >
-              Load More
-            </button>
-          )}
+        <SelectContent className="w-full"> {/* Full width dropdown */}
+          <Virtuoso
+            style={{ height: "200px", width: "100%" }} // Full width and fixed height
+            totalCount={providers.length}
+            itemContent={(index:any) => (
+              <SelectItem key={providers[index].id} value={providers[index].id?.toString() ?? ''}>
+                {providers[index].first_name} {providers[index].last_name || ""}
+              </SelectItem>
+            )}
+          />
         </SelectContent>
       </Select>
     </div>

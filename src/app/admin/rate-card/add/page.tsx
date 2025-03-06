@@ -36,22 +36,8 @@ import {
 } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { useDebounce } from "use-debounce"; // Install: npm install use-debounce
+import { Virtuoso } from "react-virtuoso";
 
-// Import React-Quill dynamically
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-import "react-quill/dist/quill.snow.css";
-
-const quillModules = {
-  toolbar: [
-    [{ header: "1" }, { header: "2" }, { font: [] }],
-    [{ size: [] }],
-    ["bold", "italic", "underline", "strike", "blockquote"],
-    [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
-    ["link", "image", "video"],
-    ["clean"],
-  ],
-};
 
 interface FilterAttributeOption {
   attributeId: string;
@@ -75,20 +61,15 @@ const RateCardForm: React.FC = () => {
   const [isActive, setIsActive] = useState(true);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>("");
-  const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedProviderId, setSelectedProviderId] = useState<string>("");
   const [strikePrice, setStrikePrice] = useState("");
   const [strikePriceError, setStrikePriceError] = useState("");
   const [priceError, setPriceError] = useState("");
-  const [serviceDescriptions, setServiceDescriptions] = useState<ServiceDetail[]>([]);
   const [segments, setSegments] = useState<ServiceSegment[]>([]);
   const [segmentsId, setsegmentsId] = useState<string>("");
-  const [searchTerm, setSearchTerm] = useState<string>("");
-const [debouncedSearch] = useDebounce(searchTerm, 300); // Debounced input
-const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
-const [isLoadingProviders, setIsLoadingProviders] = useState(false);
-const [page, setPage] = useState(1);
-const [hasMore, setHasMore] = useState(true); // Indicates if more data exists
+  const [selectedProviderName, setSelectedProviderName] = useState<string>("Select an option");
+  const [providers, setProviders] = useState<Provider[]>([]);
+
   const [weight, setWeight] = useState<number>(0);
 
   useEffect(() => {
@@ -96,6 +77,7 @@ const [hasMore, setHasMore] = useState(true); // Indicates if more data exists
       try {
         const categoryData = await fetchAllCategories();
         setCategories(categoryData);
+        await loadProviders();
         
       } catch {
         toast({
@@ -108,40 +90,18 @@ const [hasMore, setHasMore] = useState(true); // Indicates if more data exists
     loadCategories();
   }, []);
 
-  useEffect(() => {
-    const loadProviders = async () => {
-      if (!debouncedSearch && !selectedProvider) return; // Don't fetch unless searching or editing
+ 
   
-      setIsLoadingProviders(true);
+  
+   const loadProviders = async () => {
       try {
-        const fetchedProviders = await fetchProviders(debouncedSearch, page, 10); // Fetch 10 at a time
-        setProviders((prev) => (page === 1 ? fetchedProviders : [...prev, ...fetchedProviders])); // Append on new pages
-        setHasMore(fetchedProviders.length === 10); // If less than 10, no more pages
+        const fetchedProviders = await fetchProviders();
+        setProviders(fetchedProviders);
+  
       } catch (error) {
-        console.error("Failed to load providers:", error);
-      } finally {
-        setIsLoadingProviders(false);
+        setProviders([]);
       }
     };
-  
-    loadProviders();
-  }, [debouncedSearch, page]);
-  
-  // Load selected provider for edit mode
-  useEffect(() => {
-    const loadSelectedProvider = async () => {
-      if (selectedProviderId) {
-        try {
-          const provider = await fetchProviderById(selectedProviderId);
-          setSelectedProvider(provider);
-        } catch (error) {
-          console.error("Failed to load selected provider:", error);
-        }
-      }
-    };
-  
-    loadSelectedProvider();
-  }, [selectedProviderId]);
 
   // Fetch subcategories when a category is selected
   useEffect(() => {
@@ -230,6 +190,17 @@ const [hasMore, setHasMore] = useState(true); // Indicates if more data exists
     }
 
     setFilterAttributeOptions(updated);
+  };
+
+  
+  const handleValueChange = (value: string) => {
+    const selectedProvider = providers.find((provider) => provider.id?.toString() === value);
+    if (selectedProvider) {
+      setSelectedProviderId(value);
+      setSelectedProviderName(`${selectedProvider.first_name} ${selectedProvider.last_name}`);
+    } else {
+      setSelectedProviderName("Select an option");
+    }
   };
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -503,61 +474,25 @@ const [hasMore, setHasMore] = useState(true); // Indicates if more data exists
                     </div>
                       )}
 
-<div className="space-y-2">
+ <div className="space-y-2 w-full">
       <label className="text-sm font-medium text-gray-700">Select Provider</label>
-      <Select
-        value={selectedProviderId}
-        onValueChange={(value) => setSelectedProviderId(value)}
-      >
-        <SelectTrigger className="bg-white border-gray-200">
-          <SelectValue placeholder="Select a provider" />
+      <Select value={selectedProviderId || ""} onValueChange={handleValueChange}>
+        <SelectTrigger className="w-full"> {/* Full width */}
+          {selectedProviderName || "Select an option"}
         </SelectTrigger>
-
-        <SelectContent className="w-full p-2">
-          {/* Search Input Inside Dropdown */}
-          <div className="p-2">
-            <Input
-              placeholder="Search provider..."
-              value={searchTerm}
-              onChange={(e) => {
-                setSearchTerm(e.target.value);
-                setPage(1); // Reset page on new search
-              }}
-              className="h-11"
-            />
-          </div>
-
-          {/* Providers List */}
-          {isLoadingProviders && page === 1 ? (
-            <div className="p-4 text-center">Loading...</div>
-          ) : providers.length > 0 ? (
-            providers.map((provider) =>
-              provider?.id && provider?.first_name ? (
-                <SelectItem key={provider.id} value={provider.id.toString()}>
-                  {provider.first_name} {provider.last_name || ""}
-                </SelectItem>
-              ) : null
-            )
-          ) : (
-            <div className="p-4 text-center">No providers found</div>
-          )}
-
-          {/* Load More Button for Pagination */}
-          {hasMore && !isLoadingProviders && (
-            <button
-              onClick={(e) => {
-                e.preventDefault();
-                setPage((prev) => prev + 1);
-              }}
-              className="w-full text-center py-2 text-blue-600 hover:underline"
-            >
-              Load More
-            </button>
-          )}
+        <SelectContent className="w-full"> {/* Full width dropdown */}
+          <Virtuoso
+            style={{ height: "200px", width: "100%" }} // Full width and fixed height
+            totalCount={providers.length}
+            itemContent={(index:any) => (
+              <SelectItem key={providers[index].id} value={providers[index].id?.toString() ?? ''}>
+                {providers[index].first_name} {providers[index].last_name || ""}
+              </SelectItem>
+            )}
+          />
         </SelectContent>
       </Select>
     </div>
-
              
 
               {/* Active/Inactive Switch */}

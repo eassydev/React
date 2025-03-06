@@ -11,14 +11,15 @@ import { useToast } from "@/hooks/use-toast";
 import {
   fetchPromocodeById,
   updatePromocode,
-  fetchAllCategories,
+  Provider,
   fetchAllSubCategories,
   fetchAllRatecard,
   fetchAllpackages,
-  fetchAllProvidersWithoupagination,
+  fetchProviders,
   Promocode,
 } from "@/lib/api";
 import { useRouter, useParams } from "next/navigation";
+import { Virtuoso } from "react-virtuoso";
 
 const EditPromocodeForm: React.FC = () => {
  
@@ -35,7 +36,7 @@ const EditPromocodeForm: React.FC = () => {
   const [providerId, setProviderId] = useState<string | null>(null);
   const [image, setImage] = useState<File | null>(null);
   const [options, setOptions] = useState<{ id: string; name: string }[]>([]);
-  const [providers, setProviders] = useState<{ id: string; first_name: string }[]>([]);
+const [providers, setProviders] = useState<Provider[]>([]);
   const [isGlobal, setIsGlobal] = useState<boolean>(false);
   const [displayToCustomer, setDisplayToCustomer] = useState<boolean>(true);
   const [isActive, setIsActive] = useState<boolean>(true);
@@ -43,24 +44,15 @@ const EditPromocodeForm: React.FC = () => {
   const [isFree, setIsFree] = useState<boolean>(false); // New state for is_free
     const [rateCardId, setRateCardId] = useState<string | null>(null); // New state for selected rate card ID
     const [rateCardOptions, setRateCardOptions] = useState<{ id: string; name: string }[]>([]); // Options for rate cards
-    
+     const [selectedProviderId, setSelectedProviderId] = useState<string>("");
+       const [selectedProviderName, setSelectedProviderName] = useState<string>("Select an option");
+     
   const { toast } = useToast();
 
   const { id } = useParams();
   const router = useRouter();
 
-  useEffect(() => {
-    const loadProviders = async () => {
-      try {
-        const providersData = await fetchAllProvidersWithoupagination();
-        setProviders(providersData.map((provider: any) => ({ id: provider.id, first_name: provider.first_name || "Unnamed Provider" })));
-      } catch (error) {
-        toast({ variant: "error", title: "Error", description: "Failed to load providers." });
-      }
-    };
-
-    loadProviders();
-  }, []);
+  
   useEffect(() => {
     const loadPromocode = async () => {
       try {
@@ -76,6 +68,10 @@ const EditPromocodeForm: React.FC = () => {
         setSelectionType(promocode.selection_type);
         setSelectedItemId(promocode.selection_id?.toString() || null); // Ensure it's a string
         setProviderId(promocode.provider_id?.toString() || null); // Ensure it's a string
+        if (promocode.provider_id) {
+          await loadProviders(promocode.provider_id);
+         
+        }
         setIsGlobal(promocode.is_global);
         setDisplayToCustomer(promocode.display_to_customer);
         setIsActive(promocode.is_active);
@@ -89,6 +85,31 @@ const EditPromocodeForm: React.FC = () => {
     loadPromocode();
   }, [id.toString(), toast]);
   
+
+  
+   const loadProviders = async (providerid:string) => {
+       try {
+         const fetchedProviders = await fetchProviders();
+         setProviders(fetchedProviders);
+         const selectedProvider = fetchedProviders.find((provider) => provider.id?.toString() === providerid);
+   
+           setSelectedProviderName(`${selectedProvider?.first_name} ${selectedProvider?.last_name}`);
+           console.log("tSelectedProviderName",selectedProviderId)
+       } catch (error) {
+        setProviders([]);
+       }
+     };
+  
+  
+     const handleValueChange = (value: string) => {
+      const selectedProvider = providers.find((provider) => provider.id?.toString() === value);
+      if (selectedProvider) {
+        setSelectedProviderId(value);
+        setSelectedProviderName(`${selectedProvider.first_name} ${selectedProvider.last_name}`);
+      } else {
+        setSelectedProviderName("Select an option");
+      }
+    };
   useEffect(() => {
     const loadOptions = async () => {
       try {
@@ -171,7 +192,7 @@ const EditPromocodeForm: React.FC = () => {
         selection_id: selectedItemId,
         is_global: isGlobal,
         display_to_customer: displayToCustomer,
-        provider_id: providerId,
+        provider_id: selectedProviderId,
         is_free: isFree, // New field
         rate_card_id: isFree ? rateCardId : null,
       };
@@ -225,29 +246,27 @@ const EditPromocodeForm: React.FC = () => {
                 />
               </div>
 
-              <div className="space-y-2">
-  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-    <Globe2 className="w-4 h-4 text-blue-500" />
-    <span>Select Provider</span>
-  </label>
-  <Select
-   value={providerId ?? ''}
-    onValueChange={(value) => setProviderId(value)}
-  >
-    <SelectTrigger className="bg-white border-gray-200">
-      <SelectValue placeholder="Select a provider" />
-    </SelectTrigger>
-    <SelectContent>
-       {providers.map((provider) =>
-                            provider?.id && provider?.first_name ? (
-                              <SelectItem key={provider.id} value={provider.id.toString()}>
-                                {provider.first_name}
-                              </SelectItem>
-                            ) : null
-                          )}
-    </SelectContent>
-  </Select>
-</div>
+             
+               {/* Provider (with Search & Pagination) */}
+                           <div className="space-y-2 w-full">
+                                <label className="text-sm font-medium text-gray-700">Select Provider</label>
+                                <Select value={selectedProviderId || ""} onValueChange={handleValueChange}>
+                                  <SelectTrigger className="w-full"> {/* Full width */}
+                                    {selectedProviderName || "Select an option"}
+                                  </SelectTrigger>
+                                  <SelectContent className="w-full"> {/* Full width dropdown */}
+                                    <Virtuoso
+                                      style={{ height: "200px", width: "100%" }} // Full width and fixed height
+                                      totalCount={providers.length}
+                                      itemContent={(index) => (
+                                        <SelectItem key={providers[index].id} value={providers[index].id?.toString() ?? ''}>
+                                          {providers[index].first_name} {providers[index].last_name || ""}
+                                        </SelectItem>
+                                      )}
+                                    />
+                                  </SelectContent>
+                                </Select>
+                              </div>
 
               <div>
                 <label className="text-sm font-medium text-gray-700">Image</label>

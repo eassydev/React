@@ -11,7 +11,7 @@ import { Save, Loader2, ImageIcon, FileText, ChevronDown,Globe2 } from 'lucide-r
 import { fetchAllRatecard, fetchAllCategories, fetchPackageById, updatePackage, Package,Provider,fetchProviders,fetchProviderById } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
-import { useDebounce } from "use-debounce";
+import { Virtuoso } from "react-virtuoso";
 
 // Import React-Quill dynamically
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
@@ -53,11 +53,8 @@ const [providers, setProviders] = useState<Provider[]>([]);
 // Provider-related state
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
   const [selectedProviderId, setSelectedProviderId] = useState<string>("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearch] = useDebounce(searchTerm, 300);
-  const [isLoadingProviders, setIsLoadingProviders] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
+   const [selectedProviderName, setSelectedProviderName] = useState<string>("Select an option");
+ 
   const [noService, setNoService] = useState<number | null>(null);
   const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); // **Addon Dropdown Toggle**
 
@@ -103,7 +100,12 @@ const [providers, setProviders] = useState<Provider[]>([]);
         setDescription(packageData.description || '');
         setPackageType(packageData.package_type);
        // setCreatedBy(packageData.created_by);
+       
         setSelectedProviderId(packageData.provider_id ? packageData.provider_id.toString() : '');
+        if (packageData.provider_id) {
+          await loadProviders(packageData.provider_id);
+         
+        }
         setDiscountType(packageData.discount_type);
         setDiscountValue(Number(packageData.discount_value));
         setValidityPeriod(packageData.validity_period || null);
@@ -138,83 +140,29 @@ const [providers, setProviders] = useState<Provider[]>([]);
     }
   };
 
-  
-  
-    useEffect(() => {
-      const loadSelectedProvider = async () => {
-        if (selectedProviderId) {
-          try {
-            const provider = await fetchProviderById(selectedProviderId);
-            if (provider && provider.id) {
-              // Convert provider.id to string
-              setSelectedProvider({
-                ...provider,
-                id: provider.id.toString(),
-              });
-            } else {
-              setSelectedProvider(null);
-            }
-          } catch (error) {
-            console.error("Failed to load selected provider:", error);
-          }
-        } else {
-          setSelectedProvider(null);
-        }
-      };
-    
-      loadSelectedProvider();
-    }, [selectedProviderId]);
-  
-    // ------------------------------
-    // 2. Fetch Providers (Search + Pagination)
-    // ------------------------------
-    useEffect(() => {
-      const loadProviders = async () => {
-        setIsLoadingProviders(true);
-    
-        try {
-          // 1. Fetch providers from API
-         // After fetching providers
-  const fetchedProviders = await fetchProviders(debouncedSearch, page, 10);
-  
-  // Convert each provider's id to string
-  const normalizedProviders = fetchedProviders.map((p) => ({
-    ...p,
-    id: p.id?.toString(),
-  }));
-  
-  // Now merge with existing providers
-  let combinedProviders =
-    page === 1 ? normalizedProviders : [...providers, ...normalizedProviders];
-  
-  // If we have a selectedProvider, ensure it's included
-  if (
-    selectedProvider &&
-    !combinedProviders.some((p) => p.id === selectedProvider.id)
-  ) {
-    combinedProviders.unshift(selectedProvider);
-  }
-  
-  // Remove duplicates
-  const uniqueProviders = combinedProviders.reduce<Provider[]>((acc, current) => {
-    if (!acc.some((p) => p.id === current.id)) {
-      acc.push(current);
-    }
-    return acc;
-  }, []);
-  
-  setProviders(uniqueProviders);
-          setHasMore(fetchedProviders.length === 10); // If we got 10, likely more pages exist
-        } catch (error) {
-          console.error("Failed to load providers:", error);
-        } finally {
-          setIsLoadingProviders(false);
-        }
-      };
-    
-      loadProviders();
-    }, [debouncedSearch, page, selectedProvider]);
+ const loadProviders = async (providerid:string) => {
+     try {
+       const fetchedProviders = await fetchProviders();
+       setProviders(fetchedProviders);
+       const selectedProvider = fetchedProviders.find((provider) => provider.id?.toString() === providerid);
+ 
+         setSelectedProviderName(`${selectedProvider?.first_name} ${selectedProvider?.last_name}`);
+         console.log("tSelectedProviderName",selectedProviderId)
+     } catch (error) {
+      setProviders([]);
+     }
+   };
 
+
+   const handleValueChange = (value: string) => {
+    const selectedProvider = providers.find((provider) => provider.id?.toString() === value);
+    if (selectedProvider) {
+      setSelectedProviderId(value);
+      setSelectedProviderName(`${selectedProvider.first_name} ${selectedProvider.last_name}`);
+    } else {
+      setSelectedProviderName("Select an option");
+    }
+  };
   // Handle form submission
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -512,57 +460,25 @@ const [providers, setProviders] = useState<Provider[]>([]);
 
 
   {/* Provider (with Search & Pagination) */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Select Provider</label>
-                <Select value={selectedProviderId?.toString()} onValueChange={(value) => setSelectedProviderId(value)}>
-                <SelectTrigger className="bg-white border-gray-200">
-  {selectedProviderId ? (
-    <SelectValue>{providers.find(p => p.id === selectedProviderId)?.first_name || "Select a provider"}</SelectValue>
-  ) : (
-    <SelectValue placeholder="Select a provider" />
-  )}
-</SelectTrigger>
-
-                  <SelectContent>
-                    {/* Search Input */}
-                    <div className="p-2">
-                      <Input
-                        placeholder="Search provider..."
-                        value={searchTerm}
-                        onChange={(e) => {
-                          setSearchTerm(e.target.value);
-                          setPage(1);
-                        }}
-                        className="h-11"
-                      />
-                    </div>
-
-                    {/* Provider List */}
-                    {providers.length > 0 ? (
-                      providers.map((provider) => (
-                        <SelectItem key={provider.id} value={provider.id ?? ''}>
-                          {provider.first_name} {provider.last_name || ""}
-                        </SelectItem>
-                      ))
-                    ) : (
-                      <div className="p-4 text-center">No providers found</div>
-                    )}
-
-                    {/* Load More */}
-                    {hasMore && !isLoadingProviders && (
-                      <button
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setPage((prev) => prev + 1);
-                        }}
-                        className="w-full text-center py-2 text-blue-600 hover:underline"
-                      >
-                        Load More
-                      </button>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
+              <div className="space-y-2 w-full">
+                   <label className="text-sm font-medium text-gray-700">Select Provider</label>
+                   <Select value={selectedProviderId || ""} onValueChange={handleValueChange}>
+                     <SelectTrigger className="w-full"> {/* Full width */}
+                       {selectedProviderName || "Select an option"}
+                     </SelectTrigger>
+                     <SelectContent className="w-full"> {/* Full width dropdown */}
+                       <Virtuoso
+                         style={{ height: "200px", width: "100%" }} // Full width and fixed height
+                         totalCount={providers.length}
+                         itemContent={(index) => (
+                           <SelectItem key={providers[index].id} value={providers[index].id?.toString() ?? ''}>
+                             {providers[index].first_name} {providers[index].last_name || ""}
+                           </SelectItem>
+                         )}
+                       />
+                     </SelectContent>
+                   </Select>
+                 </div>
               {/* Renewal Options */}
               <div className="flex items-center space-x-2">
                 <Switch checked={renewalOptions} onCheckedChange={setRenewalOptions} />
