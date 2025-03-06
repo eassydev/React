@@ -68,6 +68,7 @@
     "react-quill": "^2.0.0",
     "react-resizable-panels": "^2.1.4",
     "react-select": "^5.9.0",
+    "react-virtuoso": "^4.12.5",
     "recharts": "^2.13.0-alpha.4",
     "sonner": "^1.5.0",
     "tailwind-merge": "^2.5.3",

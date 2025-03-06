@@ -1,6 +1,5 @@
 "use client";
-import React, { useState,useCallback, useEffect, FormEvent } from "react";
-import dynamic from "next/dynamic";
+import React, { useState, useEffect, FormEvent } from "react";
 import {
   Card,
   CardHeader,
@@ -17,6 +16,8 @@ import {
   SelectContent,
   SelectValue,
 } from "@/components/ui/select";
+import { Virtuoso } from "react-virtuoso";
+
 import { Switch } from "@/components/ui/switch";
 import { Save, Loader2, Type, Globe2 } from "lucide-react";
 import {
@@ -37,11 +38,6 @@ import {
 } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, usePathname } from "next/navigation";
-import { useDebounce } from "use-debounce";
-
-// --- Optional: If you need ReactQuill for other fields ---
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-import "react-quill/dist/quill.snow.css";
 
 // For dynamic attributes
 interface FilterAttributeOption {
@@ -77,16 +73,14 @@ const RateCardForm: React.FC = () => {
 
   // Provider-related state
   const [providers, setProviders] = useState<Provider[]>([]);
-  const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
   const [selectedProviderId, setSelectedProviderId] = useState<string>("");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [debouncedSearch] = useDebounce(searchTerm, 300);
-  const [isLoadingProviders, setIsLoadingProviders] = useState(false);
-  const [page, setPage] = useState(1);
-  const [hasMore, setHasMore] = useState(true);
-
+  const [selectedProviderName, setSelectedProviderName] = useState<string>("Select an option");
   const [priceError, setPriceError] = useState("");
   const [strikePriceError, setStrikePriceError] = useState("");
+
+  // ------------------------------
+  // 1. Fetch Categories & RateCard for Edit
+  // ------------------------------
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -96,157 +90,109 @@ const RateCardForm: React.FC = () => {
 
         // If editing, fetch rate card data
         if (rateCardId) {
-          const rateCardData = await fetchRateCardById(rateCardId);
-          populateFormData(rateCardData);
+          const rateCardData = await fetchRateCardById(rateCardId.toString());
+          setRateCardName(rateCardData.name);
+          setSelectedCategoryId(rateCardData.category_id?.toString() || "");
+          setSelectedSubcategoryId(rateCardData.subcategory_id?.toString() || "");
+          setPrice(rateCardData.price?.toString() || "");
+          setStrikePrice(rateCardData.strike_price?.toString() || "");
+          setIsActive(rateCardData.active);
+          setSelectedProviderId(rateCardData.provider_id?.toString() || "");
+
+          if (rateCardData.provider_id) {
+            await loadProviders(rateCardData.provider_id);
+           
+          }
+
+          setsegmentsId(rateCardData.segment_id?.toString() || "");
+
+          // Fetch dynamic attributes if any
+          if (rateCardData.attributes && Array.isArray(rateCardData.attributes)) {
+            const dynamicAttributes = await Promise.all(
+              rateCardData.attributes.map(async (attr: any) => {
+                try {
+                  const options = await fetchFilterOptionsByAttributeId(attr.filter_attribute_id);
+                  return {
+                    attributeId: attr.filter_attribute_id.toString(),
+                    optionId: attr.filter_option_id?.toString() || "",
+                    options: options.map((o: any) => ({
+                      id: o.id.toString(),
+                      value: o.value,
+                    })),
+                  };
+                } catch (error) {
+                  console.error(`Error fetching options for attribute ${attr.filter_attribute_id}:`, error);
+                  return {
+                    attributeId: attr.filter_attribute_id.toString(),
+                    optionId: attr.filter_option_id?.toString() || "",
+                    options: [],
+                  };
+                }
+              })
+            );
+            setFilterAttributeOptions(dynamicAttributes);
+          }
+
+          // Fetch subcategories
+          if (rateCardData.category_id) {
+            await fetchSubcategories(rateCardData.category_id.toString());
+          }
+
+          // Fetch filter attributes
+          const subcategoryId = rateCardData.subcategory_id !== null ? rateCardData.subcategory_id : undefined;
+          await fetchFilters(rateCardData.category_id, subcategoryId);
+
+          // Fetch segments if any
+          if (rateCardData.segment_id) {
+            const segmentData = await fetchServiceSegments(
+              rateCardData.category_id,
+              subcategoryId || null
+            );
+            setSegments(segmentData);
+          }
         }
       } catch (error) {
+        toast({
+          variant: "error",
+          title: "Error",
+          description: "Failed to load data.",
+        });
       }
     };
 
     fetchData();
-  }, [rateCardId]);
+  }, [rateCardId, toast]);
 
-  // Populate form data from rate card
-  const populateFormData = useCallback(async (rateCardData: any) => {
-    setRateCardName(rateCardData.name);
-    setSelectedCategoryId(rateCardData.category_id?.toString() || "");
-    setSelectedSubcategoryId(rateCardData.subcategory_id?.toString() || "");
-    setPrice(rateCardData.price?.toString() || "");
-    setStrikePrice(rateCardData.strike_price?.toString() || "");
-    setIsActive(rateCardData.active);
-    setSelectedProviderId(rateCardData.provider_id?.toString() || "");
-    setsegmentsId(rateCardData.segment_id?.toString() || "");
 
-    if(rateCardData.provider_id)
-    {
 
+  const loadProviders = async (providerid:string) => {
+    try {
+      const fetchedProviders = await fetchProviders();
+      setProviders(fetchedProviders);
+      const selectedProvider = fetchedProviders.find((provider) => provider.id?.toString() === providerid);
+
+        setSelectedProviderName(`${selectedProvider?.first_name} ${selectedProvider?.last_name}`);
+        console.log("tSelectedProviderName",selectedProviderId)
+    } catch (error) {
+      setSubcategories([]);
     }
-    // Fetch dynamic attributes
-    if (rateCardData.attributes && Array.isArray(rateCardData.attributes)) {
-      const dynamicAttributes = await fetchDynamicAttributes(rateCardData.attributes);
-      setFilterAttributeOptions(dynamicAttributes);
-    }
-
-    // Fetch subcategories
-    if (rateCardData.category_id) {
-      await fetchSubcategories(rateCardData.category_id.toString());
-    }
-
-    // Fetch filter attributes and segments
-    await fetchFiltersAndSegments(rateCardData.category_id, rateCardData.subcategory_id);
-  }, []);
-
-  // Fetch dynamic attributes
-  const fetchDynamicAttributes = useCallback(async (attributes: any[]) => {
-    return await Promise.all(
-      attributes.map(async (attr) => {
-        try {
-          const options = await fetchFilterOptionsByAttributeId(attr.filter_attribute_id);
-          return {
-            attributeId: attr.filter_attribute_id.toString(),
-            optionId: attr.filter_option_id?.toString() || "",
-            options: options.map((o: any) => ({
-              id: o.id.toString(),
-              value: o.value,
-            })),
-          };
-        } catch (error) {
-          console.error(`Error fetching options for attribute ${attr.filter_attribute_id}:`, error);
-          return {
-            attributeId: attr.filter_attribute_id.toString(),
-            optionId: attr.filter_option_id?.toString() || "",
-            options: [],
-          };
-        }
-      })
-    );
-  }, []);
-
-  // Fetch subcategories
-  const fetchSubcategories = useCallback(async (categoryId: string) => {
+  };
+  // ------------------------------
+  // 3. Load the Selected Provider (for Edit Preselect)
+  // ------------------------------
+ 
+  // ------------------------------
+  // Helpers for Subcategory & Filter Attributes
+  // ------------------------------
+  const fetchSubcategories = async (categoryId: string) => {
     try {
       const fetchedSubcategories = await fetchSubCategoriesByCategoryId(categoryId);
       setSubcategories(fetchedSubcategories);
     } catch (error) {
       setSubcategories([]);
     }
-  }, []);
+  };
 
-  // Fetch filter attributes and segments
-  const fetchFiltersAndSegments = useCallback(async (categoryId: string, subcategoryId?: string) => {
-    try {
-      const filters = await fetchFilterAttributes(categoryId, subcategoryId || null);
-      setFilterAttributes(filters);
-
-      const segmentData = await fetchServiceSegments(categoryId, subcategoryId || null);
-      setSegments(segmentData);
-    } catch (error) {
-      setFilterAttributes([]);
-      setSegments([]);
-    }
-  }, []);
-
-
-  useEffect(() => {
-    const loadSelectedProvider = async () => {
-      if (selectedProviderId) {
-        try {
-          const provider = await fetchProviderById(selectedProviderId);
-          if (provider && provider.id) {
-            // Convert provider.id to string
-            setSelectedProvider({
-              ...provider,
-              id: provider.id.toString(),
-            });
-          } else {
-            setSelectedProvider(null);
-          }
-        } catch (error) {
-          console.error("Failed to load selected provider:", error);
-        }
-      } else {
-        setSelectedProvider(null);
-      }
-    };
-  
-    loadSelectedProvider();
-  }, [selectedProviderId]);
-
-  // ------------------------------
-  // Fetch Providers (Search + Pagination)
-  // ------------------------------
-  useEffect(() => {
-    const loadProviders = async () => {
-      setIsLoadingProviders(true);
-      try {
-        const fetchedProviders = await fetchProviders(debouncedSearch, page, 10);
-        const normalizedProviders = fetchedProviders.map((p) => ({
-          ...p,
-          id: p.id?.toString(),
-        }));
-
-        // Combine providers and remove duplicates
-        const combinedProviders = page === 1 ? normalizedProviders : [...providers, ...normalizedProviders];
-        const uniqueProviders = combinedProviders.reduce<Provider[]>((acc, current) => {
-          if (!acc.some((p) => p.id === current.id)) {
-            acc.push(current);
-          }
-          return acc;
-        }, []);
-
-        setProviders(uniqueProviders);
-        setHasMore(fetchedProviders.length === 10);
-      } catch (error) {
-        console.error("Failed to load providers:", error);
-      } finally {
-        setIsLoadingProviders(false);
-      }
-    };
-
-    loadProviders();
-  }, [debouncedSearch, page]);
-
- 
   const fetchFilters = async (categoryId: string, subcategoryId?: string) => {
     try {
       const filters = await fetchFilterAttributes(categoryId, subcategoryId || null);
@@ -346,6 +292,16 @@ const RateCardForm: React.FC = () => {
     setFilterAttributeOptions(updated);
   };
 
+
+  const handleValueChange = (value: string) => {
+    const selectedProvider = providers.find((provider) => provider.id?.toString() === value);
+    if (selectedProvider) {
+      setSelectedProviderId(value);
+      setSelectedProviderName(`${selectedProvider.first_name} ${selectedProvider.last_name}`);
+    } else {
+      setSelectedProviderName("Select an option");
+    }
+  };
   // ------------------------------
   // Form Submit
   // ------------------------------
@@ -619,29 +575,16 @@ const RateCardForm: React.FC = () => {
                   </Select>
                 </div>
               )}
-
-              {/* Provider (with Search & Pagination) */}
+{/* 
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Select Provider </label>
+                <label className="text-sm font-medium text-gray-700">Select Provider {selectedProviderId}</label>
                 <Select value={selectedProviderId} onValueChange={(value) => setSelectedProviderId(value)}>
                   <SelectTrigger className="bg-white border-gray-200">
                     <SelectValue placeholder="Select a provider" />
                   </SelectTrigger>
                   <SelectContent>
-                    {/* Search Input */}
-                    <div className="p-2">
-                      <Input
-                        placeholder="Search provider..."
-                        value={searchTerm}
-                        onChange={(e) => {
-                          setSearchTerm(e.target.value);
-                          setPage(1);
-                        }}
-                        className="h-11"
-                      />
-                    </div>
+                   
 
-                    {/* Provider List */}
                     {providers.length > 0 ? (
                       providers.map((provider) => (
                         <SelectItem key={provider.id} value={provider.id?.toString() ?? ''}>
@@ -652,7 +595,6 @@ const RateCardForm: React.FC = () => {
                       <div className="p-4 text-center">No providers found</div>
                     )}
 
-                    {/* Load More */}
                     {hasMore && !isLoadingProviders && (
                       <button
                         onClick={(e) => {
@@ -666,8 +608,26 @@ const RateCardForm: React.FC = () => {
                     )}
                   </SelectContent>
                 </Select>
-              </div>
-
+              </div> */}
+ <div className="space-y-2 w-full">
+      <label className="text-sm font-medium text-gray-700">Select Provider</label>
+      <Select value={selectedProviderId || ""} onValueChange={handleValueChange}>
+        <SelectTrigger className="w-full"> {/* Full width */}
+          {selectedProviderName || "Select an option"}
+        </SelectTrigger>
+        <SelectContent className="w-full"> {/* Full width dropdown */}
+          <Virtuoso
+            style={{ height: "200px", width: "100%" }} // Full width and fixed height
+            totalCount={providers.length}
+            itemContent={(index) => (
+              <SelectItem key={providers[index].id} value={providers[index].id?.toString() ?? ''}>
+                {providers[index].first_name} {providers[index].last_name || ""}
+              </SelectItem>
+            )}
+          />
+        </SelectContent>
+      </Select>
+    </div>
               {/* Weight (optional) */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium">Ratecard Weightage</label>

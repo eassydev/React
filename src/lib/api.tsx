@@ -1912,9 +1912,6 @@ export const fetchAllProvidersWithoupagination = async (): Promise<Provider[]> =
 
 
 export const fetchProviders = async (
-  searchQuery: string = "", // Optional search term
-  page: number = 1, // Page number for pagination
-  limit: number = 10 // Limit providers per page
 ): Promise<Provider[]> => {
   try {
     const token = getToken(); // Assume getToken() retrieves the auth token
@@ -1924,9 +1921,7 @@ export const fetchProviders = async (
         'admin-auth-token': token || '',
       },
       params: {
-        search: searchQuery, // Search providers by name, email, etc.
-        page, // Page number for pagination
-        limit, // Number of providers per request
+        // Number of providers per request
       },
     });
 
