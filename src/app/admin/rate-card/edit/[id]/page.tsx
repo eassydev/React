@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, FormEvent } from "react";
+import React, { useState,useCallback, useEffect, FormEvent } from "react";
 import dynamic from "next/dynamic";
 import {
   Card,
@@ -87,10 +87,6 @@ const RateCardForm: React.FC = () => {
 
   const [priceError, setPriceError] = useState("");
   const [strikePriceError, setStrikePriceError] = useState("");
-
-  // ------------------------------
-  // 1. Fetch Categories & RateCard for Edit
-  // ------------------------------
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -100,72 +96,95 @@ const RateCardForm: React.FC = () => {
 
         // If editing, fetch rate card data
         if (rateCardId) {
-          const rateCardData = await fetchRateCardById(rateCardId.toString());
-          setRateCardName(rateCardData.name);
-          setSelectedCategoryId(rateCardData.category_id?.toString() || "");
-          setSelectedSubcategoryId(rateCardData.subcategory_id?.toString() || "");
-          setPrice(rateCardData.price?.toString() || "");
-          setStrikePrice(rateCardData.strike_price?.toString() || "");
-          setIsActive(rateCardData.active);
-          setSelectedProviderId(rateCardData.provider_id?.toString() || "");
-          setsegmentsId(rateCardData.segment_id?.toString() || "");
-
-          // Fetch dynamic attributes if any
-          if (rateCardData.attributes && Array.isArray(rateCardData.attributes)) {
-            const dynamicAttributes = await Promise.all(
-              rateCardData.attributes.map(async (attr: any) => {
-                try {
-                  const options = await fetchFilterOptionsByAttributeId(attr.filter_attribute_id);
-                  return {
-                    attributeId: attr.filter_attribute_id.toString(),
-                    optionId: attr.filter_option_id?.toString() || "",
-                    options: options.map((o: any) => ({
-                      id: o.id.toString(),
-                      value: o.value,
-                    })),
-                  };
-                } catch (error) {
-                  console.error(`Error fetching options for attribute ${attr.filter_attribute_id}:`, error);
-                  return {
-                    attributeId: attr.filter_attribute_id.toString(),
-                    optionId: attr.filter_option_id?.toString() || "",
-                    options: [],
-                  };
-                }
-              })
-            );
-            setFilterAttributeOptions(dynamicAttributes);
-          }
-
-          // Fetch subcategories
-          if (rateCardData.category_id) {
-            await fetchSubcategories(rateCardData.category_id.toString());
-          }
-
-          // Fetch filter attributes
-          const subcategoryId = rateCardData.subcategory_id !== null ? rateCardData.subcategory_id : undefined;
-          await fetchFilters(rateCardData.category_id, subcategoryId);
-
-          // Fetch segments if any
-          if (rateCardData.segment_id) {
-            const segmentData = await fetchServiceSegments(
-              rateCardData.category_id,
-              subcategoryId || null
-            );
-            setSegments(segmentData);
-          }
+          const rateCardData = await fetchRateCardById(rateCardId);
+          populateFormData(rateCardData);
         }
       } catch (error) {
-        toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load data.",
-        });
       }
     };
 
     fetchData();
-  }, [rateCardId, toast]);
+  }, [rateCardId]);
+
+  // Populate form data from rate card
+  const populateFormData = useCallback(async (rateCardData: any) => {
+    setRateCardName(rateCardData.name);
+    setSelectedCategoryId(rateCardData.category_id?.toString() || "");
+    setSelectedSubcategoryId(rateCardData.subcategory_id?.toString() || "");
+    setPrice(rateCardData.price?.toString() || "");
+    setStrikePrice(rateCardData.strike_price?.toString() || "");
+    setIsActive(rateCardData.active);
+    setSelectedProviderId(rateCardData.provider_id?.toString() || "");
+    setsegmentsId(rateCardData.segment_id?.toString() || "");
+
+    if(rateCardData.provider_id)
+    {
+
+    }
+    // Fetch dynamic attributes
+    if (rateCardData.attributes && Array.isArray(rateCardData.attributes)) {
+      const dynamicAttributes = await fetchDynamicAttributes(rateCardData.attributes);
+      setFilterAttributeOptions(dynamicAttributes);
+    }
+
+    // Fetch subcategories
+    if (rateCardData.category_id) {
+      await fetchSubcategories(rateCardData.category_id.toString());
+    }
+
+    // Fetch filter attributes and segments
+    await fetchFiltersAndSegments(rateCardData.category_id, rateCardData.subcategory_id);
+  }, []);
+
+  // Fetch dynamic attributes
+  const fetchDynamicAttributes = useCallback(async (attributes: any[]) => {
+    return await Promise.all(
+      attributes.map(async (attr) => {
+        try {
+          const options = await fetchFilterOptionsByAttributeId(attr.filter_attribute_id);
+          return {
+            attributeId: attr.filter_attribute_id.toString(),
+            optionId: attr.filter_option_id?.toString() || "",
+            options: options.map((o: any) => ({
+              id: o.id.toString(),
+              value: o.value,
+            })),
+          };
+        } catch (error) {
+          console.error(`Error fetching options for attribute ${attr.filter_attribute_id}:`, error);
+          return {
+            attributeId: attr.filter_attribute_id.toString(),
+            optionId: attr.filter_option_id?.toString() || "",
+            options: [],
+          };
+        }
+      })
+    );
+  }, []);
+
+  // Fetch subcategories
+  const fetchSubcategories = useCallback(async (categoryId: string) => {
+    try {
+      const fetchedSubcategories = await fetchSubCategoriesByCategoryId(categoryId);
+      setSubcategories(fetchedSubcategories);
+    } catch (error) {
+      setSubcategories([]);
+    }
+  }, []);
+
+  // Fetch filter attributes and segments
+  const fetchFiltersAndSegments = useCallback(async (categoryId: string, subcategoryId?: string) => {
+    try {
+      const filters = await fetchFilterAttributes(categoryId, subcategoryId || null);
+      setFilterAttributes(filters);
+
+      const segmentData = await fetchServiceSegments(categoryId, subcategoryId || null);
+      setSegments(segmentData);
+    } catch (error) {
+      setFilterAttributes([]);
+      setSegments([]);
+    }
+  }, []);
 
 
   useEffect(() => {
@@ -194,58 +213,40 @@ const RateCardForm: React.FC = () => {
   }, [selectedProviderId]);
 
   // ------------------------------
-  // 2. Fetch Providers (Search + Pagination)
+  // Fetch Providers (Search + Pagination)
   // ------------------------------
   useEffect(() => {
     const loadProviders = async () => {
       setIsLoadingProviders(true);
-  
       try {
         const fetchedProviders = await fetchProviders(debouncedSearch, page, 10);
         const normalizedProviders = fetchedProviders.map((p) => ({
           ...p,
           id: p.id?.toString(),
         }));
-  
-        // Reset providers if it's a new search (page === 1)
-        const combinedProviders =
-          page === 1 ? normalizedProviders : [...providers, ...normalizedProviders];
-  
-        // Ensure no duplicates
+
+        // Combine providers and remove duplicates
+        const combinedProviders = page === 1 ? normalizedProviders : [...providers, ...normalizedProviders];
         const uniqueProviders = combinedProviders.reduce<Provider[]>((acc, current) => {
           if (!acc.some((p) => p.id === current.id)) {
             acc.push(current);
           }
           return acc;
         }, []);
-  
+
         setProviders(uniqueProviders);
-        setHasMore(fetchedProviders.length === 10); // If we got 10, likely more pages exist
+        setHasMore(fetchedProviders.length === 10);
       } catch (error) {
         console.error("Failed to load providers:", error);
       } finally {
         setIsLoadingProviders(false);
       }
     };
-  
+
     loadProviders();
   }, [debouncedSearch, page]);
-  // ------------------------------
-  // 3. Load the Selected Provider (for Edit Preselect)
-  // ------------------------------
- 
-  // ------------------------------
-  // Helpers for Subcategory & Filter Attributes
-  // ------------------------------
-  const fetchSubcategories = async (categoryId: string) => {
-    try {
-      const fetchedSubcategories = await fetchSubCategoriesByCategoryId(categoryId);
-      setSubcategories(fetchedSubcategories);
-    } catch (error) {
-      setSubcategories([]);
-    }
-  };
 
+ 
   const fetchFilters = async (categoryId: string, subcategoryId?: string) => {
     try {
       const filters = await fetchFilterAttributes(categoryId, subcategoryId || null);
@@ -621,7 +622,7 @@ const RateCardForm: React.FC = () => {
 
               {/* Provider (with Search & Pagination) */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Select Provider</label>
+                <label className="text-sm font-medium text-gray-700">Select Provider </label>
                 <Select value={selectedProviderId} onValueChange={(value) => setSelectedProviderId(value)}>
                   <SelectTrigger className="bg-white border-gray-200">
                     <SelectValue placeholder="Select a provider" />
