@@ -650,6 +650,32 @@ export interface ServiceVideo {
   is_active?: boolean;// Add the image property
 }
 
+
+interface Campaign {
+  campaign_name: string;
+  provider_id?: string;
+  rate_card_id?: string;
+  category_id?: string;
+  subcategory_id?: string;
+  filter_attribute_id?: string;
+  filter_option_id?: string;
+  segment_id?: string;
+  utm_url?: string;
+  pincode?: string;
+  latitude?: string;
+  longitude?: string;
+  utm_source?: string;
+  utm_medium?: string;
+  screen_redirect?: string;
+  add_to_cart?: boolean;
+  is_active?: boolean;
+}
+
+export interface RatecardBogo {
+  rate_card_id: string;
+  bogo_rate_card_id: string;
+  is_active: boolean;
+}
 // Define the structure of the API response
 interface ApiResponse {
   status: boolean;
@@ -6329,5 +6355,124 @@ export const deleteServiceVideo = async (id: string): Promise<any> => {
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to delete service video.');
+  }
+};
+
+
+
+
+// **Create a new Ratecard BOGO**
+export const createRatecardBogo = async (ratecardBogo: RatecardBogo): Promise<ApiResponse> => {
+  const formData = new FormData();
+
+  formData.append("rate_card_id", ratecardBogo.rate_card_id);
+  formData.append("bogo_rate_card_id", ratecardBogo.bogo_rate_card_id);
+  formData.append("is_active", ratecardBogo.is_active ? "1" : "0");
+
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/ratecard-bogo', formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "admin-auth-token": token || "",
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error("Error creating Ratecard BOGO:", error);
+    throw new Error(error.response?.data?.message || "Failed to create Ratecard BOGO.");
+  }
+};
+
+// **Fetch all Ratecard BOGO entries (with pagination)**
+export const fetchRatecardBogo = async (page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/ratecard-bogo', {
+      params: { page, size },
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (response.data.status) {
+      return response.data;
+    } else {
+      throw new Error(response.data.message || "Failed to fetch Ratecard BOGO.");
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch Ratecard BOGO.");
+  }
+};
+
+// **Fetch a single Ratecard BOGO by ID**
+export const getRatecardBogoById = async (id: string): Promise<RatecardBogo> => {
+  const token = getToken();
+  const response: AxiosResponse<ApiResponse> = await apiClient.get(`/ratecard-bogo/${id}`, {
+    headers: {
+      "admin-auth-token": token || "",
+    },
+  });
+
+  return response.data.data;
+};
+
+// **Update a Ratecard BOGO**
+export const updateRatecardBogo = async (id: string, ratecardBogo: RatecardBogo): Promise<ApiResponse> => {
+  const formData = new FormData();
+
+  formData.append("rate_card_id", ratecardBogo.rate_card_id);
+  formData.append("bogo_rate_card_id", ratecardBogo.bogo_rate_card_id);
+  formData.append("is_active", ratecardBogo.is_active ? "1" : "0");
+
+  const token = getToken();
+  const response: AxiosResponse<ApiResponse> = await apiClient.put(`/ratecard-bogo/${id}`, formData, {
+    headers: {
+      "Content-Type": "multipart/form-data",
+      "admin-auth-token": token || "",
+    },
+  });
+
+  return response.data;
+};
+
+// **Delete a Ratecard BOGO by ID**
+export const deleteRatecardBogo = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/ratecard-bogo/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (response.data.status) {
+      return response.data;
+    } else {
+      throw new Error(response.data.message || "Failed to delete Ratecard BOGO.");
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to delete Ratecard BOGO.");
+  }
+};
+
+// **API Call for Creating a Campaign**
+export const createCampaign = async (campaign: Campaign): Promise<ApiResponse> => {
+
+
+
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/campaign', campaign, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error("Error creating campaign:", error);
+    throw new Error(error.response?.data?.message || "Failed to create campaign.");
   }
 };
