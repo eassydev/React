@@ -5,16 +5,18 @@ import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@
 import { Button } from '@/components/ui/button';
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, usePathname } from "next/navigation";
-import { fetchBookingById, fetchProviders, updateBookingProvider, updateBookingStatus, initiateRefund } from '@/lib/api';
+import { fetchBookingById, fetchProviders,Provider, updateBookingProvider, updateBookingStatus, initiateRefund } from '@/lib/api';
+import { Virtuoso } from "react-virtuoso";
 
 const ViewBookingPage: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
   const bookingId = pathname?.split("/").pop();
-
+ // Provider-related state
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [selectedProviderId, setSelectedProviderId] = useState<string>("");
+  const [selectedProviderName, setSelectedProviderName] = useState<string>("Select an option");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [providerId, setProviderId] = useState<string | null>(null);
-  const [providers, setProviders] = useState<{ id: string; name: string }[]>([]);
   const [status, setStatus] = useState<string>('accepted');
   const [bookingDetails, setBookingDetails] = useState<any>(null);
   const { toast } = useToast();
@@ -28,16 +30,14 @@ const ViewBookingPage: React.FC = () => {
         const booking = await fetchBookingById(bookingId.toString());
         setBookingDetails(booking);
 
-        setProviderId(booking.provider_id.toString());
         setStatus(booking.status || 'accepted');
+        setSelectedProviderId(booking.provider_id?.toString() || "");
 
-        const providerData = await fetchProviders();
-        setProviders(
-          providerData.map((provider: any) => ({
-            id: provider.id,
-            name: provider.first_name,
-          }))
-        );
+          if (booking.provider_id) {
+            await loadProviders(booking.provider_id?.toString() || "");
+           
+          }
+
       } catch (error) {
         console.log("error",error)
         toast({
@@ -51,6 +51,17 @@ const ViewBookingPage: React.FC = () => {
     loadBookingDetails();
   }, [bookingId, toast]);
 
+   const loadProviders = async (providerid:string) => {
+      try {
+        const fetchedProviders = await fetchProviders();
+        setProviders(fetchedProviders);
+        const selectedProvider = fetchedProviders.find((provider) => provider.id?.toString() === providerid);
+  
+          setSelectedProviderName(`${selectedProvider?.first_name} ${selectedProvider?.last_name}`);
+          console.log("tSelectedProviderName",selectedProviderId)
+      } catch (error) {
+      }
+    };
   const onProcessRefund = async () => {
   
     setIsProcessingRefund(true);
@@ -74,26 +85,7 @@ const ViewBookingPage: React.FC = () => {
     }
   };
 
-  const onUpdateProvider = async (value:any) => {
-
-    try {
-      await updateBookingProvider(bookingId!.toString(),value);
-
-      toast({
-        variant: "success",
-        title: "Success",
-        description: "Provider updated successfully.",
-      });
-    //  router.push("/admin/booking");
-    } catch (error) {
-      toast({
-        variant: "error",
-        title: "Error",
-        description: `Failed to update provider: ${error}`,
-      });
-    } finally {
-    }
-  };
+  
 
   const onUpdateStatus = async (value:any) => {
 
@@ -116,6 +108,17 @@ const ViewBookingPage: React.FC = () => {
     }
   };
 
+  const handleValueChange = async (value: string) => {
+    const selectedProvider = providers.find((provider) => provider.id?.toString() === value);
+    if (selectedProvider) {
+      setSelectedProviderId(value);
+      setSelectedProviderName(`${selectedProvider.first_name} ${selectedProvider.last_name}`);
+      await updateBookingProvider(bookingId!.toString(),value);
+
+    } else {
+      setSelectedProviderName("Select an option");
+    }
+  };
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
     <div className="max-w-6xl mx-auto space-y-6">
@@ -149,11 +152,11 @@ const ViewBookingPage: React.FC = () => {
 
               <div>
                 <h3 className="font-semibold text-lg">Provider Information</h3>
-                <p><strong>Current Provider:</strong> {bookingDetails.provider?.first_name || "N/A"}</p>
-                <p><strong>Mobile:</strong> {bookingDetails.provider?.phone || "N/A"}</p>
-                <p><strong>Email:</strong> {bookingDetails.provider?.company_name || "N/A"}</p>
-                <p><strong>Gender:</strong> {bookingDetails.provider?.gender || "N/A"}</p>
-                <p><strong>Address:</strong> {bookingDetails.address.flat_no || "N/A"}-{bookingDetails.address.building_name || "N/A"}-{bookingDetails.address.street_address || "N/A"}-{bookingDetails.address.city || "N/A"}</p>
+                <p><strong>Current Provider:</strong> {bookingDetails.rateCard.provider?.first_name || "N/A"}</p>
+                <p><strong>Mobile:</strong> {bookingDetails.rateCard.provider?.phone || "N/A"}</p>
+                <p><strong>Email:</strong> {bookingDetails.rateCard.provider?.company_name || "N/A"}</p>
+                <p><strong>Gender:</strong> {bookingDetails.rateCard.provider?.gender || "N/A"}</p>
+                <p><strong>Address:</strong> {bookingDetails.address?.flat_no || "N/A"}-{bookingDetails.address?.building_name || "N/A"}-{bookingDetails.address?.street_address || "N/A"}-{bookingDetails.address?.city || "N/A"}</p>
               </div>
 
               <div className="col-span-2">
@@ -162,34 +165,42 @@ const ViewBookingPage: React.FC = () => {
                 <p><strong>Service Date:</strong> {bookingDetails.booking_date || "N/A"}</p>
                 <p><strong>Service Time:</strong> {bookingDetails.booking_time_from || "N/A"} -  {bookingDetails.booking_time_to || "N/A"}</p>
                
-                <p><strong>Category:</strong> {bookingDetails.category?.name || "N/A"}</p>
-                <p><strong>Subcategory:</strong> {bookingDetails.subcategory?.name || "N/A"}</p>
+                <p><strong>Category:</strong> {bookingDetails.rateCard.category?.name || "N/A"}</p>
+                <p><strong>Subcategory:</strong> {bookingDetails.rateCard.subcategory?.name || "N/A"}</p>
+                <p>
+  <strong>Attribute & Option:</strong>{" "}
+  {bookingDetails.rateCard.attributes?.map((attr: { 
+    filterAttribute: { name: string }; 
+    filterOption: { value: string } 
+  }) => `${attr.filterAttribute.name}: ${attr.filterOption.value}`).join(", ") || "N/A"}
+</p>
+
                 <p><strong>Package:</strong> {bookingDetails.package?.name || "N/A"}</p>
-                <p><strong>Sub Total:</strong> ₹{bookingDetails.total_amount || 0}</p>
-                <p><strong>Discount:</strong> ₹{bookingDetails.discount_amount || 0}</p>
-                <p><strong>Final Total:</strong> ₹{bookingDetails.final_amount || 0}</p>
+                <p><strong>Price:</strong> ₹{bookingDetails.total_amount || 0}</p>
+                <p><strong>Strike Price:</strong> ₹{bookingDetails.discount_amount || 0}</p>
               </div>
             </div>
           )}
 
-<Select
-  value={String(providerId)}
-  onValueChange={(value) => {
-    setProviderId(value);
-    onUpdateProvider(value); // Call update provider API on change
-  }}
->
-  <SelectTrigger className="bg-white border-gray-200">
-    <SelectValue placeholder="Select Provider" />
-  </SelectTrigger>
-  <SelectContent>
-    {providers.map((provider) => (
-      <SelectItem key={provider.id} value={String(provider.id)}>
-        {provider.name}
-      </SelectItem>
-    ))}
-  </SelectContent>
-</Select>
+<div className="space-y-2 w-full">
+      <label className="text-sm font-medium text-gray-700">Select Provider</label>
+      <Select value={selectedProviderId || ""} onValueChange={handleValueChange}>
+        <SelectTrigger className="w-full"> {/* Full width */}
+          {selectedProviderName || "Select an option"}
+        </SelectTrigger>
+        <SelectContent className="w-full"> {/* Full width dropdown */}
+          <Virtuoso
+            style={{ height: "200px", width: "100%" }} // Full width and fixed height
+            totalCount={providers.length}
+            itemContent={(index) => (
+              <SelectItem key={providers[index].id} value={providers[index].id?.toString() ?? ''}>
+                {providers[index].first_name} {providers[index].last_name || ""}
+              </SelectItem>
+            )}
+          />
+        </SelectContent>
+      </Select>
+    </div>
 
 
           <div>
