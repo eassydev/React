@@ -13,6 +13,7 @@ import { Save, Loader2, FileText } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { createBanner, Banner, Hub, fetchAllCategories, fetchAllSubCategories, fetchAllRatecard, fetchAllpackages, fetchAllHubsWithoutPagination } from "@/lib/api";
 import { useRouter } from "next/navigation";
+import { Virtuoso } from "react-virtuoso";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
@@ -33,7 +34,7 @@ const AddBannerForm: React.FC = () => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [selectionType, setSelectionType] = useState<string>("");
-  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string>('');
   const [options, setOptions] = useState<{ id: string; name: string }[]>([]);
   const [mediaType, setMediaType] = useState<"image" | "video">("image");
   const [displayOrder, setDisplayOrder] = useState<number>(1);
@@ -54,7 +55,8 @@ const [radiusError, setRadiusError] = useState<string>("");
  const [isFree, setIsFree] = useState<boolean>(false); // New state for is_free
   const [rateCardId, setRateCardId] = useState<string | null>(null); // New state for selected rate card ID
   const [rateCardOptions, setRateCardOptions] = useState<{ id: string; name: string }[]>([]); // Options for rate cards
-  
+  const [selectedOptionName, setSelectedOptionName] = useState<string>("Select an option");
+
   const { toast } = useToast();
   const today = new Date().toISOString().split("T")[0];
 
@@ -63,20 +65,7 @@ const [radiusError, setRadiusError] = useState<string>("");
       try {
         let data: { id: string; name: string }[] = [];
         switch (selectionType) {
-          case "Category":
-            const categories = await fetchAllCategories();
-            data = categories.map((category) => ({
-              id: category.id || '',
-              name: category.name || "Unnamed Category",
-            }));
-            break;
-          case "Subcategory":
-            const subcategories = await fetchAllSubCategories();
-            data = subcategories.map((subcategory) => ({
-              id: subcategory.id || '',
-              name: subcategory.name || "Unnamed Subcategory",
-            }));
-            break;
+         
           case "Ratecard":
             const ratecards = await fetchAllRatecard();
             data = ratecards.map((ratecard) => ({
@@ -96,7 +85,7 @@ const [radiusError, setRadiusError] = useState<string>("");
             return;
         }
         setOptions(data);
-        setSelectedItemId(null);
+        setSelectedItemId('');
       } catch (error) {
         toast({ variant: "error", title: "Error", description: `Failed to load ${selectionType} options.` });
       }
@@ -105,6 +94,17 @@ const [radiusError, setRadiusError] = useState<string>("");
     if (selectionType) loadOptions();
   }, [selectionType, toast]);
 
+
+  
+  const handleValueChange = (value: string) => {
+    const selectedOption = options.find((option) => option.id?.toString() === value);
+    if (selectedOption) {
+      setSelectedItemId(value.toString());
+      setSelectedOptionName(`${selectedOption.name}`);
+    } else {
+      setSelectedOptionName("Select an option");
+    }
+  };
   useEffect(() => {
     const loadHubs = async () => {
       try {
@@ -193,6 +193,7 @@ const [radiusError, setRadiusError] = useState<string>("");
     }
   };
 
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-12xl mx-auto space-y-6">
@@ -229,7 +230,7 @@ const [radiusError, setRadiusError] = useState<string>("");
               </div>
               <div className="space-x-2">
                 <label className="text-sm font-medium text-gray-700">Selection Type</label>
-                <Select value={selectionType} onValueChange={(value) => setSelectionType(value)} required>
+                <Select value={selectionType} onValueChange={(value) => setSelectionType(value)}>
                   <SelectTrigger className="bg-white border-gray-200">
                     <SelectValue placeholder="Select Type" />
                   </SelectTrigger>
@@ -245,16 +246,21 @@ const [radiusError, setRadiusError] = useState<string>("");
               {selectionType && (
                 <div>
                   <label className="text-sm font-medium text-gray-700">Select {selectionType}</label>
-                  <Select value={String(selectedItemId)} onValueChange={(value) => setSelectedItemId(value)} required>
+                  <Select value={String(selectedItemId)} onValueChange={handleValueChange} required>
                     <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder={`Select ${selectionType}`} />
+                    {selectedOptionName || "Select an option"}
                     </SelectTrigger>
                     <SelectContent>
-                      {options.map((option) => (
-                        <SelectItem key={option.id} value={String(option.id)}>
-                          {option.name}
-                        </SelectItem>
-                      ))}
+                    <Virtuoso
+                                  style={{ height: "200px", width: "100%" }} // Full width and fixed height
+                                  totalCount={options.length}
+                                  itemContent={(index:any) => (
+                                    <SelectItem key={options[index].id} value={options[index].id?.toString() ?? ''}>
+                                      {options[index].name} {options[index].name || ""}
+                                    </SelectItem>
+                                  )}
+                                />
+                      
                     </SelectContent>
                   </Select>
                 </div>
@@ -390,11 +396,16 @@ const [radiusError, setRadiusError] = useState<string>("");
                       <SelectValue placeholder="Select Ratecard" />
                     </SelectTrigger>
                     <SelectContent>
-                      {rateCardOptions.map((option) => (
-                        <SelectItem key={option.id} value={String(option.id)}>
-                          {option.name}
-                        </SelectItem>
-                      ))}
+                       <Virtuoso
+                                  style={{ height: "200px", width: "100%" }} // Full width and fixed height
+                                  totalCount={rateCardOptions.length}
+                                  itemContent={(index:any) => (
+                                    <SelectItem key={rateCardOptions[index].id} value={rateCardOptions[index].id?.toString() ?? ''}>
+                                      {rateCardOptions[index].name} {rateCardOptions[index].name || ""}
+                                    </SelectItem>
+                                  )}
+                                />
+                      
                     </SelectContent>
                   </Select>
                 </div>

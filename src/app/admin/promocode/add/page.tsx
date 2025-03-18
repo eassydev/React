@@ -8,7 +8,7 @@ import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from "@
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { Save, Loader2, Globe2 } from "lucide-react";
+import { Save, Loader2, Globe2,ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   createPromocode,
@@ -21,6 +21,7 @@ import {
   Promocode,
 } from "@/lib/api";
 import { Virtuoso } from "react-virtuoso";
+import { Checkbox } from "@/components/ui/checkbox";
 
 // Import React-Quill dynamically for client-side rendering
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
@@ -62,12 +63,38 @@ const AddPromocodeForm: React.FC = () => {
     const [selectedProviderName, setSelectedProviderName] = useState<string>("Select an option");
     const [selectedProviderId, setSelectedProviderId] = useState<string>("");
   const [providers, setProviders] = useState<Provider[]>([]);
+    const [selectedOptionName, setSelectedOptionName] = useState<string>("Select an option");
+    const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); // **[Added state for Addon dropdown toggle]**
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // Addon Category IDs
+    const [categories, setCategories] = useState<any[]>([]);
   
 
+
+     useEffect(() => {
+        const fetchInitialData = async () => {
+          try {
+            const [ categoryResponse] = await Promise.all([
+              fetchAllCategories(),
+            ]);
+            setCategories(categoryResponse || []);
+            await loadProviders();
+          } catch (error) {
+            console.log(error)
+            toast({
+              variant: "error",
+              title: "Error",
+              description: "Failed to load data.",
+            });
+          }
+        };
+        fetchInitialData();
+      }, []);
+     
+
   useEffect(() => {
+     loadProviders();
     const loadOptions = async () => {
       try {
-        await loadProviders();
         let data: { id: string; name: string }[] = [];
         switch (selectionType) {
           case "Category":
@@ -111,6 +138,15 @@ const AddPromocodeForm: React.FC = () => {
 
     if (selectionType) loadOptions();
   }, [selectionType, toast]);
+
+
+  const handleCategorySelection = (categoryId: string, isChecked: boolean) => {
+    if (isChecked) {
+      setSelectedCategories((prev) => [...prev, categoryId]);
+    } else {
+      setSelectedCategories((prev) => prev.filter((id) => id !== categoryId));
+    }
+  };
   const loadProviders = async () => {
           try {
             const fetchedProviders = await fetchProviders();
@@ -132,6 +168,15 @@ const AddPromocodeForm: React.FC = () => {
   };
 
 
+  const handleValuerateChange = (value: string) => {
+    const selectedOption = options.find((option) => option.id?.toString() === value);
+    if (selectedOption) {
+      setSelectedItemId(value.toString());
+      setSelectedOptionName(`${selectedOption.name}`);
+    } else {
+      setSelectedOptionName("Select an option");
+    }
+  };
   useEffect(() => {
     const loadRateCards = async () => {
       try {
@@ -156,7 +201,7 @@ const AddPromocodeForm: React.FC = () => {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!code || !discountValue || !startDate || !endDate || !selectionType || !selectedItemId || !providerId || !image) {
+    if ( !discountValue || !image) {
       toast({
         variant: "error",
         title: "Validation Error",
@@ -180,6 +225,7 @@ const AddPromocodeForm: React.FC = () => {
         selection_type: selectionType,
         selection_id: selectedItemId,
         is_global: isGlobal,
+        category_ids: selectedCategories, // Include addon category selections
         display_to_customer: displayToCustomer,
         provider_id: selectedProviderId,
         is_free: isFree, // New field
@@ -360,39 +406,45 @@ const AddPromocodeForm: React.FC = () => {
               </div>
 
 
-              <div>
-                <label className="text-sm font-medium text-gray-700">Selection Type</label>
-                <Select value={selectionType} onValueChange={(value) => setSelectionType(value)}>
-                  <SelectTrigger className="bg-white border-gray-200">
-                    <SelectValue placeholder="Select Type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                   
-                    <SelectItem value="Ratecard">Ratecard</SelectItem>
-                    <SelectItem value="Package">Package</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {selectionType && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Select {selectionType}</label>
-                  <Select value={String(selectedItemId)} onValueChange={(value) => setSelectedItemId(value)}>
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder={`Select ${selectionType}`} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {options.map((option) => (
-                        <SelectItem key={option.id} value={String(option.id)}>
-                          {option.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
-
-              <div>
+              <div className="space-x-2">
+                             <label className="text-sm font-medium text-gray-700">Selection Type</label>
+                             <Select value={selectionType} onValueChange={(value) => setSelectionType(value)}>
+                               <SelectTrigger className="bg-white border-gray-200">
+                                 <SelectValue placeholder="Select Type" />
+                               </SelectTrigger>
+                               <SelectContent>
+                                 {/* <SelectItem value="Category">Category</SelectItem>
+                                 <SelectItem value="Subcategory">Subcategory</SelectItem> */}
+                                 <SelectItem value="Ratecard">Ratecard</SelectItem>
+                                 <SelectItem value="Package">Package</SelectItem>
+                               </SelectContent>
+                             </Select>
+                           </div>
+             
+                           {selectionType && (
+                             <div>
+                               <label className="text-sm font-medium text-gray-700">Select {selectionType}</label>
+                               <Select value={String(selectedItemId)} onValueChange={handleValuerateChange}>
+                                 <SelectTrigger className="bg-white border-gray-200">
+                                 {selectedOptionName || "Select an option"}
+                                 </SelectTrigger>
+                                 <SelectContent>
+                                 <Virtuoso
+                                               style={{ height: "200px", width: "100%" }} // Full width and fixed height
+                                               totalCount={options.length}
+                                               itemContent={(index:any) => (
+                                                 <SelectItem key={options[index].id} value={options[index].id?.toString() ?? ''}>
+                                                   {options[index].name} {options[index].name || ""}
+                                                 </SelectItem>
+                                               )}
+                                             />
+                                   
+                                 </SelectContent>
+                               </Select>
+                             </div>
+                           )}
+             
+             <div>
                 <label className="text-sm font-medium text-gray-700">Global Promocode</label>
                 <Switch checked={isGlobal} onCheckedChange={setIsGlobal} />
               </div>
@@ -401,6 +453,39 @@ const AddPromocodeForm: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Display to Customer</label>
                 <Switch checked={displayToCustomer} onCheckedChange={setDisplayToCustomer} />
               </div>
+
+               {/* Addon Categories Dropdown with Checkbox Selection */}
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-gray-700">Select  Categories</label>
+                              <div className="relative">
+                                <button
+                                  type="button"
+                                  className="flex items-center justify-between w-full p-2 bg-white border border-gray-200 rounded"
+                                  onClick={() => setIsAddonDropdownOpen(!isAddonDropdownOpen)}
+                                >
+                                  {selectedCategories.length > 0 ? `Selected (${selectedCategories.length})` : 'Select categories'}
+                                  <ChevronDown className="w-4 h-4" />
+                                </button>
+                                {isAddonDropdownOpen && (
+                                  <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-auto">
+                                    {categories.map((category) => (
+                                      <div key={category.id} className="flex items-center p-2">
+                                        <Checkbox
+                                          checked={selectedCategories.includes(category.id.toString())}
+                                          onCheckedChange={(checked: any) =>
+                                            handleCategorySelection(category.id.toString(), checked)
+                                          }
+                                          id={`category-${category.id}`}
+                                        />
+                                        <label htmlFor={`category-${category.id}`} className="ml-2">
+                                          {category.name}
+                                        </label>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
 
               <div>
   <label className="text-sm font-medium text-gray-700">Is Free</label>

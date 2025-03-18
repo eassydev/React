@@ -464,6 +464,7 @@ export interface Promocode {
   image?: File; // Optional image file for the promocode
   is_free: boolean; 
   rate_card_id: string | null; 
+  category_ids?: string[]; // Array of addon category IDs
 
 }
 
@@ -3158,6 +3159,9 @@ formData.append("min_order_value", minOrderValue ? minOrderValue.toString() : "0
   // Add image if provided
   if (promocode.image) {
     formData.append("image", promocode.image);
+  }
+  if (promocode.category_ids) {
+    promocode.category_ids.forEach((categoryId) => formData.append('category_ids[]', categoryId));
   }
 
   try {
@@ -6363,17 +6367,11 @@ export const deleteServiceVideo = async (id: string): Promise<any> => {
 
 // **Create a new Ratecard BOGO**
 export const createRatecardBogo = async (ratecardBogo: RatecardBogo): Promise<ApiResponse> => {
-  const formData = new FormData();
-
-  formData.append("rate_card_id", ratecardBogo.rate_card_id);
-  formData.append("bogo_rate_card_id", ratecardBogo.bogo_rate_card_id);
-  formData.append("is_active", ratecardBogo.is_active ? "1" : "0");
-
+ 
   try {
     const token = getToken();
-    const response: AxiosResponse<ApiResponse> = await apiClient.post('/ratecard-bogo', formData, {
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/ratecard-bogo', ratecardBogo, {
       headers: {
-        "Content-Type": "multipart/form-data",
         "admin-auth-token": token || "",
       },
     });
@@ -6420,16 +6418,10 @@ export const getRatecardBogoById = async (id: string): Promise<RatecardBogo> => 
 
 // **Update a Ratecard BOGO**
 export const updateRatecardBogo = async (id: string, ratecardBogo: RatecardBogo): Promise<ApiResponse> => {
-  const formData = new FormData();
-
-  formData.append("rate_card_id", ratecardBogo.rate_card_id);
-  formData.append("bogo_rate_card_id", ratecardBogo.bogo_rate_card_id);
-  formData.append("is_active", ratecardBogo.is_active ? "1" : "0");
-
+  
   const token = getToken();
-  const response: AxiosResponse<ApiResponse> = await apiClient.put(`/ratecard-bogo/${id}`, formData, {
+  const response: AxiosResponse<ApiResponse> = await apiClient.put(`/ratecard-bogo/${id}`, ratecardBogo, {
     headers: {
-      "Content-Type": "multipart/form-data",
       "admin-auth-token": token || "",
     },
   });

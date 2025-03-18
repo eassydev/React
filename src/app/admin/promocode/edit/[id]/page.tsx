@@ -6,7 +6,7 @@ import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from "@
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { Save, Loader2,Globe2 } from "lucide-react";
+import { Save, Loader2, Globe2,ChevronDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import {
   fetchPromocodeById,
@@ -20,6 +20,7 @@ import {
 } from "@/lib/api";
 import { useRouter, useParams } from "next/navigation";
 import { Virtuoso } from "react-virtuoso";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const EditPromocodeForm: React.FC = () => {
  
@@ -46,7 +47,10 @@ const [providers, setProviders] = useState<Provider[]>([]);
     const [rateCardOptions, setRateCardOptions] = useState<{ id: string; name: string }[]>([]); // Options for rate cards
      const [selectedProviderId, setSelectedProviderId] = useState<string>("");
        const [selectedProviderName, setSelectedProviderName] = useState<string>("Select an option");
-     
+const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); // **[Added state for Addon dropdown toggle]**
+    const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // Addon Category IDs
+    const [categories, setCategories] = useState<any[]>([]);
+       
   const { toast } = useToast();
 
   const { id } = useParams();
@@ -195,6 +199,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
         provider_id: selectedProviderId,
         is_free: isFree, // New field
         rate_card_id: isFree ? rateCardId : null,
+        category_ids: selectedCategories, // Include addon category selections
       };
 
       if (image) {
@@ -222,6 +227,14 @@ const [providers, setProviders] = useState<Provider[]>([]);
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setImage(e.target.files[0]);
+    }
+  };
+
+  const handleCategorySelection = (categoryId: string, isChecked: boolean) => {
+    if (isChecked) {
+      setSelectedCategories((prev) => [...prev, categoryId]);
+    } else {
+      setSelectedCategories((prev) => prev.filter((id) => id !== categoryId));
     }
   };
 
@@ -391,6 +404,39 @@ const [providers, setProviders] = useState<Provider[]>([]);
                 <label className="text-sm font-medium text-gray-700">Display to Customer</label>
                 <Switch checked={displayToCustomer} onCheckedChange={setDisplayToCustomer} />
               </div>
+
+              {/* Addon Categories Dropdown with Checkbox Selection */}
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-gray-700">Select Categories</label>
+                              <div className="relative">
+                                <button
+                                  type="button"
+                                  className="flex items-center justify-between w-full p-2 bg-white border border-gray-200 rounded"
+                                  onClick={() => setIsAddonDropdownOpen(!isAddonDropdownOpen)}
+                                >
+                                  {selectedCategories.length > 0 ? `Selected (${selectedCategories.length})` : 'Select categories'}
+                                  <ChevronDown className="w-4 h-4" />
+                                </button>
+                                {isAddonDropdownOpen && (
+                                  <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-auto">
+                                    {categories.map((category) => (
+                                      <div key={category.id} className="flex items-center p-2">
+                                        <Checkbox
+                                          checked={selectedCategories.includes(category.id.toString())}
+                                          onCheckedChange={(checked: any) =>
+                                            handleCategorySelection(category.id.toString(), checked)
+                                          }
+                                          id={`category-${category.id}`}
+                                        />
+                                        <label htmlFor={`category-${category.id}`} className="ml-2">
+                                          {category.name}
+                                        </label>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
    <div>
   <label className="text-sm font-medium text-gray-700">Is Free</label>
   <Switch checked={isFree} onCheckedChange={setIsFree} />

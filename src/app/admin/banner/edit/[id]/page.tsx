@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { getBanner, updateBanner, Banner, Hub, fetchAllCategories, fetchAllSubCategories, fetchAllRatecard, fetchAllpackages, fetchAllHubsWithoutPagination } from "@/lib/api";
 import { useRouter, useParams } from "next/navigation";
 import { format } from "date-fns";
+import { Virtuoso } from "react-virtuoso";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
@@ -56,6 +57,7 @@ const EditBannerForm: React.FC = () => {
    const [isFree, setIsFree] = useState<boolean>(false); // New state for is_free
       const [rateCardId, setRateCardId] = useState<string | null>(null); // New state for selected rate card ID
       const [rateCardOptions, setRateCardOptions] = useState<{ id: string; name: string }[]>([]); // Options for rate cards
+  const [selectedOptionName, setSelectedOptionName] = useState<string>("Select an option");
       
   const { toast } = useToast();
   const today = new Date().toISOString().split("T")[0];
@@ -123,58 +125,67 @@ const EditBannerForm: React.FC = () => {
       if (isFree) loadRateCards(); // Fetch only if isFree is true
     }, [isFree, toast]);
 
-  useEffect(() => {
-    const loadOptions = async () => {
-      try {
-        let data: { id: string; name: string }[] = [];
-        switch (selectionType) {
-          case "Category":
-            const categories = await fetchAllCategories();
-            data = categories.map((category) => ({
-              id: category.id || '',
-              name: category.name || "Unnamed Category",
-            }));
-            break;
-          case "Subcategory":
-            const subcategories = await fetchAllSubCategories();
-            data = subcategories.map((subcategory) => ({
-              id: subcategory.id || '',
-              name: subcategory.name || "Unnamed Subcategory",
-            }));
-            break;
-          case "Ratecard":
-            const ratecards = await fetchAllRatecard();
-            data = ratecards.map((ratecard) => ({
-              id: ratecard.id || '',
-              name: ratecard.name || "Unnamed Ratecard",
-            }));
-            break;
-          case "Package":
-            const packages = await fetchAllpackages();
-            data = packages.map((pkg) => ({
-              id: pkg.id || '',
-              name: pkg.name || "Unnamed Package",
-            }));
-            break;
-          default:
-            setOptions([]);
-            return;
+    useEffect(() => {
+      const loadOptions = async () => {
+        try {
+          let data: { id: string; name: string }[] = [];
+    
+          switch (selectionType) {
+            case "Ratecard": {
+              const ratecards = await fetchAllRatecard();
+              data = ratecards.map((ratecard) => ({
+                id: ratecard.id?.toString() || '',
+                name: ratecard.name || "Unnamed Ratecard",
+              }));
+              break;
+            }
+            case "Package": {
+              const packages = await fetchAllpackages();
+              data = packages.map((pkg) => ({
+                id: pkg.id?.toString() || '',
+                name: pkg.name || "Unnamed Package",
+              }));
+              break;
+            }
+            default:
+              setOptions([]);
+              return;
+          }
+    
+          setOptions(data);
+    
+          // Find selected option after setting options
+          const selectedOption = data.find((option) => option.id === selectedItemId);
+          setSelectedOptionName(selectedOption?.name || "Select an option");
+    
+        } catch (error) {
+          toast({
+            variant: "error",
+            title: "Error",
+            description: `Failed to load ${selectionType} options.`,
+          });
         }
-        setOptions(data);
-      } catch (error) {
-        toast({ variant: "error", title: "Error", description: `Failed to load ${selectionType} options.` });
-      }
-    };
-
-    if (selectionType) loadOptions();
-  }, [selectionType, toast]);
-
+      };
+    
+      loadOptions();
+    }, [selectionType, selectedItemId]); // Add dependencies
+    
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setImage(e.target.files[0]);
     }
   };
 
+
+  const handleValueChange = (value: string) => {
+    const selectedOption = options.find((option) => option.id?.toString() === value);
+    if (selectedOption) {
+      setSelectedItemId(value.toString());
+      setSelectedOptionName(`${selectedOption.name}`);
+    } else {
+      setSelectedOptionName("Select an option");
+    }
+  };
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     console.log("title", title)
@@ -285,23 +296,28 @@ const EditBannerForm: React.FC = () => {
                 </Select>
               </div>
 
-              {selectionType && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Select {selectionType}</label>
-                  <Select value={String(selectedItemId)} onValueChange={(value) => setSelectedItemId(value)}>
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder={`Select ${selectionType}`} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {options.map((option) => (
-                        <SelectItem key={option.id} value={String(option.id)}>
-                          {option.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              )}
+               {selectionType && (
+                              <div>
+                                <label className="text-sm font-medium text-gray-700">Select {selectionType}</label>
+                                <Select value={String(selectedItemId)} onValueChange={handleValueChange}>
+                                  <SelectTrigger className="bg-white border-gray-200">
+                                  {selectedOptionName || "Select an option"}
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                  <Virtuoso
+                                                style={{ height: "200px", width: "100%" }} // Full width and fixed height
+                                                totalCount={options.length}
+                                                itemContent={(index:any) => (
+                                                  <SelectItem key={options[index].id} value={options[index].id?.toString() ?? ''}>
+                                                    {options[index].name} {options[index].name || ""}
+                                                  </SelectItem>
+                                                )}
+                                              />
+                                    
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
 
               <div>
                 <label className="text-sm font-medium text-gray-700">Display Order</label>
