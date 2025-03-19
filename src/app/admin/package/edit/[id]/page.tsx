@@ -327,38 +327,47 @@ const [providers, setProviders] = useState<Provider[]>([]);
                 </Select>
               </div>
 
-              {/* Rate Card Dropdown with Checkbox Selection */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Select Rate Cards</label>
-                <div className="relative">
-                  <button
-                    type="button"
-                    className="flex items-center justify-between w-full p-2 bg-white border border-gray-200 rounded"
-                    onClick={() => setIsRateCardDropdownOpen(!isRateCardDropdownOpen)}
-                  >
-                    {selectedRateCards.length > 0 ? `Selected (${selectedRateCards.length})` : 'Select rate cards'}
-                    <ChevronDown className="w-4 h-4" />
-                  </button>
-                  {isRateCardDropdownOpen && (
-                    <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-auto">
-                      {rateCards.map((rateCard) => (
-                        <div key={rateCard.id} className="flex items-center p-2">
-                          <Checkbox
-                            checked={selectedRateCards.includes(rateCard.id.toString())}
-                            onCheckedChange={(checked: any) =>
-                              handleRateCardSelection(rateCard.id.toString(), checked)
-                            }
-                            id={`rateCard-${rateCard.id}`}
-                          />
-                          <label htmlFor={`rateCard-${rateCard.id}`} className="ml-2">
-                            {rateCard.name}
-                          </label>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
+             
+             {/* Rate Card Dropdown with Virtualized List */}
+             <div className="space-y-2">
+               <label className="text-sm font-medium text-gray-700">Select Rate Cards</label>
+               <div className="relative">
+                 <button
+                   type="button"
+                   className="flex items-center justify-between w-full p-2 bg-white border border-gray-200 rounded"
+                   onClick={() => setIsRateCardDropdownOpen(!isRateCardDropdownOpen)}
+                 >
+                   {selectedRateCards.length > 0 ? `Selected (${selectedRateCards.length})` : 'Select rate cards'}
+                   <ChevronDown className="w-4 h-4" />
+                 </button>
+                 
+                 {isRateCardDropdownOpen && (
+                   <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-hidden">
+                     <Virtuoso
+                       style={{ height: "240px", width: "100%" }} // Fixed height to avoid overflow issues
+                       totalCount={rateCards.length} // Total rate cards
+                       itemContent={(index) => {
+                         const rateCard = rateCards[index];
+                         return (
+                           <div key={rateCard.id} className="flex items-center p-2">
+                             <Checkbox
+                               checked={selectedRateCards.includes(rateCard.id.toString())}
+                               onCheckedChange={(checked: any) =>
+                                 handleRateCardSelection(rateCard.id.toString(), checked)
+                               }
+                               id={`rateCard-${rateCard.id}`}
+                             />
+                             <label htmlFor={`rateCard-${rateCard.id}`} className="ml-2">
+                               {rateCard.name || "No name"}
+                             </label>
+                           </div>
+                         );
+                       }}
+                     />
+                   </div>
+                 )}
+               </div>
+             </div>
 
 
               {/* Addon Categories Dropdown with Checkbox Selection */}
