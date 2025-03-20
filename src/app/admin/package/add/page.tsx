@@ -58,7 +58,14 @@ const [providers, setProviders] = useState<Provider[]>([]);
   const [discountError, setDiscountError] = useState<string | null>(null); // State for error message
   const [selectedProviderName, setSelectedProviderName] = useState<string>("Select an option");
   const { toast } = useToast();
+  const [searchQuery, setSearchQuery] = useState("");
 
+  const filteredRateCards = rateCards.filter((rateCard) => {
+    const text = `${rateCard.category?.name} | ${rateCard.subcategory?.name} | ${rateCard.attributes
+      ?.map((attr:any) => `${attr.filterAttribute.name}: ${attr.filterOption.value}`)
+      .join(", ") || "N/A"}`.toLowerCase();
+    return text.includes(searchQuery.toLowerCase());
+  });
   // Fetch rate cards on component mount
   useEffect(() => {
     const fetchInitialData = async () => {
@@ -154,7 +161,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
       });
       setIsSubmitting(false);
 
-      router.push('/admin/package'); // Redirect to the packages list after success
+   //   router.push('/admin/package'); // Redirect to the packages list after success
 
       // Redirect or reset form after success
     } catch (error: any) {
@@ -276,30 +283,44 @@ const [providers, setProviders] = useState<Provider[]>([]);
     </button>
     
     {isRateCardDropdownOpen && (
-      <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-hidden">
-        <Virtuoso
-          style={{ height: "240px", width: "100%" }} // Fixed height to avoid overflow issues
-          totalCount={rateCards.length} // Total rate cards
-          itemContent={(index) => {
-            const rateCard = rateCards[index];
-            return (
-              <div key={rateCard.id} className="flex items-center p-2">
-                <Checkbox
-                  checked={selectedRateCards.includes(rateCard.id.toString())}
-                  onCheckedChange={(checked: any) =>
-                    handleRateCardSelection(rateCard.id.toString(), checked)
-                  }
-                  id={`rateCard-${rateCard.id}`}
-                />
-                <label htmlFor={`rateCard-${rateCard.id}`} className="ml-2">
-                  {rateCard.name || "No name"}
-                </label>
-              </div>
-            );
-          }}
-        />
-      </div>
-    )}
+  <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-hidden">
+    {/* Search Input */}
+    <input
+      type="text"
+      placeholder="Search..."
+      value={searchQuery}
+      onChange={(e) => setSearchQuery(e.target.value)}
+      className="w-full p-2 border-b border-gray-300 focus:outline-none"
+    />
+
+    <Virtuoso
+      style={{ height: "240px", width: "100%" }}
+      totalCount={filteredRateCards.length} // Use filtered list
+      itemContent={(index) => {
+        const rateCard = filteredRateCards[index];
+        return (
+          <div key={rateCard.id} className="flex items-center p-2">
+            <Checkbox
+              checked={selectedRateCards.includes(rateCard.id.toString())}
+              onCheckedChange={(checked: any) =>
+                handleRateCardSelection(rateCard.id.toString(), checked)
+              }
+              id={`rateCard-${rateCard.id}`}
+            />
+            <label htmlFor={`rateCard-${rateCard.id}`} className="ml-2">
+              {rateCard.category?.name} | {rateCard.subcategory?.name} |{" "}
+              <p>
+                {rateCard.attributes
+                  ?.map((attr:any) => `${attr.filterAttribute.name}: ${attr.filterOption.value}`)
+                  .join(", ") || "N/A"}
+              </p>
+            </label>
+          </div>
+        );
+      }}
+    />
+  </div>
+)}
   </div>
 </div>
 

@@ -76,7 +76,7 @@ const BookingList = () => {
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="icon">
-            <Link href={`/admin/booking/edit/${row.original.id}`} passHref>
+            <Link href={`/admin/booking/view/${row.original.id}`} passHref>
               <Edit className="w-4 h-4 text-blue-600" />
             </Link>
           </Button>

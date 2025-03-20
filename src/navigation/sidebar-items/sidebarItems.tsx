@@ -51,6 +51,11 @@ export const sidebarItems: SidebarItem[] = [
     route: `${basePath}/banner`,
   },
   {
+    title: "Bogo",
+    icon: ListCheckIcon,
+    route: `${basePath}/banner`,
+  },
+  {
     title: "UTM",
     icon: ListCheckIcon,
     route: `${basePath}/campaign/add`,
