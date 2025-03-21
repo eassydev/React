@@ -19,7 +19,7 @@ import {
   Printer,
   Copy,
 } from "lucide-react";
-import { fetchSubcategories, exportSubcategories, deleteSubcategory } from "@/lib/api";
+import { fetchSubcategories, exportSubcategories, deleteSubcategory,downloadSampleSucategoryCSV } from "@/lib/api";
 import Link from "next/link";
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -45,6 +45,16 @@ const SubcategoryList = () => {
     }
   };
 
+
+  const handleSampleExport = async () => {
+      try {
+        await   downloadSampleSucategoryCSV();
+      } catch (error) {
+       
+      } finally {
+      }
+    };
+  
   useEffect(() => {
     fetchSubcategoriesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus);
   }, [pagination.pageIndex, pagination.pageSize, filterStatus]);
@@ -253,6 +263,10 @@ const SubcategoryList = () => {
       <Card>
         <CardHeader><CardTitle>Subcategories</CardTitle></CardHeader>
         <CardContent>
+           <Button className="mx-2" onClick={handleSampleExport}><span>Sample CSV</span></Button>
+                      <Button >
+            <Link href="/admin/sub-category/import">Import</Link>
+          </Button>
           <Table>
             <TableHeader>
               {subcategoryTable.getHeaderGroups().map((headerGroup) => (

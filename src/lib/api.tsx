@@ -4415,11 +4415,36 @@ export const importRateCards = async (file: File): Promise<void> => {
 };
 
 
-export const downloadSampleCSV = async (): Promise<void> => {
+export const importSubcatgeory = async (file: File): Promise<void> => {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+    const token = getToken();
+    const response: AxiosResponse<{ message: string }> = await apiClient.post('/sub-category/import', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.status === 200) {
+      console.log(response.data.message || 'Rate cards imported successfully.');
+    } else {
+      throw new Error(response.data.message || 'Failed to import rate cards.');
+    }
+  } catch (error: any) {
+    console.error('Error importing rate cards:', error.message || error);
+    throw new Error(error.response?.data?.message || 'Failed to import rate cards.');
+  }
+};
+
+
+
+export const downloadCategorySampleCSV = async (): Promise<void> => {
   try {
     const token = getToken(); // Retrieve the admin-auth-token
 
-    const response: AxiosResponse = await apiClient.get('/rate-card/sample', {
+    const response: AxiosResponse = await apiClient.get('/category/sample', {
       headers: {
         'admin-auth-token': token || '',
       },
@@ -4446,6 +4471,69 @@ export const downloadSampleCSV = async (): Promise<void> => {
   }
 };
 
+export const downloadSampleCSV = async (): Promise<void> => {
+  try {
+    const token = getToken(); // Retrieve the admin-auth-token
+
+    const response: AxiosResponse = await apiClient.get('/rate-card/sample', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      responseType: 'blob', // Treat the response as a binary file
+    });
+
+    // Generate a unique filename for the sample file
+    const uniqueFilename = generateUniqueFilename('ratecrad_sample', 'csv');
+
+    // Create a downloadable link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', uniqueFilename); // Unique filename
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Error downloading sample CSV:', error);
+    throw new Error('Failed to download sample CSV');
+  }
+};
+
+
+
+export const downloadSampleSucategoryCSV = async (): Promise<void> => {
+  try {
+    const token = getToken(); // Retrieve the admin-auth-token
+
+    const response: AxiosResponse = await apiClient.get('/sub-category/sample', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      responseType: 'blob', // Treat the response as a binary file
+    });
+
+    // Generate a unique filename for the sample file
+    const uniqueFilename = generateUniqueFilename('subcategory_sample', 'csv');
+
+    // Create a downloadable link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', uniqueFilename); // Unique filename
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Error downloading sample CSV:', error);
+    throw new Error('Failed to download sample CSV');
+  }
+};
 
 
 // Import rate cards from a CSV or Excel file

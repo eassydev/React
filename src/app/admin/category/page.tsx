@@ -19,7 +19,7 @@ import {
   Printer,
   Copy,
 } from "lucide-react";
-import { fetchCategories, exportCategories, deleteCategory } from "@/lib/api";
+import { fetchCategories, exportCategories, deleteCategory,downloadCategorySampleCSV } from "@/lib/api";
 import Link from "next/link";
 import { AlertDialog, AlertDialogTrigger,AlertDialogTitle , AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -103,6 +103,14 @@ const CategoryList = () => {
     setPagination((prev) => ({ ...prev, pageSize: Number(e.target.value) }));
   };
 
+   const handleSampleExport = async () => {
+      try {
+        await   downloadCategorySampleCSV();
+      } catch (error) {
+       
+      } finally {
+      }
+    };
 
   const handleDelete = async () => {
     try {
@@ -253,6 +261,10 @@ const CategoryList = () => {
         <CardHeader><CardTitle>Categories</CardTitle></CardHeader>
         <CardContent>
           <Table>
+              {/* <Button className="mx-2" onClick={handleSampleExport}><span>Sample CSV</span></Button> */}
+                        {/* <Button >
+              <Link href="/admin/rate-card/import">Import</Link>
+            </Button> */}
             <TableHeader>
               {categoryTable.getHeaderGroups().map((headerGroup) => (
                 <TableRow key={headerGroup.id}>
