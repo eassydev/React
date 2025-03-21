@@ -413,10 +413,10 @@ const AddPromocodeForm: React.FC = () => {
                                  <SelectValue placeholder="Select Type" />
                                </SelectTrigger>
                                <SelectContent>
-                                 {/* <SelectItem value="Category">Category</SelectItem>
-                                 <SelectItem value="Subcategory">Subcategory</SelectItem> */}
+                                 <SelectItem value="Category">Category</SelectItem>
+                                 {/* <SelectItem value="Subcategory">Subcategory</SelectItem>
                                  <SelectItem value="Ratecard">Ratecard</SelectItem>
-                                 <SelectItem value="Package">Package</SelectItem>
+                                 <SelectItem value="Package">Package</SelectItem> */}
                                </SelectContent>
                              </Select>
                            </div>

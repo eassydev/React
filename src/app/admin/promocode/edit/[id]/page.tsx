@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import {
   fetchPromocodeById,
   updatePromocode,
+  fetchAllCategories,
   Provider,
   fetchAllSubCategories,
   fetchAllRatecard,
@@ -116,32 +117,47 @@ const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); 
     };
   useEffect(() => {
     const loadOptions = async () => {
-      try {
-        let data: { id: string; name: string }[] = [];
-        switch (selectionType) {
-          case "Ratecard":
-            const ratecards = await fetchAllRatecard();
-            data = ratecards.map((ratecard) => ({
-              id: ratecard.id || '',
-              name: ratecard.name || "Unnamed Ratecard",
-            }));
-            break;
-          case "Package":
-            const packages = await fetchAllpackages();
-            data = packages.map((pkg:any) => ({
-              id: pkg.id || '',
-              name: pkg.name || "Unnamed Package",
-            }));
-            break;
-          default:
-            setOptions([]);
-            return;
-        }
-        setOptions(data);
-      } catch (error) {
-        toast({ variant: "error", title: "Error", description: `Failed to load ${selectionType} options.` });
-      }
-    };
+         try {
+           let data: { id: string; name: string }[] = [];
+           switch (selectionType) {
+             case "Category":
+               const categories = await fetchAllCategories();
+               data = categories.map((category) => ({
+                 id: category.id || '',
+                 name: category.name || "Unnamed Category",
+               }));
+               break;
+             case "Subcategory":
+               const subcategories = await fetchAllSubCategories();
+               data = subcategories.map((subcategory) => ({
+                 id: subcategory.id || '',
+                 name: subcategory.name || "Unnamed Subcategory",
+               }));
+               break;
+             case "Ratecard":
+               const ratecards = await fetchAllRatecard();
+               data = ratecards.map((ratecard) => ({
+                 id: ratecard.id || '',
+                 name: ratecard.name || "Unnamed Ratecard",
+               }));
+               break;
+             case "Package":
+               const packages = await fetchAllpackages();
+               data = packages.map((pkg) => ({
+                 id: pkg.id || '',
+                 name: pkg.name || "Unnamed Package",
+               }));
+               break;
+             default:
+               setOptions([]);
+               return;
+           }
+           setOptions(data);
+           setSelectedItemId(null);
+         } catch (error) {
+           toast({ variant: "error", title: "Error", description: `Failed to load ${selectionType} options.` });
+         }
+       };
 
     if (selectionType) loadOptions();
   }, [selectionType, toast]);
@@ -369,9 +385,9 @@ const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); 
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="Category">Category</SelectItem>
-                    <SelectItem value="Subcategory">Subcategory</SelectItem>
+                    {/* <SelectItem value="Subcategory">Subcategory</SelectItem>
                     <SelectItem value="Ratecard">Ratecard</SelectItem>
-                    <SelectItem value="Package">Package</SelectItem>
+                    <SelectItem value="Package">Package</SelectItem> */}
                   </SelectContent>
                 </Select>
               </div>
