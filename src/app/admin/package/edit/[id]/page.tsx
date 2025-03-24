@@ -358,8 +358,13 @@ const [providers, setProviders] = useState<Provider[]>([]);
                                id={`rateCard-${rateCard.id}`}
                              />
                              <label htmlFor={`rateCard-${rateCard.id}`} className="ml-2">
-                               {rateCard.name || "No name"}
-                             </label>
+              {rateCard.category?.name} | {rateCard.subcategory?.name} |{" "}
+              <p>
+                {rateCard.attributes
+                  ?.map((attr:any) => `${attr.filterAttribute.name}: ${attr.filterOption.value}`)
+                  .join(", ") || "N/A"}
+              </p>
+            </label>
                            </div>
                          );
                        }}
