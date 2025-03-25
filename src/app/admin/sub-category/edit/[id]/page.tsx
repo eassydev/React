@@ -65,22 +65,22 @@ const SubcategoryEdit: React.FC = () => {
   }, [subcategoryId, selectedCategoryId]);
 
 
-  useEffect(() => {
-    const fetchTaxRates = async () => {
-      try {
-        const rates = await fetchAllGstRates();
-        setHstRates(rates);
-      } catch (error) {
-        toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load tax rates.",
-        });
-      }
-    };
+  // useEffect(() => {
+  //   const fetchTaxRates = async () => {
+  //     try {
+  //       const rates = await fetchAllGstRates();
+  //       setHstRates(rates);
+  //     } catch (error) {
+  //       toast({
+  //         variant: "error",
+  //         title: "Error",
+  //         description: "Failed to load tax rates.",
+  //       });
+  //     }
+  //   };
 
-    fetchTaxRates();
-  }, []);
+  //   fetchTaxRates();
+  // }, []);
   const fetchCategoriesList = async () => {
     try {
       const fetchedCategories = await fetchAllCategories();
@@ -310,7 +310,7 @@ const removeAttribute = (index: number) => {
         title: 'Success',
         description: 'Subcategory updated successfully',
       });
-      router.push('/admin/sub-category'); // Redirect after successful update
+      //router.push('/admin/sub-category'); // Redirect after successful update
     } catch (error) {
       toast({
         variant: 'error',

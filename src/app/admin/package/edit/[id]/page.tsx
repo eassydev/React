@@ -57,6 +57,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
  
   const [noService, setNoService] = useState<number | null>(null);
   const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); // **Addon Dropdown Toggle**
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { toast } = useToast();
   const router = useRouter();
@@ -113,7 +114,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
         setIsActive(Boolean(packageData.is_active));
         setNoService(packageData.no_of_service || null);
         // Pre-select rate cards based on the response
-        const preSelectedRateCards = packageData.rateCards?.map((rc: any) => rc.rate_card_id.toString());
+        const preSelectedRateCards = packageData.rateCards?.map((rc: any) => rc.rate_card_id);
         setSelectedRateCards(preSelectedRateCards ?? []);
         const preSelectedAddons = packageData.addons?.map((addon: any) => addon.category_id.toString());
         setSelectedCategories(preSelectedAddons ?? []);
@@ -139,6 +140,15 @@ const [providers, setProviders] = useState<Provider[]>([]);
       setImagePreview(URL.createObjectURL(file));
     }
   };
+
+  const filteredRateCards = rateCards.filter((rateCard) => {
+    const text = `${rateCard.category?.name || ''} | ${rateCard.subcategory?.name || ''} | ${rateCard.attributes
+      ?.map((attr: any) => `${attr.filterAttribute?.name || ''}: ${attr.filterOption?.value || ''}`)
+      .join(", ") || "N/A"}`
+      .toLowerCase();
+  
+    return text.includes(searchQuery.toLowerCase());
+  });
 
  const loadProviders = async (providerid:string) => {
      try {
@@ -341,42 +351,51 @@ const [providers, setProviders] = useState<Provider[]>([]);
                    <ChevronDown className="w-4 h-4" />
                  </button>
                  
-                 {isRateCardDropdownOpen && (
-                   <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-hidden">
-                     <Virtuoso
-                       style={{ height: "240px", width: "100%" }} // Fixed height to avoid overflow issues
-                       totalCount={rateCards.length} // Total rate cards
-                       itemContent={(index) => {
-                         const rateCard = rateCards[index];
-                         return (
-                           <div key={rateCard.id} className="flex items-center p-2">
-                             <Checkbox
-                               checked={selectedRateCards.includes(rateCard.id.toString())}
-                               onCheckedChange={(checked: any) =>
-                                 handleRateCardSelection(rateCard.id.toString(), checked)
-                               }
-                               id={`rateCard-${rateCard.id}`}
-                             />
-                             <label htmlFor={`rateCard-${rateCard.id}`} className="ml-2">
-              {rateCard.category?.name} | {rateCard.subcategory?.name} |{" "}
-              <p>
-                {rateCard.attributes
-                  ?.map((attr:any) => `${attr.filterAttribute.name}: ${attr.filterOption.value}`)
-                  .join(", ") || "N/A"}
-              </p>
-            </label>
-                           </div>
-                         );
-                       }}
-                     />
-                   </div>
-                 )}
-               </div>
-             </div>
+                {isRateCardDropdownOpen && (
+                  <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-hidden">
+                    {/* Search Input */}
+                    <input
+                      type="text"
+                      placeholder="Search..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="w-full p-2 border-b border-gray-300 focus:outline-none"
+                    />
+                
+                    <Virtuoso
+                      style={{ height: "240px", width: "100%" }}
+                      totalCount={filteredRateCards.length} // Use filtered list
+                      itemContent={(index) => {
+                        const rateCard = filteredRateCards[index];
+                        return (
+                          <div key={rateCard.id} className="flex items-center p-2">
+                            <Checkbox
+                              checked={selectedRateCards.includes(rateCard.id.toString())}
+                              onCheckedChange={(checked: any) =>
+                                handleRateCardSelection(rateCard.id.toString(), checked)
+                              }
+                              id={`rateCard-${rateCard.id}`}
+                            />
+                            <label htmlFor={`rateCard-${rateCard.id}`} className="ml-2">
+                              {rateCard.category?.name} | {rateCard.subcategory?.name} |{" "}
+                              <p>
+                                {rateCard.attributes
+                                  ?.map((attr:any) => `${attr.filterAttribute.name}: ${attr.filterOption.value || ''}`)
+                                  .join(", ") || "N/A"}
+                              </p>
+                            </label>
+                          </div>
+                        );
+                      }}
+                    />
+                  </div>
+                )}
+                  </div>
+                </div>
 
 
               {/* Addon Categories Dropdown with Checkbox Selection */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Select Addon Categories</label>
                 <div className="relative">
                   <button
@@ -406,7 +425,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
                     </div>
                   )}
                 </div>
-              </div>
+              </div> */}
 
               {/* Discount Fields */}
               <div className="flex space-x-4">

@@ -61,9 +61,11 @@ const [providers, setProviders] = useState<Provider[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
 
   const filteredRateCards = rateCards.filter((rateCard) => {
-    const text = `${rateCard.category?.name} | ${rateCard.subcategory?.name} | ${rateCard.attributes
-      ?.map((attr:any) => `${attr.filterAttribute.name}: ${attr.filterOption.value}`)
-      .join(", ") || "N/A"}`.toLowerCase();
+    const text = `${rateCard.category?.name || ''} | ${rateCard.subcategory?.name || ''} | ${rateCard.attributes
+      ?.map((attr: any) => `${attr.filterAttribute?.name || ''}: ${attr.filterOption?.value || ''}`)
+      .join(", ") || "N/A"}`
+      .toLowerCase();
+  
     return text.includes(searchQuery.toLowerCase());
   });
   // Fetch rate cards on component mount
@@ -179,6 +181,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
   const handleRateCardSelection = (rateCardId: string, isChecked: boolean) => {
     if (isChecked) {
       setSelectedRateCards((prev) => [...prev, rateCardId]);
+      console.log("selectedRateCards",selectedRateCards);
     } else {
       setSelectedRateCards((prev) => prev.filter((id) => id !== rateCardId));
     }
@@ -311,7 +314,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
               {rateCard.category?.name} | {rateCard.subcategory?.name} |{" "}
               <p>
                 {rateCard.attributes
-                  ?.map((attr:any) => `${attr.filterAttribute.name}: ${attr.filterOption.value}`)
+                  ?.map((attr:any) => `${attr.filterAttribute.name}: ${attr.filterOption.value || ''}`)
                   .join(", ") || "N/A"}
               </p>
             </label>
@@ -327,7 +330,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
 
 
               {/* Addon Categories Dropdown with Checkbox Selection */}
-              <div className="space-y-2">
+              {/* <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Select Addon Categories</label>
                 <div className="relative">
                   <button
@@ -357,7 +360,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
                     </div>
                   )}
                 </div>
-              </div>
+              </div> */}
 
               {/* Discount Fields */}
               <div className="flex space-x-4">
