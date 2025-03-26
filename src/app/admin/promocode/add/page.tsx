@@ -59,7 +59,7 @@ const AddPromocodeForm: React.FC = () => {
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isFree, setIsFree] = useState<boolean>(false); // New state for is_free
   const [rateCardId, setRateCardId] = useState<string | null>(null); // New state for selected rate card ID
-  const [rateCardOptions, setRateCardOptions] = useState<{ id: string; name: string }[]>([]); // Options for rate cards
+  const [rateCardOptions, setRateCardOptions] = useState<any[]>([]); // Options for rate cards
     const [selectedProviderName, setSelectedProviderName] = useState<string>("Select an option");
     const [selectedProviderId, setSelectedProviderId] = useState<string>("");
   const [providers, setProviders] = useState<Provider[]>([]);
@@ -67,7 +67,7 @@ const AddPromocodeForm: React.FC = () => {
     const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); // **[Added state for Addon dropdown toggle]**
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // Addon Category IDs
     const [categories, setCategories] = useState<any[]>([]);
-  
+    const [searchTerm, setSearchTerm] = useState("");
 
 
      useEffect(() => {
@@ -181,11 +181,8 @@ const AddPromocodeForm: React.FC = () => {
     const loadRateCards = async () => {
       try {
         const rateCards = await fetchAllRatecard(); // New API for fetching rate cards
-        const options = rateCards.map((rateCard) => ({
-          id: rateCard.id || '',
-          name: rateCard.name || "Unnamed Ratecard",
-        }));
-        setRateCardOptions(options);
+        
+        setRateCardOptions(rateCards);
       } catch (error) {
         toast({
           variant: "error",
@@ -493,23 +490,87 @@ const AddPromocodeForm: React.FC = () => {
 </div>
 
 {isFree && (
-  <div>
+  <div className="space-y-2 w-full">
     <label className="text-sm font-medium text-gray-700">Select Ratecard</label>
     <Select value={String(rateCardId)} onValueChange={(value) => setRateCardId(value)}>
-      <SelectTrigger className="bg-white border-gray-200">
-        <SelectValue placeholder="Select Ratecard" />
+      <SelectTrigger className="w-full bg-white border-gray-200">
+  {rateCardOptions.find(rc => String(rc.id) === String(rateCardId)) ? (
+    <>
+      {rateCardOptions.find(rc => String(rc.id) === String(rateCardId))?.category?.name || ''} 
+      {rateCardOptions.find(rc => String(rc.id) === String(rateCardId))?.subcategory?.name 
+        ? ` / ${rateCardOptions.find(rc => String(rc.id) === String(rateCardId))?.subcategory?.name}` 
+        : ''}
+      {rateCardOptions.find(rc => String(rc.id) === String(rateCardId))?.attributes?.length > 0 && (
+        ` (${rateCardOptions.find(rc => String(rc.id) === String(rateCardId))?.attributes
+          .map((attr:any) => `${attr.filterAttribute?.name || ''}: ${attr.filterOption?.value || ''}`)
+          .join(', ')})`
+      )}
+    </>
+  ) : "Select Ratecard"}
       </SelectTrigger>
-      <SelectContent>
-        {rateCardOptions.map((option) => (
-          <SelectItem key={option.id} value={String(option.id)}>
-            {option.name}
-          </SelectItem>
-        ))}
+      <SelectContent className="w-full p-0">
+        {/* Search input */}
+        <div className="sticky top-0 z-10 bg-background p-2 border-b">
+          <Input
+            placeholder="Search ratecards..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-full"
+            autoFocus
+          />
+        </div>
+
+        {/* Virtualized list */}
+        {rateCardOptions.filter(rc => 
+          `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''}`
+            .toLowerCase()
+            .includes(searchTerm.toLowerCase())
+        ).length > 0 ? (
+          <Virtuoso
+            style={{ height: "200px", width: "100%" }}
+            totalCount={
+              rateCardOptions.filter(rc => 
+                `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''}`
+                  .toLowerCase()
+                  .includes(searchTerm.toLowerCase())
+              ).length
+            }
+            itemContent={(index) => {
+              // Define the filtered list first
+              const filteredRatecards = rateCardOptions.filter(rc => 
+                `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''}`
+                  .toLowerCase()
+                  .includes(searchTerm.toLowerCase())
+              );
+
+              const ratecard = filteredRatecards[index];
+              return ratecard ? (
+                <SelectItem 
+                  key={ratecard.id} 
+                  value={String(ratecard.id)}
+                >
+                  <div className="flex flex-col">
+                    <span>{ratecard.name}</span>
+                    <span className="text-sm text-gray-500">
+                      {ratecard.category?.name} / {ratecard.subcategory?.name}
+                      {ratecard.attributes?.length > 0 && ` (${ratecard.attributes
+                        .map((attr:any) => `${attr.filterAttribute?.name || ''}: ${attr.filterOption?.value || ''}`)
+                        .join(', ')})`}
+                    </span>
+                  </div>
+                </SelectItem>
+              ) : null;
+            }}
+          />
+        ) : (
+          <div className="py-6 text-center text-sm text-muted-foreground">
+            No ratecards found
+          </div>
+        )}
       </SelectContent>
     </Select>
   </div>
 )}
-
 
               <div>
                 <label className="text-sm font-medium text-gray-700">Active/Inactive</label>
