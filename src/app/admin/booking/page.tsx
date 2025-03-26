@@ -67,8 +67,11 @@ const BookingList = () => {
       cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
     }, 
     { accessorKey: 'user.first_name', header: 'User' },
-    { accessorKey: 'rateCard.provider.first_name', header: 'Provider' },
-    { accessorKey: 'booking_date', header: 'Service Date' },
+    {
+      accessorFn: (row) => row.rateCard?.provider?.first_name || 'N/A',
+      header: 'Provider'
+    },
+        { accessorKey: 'booking_date', header: 'Service Date' },
     { accessorKey: 'status', header: 'Status' },
     {
       id: 'actions',
