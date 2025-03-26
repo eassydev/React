@@ -1360,6 +1360,27 @@ export const fetchAllRatecard = async (): Promise<RateCard[]> => {
   }
 };
 
+
+export const fetchRateCardsByProvider = async (providerId: string): Promise<RateCard[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/rate-card/provider/${providerId}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch provider rate cards');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch provider rate cards');
+  }
+};
+
+
 // Function to fetch a specific rate card by ID
 export const fetchRateCardById = async (id: string): Promise<RateCard> => {
   try {

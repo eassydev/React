@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+import React, { useState, useEffect, FormEvent, ChangeEvent, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Save, Loader2, ImageIcon, FileText, ChevronDown,Globe2 } from 'lucide-react';
-import { fetchAllRatecard, fetchAllCategories, fetchPackageById, updatePackage, Package,Provider,fetchProviders,fetchProviderById } from '@/lib/api';
+import { fetchRateCardsByProvider, fetchAllCategories, fetchPackageById, updatePackage, Package,Provider,fetchProviders,fetchProviderById } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Virtuoso } from "react-virtuoso";
@@ -58,6 +58,9 @@ const [providers, setProviders] = useState<Provider[]>([]);
   const [noService, setNoService] = useState<number | null>(null);
   const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); // **Addon Dropdown Toggle**
   const [searchQuery, setSearchQuery] = useState("");
+  const [providerSearchTerm, setProviderSearchTerm] = useState("");
+  const [rateCardSearchTerm, setRateCardSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { toast } = useToast();
   const router = useRouter();
@@ -70,11 +73,9 @@ const [providers, setProviders] = useState<Provider[]>([]);
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [rateCardResponse, categoryResponse] = await Promise.all([
-          fetchAllRatecard(),
+        const [categoryResponse] = await Promise.all([
           fetchAllCategories(),
         ]);
-        setRateCards(rateCardResponse || []);
         setCategories(categoryResponse || []);
       } catch (error) {
         toast({
@@ -87,6 +88,51 @@ const [providers, setProviders] = useState<Provider[]>([]);
     fetchInitialData();
   }, []);
 
+
+  const filteredProviders = useMemo(() => {
+    return providers.filter(provider => 
+      `${provider.first_name} ${provider.last_name || ''}`
+        .toLowerCase()
+        .includes(providerSearchTerm.toLowerCase())
+    );
+  }, [providers, providerSearchTerm]);
+
+  // Filter rate cards based on search term and provider
+  const filteredRateCards = useMemo(() => {
+    return rateCards.filter(rateCard => {
+      const text = `${rateCard.category?.name || ''} | ${rateCard.subcategory?.name || ''} | ${rateCard.attributes
+        ?.map((attr: any) => `${attr.filterAttribute?.name || ''}: ${attr.filterOption?.value || ''}`)
+        .join(", ") || "N/A"}`
+        .toLowerCase();
+      
+      return text.includes(rateCardSearchTerm.toLowerCase());
+    });
+  }, [rateCards, rateCardSearchTerm]);
+
+  // Update provider selection and fetch their rate cards
+  const handleProviderChange = async (providerId: string) => {
+    const selectedProvider = providers.find(p => p.id?.toString() === providerId);
+    if (selectedProvider) {
+      setSelectedProviderId(providerId);
+      setSelectedProviderName(`${selectedProvider.first_name} ${selectedProvider.last_name || ''}`);
+      
+      try {
+        const providerRateCards = await fetchRateCardsByProvider(providerId);
+        setRateCards(providerRateCards || []);
+      } catch (error) {
+        toast({
+          variant: "error",
+          title: "Error",
+          description: "Failed to load rate cards for this provider",
+        });
+        setRateCards([]);
+      }
+    } else {
+      setSelectedProviderId("");
+      setSelectedProviderName("Select an option");
+      setRateCards([]);
+    }
+  };
   // Fetch existing package data
   useEffect(() => {
     const loadPackageData = async () => {
@@ -141,14 +187,6 @@ const [providers, setProviders] = useState<Provider[]>([]);
     }
   };
 
-  const filteredRateCards = rateCards.filter((rateCard) => {
-    const text = `${rateCard.category?.name || ''} | ${rateCard.subcategory?.name || ''} | ${rateCard.attributes
-      ?.map((attr: any) => `${attr.filterAttribute?.name || ''}: ${attr.filterOption?.value || ''}`)
-      .join(", ") || "N/A"}`
-      .toLowerCase();
-  
-    return text.includes(searchQuery.toLowerCase());
-  });
 
  const loadProviders = async (providerid:string) => {
      try {
@@ -338,6 +376,66 @@ const [providers, setProviders] = useState<Provider[]>([]);
               </div>
 
              
+
+             <div className="space-y-2 w-full">
+               <label className="text-sm font-medium text-gray-700">Select Provider</label>
+               <Select value={selectedProviderId || ""} onValueChange={handleValueChange}>
+                 <SelectTrigger className="w-full">
+                   {selectedProviderName || "Select an option"}
+                 </SelectTrigger>
+                 <SelectContent className="w-full p-0">
+                   {/* Search input */}
+                   <div className="sticky top-0 z-10 bg-background p-2 border-b">
+                     <Input
+                       placeholder="Search providers..."
+                       value={searchTerm}
+                       onChange={(e) => setSearchTerm(e.target.value)}
+                       className="w-full"
+                       autoFocus
+                     />
+                   </div>
+                   
+                   {/* Filtered provider list */}
+                   {providers.filter(provider => 
+                     `${provider.first_name} ${provider.last_name || ''}`
+                       .toLowerCase()
+                       .includes(searchTerm.toLowerCase())
+                   ).length > 0 ? (
+                     <Virtuoso
+                       style={{ height: "200px", width: "100%" }}
+                       totalCount={providers.filter(provider => 
+                         `${provider.first_name} ${provider.last_name || ''}`
+                           .toLowerCase()
+                           .includes(searchTerm.toLowerCase())
+                       ).length}
+                       itemContent={(index) => {
+                         const filteredProviders = providers.filter(provider => 
+                           `${provider.first_name} ${provider.last_name || ''}`
+                             .toLowerCase()
+                             .includes(searchTerm.toLowerCase())
+                         );
+                         const provider = filteredProviders[index];
+                         return (
+                           <SelectItem 
+                             key={provider.id} 
+                             value={provider.id?.toString() ?? ''}
+                           >
+                             {provider.first_name} {provider.last_name || ""}
+                           </SelectItem>
+                         );
+                       }}
+                     />
+                   ) : (
+                     <div className="py-6 text-center text-sm text-muted-foreground">
+                       No providers found
+                     </div>
+                   )}
+                 </SelectContent>
+               </Select>
+             </div>
+
+
+             
              {/* Rate Card Dropdown with Virtualized List */}
              <div className="space-y-2">
                <label className="text-sm font-medium text-gray-700">Select Rate Cards</label>
@@ -351,47 +449,48 @@ const [providers, setProviders] = useState<Provider[]>([]);
                    <ChevronDown className="w-4 h-4" />
                  </button>
                  
-                {isRateCardDropdownOpen && (
-                  <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-hidden">
-                    {/* Search Input */}
-                    <input
-                      type="text"
-                      placeholder="Search..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full p-2 border-b border-gray-300 focus:outline-none"
-                    />
-                
-                    <Virtuoso
-                      style={{ height: "240px", width: "100%" }}
-                      totalCount={filteredRateCards.length} // Use filtered list
-                      itemContent={(index) => {
-                        const rateCard = filteredRateCards[index];
-                        return (
-                          <div key={rateCard.id} className="flex items-center p-2">
-                            <Checkbox
-                              checked={selectedRateCards.includes(rateCard.id.toString())}
-                              onCheckedChange={(checked: any) =>
-                                handleRateCardSelection(rateCard.id.toString(), checked)
-                              }
-                              id={`rateCard-${rateCard.id}`}
-                            />
-                            <label htmlFor={`rateCard-${rateCard.id}`} className="ml-2">
-                              {rateCard.category?.name} | {rateCard.subcategory?.name} |{" "}
-                              <p>
-                                {rateCard.attributes
-                                  ?.map((attr:any) => `${attr.filterAttribute.name}: ${attr.filterOption.value || ''}`)
-                                  .join(", ") || "N/A"}
-                              </p>
-                            </label>
-                          </div>
-                        );
-                      }}
-                    />
-                  </div>
-                )}
-                  </div>
-                </div>
+                 {isRateCardDropdownOpen && (
+               <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-hidden">
+                 {/* Search Input */}
+                 <input
+                   type="text"
+                   placeholder="Search..."
+                   value={searchQuery}
+                   onChange={(e) => setSearchQuery(e.target.value)}
+                   className="w-full p-2 border-b border-gray-300 focus:outline-none"
+                 />
+             
+                 <Virtuoso
+                   style={{ height: "240px", width: "100%" }}
+                   totalCount={filteredRateCards.length} // Use filtered list
+                   itemContent={(index) => {
+                     const rateCard = filteredRateCards[index];
+                     return (
+                       <div key={rateCard.id} className="flex items-center p-2">
+                         <Checkbox
+                           checked={selectedRateCards.includes(rateCard.id.toString())}
+                           onCheckedChange={(checked: any) =>
+                             handleRateCardSelection(rateCard.id.toString(), checked)
+                           }
+                           id={`rateCard-${rateCard.id}`}
+                         />
+                         <label htmlFor={`rateCard-${rateCard.id}`} className="ml-2">
+                           {rateCard.category?.name} | {rateCard.subcategory?.name} |{" "}
+                           <p>
+                             {rateCard.attributes
+                               ?.map((attr:any) => `${attr.filterAttribute.name}: ${attr.filterOption.value || ''}`)
+                               .join(", ") || "N/A"}
+                           </p>
+                         </label>
+                       </div>
+                     );
+                   }}
+                 />
+               </div>
+             )}
+               </div>
+             </div>
+             
 
 
               {/* Addon Categories Dropdown with Checkbox Selection */}
@@ -492,26 +591,6 @@ const [providers, setProviders] = useState<Provider[]>([]);
               )}
 
 
-  {/* Provider (with Search & Pagination) */}
-              <div className="space-y-2 w-full">
-                   <label className="text-sm font-medium text-gray-700">Select Provider</label>
-                   <Select value={selectedProviderId || ""} onValueChange={handleValueChange}>
-                     <SelectTrigger className="w-full"> {/* Full width */}
-                       {selectedProviderName || "Select an option"}
-                     </SelectTrigger>
-                     <SelectContent className="w-full"> {/* Full width dropdown */}
-                       <Virtuoso
-                         style={{ height: "200px", width: "100%" }} // Full width and fixed height
-                         totalCount={providers.length}
-                         itemContent={(index) => (
-                           <SelectItem key={providers[index].id} value={providers[index].id?.toString() ?? ''}>
-                             {providers[index].first_name} {providers[index].last_name || ""}
-                           </SelectItem>
-                         )}
-                       />
-                     </SelectContent>
-                   </Select>
-                 </div>
               {/* Renewal Options */}
               <div className="flex items-center space-x-2">
                 <Switch checked={renewalOptions} onCheckedChange={setRenewalOptions} />

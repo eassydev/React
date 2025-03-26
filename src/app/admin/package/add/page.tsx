@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Save, Loader2, ImageIcon, FileText, ChevronDown,Globe2 } from 'lucide-react';
-import { fetchAllRatecard, fetchAllCategories, fetchProviderById,createPackage, Package,Provider,fetchProviders } from '@/lib/api';
+import { fetchAllRatecard, fetchAllCategories, fetchProviderById,createPackage, Package,Provider,fetchProviders,fetchRateCardsByProvider } from '@/lib/api';
 import { useToast } from "@/hooks/use-toast";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useRouter } from 'next/navigation';
@@ -59,6 +59,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedProviderName, setSelectedProviderName] = useState<string>("Select an option");
   const { toast } = useToast();
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchTerm, setSearchTerm] = useState("");
 
   const filteredRateCards = rateCards.filter((rateCard) => {
     const text = `${rateCard.category?.name || ''} | ${rateCard.subcategory?.name || ''} | ${rateCard.attributes
@@ -68,28 +69,50 @@ const [providers, setProviders] = useState<Provider[]>([]);
   
     return text.includes(searchQuery.toLowerCase());
   });
-  // Fetch rate cards on component mount
-  useEffect(() => {
-    const fetchInitialData = async () => {
+  const handleValueChange = async (value: string) => {
+    const selectedProvider = providers.find((provider) => provider.id?.toString() === value);
+    if (selectedProvider) {
+      setSelectedProviderId(value);
+      setSelectedProviderName(`${selectedProvider.first_name} ${selectedProvider.last_name}`);
+  
+      // Fetch rate cards based on the selected provider
       try {
-        const [rateCardResponse, categoryResponse] = await Promise.all([
-          fetchAllRatecard(),
-          fetchAllCategories(),
-        ]);
+        const rateCardResponse = await fetchRateCardsByProvider(value); // Pass provider ID
         setRateCards(rateCardResponse || []);
-        setCategories(categoryResponse || []);
-        await loadProviders();
       } catch (error) {
-        console.log(error)
+        console.log(error);
+        setRateCards([]);
         toast({
           variant: "error",
           title: "Error",
-          description: "Failed to load data.",
+          description: "Failed to load rate cards for the selected provider.",
+        });
+      }
+    } else {
+      setSelectedProviderName("Select an option");
+      setRateCards([]); // Reset rate cards if no provider is selected
+    }
+  };
+  
+  // Remove the initial rate card fetch from useEffect
+  useEffect(() => {
+    const fetchInitialData = async () => {
+      try {
+        const categoryResponse = await fetchAllCategories();
+        setCategories(categoryResponse || []);
+        await loadProviders();
+      } catch (error) {
+        console.log(error);
+        toast({
+          variant: "error",
+          title: "Error",
+          description: "Failed to load categories or providers.",
         });
       }
     };
     fetchInitialData();
   }, []);
+  
  
     const loadProviders = async () => {
         try {
@@ -111,15 +134,15 @@ const [providers, setProviders] = useState<Provider[]>([]);
   };
 
 
-  const handleValueChange = (value: string) => {
-    const selectedProvider = providers.find((provider) => provider.id?.toString() === value);
-    if (selectedProvider) {
-      setSelectedProviderId(value);
-      setSelectedProviderName(`${selectedProvider.first_name} ${selectedProvider.last_name}`);
-    } else {
-      setSelectedProviderName("Select an option");
-    }
-  };
+  // const handleValueChange = (value: string) => {
+  //   const selectedProvider = providers.find((provider) => provider.id?.toString() === value);
+  //   if (selectedProvider) {
+  //     setSelectedProviderId(value);
+  //     setSelectedProviderName(`${selectedProvider.first_name} ${selectedProvider.last_name}`);
+  //   } else {
+  //     setSelectedProviderName("Select an option");
+  //   }
+  // };
   // Handle form submission
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -271,6 +294,62 @@ const [providers, setProviders] = useState<Provider[]>([]);
                 </Select>
               </div>
 
+<div className="space-y-2 w-full">
+  <label className="text-sm font-medium text-gray-700">Select Provider</label>
+  <Select value={selectedProviderId || ""} onValueChange={handleValueChange}>
+    <SelectTrigger className="w-full">
+      {selectedProviderName || "Select an option"}
+    </SelectTrigger>
+    <SelectContent className="w-full p-0">
+      {/* Search input */}
+      <div className="sticky top-0 z-10 bg-background p-2 border-b">
+        <Input
+          placeholder="Search providers..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full"
+          autoFocus
+        />
+      </div>
+      
+      {/* Filtered provider list */}
+      {providers.filter(provider => 
+        `${provider.first_name} ${provider.last_name || ''}`
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
+      ).length > 0 ? (
+        <Virtuoso
+          style={{ height: "200px", width: "100%" }}
+          totalCount={providers.filter(provider => 
+            `${provider.first_name} ${provider.last_name || ''}`
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())
+          ).length}
+          itemContent={(index) => {
+            const filteredProviders = providers.filter(provider => 
+              `${provider.first_name} ${provider.last_name || ''}`
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase())
+            );
+            const provider = filteredProviders[index];
+            return (
+              <SelectItem 
+                key={provider.id} 
+                value={provider.id?.toString() ?? ''}
+              >
+                {provider.first_name} {provider.last_name || ""}
+              </SelectItem>
+            );
+          }}
+        />
+      ) : (
+        <div className="py-6 text-center text-sm text-muted-foreground">
+          No providers found
+        </div>
+      )}
+    </SelectContent>
+  </Select>
+</div>
 
 {/* Rate Card Dropdown with Virtualized List */}
 <div className="space-y-2">
@@ -429,25 +508,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
               )}
 
 
- <div className="space-y-2 w-full">
-      <label className="text-sm font-medium text-gray-700">Select Provider</label>
-      <Select value={selectedProviderId || ""} onValueChange={handleValueChange}>
-        <SelectTrigger className="w-full"> {/* Full width */}
-          {selectedProviderName || "Select an option"}
-        </SelectTrigger>
-        <SelectContent className="w-full"> {/* Full width dropdown */}
-          <Virtuoso
-            style={{ height: "200px", width: "100%" }} // Full width and fixed height
-            totalCount={providers.length}
-            itemContent={(index:any) => (
-              <SelectItem key={providers[index].id} value={providers[index].id?.toString() ?? ''}>
-                {providers[index].first_name} {providers[index].last_name || ""}
-              </SelectItem>
-            )}
-          />
-        </SelectContent>
-      </Select>
-    </div>
+ 
               {/* Renewal Options */}
               <div className="flex items-center space-x-2">
                 <Switch checked={renewalOptions} onCheckedChange={setRenewalOptions} />
