@@ -467,6 +467,8 @@ export interface Promocode {
   is_free: boolean; 
   rate_card_id: string | null; 
   category_ids?: string[]; // Array of addon category IDs
+  categories?: string[]; // Array of addon category IDs
+
 
 }
 

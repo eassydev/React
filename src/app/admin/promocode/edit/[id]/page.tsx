@@ -52,14 +52,34 @@ const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); 
     const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // Addon Category IDs
     const [categories, setCategories] = useState<any[]>([]);
          const [searchTerm, setSearchTerm] = useState("");
+         const [selectedOptionName, setSelectedOptionName] = useState<string>("Select an option");
        
   const { toast } = useToast();
 
   const { id } = useParams();
   const router = useRouter();
 
+     useEffect(() => {
+          const fetchInitialData = async () => {
+            try {
+              const [ categoryResponse] = await Promise.all([
+                fetchAllCategories(),
+              ]);
+              setCategories(categoryResponse || []);
+            } catch (error) {
+              console.log(error)
+              toast({
+                variant: "error",
+                title: "Error",
+                description: "Failed to load data.",
+              });
+            }
+          };
+          fetchInitialData();
+        }, []);
   
   useEffect(() => {
+    
     const loadPromocode = async () => {
       try {
         const promocode = await fetchPromocodeById(id.toString());
@@ -83,6 +103,8 @@ const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); 
         setIsActive(promocode.is_active);
         setIsFree(promocode.is_free);
         setRateCardId(promocode.rate_card_id?.toString() || null); // Ensure it's a string
+        setSelectedCategories(promocode.categories || []); // Include addon category selections
+
       } catch (error) {
         toast({ variant: "error", title: "Error", description: "Failed to load promocode details." });
       }
@@ -149,12 +171,14 @@ const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); 
                  name: pkg.name || "Unnamed Package",
                }));
                break;
+              
              default:
                setOptions([]);
                return;
            }
            setOptions(data);
-           setSelectedItemId(null);
+           const selectedOption = data.find((option) => option.id === selectedItemId);
+               setSelectedOptionName(selectedOption?.name || "Select an option");
          } catch (error) {
            toast({ variant: "error", title: "Error", description: `Failed to load ${selectionType} options.` });
          }
@@ -185,14 +209,7 @@ const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!code || !discountValue || !startDate || !endDate || !selectionType || !selectedItemId || !providerId) {
-      toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Please fill in all required fields.",
-      });
-      return;
-    }
+   
 
     setIsSubmitting(true);
     try {
@@ -200,7 +217,7 @@ const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); 
         code,
         description,
         discount_type: discountType,
-        discount_value: discountValue,
+        discount_value: discountValue || 0,
         min_order_value: minOrderValue,
         start_date: startDate,
         end_date: endDate,
@@ -252,6 +269,16 @@ const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); 
     }
   };
 
+
+  const handleValueRateChange = (value: string) => {
+    const selectedOption = options.find((option) => option.id?.toString() === value);
+    if (selectedOption) {
+      setSelectedItemId(value.toString());
+      setSelectedOptionName(`${selectedOption.name}`);
+    } else {
+      setSelectedOptionName("Select an option");
+    }
+  };
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-12xl mx-auto space-y-6">
@@ -391,22 +418,27 @@ const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); 
               </div>
 
               {selectionType && (
-  <div>
-    <label className="text-sm font-medium text-gray-700">Select {selectionType}</label>
-    <Select value={selectedItemId || ""} onValueChange={(value) => setSelectedItemId(value)}>
-      <SelectTrigger className="bg-white border-gray-200">
-        <SelectValue placeholder={`Select ${selectionType}`} />
-      </SelectTrigger>
-      <SelectContent>
-        {options.map((option) => (
-          <SelectItem key={option.id} value={String(option.id)}>
-            {option.name}
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
-  </div>
-)}
+                                           <div>
+                                             <label className="text-sm font-medium text-gray-700">Select {selectionType}</label>
+                                             <Select value={String(selectedItemId)} onValueChange={handleValueRateChange}>
+                                               <SelectTrigger className="bg-white border-gray-200">
+                                               {selectedOptionName || "Select an option"}
+                                               </SelectTrigger>
+                                               <SelectContent>
+                                               <Virtuoso
+                                                             style={{ height: "200px", width: "100%" }} // Full width and fixed height
+                                                             totalCount={options.length}
+                                                             itemContent={(index:any) => (
+                                                               <SelectItem key={options[index].id} value={options[index].id?.toString() ?? ''}>
+                                                                 {options[index].name} {options[index].name || ""}
+                                                               </SelectItem>
+                                                             )}
+                                                           />
+                                                 
+                                               </SelectContent>
+                                             </Select>
+                                           </div>
+                                         )}
 
 
               <div>
