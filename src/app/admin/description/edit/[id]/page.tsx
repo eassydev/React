@@ -35,6 +35,7 @@ import {
 } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, useParams } from "next/navigation";
+import { Switch } from "@/components/ui/switch";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
@@ -70,6 +71,7 @@ const EditServiceDescriptionForm: React.FC = () => {
   const [serviceDescriptions, setServiceDescriptions] = useState<
     { id?: string; name: string; description: string }[]
   >([]);
+    const [isActive, setIsActive] = useState<boolean>(true);
 
   useEffect(() => {
     const loadServiceDetail = async () => {
@@ -80,7 +82,7 @@ const EditServiceDescriptionForm: React.FC = () => {
         setFilterAttributeOptionsId(serviceDetail.filter_option_id?.toString() ?? "");
         setSegmentsId(serviceDetail.segment_id ?? "");
         setServiceDescriptions(serviceDetail.serviceDescriptions || []);
-
+        setIsActive(serviceDetail.active || false);
 
         if (serviceDetail.category_id) {
           const categoryData = await fetchAllCategories();
@@ -200,6 +202,7 @@ const EditServiceDescriptionForm: React.FC = () => {
         name: desc.name.toString(),
         description: desc.description.toString(),
       })),
+      active:isActive
     };
 
     try {
@@ -308,6 +311,10 @@ const EditServiceDescriptionForm: React.FC = () => {
                 </Select>
               )}
 
+<div className="flex items-center space-x-2">
+                <Switch checked={isActive} onCheckedChange={setIsActive} />
+                <span className="text-sm text-gray-700">Active</span>
+              </div>
               <div>
                 <Button type="button" onClick={handleAddServiceDescription}>
                   Add Service Description

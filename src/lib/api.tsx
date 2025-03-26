@@ -139,6 +139,8 @@ export interface ServiceDetail {
   filter_attribute_id?: string; // Foreign key linking to the filter attribute
   filter_option_id?: String;
   serviceDescriptions: ServiceDescription[];
+  active: boolean;
+
 
 }
 
@@ -6076,6 +6078,7 @@ export const createServiceDetail = async (serviceDetail: ServiceDetail): Promise
       name: desc.name,
       description: desc.description,
     })), // Include service descriptions
+    active: serviceDetail.active ?? 0,
   };
 
   try {

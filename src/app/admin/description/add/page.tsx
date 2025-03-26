@@ -33,6 +33,7 @@ import {
 } from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
+import { Switch } from "@/components/ui/switch";
 
 const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
 import "react-quill/dist/quill.snow.css";
@@ -46,6 +47,7 @@ const quillModules = {
     ["link", "image", "video"],
     ["clean"],
   ],
+  
 };
 
 const ServiceDescriptionForm: React.FC = () => {
@@ -66,6 +68,8 @@ const ServiceDescriptionForm: React.FC = () => {
   const [serviceDescriptions, setServiceDescriptions] = useState<
     { name: string; description: string }[]
   >([]);
+    const [isActive, setIsActive] = useState<boolean>(true);
+  
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -181,6 +185,7 @@ const ServiceDescriptionForm: React.FC = () => {
         name: desc.name.toString(),
         description: desc.description.toString(),
       })),
+      active:isActive
     };
 
     try {
@@ -190,7 +195,7 @@ const ServiceDescriptionForm: React.FC = () => {
         title: "Success",
         description: response.message,
       });
-      router.push("/admin/description");
+     // router.push("/admin/description");
     } catch {
       toast({
         variant: "error",
@@ -288,6 +293,10 @@ const ServiceDescriptionForm: React.FC = () => {
                 </Select>
               )}
 
+<div className="flex items-center space-x-2">
+                <Switch checked={isActive} onCheckedChange={setIsActive} />
+                <span className="text-sm text-gray-700">Active</span>
+              </div>
               <div>
                 <Button type="button" onClick={handleAddServiceDescription}>
                   Add Service Description
