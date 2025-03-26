@@ -32,12 +32,15 @@ const SubcategoryList = () => {
   const [isExporting, setIsExporting] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
     const [isDialogOpen, setIsDialogOpen] = useState(false); // Manage Alert visibility
-  
+    const [searchTerm, setSearchTerm] = useState("");
+
   const { toast } = useToast();
 
-  const fetchSubcategoriesData = async (page = 1, size = 50, status = "all") => {
+
+  
+  const fetchSubcategoriesData = async (page = 1, size = 50, status = "all", search = "") => {
     try {
-      const { data, meta } = await fetchSubcategories(page, size, status);
+      const { data, meta } = await fetchSubcategories(page, size, status, search);
       setSubcategories(data);
       setTotalPages(meta.totalPages);
     } catch (error) {
@@ -55,9 +58,14 @@ const SubcategoryList = () => {
       }
     };
   
-  useEffect(() => {
-    fetchSubcategoriesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus);
-  }, [pagination.pageIndex, pagination.pageSize, filterStatus]);
+    useEffect(() => {
+      const timer = setTimeout(() => {
+        fetchSubcategoriesData(1, pagination.pageSize, filterStatus, searchTerm);
+        setPagination(prev => ({ ...prev, pageIndex: 0 })); // Reset to first page on search
+      }, 500); // Debounce search by 500ms
+    
+      return () => clearTimeout(timer);
+    }, [searchTerm, pagination.pageSize, filterStatus]);
 
   const handleExport = async () => {
     try {
@@ -240,6 +248,7 @@ const SubcategoryList = () => {
     <div className="p-4">
       <div className="flex justify-between mb-4">
         <h1 className="text-2xl font-bold">Subcategory List</h1>
+        
         <div className="flex space-x-2">
         <select value={filterStatus} onChange={handleStatusChange} className="border p-2 rounded">
             <option value="">All</option>
@@ -261,11 +270,37 @@ const SubcategoryList = () => {
         </div>
       </div>
       <Card>
-        <CardHeader><CardTitle>Subcategories</CardTitle></CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between gap-4">
+          <CardTitle>Subcategories</CardTitle>
+        <div className="relative">
+      <input
+        type="text"
+        placeholder="Search subcategories..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="border p-2 pl-8 rounded w-64"
+      />
+      <svg
+        className="absolute left-2 top-3 h-4 w-4 text-gray-400"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+        xmlns="http://www.w3.org/2000/svg"
+      >
+        <path
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          strokeWidth="2"
+          d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+        ></path>
+      </svg>
+    </div>
+        </CardHeader>
         <CardContent>
            <Button className="mx-2" onClick={handleSampleExport}><span>Sample CSV</span></Button>
                       <Button >
             <Link href="/admin/sub-category/import">Import</Link>
+            
           </Button>
           <Table>
             <TableHeader>

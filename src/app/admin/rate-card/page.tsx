@@ -11,7 +11,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/components/ui/table';
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Download, Copy, Printer } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Download, Copy, Printer,Search  } from 'lucide-react';
 import { fetchRateCards,downloadSampleCSV, deleteRateCard, exportRatecard } from '@/lib/api';
 import Link from 'next/link';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from '@/components/ui/alert-dialog';
@@ -25,22 +25,36 @@ const RateCardList = () => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
+  const [searchTerm, setSearchTerm] = useState("");
 
-  const fetchRateCardsData = async (page = 1, size = 50, status = "all") => {
+  const fetchRateCardsData = async (page = 1, size = 50, status = "all", search = "") => {
     try {
-      const { data, meta } = await fetchRateCards(page, size, filterStatus);
+      const { data, meta } = await fetchRateCards(page, size, status, search);
       setRateCards(data);
       setTotalPages(meta.totalPages);
       setTotalItems(meta.totalItems);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
       console.error('Error fetching rate cards:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch rate cards',
+        variant: 'destructive',
+      });
     }
   };
 
   useEffect(() => {
-    fetchRateCardsData(pagination.pageIndex + 1, pagination.pageSize, filterStatus);
-  }, [pagination.pageIndex, pagination.pageSize, filterStatus]);
+    fetchRateCardsData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm);
+  }, [pagination.pageIndex]);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      fetchRateCardsData(1, pagination.pageSize, filterStatus, searchTerm);
+    }, 500);
+
+    return () => clearTimeout(timer);
+  }, [searchTerm, pagination.pageSize, filterStatus]);
 
   const handleRateCardDelete = async (rateCardId: number) => {
     try {
@@ -242,8 +256,18 @@ const RateCardList = () => {
         </div>
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
-          <CardHeader className="border-b border-gray-100 pb-4">
+        <CardHeader className="border-b border-gray-100 pb-4 flex flex-row items-center justify-between">
             <CardTitle className="text-xl text-gray-800">Rate Cards</CardTitle>
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Search rate cards..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-10 pr-4 py-2 border rounded-md w-64 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
           </CardHeader>
 
           <CardContent className="overflow-x-auto">

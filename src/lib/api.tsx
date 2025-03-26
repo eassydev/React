@@ -1079,20 +1079,32 @@ export const fetchAllSubCategories = async (): Promise<Subcategory[]> => {
   }
 };
 
-// Adjust the fetchSubcategories API function to support pagination
-export const fetchSubcategories = async (page = 1, size = 10,status: string = "all") => {
+// Adjust the fetchSubcategories API function to support pagination, filtering, and search
+export const fetchSubcategories = async (
+  page: number = 1,
+  size: number = 10,
+  status: string = "all",
+  search?: string
+) => {
   try {
     const token = getToken(); // Retrieve the token
- // Prepare query parameters
- const params: Record<string, any> = {
-  page,
-  size,
-};
+    
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
 
-// Include status filter only if it's not 'all'
-if (status !== "all") {
-  params.status = status;
-}
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.active = status; // Assuming your backend expects 'active' parameter
+    }
+
+    // Include search term if provided
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
     const response: AxiosResponse = await apiClient.get('/sub-category', {
       params,
       headers: {
@@ -1291,15 +1303,38 @@ export const createRateCard = async (rateCard: RateCard): Promise<ApiResponse> =
 
 
 // Function to fetch all rate cards with pagination
-export const fetchRateCards = async (page = 1, size = 10,  status: string = "all") => {
+export const fetchRateCards = async (
+  page: number = 1,
+  size: number = 10,
+  status: string = "all",
+  search?: string
+) => {
   try {
     const token = getToken();
+    
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.active = status; // Assuming your backend expects 'active' parameter
+    }
+
+    // Include search term if provided
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
     const response: AxiosResponse = await apiClient.get('/rate-card', {
-      params: { page, size, status },
+      params,
       headers: {
         'admin-auth-token': token || '',
       },
     });
+
     return response.data;
   } catch (error) {
     throw new Error('Failed to fetch rate cards');
