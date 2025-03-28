@@ -696,8 +696,8 @@ interface ApiPermissionResponse {
 
 
 
-
-export const fetchCategories = async (page = 1, size = 10, status: string = "all") => {
+export const fetchCategories = async (page = 1, size = 10, status: string = "all",search?: string
+) => {
   try {
     const token = getToken(); // Retrieve the token
 
@@ -710,6 +710,10 @@ export const fetchCategories = async (page = 1, size = 10, status: string = "all
     // Include status filter only if it's not 'all'
     if (status !== "all") {
       params.status = status;
+    }
+
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
     }
 
     // Make API call

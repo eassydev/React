@@ -34,11 +34,12 @@ const CategoryList = () => {
   const [isDialogOpen, setIsDialogOpen] = useState(false); // Manage Alert visibility
   const [deleteTargetId, setDeleteTargetId] = useState<number | null>(null);
   const { toast } = useToast();
+    const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch categories with pagination and status filter
-  const fetchCategoriesData = async (page = 1, size = 50, status = "all") => {
+  const fetchCategoriesData = async (page = 1, size = 50, status = "all",search = "") => {
     try {
-      const { data, meta } = await fetchCategories(page, size, status);
+      const { data, meta } = await fetchCategories(page, size, status,search);
       setCategories(data);
       setTotalPages(meta.totalPages);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
@@ -47,10 +48,16 @@ const CategoryList = () => {
     }
   };
 
-  useEffect(() => {
-    fetchCategoriesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus);
-  }, [pagination.pageIndex, pagination.pageSize, filterStatus]);
-
+ 
+   useEffect(() => {
+        const timer = setTimeout(() => {
+          fetchCategoriesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus,searchTerm);
+          setPagination(prev => ({ ...prev, pageIndex: 0 }));
+        }, 500); // Debounce search by 500ms
+      
+        return () => clearTimeout(timer);
+      }, [pagination.pageIndex, pagination.pageSize, filterStatus,searchTerm]);
+  
   const handleExport = async () => {
     try {
       setIsExporting(true);
@@ -125,7 +132,7 @@ const CategoryList = () => {
     }
   };
   const categoryColumns: ColumnDef<any>[] = [
-    { accessorKey: "id", header: "ID" },
+    { accessorKey: "sampleid", header: "ID" },
     { accessorKey: "name", header: "Name", size: 200 },
     {
       accessorKey: "status",
@@ -254,7 +261,32 @@ const CategoryList = () => {
         </div>
       </div>
       <Card>
-        <CardHeader><CardTitle>Categories</CardTitle></CardHeader>
+         <CardHeader className="flex flex-row items-center justify-between gap-4">
+                  <CardTitle>Categories</CardTitle>
+                <div className="relative">
+              <input
+                type="text"
+                placeholder="Search categories..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="border p-2 pl-8 rounded w-64"
+              />
+              <svg
+                className="absolute left-2 top-3 h-4 w-4 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                ></path>
+              </svg>
+            </div>
+                </CardHeader>
         <CardContent>
           <Table>
               {/* <Button className="mx-2" onClick={handleSampleExport}><span>Sample CSV</span></Button> */}

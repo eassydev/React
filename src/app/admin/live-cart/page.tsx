@@ -186,7 +186,7 @@ const CartList = () => {
       header: "Total Price",
       cell: ({ row }) =>
         row.original.total_price !== undefined
-          ? `$${row.original.total_price}`
+          ? `₹${row.original.total_price}`
           : "N/A",
     },
     {
