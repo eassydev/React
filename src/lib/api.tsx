@@ -6102,21 +6102,45 @@ export const createServiceDetail = async (serviceDetail: ServiceDetail): Promise
 };
 
 
-// // Function to fetch all rate cards with pagination
-export const fetchServiceDetails = async (page = 1, size = 10,  status: string = "all") => {
+// Function to fetch all rate cards with pagination
+export const fetchServiceDetails = async (
+  page: number = 1,
+  size: number = 10,
+  status: string = "all",
+  search?: string
+) => {
   try {
     const token = getToken();
+    
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.active = status; // Assuming your backend expects 'active' parameter
+    }
+
+    // Include search term if provided
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
     const response: AxiosResponse = await apiClient.get('/service-detail', {
-      params: { page, size, status },
+      params,
       headers: {
         'admin-auth-token': token || '',
       },
     });
+
     return response.data;
   } catch (error) {
     throw new Error('Failed to fetch rate cards');
   }
 };
+
 
 // export const fetchAllRatecard = async (): Promise<RateCard[]> => {
 //   try {
