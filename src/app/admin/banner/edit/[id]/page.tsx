@@ -56,8 +56,9 @@ const EditBannerForm: React.FC = () => {
   const [radiusError, setRadiusError] = useState<string>("");
    const [isFree, setIsFree] = useState<boolean>(false); // New state for is_free
       const [rateCardId, setRateCardId] = useState<string | null>(null); // New state for selected rate card ID
-      const [rateCardOptions, setRateCardOptions] = useState<{ id: string; name: string }[]>([]); // Options for rate cards
+      const [rateCardOptions, setRateCardOptions] = useState<any[]>([]); // Options for rate cards
   const [selectedOptionName, setSelectedOptionName] = useState<string>("Select an option");
+          const [searchTerm, setSearchTerm] = useState("");
       
   const { toast } = useToast();
   const today = new Date().toISOString().split("T")[0];
@@ -208,7 +209,7 @@ const EditBannerForm: React.FC = () => {
         title,
         description,
         selection_type: selectionType,
-        selection_id: selectedItemId,
+        selection_id:selectionType=='Package'? selectedItemId:rateCardId,
         media_type: mediaType,
         display_order: displayOrder,
         deep_link: deepLink,
@@ -296,29 +297,120 @@ const EditBannerForm: React.FC = () => {
                 </Select>
               </div>
 
-               {selectionType && (
-                              <div>
-                                <label className="text-sm font-medium text-gray-700">Select {selectionType}</label>
-                                <Select value={String(selectedItemId)} onValueChange={handleValueChange}>
-                                  <SelectTrigger className="bg-white border-gray-200">
-                                  {selectedOptionName || "Select an option"}
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                  <Virtuoso
-                                                style={{ height: "200px", width: "100%" }} // Full width and fixed height
-                                                totalCount={options.length}
-                                                itemContent={(index:any) => (
-                                                  <SelectItem key={options[index].id} value={options[index].id?.toString() ?? ''}>
-                                                    {options[index].name} {options[index].name || ""}
-                                                  </SelectItem>
-                                                )}
-                                              />
-                                    
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            )}
-
+                 {selectionType && selectionType === "Package" && (
+                               <div>
+                                 <label className="text-sm font-medium text-gray-700">Select {selectionType}</label>
+                                 <Select value={String(selectedItemId)} onValueChange={handleValueChange}>
+                                   <SelectTrigger className="bg-white border-gray-200">
+                                   {selectedOptionName || "Select an option"}
+                                   </SelectTrigger>
+                                   <SelectContent>
+                                   <Virtuoso
+                                                 style={{ height: "200px", width: "100%" }} // Full width and fixed height
+                                                 totalCount={options.length}
+                                                 itemContent={(index:any) => (
+                                                   <SelectItem key={options[index].id} value={options[index].id?.toString() ?? ''}>
+                                                     {options[index].name} {options[index].name || ""}
+                                                   </SelectItem>
+                                                 )}
+                                               />
+                                     
+                                   </SelectContent>
+                                 </Select>
+                               </div>
+                             )}
+               
+             
+             {selectionType && selectionType === "Ratecard" && (
+                            <div className="space-y-2 w-full">
+                               <label className="text-sm font-medium text-gray-700">Select Ratecard</label>
+                               <Select value={String(rateCardId)} onValueChange={(value) => setRateCardId(value)}>
+                                 <SelectTrigger className="w-full bg-white border-gray-200">
+                             {rateCardOptions.find(rc => String(rc.id) === String(rateCardId)) ? (
+                               <>
+                                 {rateCardOptions.find(rc => String(rc.id) === String(rateCardId))?.category?.name || ''} 
+                                 {rateCardOptions.find(rc => String(rc.id) === String(rateCardId))?.subcategory?.name 
+                                   ? ` / ${rateCardOptions.find(rc => String(rc.id) === String(rateCardId))?.subcategory?.name}` 
+                                   : ''}
+                                   {rateCardOptions.find(rc => String(rc.id) === String(rateCardId))?.price 
+                                   ? ` / ${rateCardOptions.find(rc => String(rc.id) === String(rateCardId))?.price}` 
+                                   : ''}
+                                 {rateCardOptions.find(rc => String(rc.id) === String(rateCardId))?.attributes?.length > 0 && (
+                                   ` (${rateCardOptions.find(rc => String(rc.id) === String(rateCardId))?.attributes
+                                     .map((attr:any) => `${attr.filterAttribute?.name || ''}: ${attr.filterOption?.value || ''}`)
+                                     .join(', ')})`
+                                 )}
+                                 {rateCardOptions.find(rc => String(rc.id) === String(rateCardId))?.provider?.first_name 
+                                   ? ` / ${rateCardOptions.find(rc => String(rc.id) === String(rateCardId))?.provider?.first_name}` 
+                                   : ''}
+                               </>
+                             ) : "Select Ratecard"}
+                                 </SelectTrigger>
+                                 <SelectContent className="w-full p-0">
+                                   {/* Search input */}
+                                   <div className="sticky top-0 z-10 bg-background p-2 border-b">
+                                     <Input
+                                       placeholder="Search ratecards..."
+                                       value={searchTerm}
+                                       onChange={(e) => setSearchTerm(e.target.value)}
+                                       className="w-full"
+                                       autoFocus
+                                     />
+                                   </div>
+                           
+                                   {/* Virtualized list */}
+                                   {rateCardOptions.filter(rc => 
+                                     `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''}`
+                                       .toLowerCase()
+                                       .includes(searchTerm.toLowerCase())
+                                   ).length > 0 ? (
+                                     <Virtuoso
+                                       style={{ height: "200px", width: "100%" }}
+                                       totalCount={
+                                         rateCardOptions.filter(rc => 
+                                           `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''}`
+                                             .toLowerCase()
+                                             .includes(searchTerm.toLowerCase())
+                                         ).length
+                                       }
+                                       itemContent={(index) => {
+                                         // Define the filtered list first
+                                         const filteredRatecards = rateCardOptions.filter(rc => 
+                                           `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''}`
+                                             .toLowerCase()
+                                             .includes(searchTerm.toLowerCase())
+                                         );
+                           
+                                         const ratecard = filteredRatecards[index];
+                                         return ratecard ? (
+                                           <SelectItem 
+                                             key={ratecard.id} 
+                                             value={String(ratecard.id)}
+                                           >
+                                             <div className="flex flex-col">
+                                               <span>{ratecard.name}</span>
+                                               <span className="text-sm text-gray-500">
+                                                 {ratecard.category?.name} / {ratecard.subcategory?.name} / {ratecard.price}
+                                                 {ratecard.attributes?.length > 0 && ` (${ratecard.attributes
+                                                   .map((attr:any) => `${attr.filterAttribute?.name || ''}: ${attr.filterOption?.value || ''}`)
+                                                   .join(', ')})`}
+                                                   / {ratecard.provider?.first_name}
+             
+                                               </span>
+                                             </div>
+                                           </SelectItem>
+                                         ) : null;
+                                       }}
+                                     />
+                                   ) : (
+                                     <div className="py-6 text-center text-sm text-muted-foreground">
+                                       No ratecards found
+                                     </div>
+                                   )}
+                                 </SelectContent>
+                               </Select>
+                             </div>
+             )}
               <div>
                 <label className="text-sm font-medium text-gray-700">Display Order</label>
                 <Input

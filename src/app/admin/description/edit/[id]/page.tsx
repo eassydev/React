@@ -106,10 +106,11 @@ const EditServiceDescriptionForm: React.FC = () => {
           setFilterAttributeOptions(options);
         }
 
-        if (serviceDetail.category_id || serviceDetail.subcategory_id) {
+        if (serviceDetail.category_id || serviceDetail.subcategory_id || serviceDetail.filter_attribute_id) {
           const segments = await fetchServiceSegments(
             serviceDetail.category_id,
-            serviceDetail.subcategory_id ?? null
+            serviceDetail.subcategory_id ?? null,
+            serviceDetail.filter_attribute_id ?? null
           );
           setSegments(segments);
         }

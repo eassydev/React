@@ -124,12 +124,13 @@ const ServiceDescriptionForm: React.FC = () => {
 
   useEffect(() => {
     const loadSegments = async () => {
-      if (selectedCategoryId || selectedSubcategoryId) {
+      if (selectedCategoryId || selectedSubcategoryId || filterAttributesId) {
         try {   
        const segmentData = await fetchServiceSegments(
             selectedCategoryId,
-            selectedSubcategoryId || null
-          );
+            selectedSubcategoryId || null,
+            filterAttributesId || null,
+          )
           setSegments(segmentData);
         } catch {
           setSegments([]);

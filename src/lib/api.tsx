@@ -676,6 +676,14 @@ interface Campaign {
   is_active?: boolean;
 }
 
+export interface PackageDetail {
+  package_id: string;
+  details: {
+    position: "Top" | "Bottom";
+    title: string;
+    image?: File | null;
+  }[];
+}
 export interface RatecardBogo {
   rate_card_id: string;
   bogo_rate_card_id: string;
@@ -1504,13 +1512,16 @@ export const fetchFilterAttributes = async (
 
 export const fetchServiceSegments = async (
   categoryId: string | null,
-  subcategoryId: string | null
+  subcategoryId: string | null,
+  filter_attribute_id?: string | null
 ): Promise<ServiceSegment[]> => {
   try {
     const token = getToken();
     const params: any = {};
     if (categoryId) params.category_id = categoryId;
     if (subcategoryId) params.subcategory_id = subcategoryId;
+    if (filter_attribute_id) params.filter_attribute_id = filter_attribute_id;
+
 
     const response: AxiosResponse<ApiResponse> = await apiClient.get('/filter/segment', {
       params,
@@ -6642,6 +6653,35 @@ export const createCampaign = async (campaign: Campaign): Promise<ApiResponse> =
     return response.data;
   } catch (error: any) {
     console.error("Error creating campaign:", error);
+    throw new Error(error.response?.data?.message || "Failed to create campaign.");
+  }
+};
+
+
+export const createPackageDetail = async (packageDetail: PackageDetail) => {
+  try {
+    const token = getToken();
+    const formData = new FormData();
+
+    formData.append("package_id", packageDetail.package_id);
+    
+    packageDetail.details.forEach((detail, index) => {
+      formData.append(`details[${index}][position]`, detail.position);
+      formData.append(`details[${index}][title]`, detail.title);
+      if (detail.image) {
+        formData.append(`details[${index}][image]`, detail.image);
+      }
+    });
+
+    const response = await apiClient.post("/package-details", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+        "admin-auth-token": token || "",
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
     throw new Error(error.response?.data?.message || "Failed to create campaign.");
   }
 };
