@@ -36,7 +36,7 @@ const EditBannerForm: React.FC = () => {
   const [description, setDescription] = useState("");
   const [selectionType, setSelectionType] = useState<string>("");
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
-  const [options, setOptions] = useState<{ id: string; name: string }[]>([]);
+  const [options, setOptions] = useState<any[]>([]);
   const [mediaType, setMediaType] = useState<"image" | "video">("image");
   const [displayOrder, setDisplayOrder] = useState<number>(1);
   const [deepLink, setDeepLink] = useState<string>("");
@@ -59,6 +59,7 @@ const EditBannerForm: React.FC = () => {
       const [rateCardOptions, setRateCardOptions] = useState<any[]>([]); // Options for rate cards
   const [selectedOptionName, setSelectedOptionName] = useState<string>("Select an option");
           const [searchTerm, setSearchTerm] = useState("");
+          const [rateBogoCardId, setRateBogoCardId] = useState<string | null>(null); // New state for selected rate card ID
       
   const { toast } = useToast();
   const today = new Date().toISOString().split("T")[0];
@@ -71,7 +72,23 @@ const EditBannerForm: React.FC = () => {
         setTitle(banner.title);
         setDescription(banner.description);
         setSelectionType(banner.selection_type);
-        setSelectedItemId(banner.selection_id);
+        if(banner.selection_type =='Ratecard')
+        {
+          // console.log("hello match", banner.selection_id)
+          // const ratecards = await fetchAllRatecard();
+          // setRateCardOptions(ratecards);
+          setRateCardId(banner.selection_id);
+          // const findrate = ratecards.find(rc => String(rc.id) === String(banner.selection_id));
+
+          // console.log("findrate",findrate)
+        }
+        else{
+          // const packages = await fetchAllpackages();
+          //      setOptions(packages)
+               setSelectedItemId(banner.selection_id);
+
+
+        }
         setMediaType(banner.media_type);
         setDisplayOrder(banner.display_order || 1);
         setDeepLink(banner.deep_link || "");
@@ -85,7 +102,7 @@ const EditBannerForm: React.FC = () => {
         setHubIds(banner.hub_ids || []);
         setMediaName(banner.media_name || "");
         setIsFree(banner.is_free);
-        setRateCardId(banner.rate_card_id?.toString() || null); // Ensure it's a string
+        setRateBogoCardId(banner.rate_card_id?.toString() || null); // Ensure it's a string
       } catch (error) {
         toast({ variant: "error", title: "Error", description: "Failed to load banner data." });
       }
@@ -105,15 +122,11 @@ const EditBannerForm: React.FC = () => {
   }, [id, toast]);
 
 
-   useEffect(() => {
+ useEffect(() => {
       const loadRateCards = async () => {
         try {
-          const rateCards = await fetchAllRatecard(); // New API for fetching rate cards
-          const options = rateCards.map((rateCard) => ({
-            id: rateCard.id || '',
-            name: rateCard.name || "Unnamed Ratecard",
-          }));
-          setRateCardOptions(options);
+          const ratecardsnew = await fetchAllRatecard();
+          setRateCardOptions(ratecardsnew);
         } catch (error) {
           toast({
             variant: "error",
@@ -127,49 +140,32 @@ const EditBannerForm: React.FC = () => {
     }, [isFree, toast]);
 
     useEffect(() => {
-      const loadOptions = async () => {
-        try {
-          let data: { id: string; name: string }[] = [];
-    
-          switch (selectionType) {
-            case "Ratecard": {
-              const ratecards = await fetchAllRatecard();
-              data = ratecards.map((ratecard) => ({
-                id: ratecard.id?.toString() || '',
-                name: ratecard.name || "Unnamed Ratecard",
-              }));
-              break;
-            }
-            case "Package": {
-              const packages = await fetchAllpackages();
-              data = packages.map((pkg) => ({
-                id: pkg.id?.toString() || '',
-                name: pkg.name || "Unnamed Package",
-              }));
-              break;
-            }
-            default:
-              setOptions([]);
-              return;
-          }
-    
-          setOptions(data);
-    
-          // Find selected option after setting options
-          const selectedOption = data.find((option) => option.id === selectedItemId);
-          setSelectedOptionName(selectedOption?.name || "Select an option");
-    
-        } catch (error) {
-          toast({
-            variant: "error",
-            title: "Error",
-            description: `Failed to load ${selectionType} options.`,
-          });
-        }
-      };
-    
-      loadOptions();
-    }, [selectionType, selectedItemId]); // Add dependencies
+       const loadOptions = async () => {
+         try {
+           let data: { id: string; name: string }[] = [];
+           switch (selectionType) {
+            
+             case "Ratecard":
+               const ratecards = await fetchAllRatecard();
+               setRateCardOptions(ratecards);
+               break;
+             case "Package":
+               const packages = await fetchAllpackages();
+               setOptions(packages)
+               break;
+             default:
+               setOptions([]);
+               return;
+           }
+         //  setOptions(data);
+           setSelectedItemId('');
+         } catch (error) {
+           toast({ variant: "error", title: "Error", description: `Failed to load ${selectionType} options.` });
+         }
+       };
+   
+       if (selectionType) loadOptions();
+     }, [selectionType, toast]);// Add dependencies
     
   const handleImageChange = (e: ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
@@ -194,14 +190,7 @@ const EditBannerForm: React.FC = () => {
     console.log("selectionType", selectionType)
     console.log("selectedItemId", selectedItemId)
 
-    if (!title || !description || !selectionType || !selectedItemId) {
-      toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Please fill in all required fields.",
-      });
-      return;
-    }
+  
 
     setIsSubmitting(true);
     try {
@@ -223,7 +212,7 @@ const EditBannerForm: React.FC = () => {
         add_to_cart: addToCart,
         hub_ids: hubIds,
         is_free: isFree, // New field
-        rate_card_id: isFree ? rateCardId : null,
+        rate_card_id: isFree ? rateBogoCardId : null,
       };
 
       await updateBanner(id!.toString(), bannerData);
@@ -233,7 +222,7 @@ const EditBannerForm: React.FC = () => {
         title: "Success",
         description: "Banner updated successfully.",
       });
-       router.push("/admin/banner");
+      // router.push("/admin/banner");
     } catch (error) {
       toast({
         variant: "error",
@@ -540,20 +529,94 @@ const EditBannerForm: React.FC = () => {
               </div>
               
               {isFree && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Select Ratecard</label>
-                  <Select value={rateCardId || ""} onValueChange={(value) => setRateCardId(value)}>
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select Ratecard" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {rateCardOptions.map((option) => (
-                        <SelectItem key={option.id} value={String(option.id)}>
-                          {option.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                
+                <div className="space-y-2 w-full">
+                <label className="text-sm font-medium text-gray-700">Select Ratecard</label>
+                <Select value={String(rateBogoCardId)} onValueChange={(value) => setRateBogoCardId(value)}>
+                  <SelectTrigger className="w-full bg-white border-gray-200">
+                {rateCardOptions.find(rc => String(rc.id) === String(rateBogoCardId)) ? (
+                <>
+                  {rateCardOptions.find(rc => String(rc.id) === String(rateBogoCardId))?.category?.name || ''} 
+                  {rateCardOptions.find(rc => String(rc.id) === String(rateBogoCardId))?.subcategory?.name 
+                    ? ` / ${rateCardOptions.find(rc => String(rc.id) === String(rateBogoCardId))?.subcategory?.name}` 
+                    : ''}
+                    {rateCardOptions.find(rc => String(rc.id) === String(rateBogoCardId))?.price 
+                    ? ` / ${rateCardOptions.find(rc => String(rc.id) === String(rateBogoCardId))?.price}` 
+                    : ''}
+                  {rateCardOptions.find(rc => String(rc.id) === String(rateBogoCardId))?.attributes?.length > 0 && (
+                    ` (${rateCardOptions.find(rc => String(rc.id) === String(rateBogoCardId))?.attributes
+                      .map((attr:any) => `${attr.filterAttribute?.name || ''}: ${attr.filterOption?.value || ''}`)
+                      .join(', ')})`
+                  )}
+                  {rateCardOptions.find(rc => String(rc.id) === String(rateBogoCardId))?.provider?.first_name 
+                    ? ` / ${rateCardOptions.find(rc => String(rc.id) === String(rateBogoCardId))?.provider?.first_name}` 
+                    : ''}
+                </>
+                ) : "Select Ratecard"}
+                  </SelectTrigger>
+                  <SelectContent className="w-full p-0">
+                    {/* Search input */}
+                    <div className="sticky top-0 z-10 bg-background p-2 border-b">
+                      <Input
+                        placeholder="Search ratecards..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full"
+                        autoFocus
+                      />
+                    </div>
+                
+                    {/* Virtualized list */}
+                    {rateCardOptions.filter(rc => 
+                      `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''}`
+                        .toLowerCase()
+                        .includes(searchTerm.toLowerCase())
+                    ).length > 0 ? (
+                      <Virtuoso
+                        style={{ height: "200px", width: "100%" }}
+                        totalCount={
+                          rateCardOptions.filter(rc => 
+                            `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''}`
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase())
+                          ).length
+                        }
+                        itemContent={(index) => {
+                          // Define the filtered list first
+                          const filteredRatecards = rateCardOptions.filter(rc => 
+                            `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''}`
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase())
+                          );
+                
+                          const ratecard = filteredRatecards[index];
+                          return ratecard ? (
+                            <SelectItem 
+                              key={ratecard.id} 
+                              value={String(ratecard.id)}
+                            >
+                              <div className="flex flex-col">
+                                <span>{ratecard.name}</span>
+                                <span className="text-sm text-gray-500">
+                                  {ratecard.category?.name} / {ratecard.subcategory?.name} / {ratecard.price}
+                                  {ratecard.attributes?.length > 0 && ` (${ratecard.attributes
+                                    .map((attr:any) => `${attr.filterAttribute?.name || ''}: ${attr.filterOption?.value || ''}`)
+                                    .join(', ')})`}
+                                    / {ratecard.provider?.first_name}
+                
+                                </span>
+                              </div>
+                            </SelectItem>
+                          ) : null;
+                        }}
+                      />
+                    ) : (
+                      <div className="py-6 text-center text-sm text-muted-foreground">
+                        No ratecards found
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
                 </div>
               )}
               <div className="flex items-center space-x-2">

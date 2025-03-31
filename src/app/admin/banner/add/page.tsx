@@ -57,6 +57,7 @@ const [radiusError, setRadiusError] = useState<string>("");
   const [selectedOptionName, setSelectedOptionName] = useState<string>("Select an option");
   const [rateCardOptions, setRateCardOptions] = useState<any[]>([]); // Options for rate cards
     const [searchTerm, setSearchTerm] = useState("");
+    const [rateBogoCardId, setRateBogoCardId] = useState<string | null>(null); // New state for selected rate card ID
 
   const { toast } = useToast();
   const today = new Date().toISOString().split("T")[0];
@@ -123,12 +124,8 @@ const [radiusError, setRadiusError] = useState<string>("");
   useEffect(() => {
       const loadRateCards = async () => {
         try {
-          const rateCards = await fetchAllRatecard(); // New API for fetching rate cards
-          const options = rateCards.map((rateCard) => ({
-            id: rateCard.id || '',
-            name: rateCard.name || "Unnamed Ratecard",
-          }));
-          setRateCardOptions(options);
+          const ratecards = await fetchAllRatecard();
+          setRateCardOptions(ratecards);
         } catch (error) {
           toast({
             variant: "error",
@@ -475,26 +472,96 @@ const [radiusError, setRadiusError] = useState<string>("");
               </div>
               
               {isFree && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Select Ratecard</label>
-                  <Select value={String(rateCardId)} onValueChange={(value) => setRateCardId(value)}>
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select Ratecard" />
-                    </SelectTrigger>
-                    <SelectContent>
-                       <Virtuoso
-                                  style={{ height: "200px", width: "100%" }} // Full width and fixed height
-                                  totalCount={rateCardOptions.length}
-                                  itemContent={(index:any) => (
-                                    <SelectItem key={rateCardOptions[index].id} value={rateCardOptions[index].id?.toString() ?? ''}>
-                                      {rateCardOptions[index].name} {rateCardOptions[index].name || ""}
-                                    </SelectItem>
-                                  )}
-                                />
-                      
-                    </SelectContent>
-                  </Select>
-                </div>
+
+<div className="space-y-2 w-full">
+<label className="text-sm font-medium text-gray-700">Select Ratecard</label>
+<Select value={String(rateBogoCardId)} onValueChange={(value) => setRateBogoCardId(value)}>
+  <SelectTrigger className="w-full bg-white border-gray-200">
+{rateCardOptions.find(rc => String(rc.id) === String(rateBogoCardId)) ? (
+<>
+  {rateCardOptions.find(rc => String(rc.id) === String(rateBogoCardId))?.category?.name || ''} 
+  {rateCardOptions.find(rc => String(rc.id) === String(rateBogoCardId))?.subcategory?.name 
+    ? ` / ${rateCardOptions.find(rc => String(rc.id) === String(rateBogoCardId))?.subcategory?.name}` 
+    : ''}
+    {rateCardOptions.find(rc => String(rc.id) === String(rateBogoCardId))?.price 
+    ? ` / ${rateCardOptions.find(rc => String(rc.id) === String(rateBogoCardId))?.price}` 
+    : ''}
+  {rateCardOptions.find(rc => String(rc.id) === String(rateBogoCardId))?.attributes?.length > 0 && (
+    ` (${rateCardOptions.find(rc => String(rc.id) === String(rateBogoCardId))?.attributes
+      .map((attr:any) => `${attr.filterAttribute?.name || ''}: ${attr.filterOption?.value || ''}`)
+      .join(', ')})`
+  )}
+  {rateCardOptions.find(rc => String(rc.id) === String(rateBogoCardId))?.provider?.first_name 
+    ? ` / ${rateCardOptions.find(rc => String(rc.id) === String(rateBogoCardId))?.provider?.first_name}` 
+    : ''}
+</>
+) : "Select Ratecard"}
+  </SelectTrigger>
+  <SelectContent className="w-full p-0">
+    {/* Search input */}
+    <div className="sticky top-0 z-10 bg-background p-2 border-b">
+      <Input
+        placeholder="Search ratecards..."
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        className="w-full"
+        autoFocus
+      />
+    </div>
+
+    {/* Virtualized list */}
+    {rateCardOptions.filter(rc => 
+      `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''}`
+        .toLowerCase()
+        .includes(searchTerm.toLowerCase())
+    ).length > 0 ? (
+      <Virtuoso
+        style={{ height: "200px", width: "100%" }}
+        totalCount={
+          rateCardOptions.filter(rc => 
+            `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''}`
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())
+          ).length
+        }
+        itemContent={(index) => {
+          // Define the filtered list first
+          const filteredRatecards = rateCardOptions.filter(rc => 
+            `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''}`
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())
+          );
+
+          const ratecard = filteredRatecards[index];
+          return ratecard ? (
+            <SelectItem 
+              key={ratecard.id} 
+              value={String(ratecard.id)}
+            >
+              <div className="flex flex-col">
+                <span>{ratecard.name}</span>
+                <span className="text-sm text-gray-500">
+                  {ratecard.category?.name} / {ratecard.subcategory?.name} / {ratecard.price}
+                  {ratecard.attributes?.length > 0 && ` (${ratecard.attributes
+                    .map((attr:any) => `${attr.filterAttribute?.name || ''}: ${attr.filterOption?.value || ''}`)
+                    .join(', ')})`}
+                    / {ratecard.provider?.first_name}
+
+                </span>
+              </div>
+            </SelectItem>
+          ) : null;
+        }}
+      />
+    ) : (
+      <div className="py-6 text-center text-sm text-muted-foreground">
+        No ratecards found
+      </div>
+    )}
+  </SelectContent>
+</Select>
+</div>
+            
               )}
               
             </CardContent>
