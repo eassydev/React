@@ -1510,6 +1510,33 @@ export const fetchFilterAttributes = async (
 };
 
 
+
+
+
+export const createNestedFilter = async (nested:any): Promise<ApiResponse> => {
+  const payload = {
+    category_id: nested.category_id,
+    subcategory_id: nested.subcategory_id ?? '',
+    first_level_attribute_id: nested.first_level_attribute_id ?? '',
+    first_level_option_id: nested.first_level_option_id ?? '',
+    second_level_attribute_id: nested.second_level_attribute_id ?? '',
+    second_level_option_ids: nested.second_level_option_ids ?? '',
+  };
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/filter/nested-attribute', payload, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create rate card.');
+  }
+};
+
+
 export const fetchServiceSegments = async (
   categoryId: string | null,
   subcategoryId: string | null,

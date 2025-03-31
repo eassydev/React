@@ -83,7 +83,8 @@ export const sidebarItems: SidebarItem[] = [
        { title: "Sub category", route: `${basePath}/sub-category` },
        { title: "Segment", route: `${basePath}/segment` },
        { title: "Service Video", route: `${basePath}/video` }, 
-       { title: "Description", route: `${basePath}/description` }
+       { title: "Description", route: `${basePath}/description` },
+       { title: "Nested Attributes ", route: `${basePath}/attribute-nested` }
       ],
   },
   {
