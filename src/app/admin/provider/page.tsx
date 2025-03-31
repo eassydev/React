@@ -41,7 +41,7 @@ const ProviderList = () => {
   const [providers, setProviders] = useState<any[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 5,
+    pageSize: 50,
   });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
@@ -50,7 +50,7 @@ const ProviderList = () => {
   const { toast } = useToast();
 
   // Fetch providers from the backend with pagination
-  const fetchProvidersData = async (page = 1, size = 5, status = "all") => {
+  const fetchProvidersData = async (page = 1, size = 50, status = "all") => {
     try {
       const { data, meta } = await fetchAllProviders(page, size, filterStatus);
       setProviders(data);

@@ -39,7 +39,7 @@ const CartList = () => {
   
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 5,
+    pageSize: 50,
   });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
@@ -55,7 +55,7 @@ const CartList = () => {
 
   const { toast } = useToast();
 
-  const fetchCartData = async (page = 1, size = 5) => {
+  const fetchCartData = async (page = 1, size = 50) => {
     try {
       const { data, meta } = await fetchCarts(page, size);
       setCarts(data);

@@ -25,14 +25,14 @@ import { useToast } from "@/hooks/use-toast";
 
 const FAQList = () => {
   const [faqs, setFAQs] = useState<any[]>([]);
-  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
+  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
 
   const { toast } = useToast();
 
   // Fetch FAQs from the backend with pagination
-  const fetchFAQsData = async (page = 1, size = 5) => {
+  const fetchFAQsData = async (page = 1, size = 50) => {
     try {
       const { data, meta } = await fetchFAQs(page, size); // Fetch paginated FAQs
       setFAQs(data);

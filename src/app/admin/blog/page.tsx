@@ -19,13 +19,13 @@ import { useToast } from "@/hooks/use-toast";
 
 const BlogList = () => {
   const [blogs, setBlogs] = useState<any[]>([]);
-  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
+  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
 
   const { toast } = useToast();
 
   // Fetch blogs from backend with pagination
-  const fetchBlogsData = async (page = 1, size = 5) => {
+  const fetchBlogsData = async (page = 1, size = 50) => {
     try {
       const { data, meta } = await fetchBlogs(page, size);
       setBlogs(data);

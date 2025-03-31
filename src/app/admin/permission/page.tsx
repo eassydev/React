@@ -25,13 +25,13 @@ import { useToast } from "@/hooks/use-toast";
 
 const PermissionList = () => {
   const [permissions, setPermissions] = useState<Permission[]>([]);
-  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
+  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
 
   const { toast } = useToast();
 
   // Fetch permissions with pagination
-  const loadPermissions = async (page = 1, size = 5) => {
+  const loadPermissions = async (page = 1, size = 50) => {
     try {
       const { data, meta } = await fetchPermissions(page, size);
       setPermissions(data);

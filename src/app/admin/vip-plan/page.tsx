@@ -19,14 +19,14 @@ import { useToast } from "@/hooks/use-toast";
 
 const VIPPlanList = () => {
   const [vipPlans, setVIPPlans] = useState<any[]>([]);
-  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
+  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
 
   const { toast } = useToast();
 
   // Fetch VIP plans from the backend with pagination
-  const fetchVIPPlansData = async (page = 1, size = 5) => {
+  const fetchVIPPlansData = async (page = 1, size = 50) => {
     try {
       const { data, totalPages, totalItems } = await fetchVIPPlans(page, size);
       setVIPPlans(data);

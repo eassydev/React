@@ -35,7 +35,7 @@ const ProviderBankList = () => {
   const [bankDetails, setBankDetails] = useState<any[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 5,
+    pageSize: 50,
   });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
@@ -44,7 +44,7 @@ const ProviderBankList = () => {
   const { id: providerId } = useParams(); // Provider ID from URL
 
   // Fetch bank details from the backend with pagination
-  const fetchBankDetailsData = async (page = 1, size = 5) => {
+  const fetchBankDetailsData = async (page = 1, size = 50) => {
     try {
       const { data, meta } = await fetchProviderBankDetails(providerId.toString(), page, size);
       setBankDetails(data);

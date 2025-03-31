@@ -19,14 +19,14 @@ import { useToast } from "@/hooks/use-toast";
 
 const BankList = () => {
   const [banks, setBanks] = useState<any[]>([]);
-  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
+  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
 
   const { toast } = useToast();
 
   // Fetch banks from the backend with pagination
-  const fetchBanksData = async (page = 1, size = 5) => {
+  const fetchBanksData = async (page = 1, size = 50) => {
     try {
       const { data, meta } = await fetchBanks(page, size);
       setBanks(data);

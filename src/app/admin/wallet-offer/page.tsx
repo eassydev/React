@@ -34,7 +34,7 @@ const WalletOfferList = () => {
   const [walletOffers, setWalletOffers] = useState<any[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
-    pageSize: 5,
+    pageSize: 50,
   });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
@@ -42,7 +42,7 @@ const WalletOfferList = () => {
   const { toast } = useToast();
 
   // Fetch wallet offers with pagination
-  const fetchWalletOffersData = async (page = 1, size = 5) => {
+  const fetchWalletOffersData = async (page = 1, size = 50) => {
     try {
       const { data, meta } = await fetchWalletOffers(page, size);
       setWalletOffers(data);

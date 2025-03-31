@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 
 const RateCardList = () => {
   const [rateCards, setRateCards] = useState<any[]>([]);
-  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
+  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const [filterStatus, setFilterStatus] = useState<string>("all");

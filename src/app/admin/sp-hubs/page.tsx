@@ -31,13 +31,13 @@ import { useToast } from "@/hooks/use-toast";
 
 const SpHubList = () => {
   const [spHubs, setSpHubs] = useState<any[]>([]);
-  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
+  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
 
   const { toast } = useToast();
 
   // Fetch SpHubs from backend with pagination
-  const fetchSpHubsData = async (page = 1, size = 5) => {
+  const fetchSpHubsData = async (page = 1, size = 50) => {
     try {
       const { data, meta } = await fetchAllSpHubs(page, size);
       setSpHubs(data);

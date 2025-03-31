@@ -19,14 +19,14 @@ import { useToast } from "@/hooks/use-toast";
 
 const GSTRateList = () => {
   const [gstRates, setGstRates] = useState<any[]>([]);
-  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
+  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50});
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
 
   const { toast } = useToast();
 
   // Fetch GST rates from the backend with pagination
-  const fetchGstRatesData = async (page = 1, size = 5) => {
+  const fetchGstRatesData = async (page = 1, size = 50) => {
     try {
       const { data, meta } = await fetchGstRates(page, size);
       setGstRates(data);

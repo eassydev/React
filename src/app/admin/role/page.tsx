@@ -25,13 +25,13 @@ import { useToast } from "@/hooks/use-toast";
 
 const RoleList = () => {
   const [roles, setRoles] = useState<Role[]>([]);
-  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 5 });
+  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
 
   const { toast } = useToast();
 
   // Fetch roles with pagination
-  const loadRoles = async (page = 1, size = 5) => {
+  const loadRoles = async (page = 1, size = 50) => {
     try {
       const { data, meta } = await fetchRoles(page, size);
       setRoles(data);
