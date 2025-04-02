@@ -48,11 +48,12 @@ const ProviderList = () => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
+     const [searchTerm, setSearchTerm] = useState("");
 
   // Fetch providers from the backend with pagination
-  const fetchProvidersData = async (page = 1, size = 50, status = "all") => {
+  const fetchProvidersData = async (page = 1, size = 50, status = "all",search = "") => {
     try {
-      const { data, meta } = await fetchAllProviders(page, size, filterStatus);
+      const { data, meta } = await fetchAllProviders(page, size, filterStatus,search);
       setProviders(data);
       setTotalPages(meta.totalPages);
       setTotalItems(meta.totalItems);
@@ -63,8 +64,8 @@ const ProviderList = () => {
   };
 
   useEffect(() => {
-    fetchProvidersData(pagination.pageIndex + 1, pagination.pageSize, filterStatus);
-  }, [pagination.pageIndex, pagination.pageSize, filterStatus]);
+    fetchProvidersData(pagination.pageIndex + 1, pagination.pageSize, filterStatus,searchTerm);
+  }, [pagination.pageIndex, pagination.pageSize, filterStatus,searchTerm]);
 
   const handleProviderDelete = async (provider: any) => {
     try {
@@ -257,9 +258,32 @@ const ProviderList = () => {
         </div>
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
-          <CardHeader className="border-b border-gray-100 pb-4">
-            <CardTitle className="text-xl text-gray-800">Providers</CardTitle>
-          </CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between gap-4">
+                                <CardTitle className="text-xl text-gray-800">Providers</CardTitle>
+                                <div className="relative">
+                                  <input
+                                    type="text"
+                                    placeholder="Search categories..."
+                                    value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}
+                                    className="border p-2 pl-8 rounded w-64"
+                                  />
+                                  <svg
+                                    className="absolute left-2 top-3 h-4 w-4 text-gray-400"
+                                    fill="none"
+                                    stroke="currentColor"
+                                    viewBox="0 0 24 24"
+                                    xmlns="http://www.w3.org/2000/svg"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      strokeWidth="2"
+                                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                    ></path>
+                                  </svg>
+                                </div>
+                              </CardHeader>
 
           <CardContent className="overflow-x-auto">
             <Table>

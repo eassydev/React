@@ -22,13 +22,17 @@ const BookingList = () => {
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
-
+const [filterStatus, setFilterStatus] = useState<string>("all");
+       const [searchTerm, setSearchTerm] = useState("");
+   
   const { toast } = useToast();
-
+   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setFilterStatus(e.target.value);
+      };
   // Fetch bookings from the backend with pagination
-  const fetchBookingsData = async (page = 1, size = 50) => {
+  const fetchBookingsData = async (page = 1, size = 50, status = "all",search = "") => {
     try {
-      const { data, meta } = await fetchBookings(page, size);
+      const { data, meta } = await fetchBookings(page, size, status,search);
       setBookings(data);
       setTotalPages(meta.totalPages);
       setTotalItems(meta.totalItems);
@@ -39,8 +43,8 @@ const BookingList = () => {
   };
 
   useEffect(() => {
-    fetchBookingsData(pagination.pageIndex + 1, pagination.pageSize);
-  }, [pagination.pageIndex, pagination.pageSize]);
+    fetchBookingsData(pagination.pageIndex + 1, pagination.pageSize,filterStatus,searchTerm);
+  }, [pagination.pageIndex, pagination.pageSize,filterStatus,searchTerm]);
 
   const handleBookingDelete = async (booking: any) => {
     try {
@@ -120,20 +124,50 @@ const BookingList = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-12xl mx-auto space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900">Booking List</h1>
-          <Button asChild variant="default" className="flex items-center space-x-2">
-            <Link href="/admin/booking/add">
-              <Plus className="w-4 h-4 mr-1" />
-              <span>Add Booking</span>
-            </Link>
-          </Button>
-        </div>
+         <div className="flex justify-between mb-4">
+                <h1 className="text-2xl font-bold">Bookings List</h1>
+                <div className="flex space-x-2">
+                  <select value={filterStatus} onChange={handleStatusChange} className="border p-2 rounded">
+                    <option value="">All</option>
+                    <option value="1">Active</option>
+                    <option value="0">Deactivated</option>
+                    <option value="2">Deleted</option>
+                  </select>
+                  
+                  
+                  <Link href="/admin/bookings/add">
+                    <Button><Plus className="w-4 h-4 mr-2" />Add Booking</Button>
+                  </Link>
+                </div>
+              </div>
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
-          <CardHeader className="border-b border-gray-100 pb-4">
-            <CardTitle className="text-xl text-gray-800">Bookings</CardTitle>
-          </CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between gap-4">
+                               <CardTitle className="text-xl text-gray-800">Bookings</CardTitle>
+                               <div className="relative">
+                                 <input
+                                   type="text"
+                                   placeholder="Search categories..."
+                                   value={searchTerm}
+                                   onChange={(e) => setSearchTerm(e.target.value)}
+                                   className="border p-2 pl-8 rounded w-64"
+                                 />
+                                 <svg
+                                   className="absolute left-2 top-3 h-4 w-4 text-gray-400"
+                                   fill="none"
+                                   stroke="currentColor"
+                                   viewBox="0 0 24 24"
+                                   xmlns="http://www.w3.org/2000/svg"
+                                 >
+                                   <path
+                                     strokeLinecap="round"
+                                     strokeLinejoin="round"
+                                     strokeWidth="2"
+                                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                   ></path>
+                                 </svg>
+                               </div>
+                             </CardHeader>
 
           <CardContent className="overflow-x-auto">
             <Table>

@@ -1870,18 +1870,40 @@ export const restorePage = async (id: string): Promise<ApiResponse> => {
 
 // Fetch all users with optional pagination
 
-export const fetchAllUsers = async (page = 1, size = 10) => {
+
+
+export const fetchAllUsers = async (page = 1, size = 10, status: string = "all",search?: string
+) => {
   try {
-    const token = getToken();
-    const response= await apiClient.get('/user', {
-      params: { page, size },
+    const token = getToken(); // Retrieve the token
+
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.status = status;
+    }
+
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
+    // Make API call
+    const response: AxiosResponse = await apiClient.get("/user", {
+      params, // Query params (page, size, status)
       headers: {
-        'admin-auth-token': token || '',
+        "admin-auth-token": token || "", // Add the token to the request headers
       },
     });
-    return response.data;
+
+    return response.data; // Return the data
   } catch (error) {
-    throw new Error('Failed to fetch users.');
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
   }
 };
 
@@ -2021,19 +2043,40 @@ export const fetchProvidersByFilters = async (
 };
 
 
-// Fetch all providers with optional pagination
-export const fetchAllProviders = async (page = 1, size = 10, status: string = "all") => {
+
+
+export const fetchAllProviders = async (page = 1, size = 10, status: string = "all",search?: string
+) => {
   try {
-    const token = getToken();
-    const response = await apiClient.get('/provider', {
-      params: { page, size , status},
+    const token = getToken(); // Retrieve the token
+
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.status = status;
+    }
+
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
+    // Make API call
+    const response: AxiosResponse = await apiClient.get("/provider", {
+      params, // Query params (page, size, status)
       headers: {
-        'admin-auth-token': token || '',
+        "admin-auth-token": token || "", // Add the token to the request headers
       },
     });
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch providers.');
+
+    return response.data; // Return the data
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
   }
 };
 
@@ -3215,20 +3258,45 @@ export const createBooking = async (booking: Booking): Promise<ApiResponse> => {
     throw new Error(error.response?.data?.message || "Failed to create booking.");
   }
 };
-export const fetchBookings = async (page = 1, size = 10) => {
+
+
+
+
+export const fetchBookings = async (page = 1, size = 10, status: string = "all",search?: string
+) => {
   try {
-    const token = getToken();
-    const response = await apiClient.get("/booking", {
-      params: { page, size },
+    const token = getToken(); // Retrieve the token
+
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.status = status;
+    }
+
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
+    // Make API call
+    const response: AxiosResponse = await apiClient.get("/booking", {
+      params, // Query params (page, size, status)
       headers: {
-        "admin-auth-token": token || "",
+        "admin-auth-token": token || "", // Add the token to the request headers
       },
     });
-    return response.data;
+
+    return response.data; // Return the data
   } catch (error) {
-    throw new Error("Failed to fetch bookings.");
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
   }
 };
+
 export const fetchBookingById = async (id: string) => {
   try {
     const token = getToken();
@@ -4941,27 +5009,38 @@ export const downloadSampleExcel = async (): Promise<void> => {
 };
 
 
-// Fetch all states with optional pagination
-export const fetchAllStates = async (
-  page: number = 1,
-  size: number = 10
+export const fetchAllStates = async (page = 1, size = 10, status: string = "all",search?: string
 ) => {
   try {
-    const token = getToken();
-    const response = await apiClient.get('/states', {
-      params: { page, size },
+    const token = getToken(); // Retrieve the token
+
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.status = status;
+    }
+
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
+    // Make API call
+    const response: AxiosResponse = await apiClient.get("/states", {
+      params, // Query params (page, size, status)
       headers: {
-        'admin-auth-token': token || '',
+        "admin-auth-token": token || "", // Add the token to the request headers
       },
     });
 
-    if (response.data.status) {
-      return response.data;
-    } else {
-      throw new Error(response.data.message || 'Failed to fetch states.');
-    }
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch states.');
+    return response.data; // Return the data
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
   }
 };
 
@@ -5137,26 +5216,43 @@ export const downloadSampleStateExcel = async (): Promise<void> => {
 };
 
 
-// Fetch all cities with optional pagination
-export const fetchAllCities = async (page: number = 1, size: number = 10) => {
+
+
+export const fetchAllCities = async (page = 1, size = 10, status: string = "all",search?: string
+) => {
   try {
-    const token = getToken();
-    const response = await apiClient.get("/cities", {
-      params: { page, size },
+    const token = getToken(); // Retrieve the token
+
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.status = status;
+    }
+
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
+    // Make API call
+    const response: AxiosResponse = await apiClient.get("/cities", {
+      params, // Query params (page, size, status)
       headers: {
-        "admin-auth-token": token || "",
+        "admin-auth-token": token || "", // Add the token to the request headers
       },
     });
 
-    if (response.data.status) {
-      return response.data;
-    } else {
-      throw new Error(response.data.message || "Failed to fetch cities.");
-    }
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch cities.");
+    return response.data; // Return the data
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
   }
 };
+
 
 // Fetch all cities without pagination
 export const fetchAllCitiesWithoutPagination = async (): Promise<City[]> => {
@@ -5333,26 +5429,45 @@ export const downloadSampleCityExcel = async (): Promise<void> => {
 };
 
 
-// Fetch all cities with optional pagination
-export const fetchAllHubs = async (page: number = 1, size: number = 10) => {
+
+
+
+export const fetchAllHubs = async (page = 1, size = 10, status: string = "all",search?: string
+) => {
   try {
-    const token = getToken();
-    const response = await apiClient.get("/hubs", {
-      params: { page, size },
+    const token = getToken(); // Retrieve the token
+
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.status = status;
+    }
+
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
+    // Make API call
+    const response: AxiosResponse = await apiClient.get("/hubs", {
+      params, // Query params (page, size, status)
       headers: {
-        "admin-auth-token": token || "",
+        "admin-auth-token": token || "", // Add the token to the request headers
       },
     });
 
-    if (response.data.status) {
-      return response.data;
-    } else {
-      throw new Error(response.data.message || "Failed to fetch hubs.");
-    }
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch hubs.");
+    return response.data; // Return the data
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
   }
 };
+
+
 
 // Fetch all cities without pagination
 export const fetchAllHubsWithoutPagination = async (): Promise<Hub[]> => {
@@ -5526,29 +5641,42 @@ export const downloadSampleHubExcel = async (): Promise<void> => {
 };
 
 
-// Fetch all hub pincodes with optional pagination
-export const fetchAllHubPincodes = async (
-  page: number = 1,
-  size: number = 10
-): Promise<{ data: HubPincode[]; meta: { totalPages: number } }> => {
+
+export const fetchAllHubPincodes = async (page = 1, size = 10, status: string = "all",search?: string
+) => {
   try {
-    const token = getToken();
-    const response = await apiClient.get("/hub-pincodes", {
-      params: { page, size },
+    const token = getToken(); // Retrieve the token
+
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.status = status;
+    }
+
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
+    // Make API call
+    const response: AxiosResponse = await apiClient.get("/hub-pincodes", {
+      params, // Query params (page, size, status)
       headers: {
-        "admin-auth-token": token || "",
+        "admin-auth-token": token || "", // Add the token to the request headers
       },
     });
 
-    if (response.data.status) {
-      return response.data;
-    } else {
-      throw new Error(response.data.message || "Failed to fetch hub pincodes.");
-    }
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch hub pincodes.");
+    return response.data; // Return the data
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
   }
 };
+
 
 // Fetch all hub pincodes without pagination
 export const fetchAllHubPincodesWithoutPagination = async (): Promise<HubPincode[]> => {
@@ -5725,29 +5853,44 @@ export const downloadSampleHubPincodeExcel = async (): Promise<void> => {
 };
 
 
-// Fetch all SpHubs with optional pagination
-export const fetchAllSpHubs = async (
-  page: number = 1,
-  size: number = 10
-): Promise<{ data: SpHub[]; meta: { totalPages: number } }> => {
+
+
+
+export const fetchAllSpHubs = async (page = 1, size = 10, status: string = "all",search?: string
+) => {
   try {
-    const token = getToken();
-    const response = await apiClient.get('/sp-hubs', {
-      params: { page, size },
+    const token = getToken(); // Retrieve the token
+
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.status = status;
+    }
+
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
+    // Make API call
+    const response: AxiosResponse = await apiClient.get("/sp-hubs", {
+      params, // Query params (page, size, status)
       headers: {
-        'admin-auth-token': token || '',
+        "admin-auth-token": token || "", // Add the token to the request headers
       },
     });
 
-    if (response.data.status) {
-      return response.data;
-    } else {
-      throw new Error(response.data.message || 'Failed to fetch SpHubs.');
-    }
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch SpHubs.');
+    return response.data; // Return the data
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
   }
 };
+
 
 // Fetch all SpHubs without pagination
 export const fetchAllSpHubsWithoutPagination = async (): Promise<SpHub[]> => {

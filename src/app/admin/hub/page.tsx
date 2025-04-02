@@ -33,13 +33,17 @@ const HubList = () => {
   const [hubs, setHubs] = useState<any[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
-
+const [filterStatus, setFilterStatus] = useState<string>("all");
+       const [searchTerm, setSearchTerm] = useState("");
+   
   const { toast } = useToast();
-
+   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setFilterStatus(e.target.value);
+      };
   // Fetch hubs from backend with pagination
-  const fetchHubsData = async (page = 1, size = 50) => {
+  const fetchHubsData = async (page = 1, size = 50, status = "all",search = "") => {
     try {
-      const { data, meta } = await fetchAllHubs(page, size);
+      const { data, meta } = await fetchAllHubs(page, size, status,search);
       setHubs(data);
       setTotalPages(meta.totalPages);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
@@ -49,8 +53,8 @@ const HubList = () => {
   };
 
   useEffect(() => {
-    fetchHubsData(pagination.pageIndex + 1, pagination.pageSize);
-  }, [pagination.pageIndex, pagination.pageSize]);
+    fetchHubsData(pagination.pageIndex + 1, pagination.pageSize,filterStatus,searchTerm);
+  }, [pagination.pageIndex, pagination.pageSize,filterStatus,searchTerm]);
 
   const handleHubDelete = async (hub: any) => {
     try {
@@ -131,17 +135,38 @@ const HubList = () => {
     { accessorKey: "hub_name", header: "Hub Name" },
     { accessorKey: "hub_priority", header: "Priority" },
     {
-      accessorKey: "is_active",
-      header: "Status",
-      cell: (info) => (
-        <span
-          className={`px-2 py-1 rounded-full text-xs font-medium ${
-            info.getValue() ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
-          }`}
-        >
-          {info.getValue() ? "Active" : "Inactive"}
-        </span>
-      ),
+      accessorKey: 'is_active',
+      header: 'Status',
+      cell: (info) => {
+        const status = info.getValue();
+        console.log("status",status)
+        let statusText = '';
+        let statusClass = '';
+    
+        switch (status) {
+          case false:
+            statusText = 'Inactive';
+            statusClass = 'bg-red-100 text-red-600';
+            break;
+          case true:
+            statusText = 'Active';
+            statusClass = 'bg-green-100 text-green-600';
+            break;
+          case 2:
+            statusText = 'Deleted';
+            statusClass = 'bg-gray-100 text-gray-600';
+            break;
+          default:
+            statusText = 'Unknown';
+            statusClass = 'bg-yellow-100 text-yellow-600';
+        }
+    
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusClass}`}>
+            {statusText}
+          </span>
+        );
+      },
     },
     {
       id: "actions",
@@ -199,6 +224,12 @@ const HubList = () => {
                 <span>Add Hub</span>
               </Link>
             </Button>
+            <select value={filterStatus} onChange={handleStatusChange} className="border p-2 rounded">
+                    <option value="">All</option>
+                    <option value="1">Active</option>
+                    <option value="0">Deactivated</option>
+                    <option value="2">Deleted</option>
+                  </select>
             <Button variant="outline" onClick={handleDownloadSample}>
               <Download className="w-4 h-4 mr-2" />
               Sample CSV
@@ -223,9 +254,32 @@ const HubList = () => {
         </div>
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
-          <CardHeader className="border-b border-gray-100 pb-4">
-            <CardTitle className="text-xl text-gray-800">Hubs</CardTitle>
-          </CardHeader>
+           <CardHeader className="flex flex-row items-center justify-between gap-4">
+                                                                      <CardTitle className="text-xl text-gray-800">Hubs</CardTitle>
+                                                                      <div className="relative">
+                                                                        <input
+                                                                          type="text"
+                                                                          placeholder="Search categories..."
+                                                                          value={searchTerm}
+                                                                          onChange={(e) => setSearchTerm(e.target.value)}
+                                                                          className="border p-2 pl-8 rounded w-64"
+                                                                        />
+                                                                        <svg
+                                                                          className="absolute left-2 top-3 h-4 w-4 text-gray-400"
+                                                                          fill="none"
+                                                                          stroke="currentColor"
+                                                                          viewBox="0 0 24 24"
+                                                                          xmlns="http://www.w3.org/2000/svg"
+                                                                        >
+                                                                          <path
+                                                                            strokeLinecap="round"
+                                                                            strokeLinejoin="round"
+                                                                            strokeWidth="2"
+                                                                            d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                                                          ></path>
+                                                                        </svg>
+                                                                      </div>
+                                                                    </CardHeader>
 
           <CardContent className="overflow-x-auto">
             <Table>
