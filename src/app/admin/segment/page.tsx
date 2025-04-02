@@ -22,11 +22,17 @@ const ServiceSegmentList = () => {
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
+   const [filterStatus, setFilterStatus] = useState<string>("all");
+       const [searchTerm, setSearchTerm] = useState("");
+   
   const { toast } = useToast();
 
-  const fetchServiceSegmentsData = async (page = 1, size = 50) => {
+   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setFilterStatus(e.target.value);
+      };
+  const fetchServiceSegmentsData = async (page = 1, size = 50, status = "all",search = "") => {
     try {
-      const { data, meta } = await fetchServiceSegmentsAll(page, size); // Call fetchServiceSegments
+      const { data, meta } = await fetchServiceSegmentsAll(page, size, status,search); // Call fetchServiceSegments
       setServiceSegments(data);
       setTotalPages(meta.totalPages);
       setTotalItems(meta.totalItems);
@@ -36,9 +42,10 @@ const ServiceSegmentList = () => {
     }
   };
 
+  
   useEffect(() => {
-    fetchServiceSegmentsData(pagination.pageIndex + 1, pagination.pageSize);
-  }, [pagination.pageIndex, pagination.pageSize]);
+    fetchServiceSegmentsData(pagination.pageIndex + 1, pagination.pageSize,filterStatus,searchTerm);
+  }, [pagination.pageIndex, pagination.pageSize,filterStatus,searchTerm]);
 
   const handleServiceSegmentDelete = async (serviceSegmentId: string) => { // ID is a string
     try {
@@ -69,32 +76,38 @@ const ServiceSegmentList = () => {
     { accessorKey: 'category.name', header: 'Category' },
     { accessorKey: 'subcategory.name', header: 'Subcategory' },
     { accessorKey: 'filterAttribute.name', header: 'Attribute' },
-
     {
-      accessorKey: "is_active", // Correct accessor key
-      header: "Status",
-      cell: ({ row }) => {
-        const statusValue = row.original.is_active; // Access is_active
-
-        let statusLabel = "";
-        let statusClass = "";
-
-        switch (statusValue) {
-          case 1:
-            statusLabel = "Active";
-            statusClass = "bg-green-200 text-green-800";
-            break;
+      accessorKey: 'is_active',
+      header: 'Status',
+      cell: (info) => {
+        const status = info.getValue();
+        console.log("status",status)
+        let statusText = '';
+        let statusClass = '';
+    
+        switch (status) {
           case 0:
-            statusLabel = "Inactive";
-            statusClass = "bg-yellow-200 text-yellow-800";
+            statusText = 'Inactive';
+            statusClass = 'bg-red-100 text-red-600';
+            break;
+          case 1:
+            statusText = 'Active';
+            statusClass = 'bg-green-100 text-green-600';
+            break;
+          case 2:
+            statusText = 'Deleted';
+            statusClass = 'bg-gray-100 text-gray-600';
             break;
           default:
-            statusLabel = "Unknown";
-            statusClass = "bg-gray-200 text-gray-800";
-            break;
+            statusText = 'Unknown';
+            statusClass = 'bg-yellow-100 text-yellow-600';
         }
-
-        return <span className={`badge px-2 py-1 rounded ${statusClass}`}>{statusLabel}</span>;
+    
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusClass}`}>
+            {statusText}
+          </span>
+        );
       },
     },
     {
@@ -144,20 +157,51 @@ const ServiceSegmentList = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-12xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900">Service Segment List</h1>
-          <Button asChild variant="default" className="flex items-center space-x-2">
-            <Link href="/admin/segment/add"> {/* Correct link */}
-              <Plus className="w-4 h-4 mr-1" />
-              <span>Add Segment</span>
-            </Link>
-          </Button>
-        </div>
+             <div className="flex justify-between mb-4">
+         <h1 className="text-3xl font-bold text-gray-900">Service Segment List</h1>
+         <div className="flex space-x-2">
+                  <select value={filterStatus} onChange={handleStatusChange} className="border p-2 rounded">
+                    <option value="">All</option>
+                    <option value="1">Active</option>
+                    <option value="0">Deactivated</option>
+                    <option value="2">Deleted</option>
+                  </select>
+                  
+                  
+                  <Link href="/admin/admin/add">
+                    <Button><Plus className="w-4 h-4 mr-2" />Add Segment</Button>
+                  </Link>
+                </div>
+              </div>
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
-          <CardHeader className="border-b border-gray-100 pb-4">
-            <CardTitle className="text-xl text-gray-800">Service Segments</CardTitle>
-          </CardHeader>
+         <CardHeader className="flex flex-row items-center justify-between gap-4">
+                              <CardTitle className="text-xl text-gray-800">Service Segments</CardTitle>
+                              <div className="relative">
+                                <input
+                                  type="text"
+                                  placeholder="Search categories..."
+                                  value={searchTerm}
+                                  onChange={(e) => setSearchTerm(e.target.value)}
+                                  className="border p-2 pl-8 rounded w-64"
+                                />
+                                <svg
+                                  className="absolute left-2 top-3 h-4 w-4 text-gray-400"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  viewBox="0 0 24 24"
+                                  xmlns="http://www.w3.org/2000/svg"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    strokeWidth="2"
+                                    d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                                  ></path>
+                                </svg>
+                              </div>
+                            </CardHeader>
+        
 
           <CardContent className="overflow-x-auto">
             <Table>

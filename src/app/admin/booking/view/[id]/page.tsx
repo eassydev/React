@@ -19,6 +19,10 @@ const ViewBookingPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [status, setStatus] = useState<string>('accepted');
   const [bookingDetails, setBookingDetails] = useState<any>(null);
+  const [report, setReport] = useState<any>(null);
+  const [bookingCoupon,setbookingCoupon]= useState<any>(null);
+  const [feedback, setFeedback] = useState<any>(null);
+
   const { toast } = useToast();
   const [isProcessingRefund, setIsProcessingRefund] = useState<boolean>(false);
 
@@ -28,8 +32,11 @@ const ViewBookingPage: React.FC = () => {
 
       try {
         const booking = await fetchBookingById(bookingId.toString());
-        setBookingDetails(booking);
-
+        console.log("booking",booking)
+        setBookingDetails(booking.booking);
+        setReport(booking.report);
+        setFeedback(booking.feedback);
+        setbookingCoupon(booking.bookingcoupon)
         setStatus(booking.status || 'accepted');
         setSelectedProviderId(booking.provider_id?.toString() || "");
 
@@ -159,7 +166,7 @@ const ViewBookingPage: React.FC = () => {
                 <p><strong>Address:</strong> {bookingDetails.address?.flat_no || "N/A"}-{bookingDetails.address?.building_name || "N/A"}-{bookingDetails.address?.street_address || "N/A"}-{bookingDetails.address?.city || "N/A"}</p>
               </div>
 
-              <div className="col-span-2">
+              <div>
                 <h3 className="font-semibold text-lg">Booking Details</h3>
                 <p><strong>Order ID:</strong> {bookingDetails.booking_id || "N/A"}</p>
                 <p><strong>Service Date:</strong> {bookingDetails.booking_date || "N/A"}</p>
@@ -179,6 +186,22 @@ const ViewBookingPage: React.FC = () => {
                 <p><strong>Price:</strong> ₹{bookingDetails.total_amount || 0}</p>
                 <p><strong>Strike Price:</strong> ₹{bookingDetails.discount_amount || 0}</p>
               </div>
+              <div>
+              <h3 className="font-semibold text-lg">Booking Report Details</h3>
+              <p><strong>Comment:</strong> {report.comment || "N/A"}</p>
+             
+              </div>
+              <div>
+              <h3 className="font-semibold text-lg">Booking Feedback Details</h3>
+              <p><strong>Comment:</strong> {feedback.comment || "N/A"}</p>
+             
+              </div>
+              <div>
+              <h3 className="font-semibold text-lg">Booking Coupon Details</h3>
+              <p><strong>Coupon Name:</strong> {bookingCoupon.coupon_name || "N/A"}</p>
+             
+              </div>
+              
             </div>
           )}
 

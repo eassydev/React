@@ -1659,19 +1659,40 @@ export const updatePackage = async (id: string, pkg: Package): Promise<ApiRespon
   }
 };
 
-// Function to fetch all packages with pagination
-export const fetchPackages = async (page = 1, size = 10) => {
+
+
+export const fetchPackages = async (page = 1, size = 10, status: string = "all",search?: string
+) => {
   try {
-    const token = getToken();
-    const response= await apiClient.get('/package', {
-      params: { page, size },
+    const token = getToken(); // Retrieve the token
+
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.status = status;
+    }
+
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
+    // Make API call
+    const response: AxiosResponse = await apiClient.get("/package", {
+      params, // Query params (page, size, status)
       headers: {
-        'admin-auth-token': token || '',
+        "admin-auth-token": token || "", // Add the token to the request headers
       },
     });
-    return response.data;
+
+    return response.data; // Return the data
   } catch (error) {
-    throw new Error('Failed to fetch packages');
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
   }
 };
 
@@ -2696,22 +2717,42 @@ export const updateBanner = async (id: string | number, bannerData: Banner): Pro
 };
 
 
-// Fetch all providers with optional pagination
-export const fetchBanners = async (page = 1, size = 10) => {
+
+
+export const fetchBanners = async (page = 1, size = 10, status: string = "all",search?: string
+) => {
   try {
-    const token = getToken();
-    const response = await apiClient.get('/banner', {
-      params: { page, size },
+    const token = getToken(); // Retrieve the token
+
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.status = status;
+    }
+
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
+    // Make API call
+    const response: AxiosResponse = await apiClient.get("/banner", {
+      params, // Query params (page, size, status)
       headers: {
-        'admin-auth-token': token || '',
+        "admin-auth-token": token || "", // Add the token to the request headers
       },
     });
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch banner.');
+
+    return response.data; // Return the data
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
   }
 };
-
 // Function to fetch all banks
 export const fetchBannerPromo = async (): Promise<Banner[]> => {
   try {
@@ -3188,7 +3229,7 @@ export const fetchBookings = async (page = 1, size = 10) => {
     throw new Error("Failed to fetch bookings.");
   }
 };
-export const fetchBookingById = async (id: string): Promise<Booking> => {
+export const fetchBookingById = async (id: string) => {
   try {
     const token = getToken();
     const response: AxiosResponse<ApiResponse> = await apiClient.get(`/booking/${id}`, {
@@ -3981,18 +4022,41 @@ export const createAdmin = async (adminData: any): Promise<ApiResponse> => {
 
 
 // Fetch all admins with optional pagination
-export const fetchAdmins = async (page = 1, size = 10) => {
+
+
+
+export const fetchAdmins = async (page = 1, size = 10, status: string = "all",search?: string
+) => {
   try {
-    const token = getToken();
-    const response = await apiClient.get('/admin', {
-      params: { page, size },
+    const token = getToken(); // Retrieve the token
+
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.status = status;
+    }
+
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
+    // Make API call
+    const response: AxiosResponse = await apiClient.get("/admin", {
+      params, // Query params (page, size, status)
       headers: {
-        'admin-auth-token': token || '',
+        "admin-auth-token": token || "", // Add the token to the request headers
       },
     });
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch admins.');
+
+    return response.data; // Return the data
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
   }
 };
 
@@ -4662,27 +4726,40 @@ export const updateRateCardsCsv = async (file: File): Promise<void> => {
   }
 };
 
-// Fetch all countries with optional pagination
-export const fetchAllCountries = async (
-  page: number = 1,
-  size: number = 10
+
+
+export const fetchAllCountries = async (page = 1, size = 10, status: string = "all",search?: string
 ) => {
   try {
-    const token = getToken();
-    const response = await apiClient.get('/countries', {
-      params: { page, size },
+    const token = getToken(); // Retrieve the token
+
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.status = status;
+    }
+
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
+    // Make API call
+    const response: AxiosResponse = await apiClient.get("/countries", {
+      params, // Query params (page, size, status)
       headers: {
-        'admin-auth-token': token || '',
+        "admin-auth-token": token || "", // Add the token to the request headers
       },
     });
 
-    if (response.data.status) {
-      return response.data;
-    } else {
-      throw new Error(response.data.message || 'Failed to fetch countries.');
-    }
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch countries.');
+    return response.data; // Return the data
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
   }
 };
 
@@ -6140,16 +6217,14 @@ export const createServiceDetail = async (serviceDetail: ServiceDetail): Promise
 };
 
 
-// Function to fetch all rate cards with pagination
-export const fetchServiceDetails = async (
-  page: number = 1,
-  size: number = 10,
-  status: string = "all",
-  search?: string
+
+
+
+export const fetchServiceDetails = async (page = 1, size = 10, status: string = "all",search?: string
 ) => {
   try {
-    const token = getToken();
-    
+    const token = getToken(); // Retrieve the token
+
     // Prepare query parameters
     const params: Record<string, any> = {
       page,
@@ -6158,24 +6233,25 @@ export const fetchServiceDetails = async (
 
     // Include status filter only if it's not 'all'
     if (status !== "all") {
-      params.active = status; // Assuming your backend expects 'active' parameter
+      params.status = status;
     }
 
-    // Include search term if provided
     if (search && search.trim() !== "") {
       params.search = search.trim();
     }
 
-    const response: AxiosResponse = await apiClient.get('/service-detail', {
-      params,
+    // Make API call
+    const response: AxiosResponse = await apiClient.get("/service-detail", {
+      params, // Query params (page, size, status)
       headers: {
-        'admin-auth-token': token || '',
+        "admin-auth-token": token || "", // Add the token to the request headers
       },
     });
 
-    return response.data;
+    return response.data; // Return the data
   } catch (error) {
-    throw new Error('Failed to fetch rate cards');
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
   }
 };
 
@@ -6362,21 +6438,42 @@ export const updateDonation = async (id: string, donation: Donation): Promise<Ap
 };
 
 
-// Fetch all service segments with optional pagination
-export const fetchServiceSegmentsAll = async (page = 1, size = 10) => {
+
+export const fetchServiceSegmentsAll = async (page = 1, size = 10, status: string = "all",search?: string
+) => {
   try {
-    const token = getToken();
-    const response = await apiClient.get('/service-segment', { // Correct route
-      params: { page, size },
+    const token = getToken(); // Retrieve the token
+
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.status = status;
+    }
+
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
+    // Make API call
+    const response: AxiosResponse = await apiClient.get("/service-segment", {
+      params, // Query params (page, size, status)
       headers: {
-        'admin-auth-token': token || '',
+        "admin-auth-token": token || "", // Add the token to the request headers
       },
     });
-    return response.data; // Assumes your API returns data in .data
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch service segments.');
+
+    return response.data; // Return the data
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
   }
 };
+
 
 // Fetch all service segments without pagination
 export const fetchAllServiceSegments = async () => {
@@ -6456,21 +6553,43 @@ export const deleteServiceSegment = async (id: string) => {
   }
 };
 
-// Fetch all service videos (paginated)
-export const fetchServiceVideosAll = async (page = 1, size = 10): Promise<any> => {
+
+
+export const fetchServiceVideosAll = async (page = 1, size = 10, status: string = "all",search?: string
+) => {
   try {
-    const token = getToken();
-    const response = await apiClient.get('/service-video', {
-      params: { page, size },
+    const token = getToken(); // Retrieve the token
+
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.status = status;
+    }
+
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
+    // Make API call
+    const response: AxiosResponse = await apiClient.get("/service-video", {
+      params, // Query params (page, size, status)
       headers: {
-        'admin-auth-token': token || '',
+        "admin-auth-token": token || "", // Add the token to the request headers
       },
     });
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch service videos.');
+
+    return response.data; // Return the data
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
   }
 };
+
 
 // Fetch all service videos (without pagination)
 export const fetchAllServiceVideos = async (): Promise<any> => {

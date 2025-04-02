@@ -25,7 +25,9 @@ const ServiceDetailList = () => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState("");
-
+const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+        setFilterStatus(e.target.value);
+      };
   const fetchServiceDetailsData = async (page = 1, size = 50, status = "all", search = "") => {
     try {
       const { data, meta } = await fetchServiceDetails(page, size, filterStatus,search);
@@ -41,7 +43,7 @@ const ServiceDetailList = () => {
   
     useEffect(() => {
       fetchServiceDetailsData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm);
-    }, [pagination.pageIndex,pagination.pageSize,searchTerm]);
+    }, [pagination.pageIndex,pagination.pageSize,filterStatus,searchTerm]);
   const handleServiceDetailDelete = async (serviceDetailId: number) => {
     try {
       await deleteServiceDetail(serviceDetailId.toString());
@@ -79,11 +81,11 @@ const ServiceDetailList = () => {
     { accessorKey: 'filterAttribute.name', header: 'Filter' },
     { accessorKey: 'filterOption.value', header: 'Option' },
     {
-      accessorKey: "active",
+      accessorKey: "is_active",
       header: "Status",
       cell: ({ row }) => {
-        const statusValue = row.original.active;
-
+        const statusValue = row.original.is_active;
+console.log("statusValue",statusValue)
         let statusLabel = "";
         let statusClass = "";
 
@@ -105,7 +107,6 @@ const ServiceDetailList = () => {
             statusClass = "bg-gray-200 text-gray-800";
             break;
         }
-
         return <span className={`badge px-2 py-1 rounded ${statusClass}`}>{statusLabel}</span>;
       },
     },
@@ -156,15 +157,23 @@ const ServiceDetailList = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-12xl mx-auto space-y-6">
-      <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900">Service Description List</h1>
-          <Button asChild variant="default" className="flex items-center space-x-2">
-            <Link href="/admin/description/add">
-              <Plus className="w-4 h-4 mr-1" />
-              <span>Add Description</span>
-            </Link>
-          </Button>
-        </div>
+        <div className="flex justify-between mb-4">
+                 <h1 className="text-3xl font-bold text-gray-900">Service Description List</h1>
+                 <div className="flex space-x-2">
+                          <select value={filterStatus} onChange={handleStatusChange} className="border p-2 rounded">
+                            <option value="">All</option>
+                            <option value="1">Active</option>
+                            <option value="0">Deactivated</option>
+                            <option value="2">Deleted</option>
+                          </select>
+                          
+                          
+                          <Link href="/admin/description/add">
+                            <Button><Plus className="w-4 h-4 mr-2" />Add Description</Button>
+                          </Link>
+                        </div>
+                      </div>
+     
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
            <CardHeader className="flex flex-row items-center justify-between gap-4">
