@@ -3449,19 +3449,40 @@ formData.append("min_order_value", minOrderValue ? minOrderValue.toString() : "0
   }
 };
 
-// Fetch all promocodes with optional pagination
-export const fetchPromocodes = async (page = 1, size = 10) => {
+
+
+export const fetchPromocodes = async (page = 1, size = 10, status: string = "all",search?: string
+) => {
   try {
-    const token = getToken();
+    const token = getToken(); // Retrieve the token
+
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.status = status;
+    }
+
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
+    // Make API call
     const response: AxiosResponse = await apiClient.get("/promocode", {
-      params: { page, size },
+      params, // Query params (page, size, status)
       headers: {
-        "admin-auth-token": token || "",
+        "admin-auth-token": token || "", // Add the token to the request headers
       },
     });
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || "Failed to fetch promocodes.");
+
+    return response.data; // Return the data
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
   }
 };
 
