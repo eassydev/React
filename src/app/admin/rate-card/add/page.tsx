@@ -202,6 +202,8 @@ const RateCardForm: React.FC = () => {
       setSelectedProviderName("Select an option");
     }
   };
+
+  
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);

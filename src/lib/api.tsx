@@ -136,8 +136,10 @@ export interface ServiceDetail {
   segment_id?: string; // Foreign key linking to the service segment
   category_id: string; // Foreign key linking to the category
   subcategory_id?: string; // Foreign key linking to the subcategory
-  filter_attribute_id?: string; // Foreign key linking to the filter attribute
-  filter_option_id?: String;
+  serviceAttributes: {
+    attribute_id: string;
+    option_id: string;
+  }[];
   serviceDescriptions: ServiceDescription[];
   active: boolean;
 
@@ -6357,8 +6359,10 @@ export const createServiceDetail = async (serviceDetail: ServiceDetail): Promise
     category_id: serviceDetail.category_id,
     subcategory_id: serviceDetail.subcategory_id ?? '',
     segment_id: serviceDetail.segment_id ?? '',
-    filter_attribute_id: serviceDetail.filter_attribute_id ?? '',
-    filter_option_id: serviceDetail.filter_option_id ?? '',
+    filter_attributes: serviceDetail.serviceAttributes.map((attr) => ({
+      attribute_id: attr.attribute_id,
+      option_id: attr.option_id,
+    })),
     serviceDescription: serviceDetail.serviceDescriptions!.map((desc) => ({
       name: desc.name,
       description: desc.description,
@@ -6465,12 +6469,15 @@ export const updateServiceDetail = async (id: string, serviceDetail: ServiceDeta
     category_id: serviceDetail.category_id,
     subcategory_id: serviceDetail.subcategory_id ?? '',
     segment_id: serviceDetail.segment_id ?? '',
-    filter_attribute_id: serviceDetail.filter_attribute_id ?? '',
-    filter_option_id: serviceDetail.filter_option_id ?? '',
+    filter_attributes: serviceDetail.serviceAttributes.map((attr) => ({
+      attribute_id: attr.attribute_id,
+      option_id: attr.option_id,
+    })),
     serviceDescription: serviceDetail.serviceDescriptions!.map((desc) => ({
       name: desc.name,
       description: desc.description,
     })), // Include service descriptions
+    active: serviceDetail.active ?? 0,
   };
 
   try {

@@ -78,8 +78,36 @@ const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     { accessorKey: 'category.name', header: 'Category' },
     { accessorKey: 'subcategory.name', header: 'Subcategory' },
     { accessorKey: 'serviceSegment.segment_name', header: 'Segment' },
-    { accessorKey: 'filterAttribute.name', header: 'Filter' },
-    { accessorKey: 'filterOption.value', header: 'Option' },
+    {
+      accessorKey: "service",
+      header: "Service",
+      cell: ({ row }) => {
+        const serviceDetail = row.original;
+        if (!serviceDetail) return "N/A";
+        const attributes =
+        serviceDetail.serviceAttributes?.map(
+            (attr:any) =>
+              `${attr.filterAttribute?.name || "Unknown"}: ${attr.filterOption?.value || "N/A"}`
+          ) || [];
+    
+        return (
+          <div className="space-y-1">
+            {attributes.length > 0 && (
+              <div>
+                <span className="font-bold">Attributes:</span>
+                <ul className="list-disc list-inside">
+                  {attributes.map((attr:any, index:any) => (
+                    <li key={index} className="text-sm text-gray-600">
+                      {attr}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+          </div>
+        );
+      },
+    },
     {
       accessorKey: "is_active",
       header: "Status",
