@@ -131,16 +131,7 @@ const ServiceAddForm: React.FC = () => {
         }
       };
       loadFilterAttributes();
-      const loadServiceDetails = async () => {
-        try {
-          const segmentData = await fetchServiceSegments(selectedCategoryId,
-            selectedSubcategoryId ? selectedSubcategoryId : null);
-          setSegments(segmentData);
-        } catch (error) {
-          setSegments([]);
-        }
-      };
-      loadServiceDetails();
+    
     }
   }, [selectedCategoryId, selectedSubcategoryId]);
 
@@ -174,6 +165,16 @@ const ServiceAddForm: React.FC = () => {
           id: option.id!.toString(),
           value: option.value,
         }));
+        const loadServiceDetails = async () => {
+          try {
+            const segmentData = await fetchServiceSegments(selectedCategoryId,
+              selectedSubcategoryId ? selectedSubcategoryId : null,value);
+            setSegments(segmentData);
+          } catch (error) {
+            setSegments([]);
+          }
+        };
+        loadServiceDetails();
       } catch (error) {
         console.error("Error fetching filter options:", error);
         updated[index].options = [];

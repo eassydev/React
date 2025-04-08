@@ -105,7 +105,6 @@ const EditServiceDescriptionForm: React.FC = () => {
           setSelectedCategoryId(serviceDetail.category_id?.toString() || "");
           setSelectedSubcategoryId(serviceDetail.subcategory_id?.toString() || "");
           setIsActive(serviceDetail.active);
-          setsegmentsId(serviceDetail.segment_id?.toString() || "");
           setServiceDescriptions(serviceDetail.serviceDescriptions || []);
 
           // Fetch dynamic attributes if any
@@ -113,6 +112,18 @@ const EditServiceDescriptionForm: React.FC = () => {
             const dynamicAttributes = await Promise.all(
               serviceDetail.serviceAttributes.map(async (attr: any) => {
                 try {
+                  if (serviceDetail.segment_id) {
+                    const segmentData = await fetchServiceSegments(
+                      serviceDetail.category_id,
+                      serviceDetail.subcategory_id || null,
+                      attr.filter_attribute_id
+                    );
+                    console.log("erviceDetail.subcategory_id",segmentData)
+
+                    setSegments(segmentData);
+                    setsegmentsId(serviceDetail.segment_id?.toString() || "");
+
+                  }
                   const options = await fetchFilterOptionsByAttributeId(attr.filter_attribute_id);
                   return {
                     attributeId: attr.filter_attribute_id.toString(),
@@ -122,6 +133,8 @@ const EditServiceDescriptionForm: React.FC = () => {
                       value: o.value,
                     })),
                   };
+
+                
                 } catch (error) {
                   console.error(`Error fetching options for attribute ${attr.filter_attribute_id}:`, error);
                   return {
@@ -145,13 +158,7 @@ const EditServiceDescriptionForm: React.FC = () => {
           await fetchFilters(serviceDetail.category_id, subcategoryId);
 
           // Fetch segments if any
-          if (serviceDetail.segment_id) {
-            const segmentData = await fetchServiceSegments(
-              serviceDetail.category_id,
-              subcategoryId || null
-            );
-            setSegments(segmentData);
-          }
+          
         }
       } catch (error) {
         toast({
@@ -272,6 +279,16 @@ const EditServiceDescriptionForm: React.FC = () => {
           id: option.id!.toString(),
           value: option.value,
         }));
+        const loadServiceDetails = async () => {
+                  try {
+                    const segmentData = await fetchServiceSegments(selectedCategoryId,
+                      selectedSubcategoryId ? selectedSubcategoryId : null,value);
+                    setSegments(segmentData);
+                  } catch (error) {
+                    setSegments([]);
+                  }
+                };
+                loadServiceDetails();
       } catch (error) {
         console.error("Error fetching filter options:", error);
         updated[index].options = [];
