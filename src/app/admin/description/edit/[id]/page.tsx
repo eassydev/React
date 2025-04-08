@@ -526,10 +526,7 @@ const EditServiceDescriptionForm: React.FC = () => {
               )}
 
 
-<div className="flex items-center space-x-2">
-                <Switch checked={isActive} onCheckedChange={setIsActive} />
-                <span className="text-sm text-gray-700">Active</span>
-              </div>
+
               <div>
                 <Button type="button" onClick={handleAddServiceDescription}>
                   Add Service Description
