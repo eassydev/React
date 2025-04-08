@@ -472,6 +472,16 @@ const removeAttribute = (index: number) => {
                   <span className="text-sm text-gray-600">Active</span>
                 </div>
               </div>
+              <div className="space-y-4">
+                      <label className="block text-sm font-medium">Category Weight</label>
+                      <Input
+                        placeholder="Category Weight"
+                        type="number"
+                        value={weight}
+                        onChange={(e) => setWeight(Number(e.target.value))}
+                        className="h-10"
+                      />
+                    </div>
 
               {/* Active/Inactive Switch */}
               <div className="space-y-2">

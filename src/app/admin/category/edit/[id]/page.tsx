@@ -341,6 +341,7 @@ const removeAttribute = (index: number) => {
       service_time: serviceTime,
       active: isActive,
       is_home: isHome,
+      weight:weight,
       attributes: attributes,
       location_method: locationMethod,
       sac_code: sacCode,
@@ -467,6 +468,17 @@ const removeAttribute = (index: number) => {
                   <span className="text-sm text-gray-600">Active</span>
                 </div>
               </div>
+               <div className="space-y-4">
+                                    <label className="block text-sm font-medium">Category Weight</label>
+                                    <Input
+                                      placeholder="Category Weight"
+                                      type="number"
+                                      value={weight}
+                                      onChange={(e) => setWeight(Number(e.target.value))}
+                                      className="h-10"
+                                    />
+                                  </div>
+              
 
               <div className="space-y-4">
   <h3 className="text-lg font-semibold">Attributes</h3>

@@ -6954,6 +6954,66 @@ export const deleteRatecardBogo = async (id: string): Promise<ApiResponse> => {
   }
 };
 
+
+
+export const deleteCampaign = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/campaign/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (response.data.status) {
+      return response.data;
+    } else {
+      throw new Error(response.data.message || "Failed to delete Ratecard BOGO.");
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to delete Ratecard BOGO.");
+  }
+};
+
+
+
+
+export const fetchCampaign = async (page = 1, size = 10, status: string = "all",search?: string
+) => {
+  try {
+    const token = getToken(); // Retrieve the token
+
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.status = status;
+    }
+
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
+    // Make API call
+    const response: AxiosResponse = await apiClient.get("/campaign", {
+      params, // Query params (page, size, status)
+      headers: {
+        "admin-auth-token": token || "", // Add the token to the request headers
+      },
+    });
+
+    return response.data; // Return the data
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
+  }
+};
+
+
 // **API Call for Creating a Campaign**
 export const createCampaign = async (campaign: Campaign): Promise<ApiResponse> => {
 

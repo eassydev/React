@@ -297,7 +297,7 @@ const [radiusError, setRadiusError] = useState<string>("");
               
                       {/* Virtualized list */}
                       {rateCardOptions.filter(rc => 
-                        `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''}`
+                        `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''} ${rc.price||''}`
                           .toLowerCase()
                           .includes(searchTerm.toLowerCase())
                       ).length > 0 ? (
@@ -305,7 +305,7 @@ const [radiusError, setRadiusError] = useState<string>("");
                           style={{ height: "200px", width: "100%" }}
                           totalCount={
                             rateCardOptions.filter(rc => 
-                              `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''}`
+                              `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''} ${rc.price||''}`
                                 .toLowerCase()
                                 .includes(searchTerm.toLowerCase())
                             ).length
@@ -313,7 +313,7 @@ const [radiusError, setRadiusError] = useState<string>("");
                           itemContent={(index) => {
                             // Define the filtered list first
                             const filteredRatecards = rateCardOptions.filter(rc => 
-                              `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''}`
+                              `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''} ${rc.price||''}`
                                 .toLowerCase()
                                 .includes(searchTerm.toLowerCase())
                             );
@@ -384,6 +384,7 @@ const [radiusError, setRadiusError] = useState<string>("");
   <label className="text-sm font-medium text-gray-700">Hubs</label>
   <ReactSelect
     isMulti
+    closeMenuOnSelect={false}
     options={hubOptions.map((hub) => ({
       value: hub.id,
       label: hub.hub_name || `Unnamed Hub (ID: ${hub.id})`,
@@ -511,7 +512,7 @@ const [radiusError, setRadiusError] = useState<string>("");
 
     {/* Virtualized list */}
     {rateCardOptions.filter(rc => 
-      `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''}`
+      `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''} ${rc.price || ''}`
         .toLowerCase()
         .includes(searchTerm.toLowerCase())
     ).length > 0 ? (
@@ -519,7 +520,7 @@ const [radiusError, setRadiusError] = useState<string>("");
         style={{ height: "200px", width: "100%" }}
         totalCount={
           rateCardOptions.filter(rc => 
-            `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''}`
+            `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''} ${rc.price || ''}`
               .toLowerCase()
               .includes(searchTerm.toLowerCase())
           ).length
@@ -527,7 +528,7 @@ const [radiusError, setRadiusError] = useState<string>("");
         itemContent={(index) => {
           // Define the filtered list first
           const filteredRatecards = rateCardOptions.filter(rc => 
-            `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''}`
+            `${rc.name} ${rc.category?.name || ''} ${rc.subcategory?.name || ''} ${rc.price || ''}`
               .toLowerCase()
               .includes(searchTerm.toLowerCase())
           );
