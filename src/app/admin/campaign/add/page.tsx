@@ -31,6 +31,7 @@ import {
   Subcategory,
   Attribute,
   AttributeOption,
+  fetchRateCardsByProvider,
   ServiceSegment,
 } from "@/lib/api";
 import { Virtuoso } from "react-virtuoso";
@@ -87,10 +88,10 @@ const [providers, setProviders] = useState<Provider[]>([]);
       try {
         const categoryData = await fetchAllCategories();
         setCategories(categoryData);
-        const [rateCardResponse] = await Promise.all([
-          fetchAllRatecard(),
-        ]);
-        setRateCards(rateCardResponse || []);
+        // const [rateCardResponse] = await Promise.all([
+        //   fetchAllRatecard(),
+        // ]);
+      //  setRateCards(rateCardResponse || []);
          const fetchedProviders = await fetchProviders();
                   setProviders(fetchedProviders);
       } catch {
@@ -180,6 +181,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
       filter_option_id: selectedOptionId || "",
       rate_card_id: selectedRatecardId || "",
       segment_id: selectedSegmentId || "",
+      provider_id:selectedProviderId,
       utm_url: utmUrl || "",
       pincode,
       latitude,
@@ -231,6 +233,8 @@ const [providers, setProviders] = useState<Provider[]>([]);
       if (selectedProvider) {
         setSelectedProviderId(value);
         setSelectedProviderName(`${selectedProvider.first_name} ${selectedProvider.last_name}`);
+        const rateCardResponse = await fetchRateCardsByProvider(value); // Pass provider ID
+                setRateCards(rateCardResponse || []);
       } else {
         setSelectedProviderName("Select an option");
       }
