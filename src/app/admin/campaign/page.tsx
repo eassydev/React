@@ -29,7 +29,7 @@ import {
   AlertDialogHeader,
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
-
+import { Copy } from "lucide-react";
 const CampaignList = () => {
   const [campaigns, setCampaigns] = useState<any[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({
@@ -162,9 +162,24 @@ const CampaignList = () => {
       },
     },
     {
-      accessorKey: "utm_url",
-      header: "Utm Url",
-      size: 100, // Width in pixels
+      accessorKey: "firebase_url",
+      header: "Utm Firebase Url",
+      size: 100,
+      cell: ({ row }) => {
+        const url = row.getValue("firebase_url") as string;  
+        const handleCopy = () => {
+          navigator.clipboard.writeText(url);
+          toast({
+            variant: "success", title: "Success",
+            description: `Campaign link copied successfully.`,
+          });        };
+  
+        return (
+          <Button variant="outline" size="sm" onClick={handleCopy}>
+            <Copy className="w-4 h-4 mr-1" /> Copy
+          </Button>
+        );
+      },
     },
     {
       id: "actions",

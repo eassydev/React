@@ -58,7 +58,7 @@ export const sidebarItems: SidebarItem[] = [
   {
     title: "UTM",
     icon: ListCheckIcon,
-    route: `${basePath}/campaign/add`,
+    route: `${basePath}/campaign`,
   },
   {
     title: "System Admin",

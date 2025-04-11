@@ -159,7 +159,9 @@ const [providers, setProviders] = useState<Provider[]>([]);
     if (selectedCategoryId || selectedSubcategoryId) {
       const loadSegments = async () => {
         try {
-          const segmentData = await fetchServiceSegments(selectedCategoryId, selectedSubcategoryId || null);
+           const segmentData = await fetchServiceSegments(selectedCategoryId,
+                        selectedSubcategoryId ? selectedSubcategoryId : null,selectedAttributeId?selectedAttributeId:null);
+          // const segmentData = await fetchServiceSegments(selectedCategoryId, selectedSubcategoryId || null);
           setSegments(segmentData);
         } catch {
           setSegments([]);
@@ -167,7 +169,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
       };
       loadSegments();
     }
-  }, [selectedCategoryId, selectedSubcategoryId]);
+  }, [selectedCategoryId, selectedSubcategoryId,selectedAttributeId]);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
