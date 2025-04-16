@@ -163,20 +163,71 @@ const CampaignList = () => {
     },
     {
       accessorKey: "firebase_url",
-      header: "Utm Firebase Url",
+      header: "UTM Firebase URL",
       size: 100,
-      cell: ({ row }) => {
-        const url = row.getValue("firebase_url") as string;  
+      cell: ({ row }: { row: any }) => {
+        const url = row.getValue("firebase_url") as string;
+    
+        const fallbackCopyTextToClipboard = (text: string) => {
+          const textArea = document.createElement("textarea");
+          textArea.value = text;
+          textArea.style.position = "fixed";
+          textArea.style.top = "0";
+          textArea.style.left = "0";
+          textArea.style.opacity = "0";
+          document.body.appendChild(textArea);
+          textArea.focus();
+          textArea.select();
+    
+          try {
+            const successful = document.execCommand("copy");
+            if (successful) {
+              toast({
+                variant: "success",
+                title: "Copied (Fallback)",
+                description: "Campaign link copied using fallback method.",
+              });
+            } else {
+              throw new Error("Fallback failed");
+            }
+          } catch (err) {
+            toast({
+              variant: "destructive",
+              title: "Error",
+              description: "Copy failed. Please copy manually.",
+            });
+            console.error("Fallback copy failed:", err);
+          }
+    
+          document.body.removeChild(textArea);
+        };
+    
         const handleCopy = () => {
-          navigator.clipboard.writeText(url);
-          toast({
-            variant: "success", title: "Success",
-            description: `Campaign link copied successfully.`,
-          });        };
-  
+          if (navigator.clipboard?.writeText) {
+            navigator.clipboard.writeText(url).then(() => {
+              toast({
+                variant: "success",
+                title: "Success",
+                description: "Campaign link copied successfully.",
+              });
+            }).catch(() => {
+              fallbackCopyTextToClipboard(url);
+            });
+          } else {
+            fallbackCopyTextToClipboard(url);
+          }
+        };
+    
         return (
-          <Button variant="outline" size="sm" onClick={handleCopy}>
-            <Copy className="w-4 h-4 mr-1" /> Copy
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleCopy}
+            title="Copy Firebase URL"
+            aria-label="Copy Firebase URL"
+          >
+            <Copy className="w-4 h-4 mr-1" />
+            Copy
           </Button>
         );
       },
