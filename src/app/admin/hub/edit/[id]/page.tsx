@@ -8,13 +8,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Save, Loader2 } from "lucide-react";
-import { fetchHubById, updateHub, Hub } from "@/lib/api";
+import { fetchHubById, updateHub, Hub,City,fetchAllCitiesWithoutPagination } from "@/lib/api";
+import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from "@/components/ui/select";
 
 const EditHubForm: React.FC = () => {
   const [hub_name, setHubName] = useState<string>("");
   const [hub_priority, setHubPriority] = useState<string>("");
   const [is_active, setIsActive] = useState<boolean>(true); // Active switch state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [selectedCityId, setSelectedCityId] = useState<string>("");
+  const [cities, setCities] = useState<City[]>([]);
 
   const { toast } = useToast();
   const router = useRouter();
@@ -24,13 +27,17 @@ const EditHubForm: React.FC = () => {
   const hubId = pathname?.split("/").pop();
 
   useEffect(() => {
+    
     if (hubId) {
+
       // Fetch hub details by ID
       const fetchHub = async () => {
         try {
           const hub: Hub = await fetchHubById(hubId);
           setHubName(hub.hub_name);
           setHubPriority(hub.hub_priority);
+          setSelectedCityId(hub.city_id.toString());
+
           setIsActive(hub.is_active ?? true);
         } catch (error: any) {
           toast({
@@ -42,6 +49,19 @@ const EditHubForm: React.FC = () => {
       };
 
       fetchHub();
+      const loadData = async () => {
+        try {
+          const cityData = await fetchAllCitiesWithoutPagination();
+          setCities(cityData);
+        } catch (error) {
+          toast({
+            variant: "error",
+            title: "Error",
+            description: "Failed to load initial data.",
+          });
+        }
+      };
+      loadData();
     }
   }, [hubId, toast]);
 
@@ -64,6 +84,7 @@ const EditHubForm: React.FC = () => {
       const updatedHub: Hub = {
         hub_name,
         hub_priority,
+        city_id: selectedCityId,
         is_active, // Set the is_active status
       };
 
@@ -112,6 +133,24 @@ const EditHubForm: React.FC = () => {
                   required
                 />
               </div>
+          <div>
+                       <label className="text-sm font-medium text-gray-700">City</label>
+                       <Select
+                         value={selectedCityId}
+                         onValueChange={(value) => setSelectedCityId(value)}
+                       >
+                         <SelectTrigger className="bg-white border-gray-200">
+                           <SelectValue placeholder="Select a city" />
+                         </SelectTrigger>
+                         <SelectContent>
+                         {cities.map((city) => (
+                             <SelectItem key={city.id} value={city.id!.toString()}>
+                               {city.name}
+                             </SelectItem>
+                           ))}
+                         </SelectContent>
+                       </Select>
+                     </div>
 
               {/* Hub Priority Field */}
               <div>

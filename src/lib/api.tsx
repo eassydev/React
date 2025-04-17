@@ -603,6 +603,7 @@ export interface City {
 export interface Hub {
   id?: string;
   hub_name: string;
+  city_id: string;
   hub_priority: string; // Priority as a string
   is_active: boolean;
 }

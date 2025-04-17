@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, FormEvent } from "react";
+import React, { useState,useEffect, FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
@@ -8,17 +8,36 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Save, Loader2 } from "lucide-react";
-import { createHub, Hub } from "@/lib/api";
+import { createHub, Hub,City,fetchAllCitiesWithoutPagination } from "@/lib/api";
+import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from "@/components/ui/select";
 
 const AddHubForm: React.FC = () => {
   const [hub_name, setHubName] = useState<string>("");
   const [hub_priority, setHubPriority] = useState<string>("");
   const [is_active, setIsActive] = useState<boolean>(true); // Active switch state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [cities, setCities] = useState<City[]>([]);;
+  const [selectedCityId, setSelectedCityId] = useState<string>("");
 
   const { toast } = useToast();
   const router = useRouter();
 
+
+  useEffect(() => {
+      const loadData = async () => {
+        try {
+          const cityData = await fetchAllCitiesWithoutPagination();
+          setCities(cityData);
+        } catch (error) {
+          toast({
+            variant: "error",
+            title: "Error",
+            description: "Failed to load initial data.",
+          });
+        }
+      };
+      loadData();
+    }, []);
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -37,6 +56,7 @@ const AddHubForm: React.FC = () => {
       // Construct the hub object
       const newHub: Hub = {
         hub_name,
+        city_id: selectedCityId,
         hub_priority,
         is_active, // Set the is_active status
       };
@@ -86,7 +106,24 @@ const AddHubForm: React.FC = () => {
                   required
                 />
               </div>
-
+              <div>
+  <label className="text-sm font-medium text-gray-700">Hub</label>
+  <Select
+    value={selectedCityId}
+    onValueChange={(value) => setSelectedCityId(value)}
+  >
+    <SelectTrigger className="bg-white border-gray-200">
+      <SelectValue placeholder="Select a city" />
+    </SelectTrigger>
+    <SelectContent>
+      {cities.map((city) => (
+        <SelectItem key={city.id} value={city.id!.toString()}>
+          {city.name}
+        </SelectItem>
+      ))}
+    </SelectContent>
+  </Select>
+</div>
               {/* Hub Priority Field */}
               <div>
                 <label className="text-sm font-medium text-gray-700">Hub Priority</label>
