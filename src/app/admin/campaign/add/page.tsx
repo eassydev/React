@@ -419,7 +419,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
                 </div>
                 <div className="text-xs text-gray-500">
                   {rateCard.attributes
-                    ?.map((attr: any) => `${attr.filterAttribute.name}: ${attr.filterOption.value || ''}`)
+                    ?.map((attr: any) => `${attr.filterAttribute?.name}: ${attr.filterOption?.value || ''}`)
                     .join(", ") || "N/A"}
                 </div>
                 <div className="text-xs text-gray-400 italic">{rateCard.provider?.first_name}</div>
