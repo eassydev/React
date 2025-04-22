@@ -188,17 +188,17 @@ const ViewBookingPage: React.FC = () => {
               </div>
               <div>
               <h3 className="font-semibold text-lg">Booking Report Details</h3>
-              <p><strong>Comment:</strong> {report.comment || "N/A"}</p>
+              <p><strong>Comment:</strong> {report?.comment || "N/A"}</p>
              
               </div>
               <div>
               <h3 className="font-semibold text-lg">Booking Feedback Details</h3>
-              <p><strong>Comment:</strong> {feedback.comment || "N/A"}</p>
+              <p><strong>Comment:</strong> {feedback?.comment || "N/A"}</p>
              
               </div>
               <div>
               <h3 className="font-semibold text-lg">Booking Coupon Details</h3>
-              <p><strong>Coupon Name:</strong> {bookingCoupon.coupon_name || "N/A"}</p>
+              <p><strong>Coupon Name:</strong> {bookingCoupon?.coupon_name || "N/A"}</p>
              
               </div>
               
