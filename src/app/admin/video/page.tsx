@@ -94,11 +94,11 @@ const ServiceVideoList = () => {
               let statusClass = '';
           
               switch (status) {
-                case 0:
+                case false:
                   statusText = 'Inactive';
                   statusClass = 'bg-red-100 text-red-600';
                   break;
-                case 1:
+                case true:
                   statusText = 'Active';
                   statusClass = 'bg-green-100 text-green-600';
                   break;

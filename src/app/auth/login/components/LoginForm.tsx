@@ -10,7 +10,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { toast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
 import { login } from "@/lib/auth";
 
 const FormSchema = z.object({
@@ -24,6 +24,7 @@ export default function LoginForm() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isRedirecting, setIsRedirecting] = useState<boolean>(true); // Prevent rendering until check is complete
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -55,11 +56,13 @@ export default function LoginForm() {
 
       router.replace("/admin");
     } catch (error: any) {
-      toast({
-        title: "Login failed",
-        description: error.message || "An error occurred.",
-        variant: "destructive",
-      });
+      console.log("error",error.message)
+    
+    toast({
+      title: "Login failed",
+      description: error.message,
+      variant: "destructive",
+    });
     } finally {
       setIsLoading(false);
     }
@@ -83,7 +86,7 @@ export default function LoginForm() {
             <FormItem>
               <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="Enter your username" {...field} />
+                <Input placeholder="Enter your username or email" {...field} />
               </FormControl>
               <FormMessage>{fieldState.error?.message}</FormMessage>
             </FormItem>

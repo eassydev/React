@@ -144,11 +144,7 @@ const ProviderList = () => {
 
 
   const providerColumns: ColumnDef<any>[] = [
-    {
-      accessorKey: "sno", // Placeholder key for S.No
-      header: "S.No",
-      cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
-    },
+    { accessorKey: "sampleid", header: "ID" },
     { accessorKey: "first_name", header: "First Name" },
     { accessorKey: "last_name", header: "Last Name" },
     { accessorKey: "email", header: "Email" },

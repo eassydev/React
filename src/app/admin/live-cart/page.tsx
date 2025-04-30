@@ -97,11 +97,9 @@ const CartList = () => {
         const endDate = dateRange[0].endDate.toISOString().split("T")[0];
         await exportLiveCart(startDate,endDate);
         setIsExporting(true);
-
-      } catch (error) {
+      } catch (error:any) {
         console.error("Error exporting categories:", error);
-        toast({ title: "Error", description: "Failed to export categories." });
-      } finally {
+       } finally {
         setIsExporting(false);
       }
     }

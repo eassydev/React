@@ -4344,38 +4344,43 @@ export const exportSubcategories = async (): Promise<void> => {
   }
 };
 
-
 export const exportLiveCart = async (startDate: string, endDate: string): Promise<void> => {
   try {
-    const token = getToken(); // Retrieve the admin-auth-token
+    const token = getToken();
 
     const response: AxiosResponse = await apiClient.get('/cart/export', {
       headers: {
         'admin-auth-token': token || '',
       },
-      params: { startDate, endDate }, // Pass start and end date as query params
-      responseType: 'blob', // Treat the response as a binary file
+      params: { startDate, endDate },
+      responseType: 'blob',
+      validateStatus: (status) => true, // Accept all status codes so we can handle them manually
     });
 
-    // Generate a unique filename
-    const uniqueFilename = generateUniqueFilename('live_cart', 'xlsx');
+    if (response.status === 200) {
+      const uniqueFilename = generateUniqueFilename('live_cart', 'xlsx');
 
-    // Create a downloadable link
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', uniqueFilename); // Unique filename
-    document.body.appendChild(link);
-    link.click();
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', uniqueFilename);
+      document.body.appendChild(link);
+      link.click();
 
-    // Clean up
-    window.URL.revokeObjectURL(url);
-    document.body.removeChild(link);
-  } catch (error) {
+      // Cleanup
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(link);
+    } else if (response.status === 404) {
+      throw new Error('No live cart data found for the selected date range.');
+    } else {
+      throw new Error('Failed to export live cart. Please try again later.');
+    }
+  } catch (error: any) {
     console.error('Error exporting live cart:', error);
-    throw new Error('Failed to export live cart');
+    throw new Error(error.message || 'Unexpected error occurred while exporting.');
   }
 };
+
 
 
 

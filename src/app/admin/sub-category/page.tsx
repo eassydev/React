@@ -254,7 +254,7 @@ const SubcategoryList = () => {
             <option value="">All</option>
             <option value="0">Active</option>
             <option value="1">Deactivated</option>
-            <option value="2">Deleted</option>
+            {/* <option value="2">Deleted</option> */}
           </select>
           <select value={pagination.pageSize} onChange={handlePageSizeChange} className="border p-2 rounded">
             <option value={50}>50</option>

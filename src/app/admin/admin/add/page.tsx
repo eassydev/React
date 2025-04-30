@@ -110,15 +110,13 @@ const AdminAddForm: React.FC = () => {
               </div>
 
               {/* Email */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Email</label>
-                <Input
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter email"
-                  required
-                />
-              </div>
+              <Input
+  type="email"
+  value={email}
+  onChange={(e) => setEmail(e.target.value)}
+  placeholder="Enter email"
+  required
+/>
 
               {/* Password */}
               <div className="space-y-2">

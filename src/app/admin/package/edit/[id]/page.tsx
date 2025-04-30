@@ -196,6 +196,8 @@ const [providers, setProviders] = useState<Provider[]>([]);
  
          setSelectedProviderName(`${selectedProvider?.first_name} ${selectedProvider?.last_name}`);
          console.log("tSelectedProviderName",selectedProviderId)
+         const rateCardResponse = await fetchRateCardsByProvider(providerid); // Pass provider ID
+                 setRateCards(rateCardResponse || []);
      } catch (error) {
       setProviders([]);
      }
@@ -293,16 +295,15 @@ const [providers, setProviders] = useState<Provider[]>([]);
     }
   };
 
-
-  // Handle addon category selection
-  const handleCategorySelection = (categoryId: string, isChecked: boolean) => {
-    if (isChecked) {
-      setSelectedCategories((prev) => [...prev, categoryId]);
-    } else {
-      setSelectedCategories((prev) => prev.filter((id) => id !== categoryId));
-    }
-  };
-
+  const sortedRateCards = [...filteredRateCards].sort((a, b) => {
+    const aSelected = selectedRateCards.includes(a.id.toString());
+    const bSelected = selectedRateCards.includes(b.id.toString());
+  
+    // Put selected cards first
+    if (aSelected && !bSelected) return -1;
+    if (!aSelected && bSelected) return 1;
+    return 0;
+  });
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-12xl mx-auto space-y-6">
@@ -462,9 +463,9 @@ const [providers, setProviders] = useState<Provider[]>([]);
              
                  <Virtuoso
                    style={{ height: "240px", width: "100%" }}
-                   totalCount={filteredRateCards.length} // Use filtered list
-                   itemContent={(index) => {
-                     const rateCard = filteredRateCards[index];
+                   totalCount={sortedRateCards.length}
+itemContent={(index) => {
+  const rateCard = sortedRateCards[index];
                      return (
                        <div key={rateCard.id} className="flex items-center p-2">
                          <Checkbox
@@ -478,7 +479,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
                          {rateCard.category?.name} | {rateCard.subcategory?.name} |{rateCard.price} |{" "}
               <p>
                 {rateCard.attributes
-                  ?.map((attr:any) => `${attr.filterAttribute.name}: ${attr.filterOption.value || ''}`)
+                  ?.map((attr:any) => `${attr.filterAttribute?.name}: ${attr.filterOption?.value || ''}`)
                   .join(", ") || "N/A"}
               </p>
               {rateCard.provider?.first_name}

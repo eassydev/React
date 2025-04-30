@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter, usePathname } from "next/navigation";
 import { fetchBookingById, fetchProviders,Provider, updateBookingProvider, updateBookingStatus, initiateRefund } from '@/lib/api';
 import { Virtuoso } from "react-virtuoso";
+import { Input } from '@/components/ui/input';
 
 const ViewBookingPage: React.FC = () => {
   const router = useRouter();
@@ -22,6 +23,7 @@ const ViewBookingPage: React.FC = () => {
   const [report, setReport] = useState<any>(null);
   const [bookingCoupon,setbookingCoupon]= useState<any>(null);
   const [feedback, setFeedback] = useState<any>(null);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { toast } = useToast();
   const [isProcessingRefund, setIsProcessingRefund] = useState<boolean>(false);
@@ -39,9 +41,9 @@ const ViewBookingPage: React.FC = () => {
         setbookingCoupon(booking.bookingcoupon)
         setStatus(booking.status || 'accepted');
         setSelectedProviderId(booking.provider_id?.toString() || "");
-
-          if (booking.provider_id) {
-            await loadProviders(booking.provider_id?.toString() || "");
+console.log("booking.provider_id",booking.provider_id)
+          if (booking.booking) {
+            await loadProviders(booking.booking.provider_id?.toString() || "");
            
           }
 
@@ -193,38 +195,75 @@ const ViewBookingPage: React.FC = () => {
               </div>
               <div>
               <h3 className="font-semibold text-lg">Booking Feedback Details</h3>
+              <p><strong>Rating:</strong> {feedback?.rating || "N/A"}</p>
               <p><strong>Comment:</strong> {feedback?.comment || "N/A"}</p>
              
               </div>
               <div>
               <h3 className="font-semibold text-lg">Booking Coupon Details</h3>
+              
               <p><strong>Coupon Name:</strong> {bookingCoupon?.coupon_name || "N/A"}</p>
              
               </div>
               
             </div>
           )}
-
-<div className="space-y-2 w-full">
-      <label className="text-sm font-medium text-gray-700">Select Provider</label>
-      <Select value={selectedProviderId || ""} onValueChange={handleValueChange}>
-        <SelectTrigger className="w-full"> {/* Full width */}
-          {selectedProviderName || "Select an option"}
-        </SelectTrigger>
-        <SelectContent className="w-full"> {/* Full width dropdown */}
-          <Virtuoso
-            style={{ height: "200px", width: "100%" }} // Full width and fixed height
-            totalCount={providers.length}
-            itemContent={(index) => (
-              <SelectItem key={providers[index].id} value={providers[index].id?.toString() ?? ''}>
-                {providers[index].first_name} {providers[index].last_name || ""}
-              </SelectItem>
-            )}
-          />
-        </SelectContent>
-      </Select>
-    </div>
-
+ <div className="space-y-2 w-full">
+               <label className="text-sm font-medium text-gray-700">Select Provider</label>
+               <Select value={selectedProviderId || ""} onValueChange={handleValueChange}>
+                 <SelectTrigger className="w-full">
+                   {selectedProviderName || "Select an option"}
+                 </SelectTrigger>
+                 <SelectContent className="w-full p-0">
+                   {/* Search input */}
+                   <div className="sticky top-0 z-10 bg-background p-2 border-b">
+                     <Input
+                       placeholder="Search providers..."
+                       value={searchTerm}
+                       onChange={(e:any) => setSearchTerm(e.target.value)}
+                       className="w-full"
+                       autoFocus
+                     />
+                   </div>
+                   
+                   {/* Filtered provider list */}
+                   {providers.filter(provider => 
+                     `${provider.first_name} ${provider.last_name || ''}`
+                       .toLowerCase()
+                       .includes(searchTerm.toLowerCase())
+                   ).length > 0 ? (
+                     <Virtuoso
+                       style={{ height: "200px", width: "100%" }}
+                       totalCount={providers.filter(provider => 
+                         `${provider.first_name} ${provider.last_name || ''}`
+                           .toLowerCase()
+                           .includes(searchTerm.toLowerCase())
+                       ).length}
+                       itemContent={(index) => {
+                         const filteredProviders = providers.filter(provider => 
+                           `${provider.first_name} ${provider.last_name || ''}`
+                             .toLowerCase()
+                             .includes(searchTerm.toLowerCase())
+                         );
+                         const provider = filteredProviders[index];
+                         return (
+                           <SelectItem 
+                             key={provider.id} 
+                             value={provider.id?.toString() ?? ''}
+                           >
+                             {provider.first_name} {provider.last_name || ""}
+                           </SelectItem>
+                         );
+                       }}
+                     />
+                   ) : (
+                     <div className="py-6 text-center text-sm text-muted-foreground">
+                       No providers found
+                     </div>
+                   )}
+                 </SelectContent>
+               </Select>
+             </div>
 
           <div>
             <label className="text-sm font-medium text-gray-700">Change Status</label>

@@ -79,7 +79,7 @@ export const sidebarItems: SidebarItem[] = [
     title: "Service",
     icon: Receipt,
     children: [
-      { title: "Catgeory", route: `${basePath}/category` },
+      { title: "Category", route: `${basePath}/category` },
        { title: "Sub category", route: `${basePath}/sub-category` },
        { title: "Segment", route: `${basePath}/segment` },
        { title: "Service Video", route: `${basePath}/video` }, 

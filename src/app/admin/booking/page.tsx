@@ -70,12 +70,50 @@ const [filterStatus, setFilterStatus] = useState<string>("all");
       header: "S.No",
       cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
     }, 
+    { accessorKey: 'booking_date', header: 'Service Date' },
+    {
+      header: "Category Details",
+      accessorFn: (row) => {
+        const category = row.rateCard?.category?.name || "N/A";
+        const subcategory = row.rateCard?.subcategory?.name || "N/A";
+        const attributes = row.rateCard?.attributes?.map((attr: {
+          filterAttribute: { name: string };
+          filterOption: { value: string };
+        }) => `${attr.filterAttribute.name}: ${attr.filterOption.value}`).join(", ") || "N/A";
+    
+        return { category, subcategory, attributes };
+      },
+      cell: (info) => {
+        const value = info.getValue() as {
+          category: string;
+          subcategory: string;
+          attributes: string;
+        };
+    
+        return (
+          <div style={{ whiteSpace: 'pre-wrap' }}>
+            <p><strong>Category:</strong> {value.category}</p>
+            <p><strong>Subcategory:</strong> {value.subcategory}</p>
+            <p><strong>Attributes:</strong> {value.attributes}</p>
+          </div>
+        );
+      }
+    },
+     
+    
+    { accessorKey: 'payment_type', header: 'Payment Method' },
     { accessorKey: 'user.first_name', header: 'User' },
+    { accessorKey: 'user.mobile', header: 'Customer Mobile' },
     {
       accessorFn: (row) => row.rateCard?.provider?.first_name || 'N/A',
       header: 'Provider'
     },
-        { accessorKey: 'booking_date', header: 'Service Date' },
+    {
+      accessorFn: (row) => row.rateCard?.provider?.phone || 'N/A',
+      header: 'Provider Mobile'
+    },
+        
+
     { accessorKey: 'status', header: 'Status' },
     {
       id: 'actions',

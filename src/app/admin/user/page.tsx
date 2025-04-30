@@ -99,11 +99,30 @@ const [filterStatus, setFilterStatus] = useState<string>("all");
   };
 
   const userColumns: ColumnDef<any>[] = [
-    { accessorKey: "id", header: "ID" },
+    { accessorKey: "sampleid", header: "ID" },
     { accessorKey: "first_name", header: "First Name" },
     { accessorKey: "last_name", header: "Last Name" },
     { accessorKey: "email", header: "Email" },
     { accessorKey: "mobile", header: "Mobile" },
+    {
+      id: "plainDetails",
+      header: "Plain Details",
+      cell: ({ row }) => {
+        const user = row.original;
+        const vipPlanName = user.vip?.plan_name;
+
+        const vipExpiry = user?.vip_subscription_expiry
+          ? new Date(user.vip_subscription_expiry).toLocaleDateString()
+          : "No VIP";
+    
+        return (
+          <div className="flex flex-col text-sm text-gray-700">
+             <span><strong>Plan:</strong> {vipPlanName}</span>
+            <span><strong>VIP Expiry:</strong> {vipExpiry}</span>
+          </div>
+        );
+      }
+    },
     {
       accessorKey: 'is_active',
       header: 'Status',
