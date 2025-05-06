@@ -107,7 +107,7 @@ const BookingList = () => {
         const attributes = row.rateCard?.attributes?.map((attr: {
           filterAttribute: { name: string };
           filterOption: { value: string };
-        }) => `${attr.filterAttribute.name}: ${attr.filterOption.value}`).join(", ") || "N/A";
+        }) => `${attr.filterAttribute?.name}: ${attr.filterOption?.value}`).join(", ") || "N/A";
     
         return { category, subcategory, attributes };
       },
