@@ -22,29 +22,57 @@ const BookingList = () => {
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
-const [filterStatus, setFilterStatus] = useState<string>("all");
-       const [searchTerm, setSearchTerm] = useState("");
-   
+
+  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [searchTerm, setSearchTerm] = useState("");
+  const [pincode, setPincode] = useState("");
+  const [bookingDate, setBookingDate] = useState("");
+  const [serviceDate, setServiceDate] = useState("");
+
+  const [filters, setFilters] = useState({
+    today: false,
+    yesterday: false,
+    initiated: false,
+    past: false
+  });
+
   const { toast } = useToast();
-   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setFilterStatus(e.target.value);
-      };
-  // Fetch bookings from the backend with pagination
-  const fetchBookingsData = async (page = 1, size = 50, status = "all",search = "") => {
+
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFilterStatus(e.target.value);
+  };
+
+  const handleCheckboxChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, checked } = e.target;
+    setFilters((prev) => ({ ...prev, [name]: checked }));
+  };
+
+  const fetchBookingsData = async () => {
     try {
-      const { data, meta } = await fetchBookings(page, size, status,search);
+      const queryFilters = {
+        pincode,
+        bookingDate,
+        serviceDate,
+        status: filterStatus,
+        search: searchTerm,
+        ...filters,
+      };
+      const { data, meta } = await fetchBookings(
+        pagination.pageIndex + 1,
+        pagination.pageSize,
+        queryFilters
+      );
       setBookings(data);
       setTotalPages(meta.totalPages);
       setTotalItems(meta.totalItems);
-      setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
       console.error('Error fetching bookings:', error);
     }
   };
 
   useEffect(() => {
-    fetchBookingsData(pagination.pageIndex + 1, pagination.pageSize,filterStatus,searchTerm);
-  }, [pagination.pageIndex, pagination.pageSize,filterStatus,searchTerm]);
+    fetchBookingsData();
+  }, [pagination, filterStatus, searchTerm, pincode, bookingDate, serviceDate, filters]);
 
   const handleBookingDelete = async (booking: any) => {
     try {
@@ -54,7 +82,7 @@ const [filterStatus, setFilterStatus] = useState<string>("all");
         description: `Booking for "${booking.user}" deleted successfully`,
         variant: 'success',
       });
-      fetchBookingsData(pagination.pageIndex + 1, pagination.pageSize);
+      fetchBookingsData();
     } catch (error) {
       toast({
         title: 'Error',
@@ -66,10 +94,10 @@ const [filterStatus, setFilterStatus] = useState<string>("all");
 
   const bookingColumns: ColumnDef<any>[] = [
     {
-      accessorKey: "sno", // Placeholder key for S.No
+      accessorKey: "sno",
       header: "S.No",
-      cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
-    }, 
+      cell: (info) => info.row.index + 1,
+    },
     { accessorKey: 'booking_date', header: 'Service Date' },
     {
       header: "Category Details",
@@ -99,8 +127,6 @@ const [filterStatus, setFilterStatus] = useState<string>("all");
         );
       }
     },
-     
-    
     { accessorKey: 'payment_type', header: 'Payment Method' },
     { accessorKey: 'user.first_name', header: 'User' },
     { accessorKey: 'user.mobile', header: 'Customer Mobile' },
@@ -112,8 +138,6 @@ const [filterStatus, setFilterStatus] = useState<string>("all");
       accessorFn: (row) => row.rateCard?.provider?.phone || 'N/A',
       header: 'Provider Mobile'
     },
-        
-
     { accessorKey: 'status', header: 'Status' },
     {
       id: 'actions',
@@ -162,50 +186,61 @@ const [filterStatus, setFilterStatus] = useState<string>("all");
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-12xl mx-auto space-y-6">
-         <div className="flex justify-between mb-4">
-                <h1 className="text-2xl font-bold">Bookings List</h1>
-                <div className="flex space-x-2">
-                  <select value={filterStatus} onChange={handleStatusChange} className="border p-2 rounded">
-                    <option value="">All</option>
-                    <option value="1">Active</option>
-                    <option value="0">Deactivated</option>
-                    <option value="2">Deleted</option>
-                  </select>
-                  
-                  
-                  <Link href="/admin/bookings/add">
-                    <Button><Plus className="w-4 h-4 mr-2" />Add Booking</Button>
-                  </Link>
-                </div>
-              </div>
+        <div className="flex justify-between mb-4">
+          <h1 className="text-2xl font-bold">Bookings List</h1>
+          <div className="flex space-x-2">
+            <select value={filterStatus} onChange={handleStatusChange} className="border p-2 rounded">
+              <option value="">All</option>
+              <option value="1">Active</option>
+              <option value="0">Deactivated</option>
+              <option value="2">Deleted</option>
+            </select>
+            <Link href="/admin/bookings/add">
+              <Button><Plus className="w-4 h-4 mr-2" />Add Booking</Button>
+            </Link>
+          </div>
+        </div>
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
-          <CardHeader className="flex flex-row items-center justify-between gap-4">
-                               <CardTitle className="text-xl text-gray-800">Bookings</CardTitle>
-                               <div className="relative">
-                                 <input
-                                   type="text"
-                                   placeholder="Search categories..."
-                                   value={searchTerm}
-                                   onChange={(e) => setSearchTerm(e.target.value)}
-                                   className="border p-2 pl-8 rounded w-64"
-                                 />
-                                 <svg
-                                   className="absolute left-2 top-3 h-4 w-4 text-gray-400"
-                                   fill="none"
-                                   stroke="currentColor"
-                                   viewBox="0 0 24 24"
-                                   xmlns="http://www.w3.org/2000/svg"
-                                 >
-                                   <path
-                                     strokeLinecap="round"
-                                     strokeLinejoin="round"
-                                     strokeWidth="2"
-                                     d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                   ></path>
-                                 </svg>
-                               </div>
-                             </CardHeader>
+          <CardHeader>
+            <CardTitle className="text-xl text-gray-800 mb-4">Filter Bookings</CardTitle>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <input
+                type="text"
+                placeholder="Search categories..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="border p-2 rounded w-full"
+              />
+              <input
+                type="text"
+                placeholder="Pincode"
+                value={pincode}
+                onChange={(e) => setPincode(e.target.value)}
+                className="border p-2 rounded w-full"
+              />
+              <input
+                type="date"
+                placeholder="Booking Date"
+                value={bookingDate}
+                onChange={(e) => setBookingDate(e.target.value)}
+                className="border p-2 rounded w-full"
+              />
+              <input
+                type="date"
+                placeholder="Service Date"
+                value={serviceDate}
+                onChange={(e) => setServiceDate(e.target.value)}
+                className="border p-2 rounded w-full"
+              />
+              <div className="flex flex-col">
+                <label><input type="checkbox" name="today" checked={filters.today} onChange={handleCheckboxChange} /> Today Orders</label>
+                <label><input type="checkbox" name="yesterday" checked={filters.yesterday} onChange={handleCheckboxChange} /> Yesterday Orders</label>
+                <label><input type="checkbox" name="initiated" checked={filters.initiated} onChange={handleCheckboxChange} /> Initiated Orders</label>
+                <label><input type="checkbox" name="past" checked={filters.past} onChange={handleCheckboxChange} /> Past Orders</label>
+              </div>
+            </div>
+          </CardHeader>
 
           <CardContent className="overflow-x-auto">
             <Table>

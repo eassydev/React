@@ -3214,7 +3214,7 @@ export const restoreGstRate = async (id: string): Promise<ApiResponse> => {
     });
     return response.data;
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to restore GST rate.');
+    throw new Error(error.response?.data?.message || 'Failed to restore G ST rate.');
   }
 };
 
@@ -3263,42 +3263,80 @@ export const createBooking = async (booking: Booking): Promise<ApiResponse> => {
 };
 
 
-
-
-export const fetchBookings = async (page = 1, size = 10, status: string = "all",search?: string
+export const fetchBookings = async (
+  page = 1,
+  size = 10,
+  filters: {
+    status?: string;
+    search?: string;
+    pincode?: string;
+    bookingDate?: string;
+    serviceDate?: string;
+    today?: boolean;
+    yesterday?: boolean;
+    initiated?: boolean;
+    past?: boolean;
+  } = {}
 ) => {
   try {
     const token = getToken(); // Retrieve the token
 
-    // Prepare query parameters
     const params: Record<string, any> = {
       page,
       size,
     };
 
-    // Include status filter only if it's not 'all'
-    if (status !== "all") {
-      params.status = status;
+    // Add filters if provided
+    if (filters.status && filters.status !== "all") {
+      params.status = filters.status;
     }
 
-    if (search && search.trim() !== "") {
-      params.search = search.trim();
+    if (filters.search?.trim()) {
+      params.search = filters.search.trim();
     }
 
-    // Make API call
+    if (filters.pincode?.trim()) {
+      params.pincode = filters.pincode.trim();
+    }
+
+    if (filters.bookingDate?.trim()) {
+      params.bookingDate = filters.bookingDate.trim();
+    }
+
+    if (filters.serviceDate?.trim()) {
+      params.serviceDate = filters.serviceDate.trim();
+    }
+
+    if (filters.today) {
+      params.today = true;
+    }
+
+    if (filters.yesterday) {
+      params.yesterday = true;
+    }
+
+    if (filters.initiated) {
+      params.initiated = true;
+    }
+
+    if (filters.past) {
+      params.past = true;
+    }
+
     const response: AxiosResponse = await apiClient.get("/booking", {
-      params, // Query params (page, size, status)
+      params,
       headers: {
-        "admin-auth-token": token || "", // Add the token to the request headers
+        "admin-auth-token": token || "",
       },
     });
 
-    return response.data; // Return the data
+    return response.data;
   } catch (error) {
-    console.error("Error fetching categories:", error);
-    throw new Error("Failed to fetch categories");
+    console.error("Error fetching bookings:", error);
+    throw new Error("Failed to fetch bookings");
   }
 };
+
 
 export const fetchBookingById = async (id: string) => {
   try {
