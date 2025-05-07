@@ -11,23 +11,36 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/components/ui/table';
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from 'lucide-react';
-import { fetchBookings, deleteBooking } from '@/lib/api';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Download } from 'lucide-react';
+import { fetchBookings, deleteBooking, exportBookings } from '@/lib/api';
 import Link from 'next/link';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { useToast } from "@/hooks/use-toast";
+import { DateRange } from 'react-date-range';
+import 'react-date-range/dist/styles.css';
+import 'react-date-range/dist/theme/default.css';
 
 const BookingList = () => {
   const [bookings, setBookings] = useState<any[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
+  const [isExporting, setIsExporting] = useState(false);
 
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [searchTerm, setSearchTerm] = useState("");
   const [pincode, setPincode] = useState("");
   const [bookingDate, setBookingDate] = useState("");
   const [serviceDate, setServiceDate] = useState("");
+
+  const [dateRange, setDateRange] = useState([
+     {
+       startDate: new Date(),
+       endDate: new Date(),
+       key: "selection",
+     },
+   ]);
+  const [showDatePicker, setShowDatePicker] = useState(false);
 
   const [filters, setFilters] = useState({
     today: false,
@@ -51,12 +64,14 @@ const BookingList = () => {
     try {
       const queryFilters = {
         pincode,
-        bookingDate,
         serviceDate,
         status: filterStatus,
         search: searchTerm,
         ...filters,
+        startDate: dateRange[0].startDate?.toISOString().split('T')[0] || '',
+        endDate: dateRange[0].endDate?.toISOString().split('T')[0] || '',
       };
+      
       const { data, meta } = await fetchBookings(
         pagination.pageIndex + 1,
         pagination.pageSize,
@@ -70,9 +85,54 @@ const BookingList = () => {
     }
   };
 
+  const handleExport = async () => {
+    try {
+      setIsExporting(true);
+      
+      if (!dateRange[0].startDate || !dateRange[0].endDate) {
+        toast({
+          title: 'Error',
+          description: 'Please select a date range before exporting',
+          variant: 'destructive',
+        });
+        return;
+      }
+
+      const startDate = dateRange[0].startDate.toISOString().split('T')[0];
+      const endDate = dateRange[0].endDate.toISOString().split('T')[0];
+      
+      await exportBookings(
+        startDate,
+        endDate
+      );
+
+      toast({
+        title: 'Success',
+        description: 'Bookings exported successfully',
+        variant: 'success',
+      });
+    } catch (error) {
+      console.error('Error exporting bookings:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to export bookings',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const formatDateRange = () => {
+    if (!dateRange[0].startDate || !dateRange[0].endDate) {
+      return 'Select date range';
+    }
+    return `${dateRange[0].startDate?.toLocaleDateString()} - ${dateRange[0].endDate?.toLocaleDateString()}`;
+  };
+
   useEffect(() => {
     fetchBookingsData();
-  }, [pagination, filterStatus, searchTerm, pincode, bookingDate, serviceDate, filters]);
+  }, [pagination, filterStatus, searchTerm, pincode, serviceDate, filters, dateRange]);
 
   const handleBookingDelete = async (booking: any) => {
     try {
@@ -94,9 +154,8 @@ const BookingList = () => {
 
   const bookingColumns: ColumnDef<any>[] = [
     {
-      accessorKey: "sno",
-      header: "S.No",
-      cell: (info) => info.row.index + 1,
+      accessorKey: "sampleid",
+      header: "ID",
     },
     { accessorKey: 'booking_date', header: 'Service Date' },
     {
@@ -127,7 +186,6 @@ const BookingList = () => {
         );
       }
     },
-    { accessorKey: 'payment_type', header: 'Payment Method' },
     { accessorKey: 'user.first_name', header: 'User' },
     { accessorKey: 'user.mobile', header: 'Customer Mobile' },
     {
@@ -138,6 +196,36 @@ const BookingList = () => {
       accessorFn: (row) => row.rateCard?.provider?.phone || 'N/A',
       header: 'Provider Mobile'
     },
+    {
+      accessorKey: 'is_partial',
+      header: 'Partial',
+      cell: (info) => {
+        const status = info.getValue();
+        let statusText = '';
+        let statusClass = '';
+    
+        switch (status) {
+          case 0:
+            statusText = 'No';
+            statusClass = 'bg-red-100 text-red-600';
+            break;
+          case 1:
+            statusText = 'Yes';
+            statusClass = 'bg-green-100 text-green-600';
+            break;
+          default:
+            statusText = 'Unknown';
+            statusClass = 'bg-yellow-100 text-yellow-600';
+        }
+    
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusClass}`}>
+            {statusText}
+          </span>
+        );
+      },
+    },
+    { accessorKey: 'payment_status', header: 'Payment Status' },
     { accessorKey: 'status', header: 'Status' },
     {
       id: 'actions',
@@ -195,6 +283,42 @@ const BookingList = () => {
               <option value="0">Deactivated</option>
               <option value="2">Deleted</option>
             </select>
+            <div className="relative">
+                <input
+                  type="text"
+                  placeholder="Date Range"
+                  value={formatDateRange()}
+                  onClick={() => setShowDatePicker(!showDatePicker)}
+                  className="border p-2 rounded w-full cursor-pointer"
+                  readOnly
+                />
+                {showDatePicker && (
+                  <div className="absolute z-10 mt-1 bg-white shadow-lg">
+                    <DateRange
+                      editableDateInputs={true}
+                      onChange={(item: any) => {
+                        setDateRange([item.selection]);
+                        if (item.selection.startDate && item.selection.endDate) {
+                          setShowDatePicker(false);
+                        }
+                      }}
+                      moveRangeOnFirstSelection={false}
+                      ranges={dateRange}
+                    />
+                  </div>
+                )}
+              </div>
+            <Button onClick={handleExport} disabled={isExporting}>
+              {isExporting ? (
+                <span className="flex items-center">
+                  <span className="loader mr-2"></span> Exporting...
+                </span>
+              ) : (
+                <span className="flex items-center">
+                  <Download className="w-4 h-4 mr-2" /> Export
+                </span>
+              )}
+            </Button>
             <Link href="/admin/bookings/add">
               <Button><Plus className="w-4 h-4 mr-2" />Add Booking</Button>
             </Link>
@@ -207,7 +331,7 @@ const BookingList = () => {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <input
                 type="text"
-                placeholder="Search categories..."
+                placeholder="Search ...."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="border p-2 rounded w-full"
@@ -219,7 +343,7 @@ const BookingList = () => {
                 onChange={(e) => setPincode(e.target.value)}
                 className="border p-2 rounded w-full"
               />
-              <input
+               <input
                 type="date"
                 placeholder="Booking Date"
                 value={bookingDate}
@@ -233,6 +357,7 @@ const BookingList = () => {
                 onChange={(e) => setServiceDate(e.target.value)}
                 className="border p-2 rounded w-full"
               />
+             
               <div className="flex flex-col">
                 <label><input type="checkbox" name="today" checked={filters.today} onChange={handleCheckboxChange} /> Today Orders</label>
                 <label><input type="checkbox" name="yesterday" checked={filters.yesterday} onChange={handleCheckboxChange} /> Yesterday Orders</label>

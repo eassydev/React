@@ -7106,3 +7106,37 @@ export const createPackageDetail = async (packageDetail: PackageDetail) => {
     throw new Error(error.response?.data?.message || "Failed to create campaign.");
   }
 };
+
+
+
+export const exportBookings = async (startDate: string, endDate: string): Promise<void> => {
+  try {
+    const token = getToken(); // Retrieve the admin-auth-token
+
+    const response: AxiosResponse = await apiClient.get('/booking/export', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      params: { startDate, endDate }, // Pass start and end date as query params
+      responseType: 'blob', // Treat the response as a binary file
+    });
+
+    // Generate a unique filename
+    const uniqueFilename = generateUniqueFilename('booking', 'xlsx');
+
+    // Create a downloadable link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', uniqueFilename); // Unique filename
+    document.body.appendChild(link);
+    link.click();
+
+    // Clean up
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(link);
+  } catch (error) {
+    console.error('Error exporting live cart:', error);
+    throw new Error('Failed to export live cart');
+  }
+};
