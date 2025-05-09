@@ -153,6 +153,38 @@ const BookingList = () => {
   };
 
   const bookingColumns: ColumnDef<any>[] = [
+     {
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-2">
+          <Button variant="ghost" size="icon">
+            <Link href={`/admin/booking/view/${row.original.id}`} passHref>
+              <Edit className="w-4 h-4 text-blue-600" />
+            </Link>
+          </Button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Trash2 className="w-4 h-4 text-red-600" />
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <h2 className="text-xl font-bold">Confirm Delete</h2>
+                <p>Are you sure you want to delete this booking?</p>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <Button variant="secondary" onClick={() => handleBookingDelete(row.original)}>
+                  Yes, Delete
+                </Button>
+                <Button variant="outline">Cancel</Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      ),
+    },
     {
       accessorKey: "sampleid",
       header: "ID",
@@ -196,69 +228,139 @@ const BookingList = () => {
       accessorFn: (row) => row.rateCard?.provider?.phone || 'N/A',
       header: 'Provider Mobile'
     },
-    {
-      accessorKey: 'is_partial',
-      header: 'Partial',
-      cell: (info) => {
-        const status = info.getValue();
-        let statusText = '';
-        let statusClass = '';
-    
-        switch (status) {
-          case 0:
-            statusText = 'No';
-            statusClass = 'bg-red-100 text-red-600';
-            break;
-          case 1:
-            statusText = 'Yes';
-            statusClass = 'bg-green-100 text-green-600';
-            break;
-          default:
-            statusText = 'Unknown';
-            statusClass = 'bg-yellow-100 text-yellow-600';
-        }
-    
-        return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusClass}`}>
-            {statusText}
-          </span>
-        );
-      },
+   {
+  accessorKey: 'is_partial',
+  header: 'Partial',
+  cell: (info) => {
+    const row = info.row.original;
+    const isPartial = row.is_partial;
+    const hasPartialIds = row.partial_transaction_id && row.razorpay_partial_order_id;
+
+    let statusText = '';
+    let statusClass = '';
+
+    if (hasPartialIds) {
+      statusText = 'Yes';
+      statusClass = 'bg-green-100 text-green-600';
+    } else {
+      statusText = 'No';
+      statusClass = 'bg-red-100 text-red-600';
+    }
+
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusClass}`}>
+        {statusText}
+      </span>
+    );
+  },
+},
+ 
+{
+      accessorFn: (row) => row.razorpay_partial_order_id || 'N/A',
+      header: 'Partial order id '
     },
+    {
+      accessorFn: (row) => row.partial_transaction_id || 'N/A',
+      header: 'Partial Transection id '
+    },
+    {
+  accessorKey: 'is full',
+  header: 'Is Full',
+  cell: (info) => {
+    const row = info.row.original;
+    const hasFull = row.transaction_id;
+
+    let statusText = '';
+    let statusClass = '';
+
+    if (hasFull) {
+      statusText = 'Yes';
+      statusClass = 'bg-green-100 text-green-600';
+    } else {
+      statusText = 'No';
+      statusClass = 'bg-red-100 text-red-600';
+    }
+
+    return (
+      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusClass}`}>
+        {statusText}
+      </span>
+    );
+  },
+},
+ {
+      accessorFn: (row) => row.transaction_id || 'N/A',
+      header: 'Transection id '
+    },
+     {
+      accessorFn: (row) => row.start_service_otp || 'N/A',
+      header: 'Start otp '
+    },
+     {
+      accessorFn: (row) => row.end_service_otp || 'N/A',
+      header: 'End Otp'
+    },
+     {
+  header: 'Booking date and Time',
+  cell: (info) => {
+    const row = info.row.original;
+    return (
+      <span>
+        {row.booking_date} {row.booking_time_from}-{row.booking_time_to}
+      </span>
+    );
+  },
+},
+   {
+  header: 'Basic Amount',
+  cell: (info) => {
+    const row = info.row.original;
+    return (
+      <span>
+        ₹ {row.total_amount}
+      </span>
+    );
+  },
+},
+  {
+  header: 'GST Amount',
+  cell: (info) => {
+    const row = info.row.original;
+    return (
+      <span>
+        ₹ {row.total_gst}
+      </span>
+    );
+  },
+},
+  {
+  header: 'Final Amount',
+  cell: (info) => {
+    const row = info.row.original;
+    return (
+      <span>
+        ₹ {row.final_amount}
+      </span>
+    );
+  },
+},
+{
+  header: 'Address',
+  cell: (info) => {
+    const row = info.row.original;
+        const address = row.address;
+
+    return (
+      <span>
+         {address?.flat_no},{address?.building_name},{address?.street_address},{address?.city},{address?.state},{address?.country} - {address?.postal_code}
+      </span>
+    );
+  },
+},
+
     { accessorKey: 'payment_status', header: 'Payment Status' },
     { accessorKey: 'status', header: 'Status' },
-    {
-      id: 'actions',
-      header: 'Actions',
-      cell: ({ row }) => (
-        <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="icon">
-            <Link href={`/admin/booking/view/${row.original.id}`} passHref>
-              <Edit className="w-4 h-4 text-blue-600" />
-            </Link>
-          </Button>
-          <AlertDialog>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <Trash2 className="w-4 h-4 text-red-600" />
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <h2 className="text-xl font-bold">Confirm Delete</h2>
-                <p>Are you sure you want to delete this booking?</p>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <Button variant="secondary" onClick={() => handleBookingDelete(row.original)}>
-                  Yes, Delete
-                </Button>
-                <Button variant="outline">Cancel</Button>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        </div>
-      ),
-    },
+   
   ];
 
   const bookingTable = useReactTable({
