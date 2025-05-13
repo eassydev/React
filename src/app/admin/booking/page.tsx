@@ -44,6 +44,7 @@ const BookingList = () => {
 
   const [filters, setFilters] = useState({
     today: false,
+    tomorrow: false,
     yesterday: false,
     initiated: false,
     past: false
@@ -421,7 +422,7 @@ const BookingList = () => {
                 </span>
               )}
             </Button>
-            <Link href="/admin/bookings/add">
+            <Link href="/admin/booking/add">
               <Button><Plus className="w-4 h-4 mr-2" />Add Booking</Button>
             </Link>
           </div>
@@ -462,6 +463,7 @@ const BookingList = () => {
              
               <div className="flex flex-col">
                 <label><input type="checkbox" name="today" checked={filters.today} onChange={handleCheckboxChange} /> Today Orders</label>
+                <label><input type="checkbox" name="tomorrow" checked={filters.tomorrow} onChange={handleCheckboxChange} /> Tomorrow Orders</label>
                 <label><input type="checkbox" name="yesterday" checked={filters.yesterday} onChange={handleCheckboxChange} /> Yesterday Orders</label>
                 <label><input type="checkbox" name="initiated" checked={filters.initiated} onChange={handleCheckboxChange} /> Initiated Orders</label>
                 <label><input type="checkbox" name="past" checked={filters.past} onChange={handleCheckboxChange} /> Past Orders</label>

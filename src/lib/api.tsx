@@ -3,7 +3,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // Access environment variables
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+// const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const BASE_URL ='http://localhost:5001/admin-api';
 
 // Set the base URL for your API
 // const BASE_URL = 'http://localhost:5001/admin';
@@ -1932,6 +1933,30 @@ export const fetchAllUsersWithouPagination = async (): Promise<User[]> => {
 };
 
 
+
+// search user using name ,mobile,id
+export const searchUser = async (searchTerm: string): Promise<User[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/user/search', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      params: {
+        search: searchTerm,
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch users.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch users.');
+  }
+};
+
 // Fetch a single user by ID
 export const fetchUserById = async (id: string): Promise<User> => {
   try {
@@ -3273,6 +3298,7 @@ export const fetchBookings = async (
     bookingDate?: string;
     serviceDate?: string;
     today?: boolean;
+    tomorrow?: boolean;
     yesterday?: boolean;
     initiated?: boolean;
     past?: boolean;
@@ -3309,6 +3335,9 @@ export const fetchBookings = async (
 
     if (filters.today) {
       params.today = true;
+    }
+    if (filters.tomorrow) {
+      params.tomorrow = true;
     }
 
     if (filters.yesterday) {
