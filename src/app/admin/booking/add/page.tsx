@@ -7,8 +7,9 @@ import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@
 import { useToast } from "@/hooks/use-toast";
 import { Virtuoso } from "react-virtuoso";
 import { useRouter } from 'next/navigation';
+
 import { Save, FileText, Loader2, Type, Globe2 } from 'lucide-react';
-import { fetchAllCategories, createBooking, fetchSubCategoriesByCategoryId, fetchAllUsersWithouPagination, searchUser, fetchUserAddresses, fetchProvidersByFilters, Provider, Package, fetchFilterOptionsByAttributeId, fetchFilterAttributes, AttributeOption, createRateCard, Category, Subcategory, Attribute } from '@/lib/api';
+import { fetchAllCategories, createBooking, fetchSubCategoriesByCategoryId, fetchAllUsersWithouPagination, searchUser, fetchUserAddresses, fetchProvidersByFilters, Provider, Package, fetchFilterOptionsByAttributeId, fetchFilterAttributes, AttributeOption, createRateCard, Category, Subcategory, Attribute, SearchUserResult } from '@/lib/api';
 // Add this at the top of your file, after the imports
 declare global {
   interface Window {
@@ -47,19 +48,17 @@ const AddBookingForm: React.FC = () => {
   const [packages, setPackages] = useState<Package[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
   // Update the state to include more user details
-  const [selectedUser, setSelectedUser] = useState<{
-    id: number | null;
-    name: string;
-    mobile?: string;
-  }>({
-    id: null,
-    name: "",
-    mobile: "",
-  });
+  const [users, setUsers] = useState<SearchUserResult[]>([]);
+// Update the selectedUser state type
+const [selectedUser, setSelectedUser] = useState<{
+  id: number;
+  name: string;
+  mobile?: string;
+} | null>(null);
   const [userSearchTerm, setUserSearchTerm] = useState<string>("");
   const [providerId, setProviderId] = useState<number | null>(null);
   const [providers, setProviders] = useState<{ id: number; name: string }[]>([]);
-  const [users, setUsers] = useState<{ id: number; name: string }[]>([]);
+  // const [users, setUsers] = useState<{ id: number; name: string }[]>([]);
   const [addresses, setAddresses] = useState<{ id: number; full_address: string }[]>([]);
   const [deliveryAddressId, setDeliveryAddressId] = useState<number | null>(null);
 
@@ -217,18 +216,24 @@ const AddBookingForm: React.FC = () => {
     }
 
     try {
-      // Show loading state
       setIsSearching(true);
-
       const userData = await searchUser(searchTerm);
 
-      // Limit the number of results to improve performance
-      const limitedResults = userData.slice(0, 50).map((user: any) => ({
-        id: user.id,
-        name: `${user.first_name} ${user.last_name}`,
-        mobile: user.mobile || 'N/A',
-        // Include any other fields you want to display
-      }));
+      // Use type assertion and careful property access
+      const limitedResults = userData.slice(0, 50).map((user: any) => {
+        // Create a properly typed object
+        const result: SearchUserResult = {
+          id: user.id,
+          name: `${user.first_name} ${user.last_name}`,
+        };
+
+        // Only add mobile if it exists
+        if (user.mobile) {
+          result.mobile = user.mobile;
+        }
+
+        return result;
+      });
 
       setUsers(limitedResults);
     } catch (error) {
@@ -540,10 +545,11 @@ const AddBookingForm: React.FC = () => {
                               setSelectedUser({
                                 id: user.id,
                                 name: user.name,
-                                mobile: user.mobile
+                                // Only include mobile if it exists
+                                ...(user.mobile ? { mobile: user.mobile } : {})
                               });
                               setUserSearchTerm("");
-                              setUsers([]); // Clear results after selection
+                              setUsers([]);
                             }}
                           >
                             <div className="flex flex-col">
@@ -559,7 +565,8 @@ const AddBookingForm: React.FC = () => {
                     </div>
                   )}
 
-                  {userId !== null && (
+                  {/* And in the selected user display, check if selectedUser exists first */}
+                  {userId !== null && selectedUser && (
                     <div className="p-2 bg-blue-50 rounded-md">
                       <div className="flex justify-between items-center">
                         <span className="font-medium">Selected User</span>
@@ -578,7 +585,7 @@ const AddBookingForm: React.FC = () => {
                       <div className="mt-1 text-sm">
                         <div><strong>Name:</strong> {selectedUser.name}</div>
                         <div><strong>ID:</strong> {selectedUser.id}</div>
-                        <div><strong>Mobile:</strong> {selectedUser.mobile}</div>
+                        <div><strong>Mobile:</strong> {selectedUser.mobile || 'N/A'}</div>
                       </div>
                     </div>
                   )}
