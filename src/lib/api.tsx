@@ -3,8 +3,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // Access environment variables
-// const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-const BASE_URL ='http://localhost:5001/admin-api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+// const BASE_URL ='http://localhost:5001/admin-api';
 
 // Set the base URL for your API
 // const BASE_URL = 'http://localhost:5001/admin';
