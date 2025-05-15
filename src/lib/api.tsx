@@ -405,6 +405,11 @@ export interface GstRate {
   updated_at?: number; // UNIX timestamp
   deleted_at?: number | null; // UNIX timestamp for soft-delete
 }
+export interface SearchUserResult {
+  id: number;
+  name: string;
+  mobile?: string;
+}
 export interface Booking {
   id?: string; // Optional for editing
   user_id: number;
