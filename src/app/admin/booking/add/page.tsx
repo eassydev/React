@@ -46,7 +46,16 @@ const AddBookingForm: React.FC = () => {
   const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>('');
   const [packages, setPackages] = useState<Package[]>([]);
   const [userId, setUserId] = useState<number | null>(null);
-  const [selectedUserName, setSelectedUserName] = useState<string>("");
+  // Update the state to include more user details
+  const [selectedUser, setSelectedUser] = useState<{
+    id: number | null;
+    name: string;
+    mobile?: string;
+  }>({
+    id: null,
+    name: "",
+    mobile: "",
+  });
   const [userSearchTerm, setUserSearchTerm] = useState<string>("");
   const [providerId, setProviderId] = useState<number | null>(null);
   const [providers, setProviders] = useState<{ id: number; name: string }[]>([]);
@@ -200,7 +209,7 @@ const AddBookingForm: React.FC = () => {
     }
   }, [userId, toast]);
 
-  // Modify the handleUserSearch function to be more efficient
+  // Modify the handleUserSearch function to include more user details
   const handleUserSearch = async (searchTerm: string) => {
     if (!searchTerm.trim()) {
       setUsers([]);
@@ -217,6 +226,8 @@ const AddBookingForm: React.FC = () => {
       const limitedResults = userData.slice(0, 50).map((user: any) => ({
         id: user.id,
         name: `${user.first_name} ${user.last_name}`,
+        mobile: user.mobile || 'N/A',
+        // Include any other fields you want to display
       }));
 
       setUsers(limitedResults);
@@ -232,27 +243,32 @@ const AddBookingForm: React.FC = () => {
   };
 
   // Add a debounced search input
- // Improve the debounced search input
-const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-  const value = e.target.value;
-  setUserSearchTerm(value);
-  
-  // Clear any existing timeout
-  if (window.searchTimeout) {
-    clearTimeout(window.searchTimeout);
-  }
-  
-  // Clear results if input is empty
-  if (!value.trim()) {
-    setUsers([]);
-    return;
-  }
-  
-  // Set a new timeout with a longer delay to reduce API calls
-  window.searchTimeout = setTimeout(() => {
-    handleUserSearch(value);
-  }, 500); // Increased to 500ms
-};
+  // Improve the debounced search input
+  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setUserSearchTerm(value);
+
+    // Clear any existing timeout
+    if (window.searchTimeout) {
+      clearTimeout(window.searchTimeout);
+    }
+
+    // Clear results if input is empty
+    if (!value.trim()) {
+      setUsers([]);
+      return;
+    }
+
+    // Only search if at least 4 characters have been entered
+    if (value.trim().length < 4) {
+      return;
+    }
+
+    // Set a new timeout with a delay to reduce API calls
+    window.searchTimeout = setTimeout(() => {
+      handleUserSearch(value);
+    }, 500);
+  };
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -491,63 +507,83 @@ const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 </Select>
               </div> */}
               {/* Add this to your form, replacing any existing user selection */}
-             {/* // Replace the user search UI component */}
-<div className="space-y-2">
-  <label className="text-sm font-medium text-gray-700">Search User</label>
-  <div className="space-y-2">
-    <div className="relative">
-      <Input
-        placeholder="Search by name, mobile or ID..."
-        value={userSearchTerm}
-        onChange={handleSearchInputChange}
-        className="w-full"
-      />
-      {isSearching && (
-        <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
-          <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
-        </div>
-      )}
-    </div>
-    
-    {users.length > 0 && (
-      <div className="border rounded-md overflow-hidden">
-        <div className="max-h-48 overflow-y-auto">
-          {users.map((user) => (
-            <div
-              key={user.id}
-              className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-0"
-              onClick={() => {
-                setUserId(user.id);
-                setSelectedUserName(user.name);
-                setUserSearchTerm("");
-                setUsers([]); // Clear results after selection
-              }}
-            >
-              {user.name}
-            </div>
-          ))}
-        </div>
-      </div>
-    )}
-    
-    {userId !== null && (
-      <div className="p-2 bg-blue-50 rounded-md flex justify-between items-center">
-        <span className="font-medium">Selected: {selectedUserName}</span>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => {
-            setUserId(null);
-            setSelectedUserName("");
-            setUserSearchTerm("");
-          }}
-        >
-          Clear
-        </Button>
-      </div>
-    )}
-  </div>
-</div>
+              {/* // Replace the user search UI component */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Search User</label>
+                <div className="space-y-2">
+                  <div className="relative">
+                    <Input
+                      placeholder="Search by name, mobile or ID (min 4 chars)..."
+                      value={userSearchTerm}
+                      onChange={handleSearchInputChange}
+                      className="w-full"
+                    />
+                    {isSearching && (
+                      <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
+                        <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                      </div>
+                    )}
+                  </div>
+                  {userSearchTerm.trim().length > 0 && userSearchTerm.trim().length < 4 && (
+                    <p className="text-xs text-amber-600">Please enter at least 4 characters to search</p>
+                  )}
+
+                  {users.length > 0 && (
+                    <div className="border rounded-md overflow-hidden">
+                      <div className="max-h-48 overflow-y-auto">
+                        {users.map((user) => (
+                          <div
+                            key={user.id}
+                            className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-0"
+                            onClick={() => {
+                              setUserId(user.id);
+                              setSelectedUser({
+                                id: user.id,
+                                name: user.name,
+                                mobile: user.mobile
+                              });
+                              setUserSearchTerm("");
+                              setUsers([]); // Clear results after selection
+                            }}
+                          >
+                            <div className="flex flex-col">
+                              <div className="font-medium">{user.name}</div>
+                              <div className="text-xs text-gray-500 flex justify-between">
+                                <span>ID: {user.id}</span>
+                                <span>Mobile: {user.mobile}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {userId !== null && (
+                    <div className="p-2 bg-blue-50 rounded-md">
+                      <div className="flex justify-between items-center">
+                        <span className="font-medium">Selected User</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setUserId(null);
+                            setSelectedUser(null);
+                            setUserSearchTerm("");
+                          }}
+                        >
+                          Clear
+                        </Button>
+                      </div>
+                      <div className="mt-1 text-sm">
+                        <div><strong>Name:</strong> {selectedUser.name}</div>
+                        <div><strong>ID:</strong> {selectedUser.id}</div>
+                        <div><strong>Mobile:</strong> {selectedUser.mobile}</div>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
 
 
 
