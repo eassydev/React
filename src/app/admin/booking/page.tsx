@@ -34,12 +34,12 @@ const BookingList = () => {
   const [serviceDate, setServiceDate] = useState("");
 
   const [dateRange, setDateRange] = useState([
-     {
-       startDate: new Date(),
-       endDate: new Date(),
-       key: "selection",
-     },
-   ]);
+    {
+      startDate: new Date(),
+      endDate: new Date(),
+      key: "selection",
+    },
+  ]);
   const [showDatePicker, setShowDatePicker] = useState(false);
 
   const [filters, setFilters] = useState({
@@ -72,7 +72,7 @@ const BookingList = () => {
         startDate: dateRange[0].startDate?.toISOString().split('T')[0] || '',
         endDate: dateRange[0].endDate?.toISOString().split('T')[0] || '',
       };
-      
+
       const { data, meta } = await fetchBookings(
         pagination.pageIndex + 1,
         pagination.pageSize,
@@ -89,7 +89,7 @@ const BookingList = () => {
   const handleExport = async () => {
     try {
       setIsExporting(true);
-      
+
       if (!dateRange[0].startDate || !dateRange[0].endDate) {
         toast({
           title: 'Error',
@@ -101,7 +101,7 @@ const BookingList = () => {
 
       const startDate = dateRange[0].startDate.toISOString().split('T')[0];
       const endDate = dateRange[0].endDate.toISOString().split('T')[0];
-      
+
       await exportBookings(
         startDate,
         endDate
@@ -154,7 +154,7 @@ const BookingList = () => {
   };
 
   const bookingColumns: ColumnDef<any>[] = [
-     {
+    {
       id: 'actions',
       header: 'Actions',
       cell: ({ row }) => (
@@ -190,7 +190,18 @@ const BookingList = () => {
       accessorKey: "sampleid",
       header: "ID",
     },
-    { accessorKey: 'booking_date', header: 'Service Date' },
+    {
+      accessorKey: 'booking_date',
+      header: 'Service Date',
+      cell: ({ row }) => {
+        const booking = row.original;
+        return (
+          <span>
+            {booking.booking_date} {booking.booking_time_from}-{booking.booking_time_to}
+          </span>
+        );
+      }
+    },
     {
       header: "Category Details",
       accessorFn: (row) => {
@@ -200,7 +211,7 @@ const BookingList = () => {
           filterAttribute: { name: string };
           filterOption: { value: string };
         }) => `${attr.filterAttribute?.name}: ${attr.filterOption?.value}`).join(", ") || "N/A";
-    
+
         return { category, subcategory, attributes };
       },
       cell: (info) => {
@@ -209,7 +220,7 @@ const BookingList = () => {
           subcategory: string;
           attributes: string;
         };
-    
+
         return (
           <div style={{ whiteSpace: 'pre-wrap' }}>
             <p><strong>Category:</strong> {value.category}</p>
@@ -229,34 +240,34 @@ const BookingList = () => {
       accessorFn: (row) => row.rateCard?.provider?.phone || 'N/A',
       header: 'Provider Mobile'
     },
-   {
-  accessorKey: 'is_partial',
-  header: 'Partial',
-  cell: (info) => {
-    const row = info.row.original;
-    const isPartial = row.is_partial;
-    const hasPartialIds = row.partial_transaction_id && row.razorpay_partial_order_id;
+    {
+      accessorKey: 'is_partial',
+      header: 'Partial',
+      cell: (info) => {
+        const row = info.row.original;
+        const isPartial = row.is_partial;
+        const hasPartialIds = row.partial_transaction_id && row.razorpay_partial_order_id;
 
-    let statusText = '';
-    let statusClass = '';
+        let statusText = '';
+        let statusClass = '';
 
-    if (hasPartialIds) {
-      statusText = 'Yes';
-      statusClass = 'bg-green-100 text-green-600';
-    } else {
-      statusText = 'No';
-      statusClass = 'bg-red-100 text-red-600';
-    }
+        if (hasPartialIds) {
+          statusText = 'Yes';
+          statusClass = 'bg-green-100 text-green-600';
+        } else {
+          statusText = 'No';
+          statusClass = 'bg-red-100 text-red-600';
+        }
 
-    return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusClass}`}>
-        {statusText}
-      </span>
-    );
-  },
-},
- 
-{
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusClass}`}>
+            {statusText}
+          </span>
+        );
+      },
+    },
+
+    {
       accessorFn: (row) => row.razorpay_partial_order_id || 'N/A',
       header: 'Partial order id '
     },
@@ -265,103 +276,111 @@ const BookingList = () => {
       header: 'Partial Transection id '
     },
     {
-  accessorKey: 'is full',
-  header: 'Is Full',
-  cell: (info) => {
-    const row = info.row.original;
-    const hasFull = row.transaction_id;
+      accessorKey: 'is full',
+      header: 'Is Full',
+      cell: (info) => {
+        const row = info.row.original;
+        const hasFull = row.transaction_id;
 
-    let statusText = '';
-    let statusClass = '';
+        let statusText = '';
+        let statusClass = '';
 
-    if (hasFull) {
-      statusText = 'Yes';
-      statusClass = 'bg-green-100 text-green-600';
-    } else {
-      statusText = 'No';
-      statusClass = 'bg-red-100 text-red-600';
-    }
+        if (hasFull) {
+          statusText = 'Yes';
+          statusClass = 'bg-green-100 text-green-600';
+        } else {
+          statusText = 'No';
+          statusClass = 'bg-red-100 text-red-600';
+        }
 
-    return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusClass}`}>
-        {statusText}
-      </span>
-    );
-  },
-},
- {
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusClass}`}>
+            {statusText}
+          </span>
+        );
+      },
+    },
+    {
       accessorFn: (row) => row.transaction_id || 'N/A',
       header: 'Transection id '
     },
-     {
+    {
       accessorFn: (row) => row.start_service_otp || 'N/A',
       header: 'Start otp '
     },
-     {
+    {
       accessorFn: (row) => row.end_service_otp || 'N/A',
       header: 'End Otp'
     },
-     {
-  header: 'Booking date and Time',
-  cell: (info) => {
-    const row = info.row.original;
-    return (
-      <span>
-        {row.booking_date} {row.booking_time_from}-{row.booking_time_to}
-      </span>
-    );
-  },
-},
-   {
-  header: 'Basic Amount',
-  cell: (info) => {
-    const row = info.row.original;
-    return (
-      <span>
-        ₹ {row.total_amount}
-      </span>
-    );
-  },
-},
-  {
-  header: 'GST Amount',
-  cell: (info) => {
-    const row = info.row.original;
-    return (
-      <span>
-        ₹ {row.total_gst}
-      </span>
-    );
-  },
-},
-  {
-  header: 'Final Amount',
-  cell: (info) => {
-    const row = info.row.original;
-    return (
-      <span>
-        ₹ {row.final_amount}
-      </span>
-    );
-  },
-},
-{
-  header: 'Address',
-  cell: (info) => {
-    const row = info.row.original;
+    {
+      header: 'Booking date and Time',
+      cell: ({ row }) => {
+        const booking = row.original;
+        // Convert Unix timestamp to readable date and time
+        const createdDate = booking.created_at
+          ? new Date(booking.created_at * 1000).toLocaleDateString()
+          : 'N/A';
+        const createdTime = booking.created_at
+          ? new Date(booking.created_at * 1000).toLocaleTimeString()
+          : '';
+
+        return (
+          <span>
+            {createdDate} {createdTime}
+          </span>
+        );
+      },
+    },
+    {
+      header: 'Basic Amount',
+      cell: (info) => {
+        const row = info.row.original;
+        return (
+          <span>
+            ₹ {row.total_amount}
+          </span>
+        );
+      },
+    },
+    {
+      header: 'GST Amount',
+      cell: (info) => {
+        const row = info.row.original;
+        return (
+          <span>
+            ₹ {row.total_gst}
+          </span>
+        );
+      },
+    },
+    {
+      header: 'Final Amount',
+      cell: (info) => {
+        const row = info.row.original;
+        return (
+          <span>
+            ₹ {row.final_amount}
+          </span>
+        );
+      },
+    },
+    {
+      header: 'Address',
+      cell: (info) => {
+        const row = info.row.original;
         const address = row.address;
 
-    return (
-      <span>
-         {address?.flat_no},{address?.building_name},{address?.street_address},{address?.city},{address?.state},{address?.country} - {address?.postal_code}
-      </span>
-    );
-  },
-},
+        return (
+          <span>
+            {address?.flat_no},{address?.building_name},{address?.street_address},{address?.city},{address?.state},{address?.country} - {address?.postal_code}
+          </span>
+        );
+      },
+    },
 
     { accessorKey: 'payment_status', header: 'Payment Status' },
     { accessorKey: 'status', header: 'Status' },
-   
+
   ];
 
   const bookingTable = useReactTable({
@@ -387,30 +406,30 @@ const BookingList = () => {
               <option value="2">Deleted</option>
             </select>
             <div className="relative">
-                <input
-                  type="text"
-                  placeholder="Date Range"
-                  value={formatDateRange()}
-                  onClick={() => setShowDatePicker(!showDatePicker)}
-                  className="border p-2 rounded w-full cursor-pointer"
-                  readOnly
-                />
-                {showDatePicker && (
-                  <div className="absolute z-10 mt-1 bg-white shadow-lg">
-                    <DateRange
-                      editableDateInputs={true}
-                      onChange={(item: any) => {
-                        setDateRange([item.selection]);
-                        if (item.selection.startDate && item.selection.endDate) {
-                          setShowDatePicker(false);
-                        }
-                      }}
-                      moveRangeOnFirstSelection={false}
-                      ranges={dateRange}
-                    />
-                  </div>
-                )}
-              </div>
+              <input
+                type="text"
+                placeholder="Date Range"
+                value={formatDateRange()}
+                onClick={() => setShowDatePicker(!showDatePicker)}
+                className="border p-2 rounded w-full cursor-pointer"
+                readOnly
+              />
+              {showDatePicker && (
+                <div className="absolute z-10 mt-1 bg-white shadow-lg">
+                  <DateRange
+                    editableDateInputs={true}
+                    onChange={(item: any) => {
+                      setDateRange([item.selection]);
+                      if (item.selection.startDate && item.selection.endDate) {
+                        setShowDatePicker(false);
+                      }
+                    }}
+                    moveRangeOnFirstSelection={false}
+                    ranges={dateRange}
+                  />
+                </div>
+              )}
+            </div>
             <Button onClick={handleExport} disabled={isExporting}>
               {isExporting ? (
                 <span className="flex items-center">
@@ -446,7 +465,7 @@ const BookingList = () => {
                 onChange={(e) => setPincode(e.target.value)}
                 className="border p-2 rounded w-full"
               />
-               <input
+              <input
                 type="date"
                 placeholder="Booking Date"
                 value={bookingDate}
@@ -460,7 +479,7 @@ const BookingList = () => {
                 onChange={(e) => setServiceDate(e.target.value)}
                 className="border p-2 rounded w-full"
               />
-             
+
               <div className="flex flex-col">
                 <label><input type="checkbox" name="today" checked={filters.today} onChange={handleCheckboxChange} /> Today Orders</label>
                 <label><input type="checkbox" name="tomorrow" checked={filters.tomorrow} onChange={handleCheckboxChange} /> Tomorrow Orders</label>
