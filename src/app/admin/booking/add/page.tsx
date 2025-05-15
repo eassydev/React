@@ -513,7 +513,7 @@ const AddBookingForm: React.FC = () => {
                 <div className="space-y-2">
                   <div className="relative">
                     <Input
-                      placeholder="Search by name, mobile or ID (min 4 chars)..."
+                      placeholder="Search by  mobile(min 4 chars)..."
                       value={userSearchTerm}
                       onChange={handleSearchInputChange}
                       className="w-full"
