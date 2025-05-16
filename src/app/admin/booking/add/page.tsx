@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, FormEvent } from 'react';
+import React, { useState, useEffect, FormEvent, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,17 @@ declare global {
 // Initialize the timeout
 if (typeof window !== 'undefined') {
   window.searchTimeout = null;
+}
+
+// Update the SearchUserResult interface to match the API response
+interface SearchUserResult {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  mobile: string;
+  created_at?: number;
+  sampleid?: string; // The decrypted ID from the API
 }
 
 const AddBookingForm: React.FC = () => {
@@ -61,6 +72,11 @@ const [selectedUser, setSelectedUser] = useState<{
   // const [users, setUsers] = useState<{ id: number; name: string }[]>([]);
   const [addresses, setAddresses] = useState<{ id: number; full_address: string }[]>([]);
   const [deliveryAddressId, setDeliveryAddressId] = useState<number | null>(null);
+
+  // Add these state variables for pagination
+  const [searchPage, setSearchPage] = useState<number>(1);
+  const [hasMoreResults, setHasMoreResults] = useState<boolean>(true);
+  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
 
   const { toast } = useToast();
 
@@ -208,35 +224,46 @@ const [selectedUser, setSelectedUser] = useState<{
     }
   }, [userId, toast]);
 
-  // Modify the handleUserSearch function to include more user details
-  const handleUserSearch = async (searchTerm: string) => {
+  // Update the search function to handle pagination
+  const handleUserSearch = useCallback(async (searchTerm: string, page = 1, append = false) => {
     if (!searchTerm.trim()) {
       setUsers([]);
+      setHasMoreResults(false);
       return;
     }
 
     try {
-      setIsSearching(true);
-      const userData = await searchUser(searchTerm);
+      if (page === 1) {
+        setIsSearching(true);
+      } else {
+        setIsLoadingMore(true);
+      }
 
-      // Use type assertion and careful property access
-      const limitedResults = userData.slice(0, 50).map((user: any) => {
-        // Create a properly typed object
-        const result: SearchUserResult = {
-          id: user.id,
-          name: `${user.first_name} ${user.last_name}`,
-        };
+      // Use the page parameter in the API call
+      const response = await searchUser(searchTerm, page, 10);
+      
+      // Get pagination metadata if available
+      const hasMore = response.meta?.totalPages > page;
+      setHasMoreResults(hasMore);
+      
+      const formattedUsers = response.map((user: any) => ({
+        id: user.id,
+        name: `${user.first_name} ${user.last_name}`,
+        mobile: user.mobile,
+        displayId: user.sampleid || user.id.toString(),
+      }));
 
-        // Only add mobile if it exists
-        if (user.mobile) {
-          result.mobile = user.mobile;
-        }
-
-        return result;
-      });
-
-      setUsers(limitedResults);
+      // Either replace or append results based on the append flag
+      if (append) {
+        setUsers(prev => [...prev, ...formattedUsers]);
+      } else {
+        setUsers(formattedUsers);
+      }
+      
+      // Update the current page
+      setSearchPage(page);
     } catch (error) {
+      console.error("Search error:", error);
       toast({
         variant: "error",
         title: "Error",
@@ -244,36 +271,45 @@ const [selectedUser, setSelectedUser] = useState<{
       });
     } finally {
       setIsSearching(false);
+      setIsLoadingMore(false);
     }
-  };
+  }, [toast]);
 
-  // Add a debounced search input
-  // Improve the debounced search input
-  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Function to load more results
+  const loadMoreResults = useCallback(() => {
+    if (hasMoreResults && !isLoadingMore && userSearchTerm.trim()) {
+      handleUserSearch(userSearchTerm, searchPage + 1, true);
+    }
+  }, [handleUserSearch, hasMoreResults, isLoadingMore, searchPage, userSearchTerm]);
+
+  // Reset pagination when search term changes
+  const handleSearchInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setUserSearchTerm(value);
-
-    // Clear any existing timeout
+    
+    // Reset pagination state
+    setSearchPage(1);
+    setHasMoreResults(true);
+    
     if (window.searchTimeout) {
       clearTimeout(window.searchTimeout);
+      window.searchTimeout = null;
     }
-
-    // Clear results if input is empty
+    
     if (!value.trim()) {
       setUsers([]);
       return;
     }
-
-    // Only search if at least 4 characters have been entered
+    
     if (value.trim().length < 4) {
       return;
     }
-
-    // Set a new timeout with a delay to reduce API calls
+    
     window.searchTimeout = setTimeout(() => {
-      handleUserSearch(value);
-    }, 500);
-  };
+      // Always start from page 1 for new searches
+      handleUserSearch(value, 1, false);
+    }, 600);
+  }, [handleUserSearch]);
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -535,33 +571,48 @@ const [selectedUser, setSelectedUser] = useState<{
 
                   {users.length > 0 && (
                     <div className="border rounded-md overflow-hidden">
-                      <div className="max-h-48 overflow-y-auto">
-                        {users.map((user) => (
-                          <div
-                            key={user.id}
-                            className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-0"
-                            onClick={() => {
-                              setUserId(user.id);
-                              setSelectedUser({
-                                id: user.id,
-                                name: user.name,
-                                // Only include mobile if it exists
-                                ...(user.mobile ? { mobile: user.mobile } : {})
-                              });
-                              setUserSearchTerm("");
-                              setUsers([]);
-                            }}
-                          >
-                            <div className="flex flex-col">
-                              <div className="font-medium">{user.name}</div>
-                              <div className="text-xs text-gray-500 flex justify-between">
-                                <span>ID: {user.id}</span>
-                                <span>Mobile: {user.mobile}</span>
+                      <Virtuoso
+                        style={{ height: "200px", width: "100%" }}
+                        totalCount={users.length}
+                        itemContent={(index) => {
+                          const user = users[index];
+                          return (
+                            <div
+                              key={user.id}
+                              className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-0"
+                              onClick={() => handleUserSelect(user)}
+                            >
+                              <div className="flex flex-col">
+                                <div className="font-medium">{user.name}</div>
+                                <div className="text-xs text-gray-500 flex justify-between">
+                                  <span>ID: {user.displayId || user.id}</span>
+                                  <span>Mobile: {user.mobile}</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
+                          );
+                        }}
+                        endReached={() => loadMoreResults()}
+                        components={{
+                          Footer: () => 
+                            hasMoreResults ? (
+                              <div className="p-2 text-center">
+                                {isLoadingMore ? (
+                                  <div className="flex justify-center items-center p-2">
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                    <span className="text-xs">Loading more...</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-gray-500">Scroll for more results</span>
+                                )}
+                              </div>
+                            ) : users.length > 0 ? (
+                              <div className="p-2 text-center">
+                                <span className="text-xs text-gray-500">End of results</span>
+                              </div>
+                            ) : null
+                        }}
+                      />
                     </div>
                   )}
 

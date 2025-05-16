@@ -6,9 +6,6 @@ dotenv.config();
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
 // const BASE_URL ='http://localhost:5001/admin-api';
 
-// Set the base URL for your API
-// const BASE_URL = 'http://localhost:5001/admin';
-
 // Initialize Axios instance with base URL
 const apiClient = axios.create({
   baseURL: BASE_URL,
@@ -1938,29 +1935,37 @@ export const fetchAllUsersWithouPagination = async (): Promise<User[]> => {
 };
 
 
-
-// search user using name ,mobile,id
-export const searchUser = async (searchTerm: string): Promise<User[]> => {
+// Search users by mobile number with pagination
+export const searchUser = async (searchTerm: string, page = 1, size = 10): Promise<any> => {
   try {
     const token = getToken();
-    const response: AxiosResponse<ApiResponse> = await apiClient.get('/user/search', {
+    
+    // Build query parameters
+    const params = new URLSearchParams({
+      search: searchTerm,
+      page: page.toString(),
+      size: size.toString()
+    });
+    
+    const response: AxiosResponse = await apiClient.get(`/user/search?${params.toString()}`, {
       headers: {
-        'admin-auth-token': token || '',
-      },
-      params: {
-        search: searchTerm,
+        "admin-auth-token": token || "",
       },
     });
-
-    if (response.data.status) {
+    
+    // Check if the response has the expected structure
+    if (response.data && response.data.status && Array.isArray(response.data.data)) {
       return response.data.data;
     } else {
-      throw new Error(response.data.message || 'Failed to fetch users.');
+      // If the API returns a different structure, handle it appropriately
+      return response.data.data || [];
     }
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch users.');
+    console.error("Error searching users:", error);
+    throw new Error(error.response?.data?.message || "Failed to search users.");
   }
 };
+
 
 // Fetch a single user by ID
 export const fetchUserById = async (id: string): Promise<User> => {
