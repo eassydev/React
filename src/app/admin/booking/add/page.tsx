@@ -22,6 +22,7 @@ if (typeof window !== 'undefined') {
   window.searchTimeout = null;
 }
 
+<<<<<<< HEAD
 // Update the SearchUserResult interface to match the API response
 interface SearchUserResult {
   id: number;
@@ -32,6 +33,9 @@ interface SearchUserResult {
   created_at?: number;
   sampleid?: string; // The decrypted ID from the API
 }
+=======
+
+>>>>>>> e0330dc61319523a037502632652bfd596f20ff0
 
 const AddBookingForm: React.FC = () => {
   const router = useRouter();
@@ -225,7 +229,11 @@ const AddBookingForm: React.FC = () => {
     }
   }, [userId, toast]);
 
+<<<<<<< HEAD
   // Update the search function with better debugging and error handling
+=======
+  // Update the search function to handle pagination
+>>>>>>> e0330dc61319523a037502632652bfd596f20ff0
   const handleUserSearch = useCallback(async (searchTerm: string, page = 1, append = false) => {
     if (!searchTerm.trim()) {
       setUsers([]);
@@ -243,6 +251,7 @@ const AddBookingForm: React.FC = () => {
       // Use the page parameter in the API call
       const response = await searchUser(searchTerm, page, 10);
       
+<<<<<<< HEAD
       // Log the response structure to debug
       console.log("Search API response:", response);
       
@@ -288,6 +297,24 @@ const AddBookingForm: React.FC = () => {
         console.error("Unexpected API response format:", response);
         setUsers([]);
         setHasMoreResults(false);
+=======
+      // Get pagination metadata if available
+      const hasMore = response.meta?.totalPages > page;
+      setHasMoreResults(hasMore);
+      
+      const formattedUsers = response.map((user: any) => ({
+        id: user.id,
+        name: `${user.first_name} ${user.last_name}`,
+        mobile: user.mobile,
+        displayId: user.sampleid || user.id.toString(),
+      }));
+
+      // Either replace or append results based on the append flag
+      if (append) {
+        setUsers(prev => [...prev, ...formattedUsers]);
+      } else {
+        setUsers(formattedUsers);
+>>>>>>> e0330dc61319523a037502632652bfd596f20ff0
       }
       
       // Update the current page
@@ -307,6 +334,7 @@ const AddBookingForm: React.FC = () => {
     }
   }, [toast]);
 
+<<<<<<< HEAD
    {/* Optimize user selection with useCallback */}
                   const handleUserSelect = useCallback((user: any) => {
                     setUserId(user.id);
@@ -324,6 +352,8 @@ const AddBookingForm: React.FC = () => {
                     });
                   }, []);
 
+=======
+>>>>>>> e0330dc61319523a037502632652bfd596f20ff0
   // Function to load more results
   const loadMoreResults = useCallback(() => {
     if (hasMoreResults && !isLoadingMore && userSearchTerm.trim()) {

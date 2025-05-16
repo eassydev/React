@@ -414,7 +414,14 @@ interface SearchUserResult {
   mobile: string;
   created_at?: number;
   sampleid?: string; // The decrypted ID from the API
+  first_name: string;
+  last_name: string;
+  email?: string;
+  mobile: string;
+  created_at?: number;
+  sampleid?: string; // The decrypted ID from the API
 }
+
 
 export interface Booking {
   id?: string; // Optional for editing
@@ -1958,7 +1965,17 @@ export const searchUser = async (searchTerm: string, page = 1, size = 10): Promi
     });
     
     const response: AxiosResponse = await apiClient.get(`/user/search?${params.toString()}`, {
+    
+    // Build query parameters
+    const params = new URLSearchParams({
+      search: searchTerm,
+      page: page.toString(),
+      size: size.toString()
+    });
+    
+    const response: AxiosResponse = await apiClient.get(`/user/search?${params.toString()}`, {
       headers: {
+        "admin-auth-token": token || "",
         "admin-auth-token": token || "",
       },
     });
@@ -2004,8 +2021,11 @@ export const searchUser = async (searchTerm: string, page = 1, size = 10): Promi
   } catch (error: any) {
     console.error("Error searching users:", error);
     throw new Error(error.response?.data?.message || "Failed to search users.");
+    console.error("Error searching users:", error);
+    throw new Error(error.response?.data?.message || "Failed to search users.");
   }
 };
+
 
 // Fetch a single user by ID
 export const fetchUserById = async (id: string): Promise<User> => {
