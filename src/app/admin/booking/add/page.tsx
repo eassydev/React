@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect, FormEvent } from 'react';
+import React, { useState, useEffect, FormEvent, useCallback } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -20,6 +20,17 @@ declare global {
 // Initialize the timeout
 if (typeof window !== 'undefined') {
   window.searchTimeout = null;
+}
+
+// Update the SearchUserResult interface to match the API response
+interface SearchUserResult {
+  id: number;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  mobile: string;
+  created_at?: number;
+  sampleid?: string; // The decrypted ID from the API
 }
 
 const AddBookingForm: React.FC = () => {
@@ -49,18 +60,24 @@ const AddBookingForm: React.FC = () => {
   const [userId, setUserId] = useState<number | null>(null);
   // Update the state to include more user details
   const [users, setUsers] = useState<SearchUserResult[]>([]);
-// Update the selectedUser state type
-const [selectedUser, setSelectedUser] = useState<{
-  id: number;
-  name: string;
-  mobile?: string;
-} | null>(null);
+  // Update the selectedUser state type
+  const [selectedUser, setSelectedUser] = useState<{
+    id: number;
+    name: string;
+    mobile: string;
+    displayId?: string;
+  } | null>(null);
   const [userSearchTerm, setUserSearchTerm] = useState<string>("");
   const [providerId, setProviderId] = useState<number | null>(null);
   const [providers, setProviders] = useState<{ id: number; name: string }[]>([]);
   // const [users, setUsers] = useState<{ id: number; name: string }[]>([]);
   const [addresses, setAddresses] = useState<{ id: number; full_address: string }[]>([]);
   const [deliveryAddressId, setDeliveryAddressId] = useState<number | null>(null);
+
+  // Add these state variables for pagination
+  const [searchPage, setSearchPage] = useState<number>(1);
+  const [hasMoreResults, setHasMoreResults] = useState<boolean>(true);
+  const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
 
   const { toast } = useToast();
 
@@ -208,72 +225,123 @@ const [selectedUser, setSelectedUser] = useState<{
     }
   }, [userId, toast]);
 
-  // Modify the handleUserSearch function to include more user details
-  const handleUserSearch = async (searchTerm: string) => {
+  // Update the search function with better debugging and error handling
+  const handleUserSearch = useCallback(async (searchTerm: string, page = 1, append = false) => {
     if (!searchTerm.trim()) {
       setUsers([]);
+      setHasMoreResults(false);
       return;
     }
 
     try {
-      setIsSearching(true);
-      const userData = await searchUser(searchTerm);
+      if (page === 1) {
+        setIsSearching(true);
+      } else {
+        setIsLoadingMore(true);
+      }
 
-      // Use type assertion and careful property access
-      const limitedResults = userData.slice(0, 50).map((user: any) => {
-        // Create a properly typed object
-        const result: SearchUserResult = {
+      // Use the page parameter in the API call
+      const response = await searchUser(searchTerm, page, 10);
+      
+      // Log the response structure to debug
+      console.log("Search API response:", response);
+      
+      // Check if response is an array directly (old API format)
+      if (Array.isArray(response)) {
+        const formattedUsers = response.map((user: any) => ({
           id: user.id,
           name: `${user.first_name} ${user.last_name}`,
-        };
-
-        // Only add mobile if it exists
-        if (user.mobile) {
-          result.mobile = user.mobile;
+          mobile: user.mobile,
+          displayId: user.sampleid || user.id.toString(),
+        }));
+        
+        if (append) {
+          setUsers(prev => [...prev, ...formattedUsers]);
+        } else {
+          setUsers(formattedUsers);
         }
-
-        return result;
-      });
-
-      setUsers(limitedResults);
+        
+        // Assume there might be more if we got results
+        setHasMoreResults(formattedUsers.length >= 10);
+      } 
+      // Check if response has data property (new API format)
+      else if (response && response.data) {
+        const userData = response.data;
+        const hasMore = response.meta?.totalPages > page;
+        setHasMoreResults(hasMore);
+        
+        const formattedUsers = userData.map((user: any) => ({
+          id: user.id,
+          name: `${user.first_name} ${user.last_name}`,
+          mobile: user.mobile,
+          displayId: user.sampleid || user.id.toString(),
+        }));
+        
+        if (append) {
+          setUsers(prev => [...prev, ...formattedUsers]);
+        } else {
+          setUsers(formattedUsers);
+        }
+      } 
+      // Fallback for unexpected response format
+      else {
+        console.error("Unexpected API response format:", response);
+        setUsers([]);
+        setHasMoreResults(false);
+      }
+      
+      // Update the current page
+      setSearchPage(page);
     } catch (error) {
+      console.error("Search error:", error);
       toast({
         variant: "error",
         title: "Error",
         description: "Failed to search users."
       });
+      setUsers([]);
+      setHasMoreResults(false);
     } finally {
       setIsSearching(false);
+      setIsLoadingMore(false);
     }
-  };
+  }, [toast]);
 
-  // Add a debounced search input
-  // Improve the debounced search input
-  const handleSearchInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Function to load more results
+  const loadMoreResults = useCallback(() => {
+    if (hasMoreResults && !isLoadingMore && userSearchTerm.trim()) {
+      handleUserSearch(userSearchTerm, searchPage + 1, true);
+    }
+  }, [handleUserSearch, hasMoreResults, isLoadingMore, searchPage, userSearchTerm]);
+
+  // Reset pagination when search term changes
+  const handleSearchInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setUserSearchTerm(value);
-
-    // Clear any existing timeout
+    
+    // Reset pagination state
+    setSearchPage(1);
+    setHasMoreResults(true);
+    
     if (window.searchTimeout) {
       clearTimeout(window.searchTimeout);
+      window.searchTimeout = null;
     }
-
-    // Clear results if input is empty
+    
     if (!value.trim()) {
       setUsers([]);
       return;
     }
-
-    // Only search if at least 4 characters have been entered
+    
     if (value.trim().length < 4) {
       return;
     }
-
-    // Set a new timeout with a delay to reduce API calls
+    
     window.searchTimeout = setTimeout(() => {
-      handleUserSearch(value);
-    }, 500);
-  };
+      // Always start from page 1 for new searches
+      handleUserSearch(value, 1, false);
+    }, 600);
+  }, [handleUserSearch]);
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -518,10 +586,13 @@ const [selectedUser, setSelectedUser] = useState<{
                 <div className="space-y-2">
                   <div className="relative">
                     <Input
-                      placeholder="Search by  mobile(min 4 chars)..."
+                      placeholder="Search by mobile number (min 4 digits)..."
                       value={userSearchTerm}
                       onChange={handleSearchInputChange}
                       className="w-full"
+                      type="tel" // Use tel input type for better mobile keyboard on touch devices
+                      inputMode="numeric" // Suggest numeric keyboard
+                      pattern="[0-9]*" // Only allow numbers
                     />
                     {isSearching && (
                       <div className="absolute right-2 top-1/2 transform -translate-y-1/2">
@@ -535,37 +606,69 @@ const [selectedUser, setSelectedUser] = useState<{
 
                   {users.length > 0 && (
                     <div className="border rounded-md overflow-hidden">
-                      <div className="max-h-48 overflow-y-auto">
-                        {users.map((user) => (
-                          <div
-                            key={user.id}
-                            className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-0"
-                            onClick={() => {
-                              setUserId(user.id);
-                              setSelectedUser({
-                                id: user.id,
-                                name: user.name,
-                                // Only include mobile if it exists
-                                ...(user.mobile ? { mobile: user.mobile } : {})
-                              });
-                              setUserSearchTerm("");
-                              setUsers([]);
-                            }}
-                          >
-                            <div className="flex flex-col">
-                              <div className="font-medium">{user.name}</div>
-                              <div className="text-xs text-gray-500 flex justify-between">
-                                <span>ID: {user.id}</span>
-                                <span>Mobile: {user.mobile}</span>
+                      <Virtuoso
+                        style={{ height: "200px", width: "100%" }}
+                        totalCount={users.length}
+                        itemContent={(index) => {
+                          const user = users[index];
+                          return (
+                            <div
+                              key={user.id}
+                              className="p-2 hover:bg-gray-100 cursor-pointer border-b last:border-0"
+                              onClick={() => handleUserSelect(user)}
+                            >
+                              <div className="flex flex-col">
+                                <div className="font-medium">{user.name}</div>
+                                <div className="text-xs text-gray-500 flex justify-between">
+                                  <span>ID: {user.displayId || user.id}</span>
+                                  <span>Mobile: {user.mobile}</span>
+                                </div>
                               </div>
                             </div>
-                          </div>
-                        ))}
-                      </div>
+                          );
+                        }}
+                        endReached={() => loadMoreResults()}
+                        components={{
+                          Footer: () => 
+                            hasMoreResults ? (
+                              <div className="p-2 text-center">
+                                {isLoadingMore ? (
+                                  <div className="flex justify-center items-center p-2">
+                                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                                    <span className="text-xs">Loading more...</span>
+                                  </div>
+                                ) : (
+                                  <span className="text-xs text-gray-500">Scroll for more results</span>
+                                )}
+                              </div>
+                            ) : users.length > 0 ? (
+                              <div className="p-2 text-center">
+                                <span className="text-xs text-gray-500">End of results</span>
+                              </div>
+                            ) : null
+                        }}
+                      />
                     </div>
                   )}
 
-                  {/* And in the selected user display, check if selectedUser exists first */}
+                  {/* Optimize user selection with useCallback */}
+                  const handleUserSelect = useCallback((user: any) => {
+                    setUserId(user.id);
+                    setSelectedUser({
+                      id: user.id,
+                      name: user.name,
+                      mobile: user.mobile,
+                      displayId: user.displayId || user.id.toString()
+                    });
+                    
+                    // Clear search state after a short delay
+                    requestAnimationFrame(() => {
+                      setUserSearchTerm("");
+                      setUsers([]);
+                    });
+                  }, []);
+
+                  {/* And in the selected user display */}
                   {userId !== null && selectedUser && (
                     <div className="p-2 bg-blue-50 rounded-md">
                       <div className="flex justify-between items-center">
@@ -576,7 +679,6 @@ const [selectedUser, setSelectedUser] = useState<{
                           onClick={() => {
                             setUserId(null);
                             setSelectedUser(null);
-                            setUserSearchTerm("");
                           }}
                         >
                           Clear
@@ -584,8 +686,8 @@ const [selectedUser, setSelectedUser] = useState<{
                       </div>
                       <div className="mt-1 text-sm">
                         <div><strong>Name:</strong> {selectedUser.name}</div>
-                        <div><strong>ID:</strong> {selectedUser.id}</div>
-                        <div><strong>Mobile:</strong> {selectedUser.mobile || 'N/A'}</div>
+                        <div><strong>ID:</strong> {selectedUser.displayId || selectedUser.id}</div>
+                        <div><strong>Mobile:</strong> {selectedUser.mobile}</div>
                       </div>
                     </div>
                   )}
