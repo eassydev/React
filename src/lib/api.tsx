@@ -1963,22 +1963,10 @@ export const searchUser = async (searchTerm: string, page = 1, size = 10): Promi
     });
     
     const response: AxiosResponse = await apiClient.get(`/user/search?${params.toString()}`, {
-    
-    // Build query parameters
-    const params = new URLSearchParams({
-      search: searchTerm,
-      page: page.toString(),
-      size: size.toString()
-    });
-    
-    const response: AxiosResponse = await apiClient.get(`/user/search?${params.toString()}`, {
       headers: {
-        "admin-auth-token": token || "",
         "admin-auth-token": token || "",
       },
     });
-    
-    console.log("Raw API response:", response.data);
     
     // Check if the response has the expected structure
     if (response.data && response.data.status) {
@@ -1992,20 +1980,8 @@ export const searchUser = async (searchTerm: string, page = 1, size = 10): Promi
           pageSize: size
         }
       };
-    } else if (Array.isArray(response.data)) {
-      // Handle case where API returns an array directly
-      return {
-        data: response.data,
-        meta: {
-          totalItems: response.data.length,
-          totalPages: 1,
-          currentPage: 1,
-          pageSize: response.data.length
-        }
-      };
     } else {
       // Return empty data with default metadata
-      console.warn("Unexpected API response format:", response.data);
       return {
         data: [],
         meta: {
@@ -2017,8 +1993,6 @@ export const searchUser = async (searchTerm: string, page = 1, size = 10): Promi
       };
     }
   } catch (error: any) {
-    console.error("Error searching users:", error);
-    throw new Error(error.response?.data?.message || "Failed to search users.");
     console.error("Error searching users:", error);
     throw new Error(error.response?.data?.message || "Failed to search users.");
   }
@@ -2682,8 +2656,6 @@ export const deleteProviderBankDetail = async (id: string): Promise<ApiResponse>
     throw new Error(error.response?.data?.message || 'Failed to delete provider bank detail.');
   }
 };
-
-
 
 
 
