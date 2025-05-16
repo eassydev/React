@@ -406,14 +406,18 @@ export interface GstRate {
   deleted_at?: number | null; // UNIX timestamp for soft-delete
 }
 // Update the SearchUserResult interface to match the API response
-interface SearchUserResult {
+export interface SearchUserResult {
   id: number;
-  first_name: string;
-  last_name: string;
+  // API response fields
+  first_name?: string;
+  last_name?: string;
   email?: string;
   mobile: string;
-  created_at?: number;
-  sampleid?: string; // The decrypted ID from the API
+  created_at?: string;
+  sampleid?: string;
+  // Our formatted fields
+  name?: string;
+  displayId?: string;
 }
 
 

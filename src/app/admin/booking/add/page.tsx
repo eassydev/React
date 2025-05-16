@@ -214,7 +214,7 @@ const AddBookingForm: React.FC = () => {
     }
   }, [userId, toast]);
 
-  // Update the search function with better debugging and error handling
+  // Optimize the user search function
   const handleUserSearch = useCallback(async (searchTerm: string, page = 1, append = false) => {
     if (!searchTerm.trim()) {
       setUsers([]);
@@ -231,54 +231,58 @@ const AddBookingForm: React.FC = () => {
 
       // Use the page parameter in the API call
       const response = await searchUser(searchTerm, page, 10);
-      
+
       // Log the response structure to debug
       console.log("Search API response:", response);
-      
+
       // Check if response is an array directly (old API format)
       if (Array.isArray(response)) {
-        const formattedUsers = response.map((user: any) => ({
+        const formattedUsers: SearchUserResult[] = response.map((user: any) => ({
           id: user.id,
-          name: `${user.first_name} ${user.last_name}`,
+          first_name: user.first_name,
+          last_name: user.last_name,
           mobile: user.mobile,
+          name: `${user.first_name} ${user.last_name}`,
           displayId: user.sampleid || user.id.toString(),
         }));
-        
+
         if (append) {
           setUsers(prev => [...prev, ...formattedUsers]);
         } else {
           setUsers(formattedUsers);
         }
-        
+
         // Assume there might be more if we got results
         setHasMoreResults(formattedUsers.length >= 10);
-      } 
+      }
       // Check if response has data property (new API format)
       else if (response && response.data) {
         const userData = response.data;
         const hasMore = response.meta?.totalPages > page;
         setHasMoreResults(hasMore);
-        
-        const formattedUsers = userData.map((user: any) => ({
+
+        const formattedUsers: SearchUserResult[] = userData.map((user: any) => ({
           id: user.id,
-          name: `${user.first_name} ${user.last_name}`,
+          first_name: user.first_name,
+          last_name: user.last_name,
           mobile: user.mobile,
+          name: `${user.first_name} ${user.last_name}`,
           displayId: user.sampleid || user.id.toString(),
         }));
-        
+
         if (append) {
           setUsers(prev => [...prev, ...formattedUsers]);
         } else {
           setUsers(formattedUsers);
         }
-      } 
+      }
       // Fallback for unexpected response format
       else {
         console.error("Unexpected API response format:", response);
         setUsers([]);
         setHasMoreResults(false);
       }
-      
+
       // Update the current page
       setSearchPage(page);
     } catch (error) {
@@ -296,22 +300,22 @@ const AddBookingForm: React.FC = () => {
     }
   }, [toast]);
 
-   {/* Optimize user selection with useCallback */}
-                  const handleUserSelect = useCallback((user: any) => {
-                    setUserId(user.id);
-                    setSelectedUser({
-                      id: user.id,
-                      name: user.name,
-                      mobile: user.mobile,
-                      displayId: user.displayId || user.id.toString()
-                    });
-                    
-                    // Clear search state after a short delay
-                    requestAnimationFrame(() => {
-                      setUserSearchTerm("");
-                      setUsers([]);
-                    });
-                  }, []);
+  // Update the handleUserSelect function
+  const handleUserSelect = useCallback((user: SearchUserResult) => {
+    setUserId(user.id);
+    setSelectedUser({
+      id: user.id,
+      name: user.name || `${user.first_name || ''} ${user.last_name || ''}`,
+      mobile: user.mobile,
+      displayId: user.displayId || user.sampleid || user.id.toString()
+    });
+
+    // Clear search state after a short delay
+    requestAnimationFrame(() => {
+      setUserSearchTerm("");
+      setUsers([]);
+    });
+  }, []);
 
   // Function to load more results
   const loadMoreResults = useCallback(() => {
@@ -324,25 +328,25 @@ const AddBookingForm: React.FC = () => {
   const handleSearchInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setUserSearchTerm(value);
-    
+
     // Reset pagination state
     setSearchPage(1);
     setHasMoreResults(true);
-    
+
     if (window.searchTimeout) {
       clearTimeout(window.searchTimeout);
       window.searchTimeout = null;
     }
-    
+
     if (!value.trim()) {
       setUsers([]);
       return;
     }
-    
+
     if (value.trim().length < 4) {
       return;
     }
-    
+
     window.searchTimeout = setTimeout(() => {
       // Always start from page 1 for new searches
       handleUserSearch(value, 1, false);
@@ -635,7 +639,7 @@ const AddBookingForm: React.FC = () => {
                         }}
                         endReached={() => loadMoreResults()}
                         components={{
-                          Footer: () => 
+                          Footer: () =>
                             hasMoreResults ? (
                               <div className="p-2 text-center">
                                 {isLoadingMore ? (
@@ -656,8 +660,6 @@ const AddBookingForm: React.FC = () => {
                       />
                     </div>
                   )}
-
-                 
 
                   {/* And in the selected user display */}
                   {userId !== null && selectedUser && (
