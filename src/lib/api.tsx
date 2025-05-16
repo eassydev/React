@@ -402,11 +402,17 @@ export interface GstRate {
   updated_at?: number; // UNIX timestamp
   deleted_at?: number | null; // UNIX timestamp for soft-delete
 }
+// Update the SearchUserResult interface to match the API response
 export interface SearchUserResult {
   id: number;
-  name: string;
-  mobile?: string;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  mobile: string;
+  created_at?: number;
+  sampleid?: string; // The decrypted ID from the API
 }
+
 export interface Booking {
   id?: string; // Optional for editing
   user_id: number;

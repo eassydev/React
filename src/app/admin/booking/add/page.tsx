@@ -22,16 +22,7 @@ if (typeof window !== 'undefined') {
   window.searchTimeout = null;
 }
 
-// Update the SearchUserResult interface to match the API response
-interface SearchUserResult {
-  id: number;
-  first_name: string;
-  last_name: string;
-  email?: string;
-  mobile: string;
-  created_at?: number;
-  sampleid?: string; // The decrypted ID from the API
-}
+
 
 const AddBookingForm: React.FC = () => {
   const router = useRouter();
