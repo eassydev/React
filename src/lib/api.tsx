@@ -3,8 +3,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // Access environment variables
-// const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-const BASE_URL ='http://localhost:5001/admin-api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+// const BASE_URL ='http://localhost:5001/admin-api';
 
 // Set the base URL for your API
 // const BASE_URL = 'http://localhost:5001/admin';
@@ -405,11 +405,17 @@ export interface GstRate {
   updated_at?: number; // UNIX timestamp
   deleted_at?: number | null; // UNIX timestamp for soft-delete
 }
-export interface SearchUserResult {
+// Update the SearchUserResult interface to match the API response
+interface SearchUserResult {
   id: number;
-  name: string;
-  mobile?: string;
+  first_name: string;
+  last_name: string;
+  email?: string;
+  mobile: string;
+  created_at?: number;
+  sampleid?: string; // The decrypted ID from the API
 }
+
 export interface Booking {
   id?: string; // Optional for editing
   user_id: number;
@@ -1939,26 +1945,65 @@ export const fetchAllUsersWithouPagination = async (): Promise<User[]> => {
 
 
 
-// search user using name ,mobile,id
-export const searchUser = async (searchTerm: string): Promise<User[]> => {
+// Search users by mobile number with pagination
+export const searchUser = async (searchTerm: string, page = 1, size = 10): Promise<any> => {
   try {
     const token = getToken();
-    const response: AxiosResponse<ApiResponse> = await apiClient.get('/user/search', {
+    
+    // Build query parameters
+    const params = new URLSearchParams({
+      search: searchTerm,
+      page: page.toString(),
+      size: size.toString()
+    });
+    
+    const response: AxiosResponse = await apiClient.get(`/user/search?${params.toString()}`, {
       headers: {
-        'admin-auth-token': token || '',
-      },
-      params: {
-        search: searchTerm,
+        "admin-auth-token": token || "",
       },
     });
-
-    if (response.data.status) {
-      return response.data.data;
+    
+    console.log("Raw API response:", response.data);
+    
+    // Check if the response has the expected structure
+    if (response.data && response.data.status) {
+      // Return both the data and metadata for pagination
+      return {
+        data: response.data.data || [],
+        meta: response.data.meta || {
+          totalItems: 0,
+          totalPages: 0,
+          currentPage: page,
+          pageSize: size
+        }
+      };
+    } else if (Array.isArray(response.data)) {
+      // Handle case where API returns an array directly
+      return {
+        data: response.data,
+        meta: {
+          totalItems: response.data.length,
+          totalPages: 1,
+          currentPage: 1,
+          pageSize: response.data.length
+        }
+      };
     } else {
-      throw new Error(response.data.message || 'Failed to fetch users.');
+      // Return empty data with default metadata
+      console.warn("Unexpected API response format:", response.data);
+      return {
+        data: [],
+        meta: {
+          totalItems: 0,
+          totalPages: 0,
+          currentPage: page,
+          pageSize: size
+        }
+      };
     }
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch users.');
+    console.error("Error searching users:", error);
+    throw new Error(error.response?.data?.message || "Failed to search users.");
   }
 };
 

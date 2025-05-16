@@ -307,6 +307,23 @@ const AddBookingForm: React.FC = () => {
     }
   }, [toast]);
 
+   {/* Optimize user selection with useCallback */}
+                  const handleUserSelect = useCallback((user: any) => {
+                    setUserId(user.id);
+                    setSelectedUser({
+                      id: user.id,
+                      name: user.name,
+                      mobile: user.mobile,
+                      displayId: user.displayId || user.id.toString()
+                    });
+                    
+                    // Clear search state after a short delay
+                    requestAnimationFrame(() => {
+                      setUserSearchTerm("");
+                      setUsers([]);
+                    });
+                  }, []);
+
   // Function to load more results
   const loadMoreResults = useCallback(() => {
     if (hasMoreResults && !isLoadingMore && userSearchTerm.trim()) {
@@ -651,22 +668,7 @@ const AddBookingForm: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Optimize user selection with useCallback */}
-                  const handleUserSelect = useCallback((user: any) => {
-                    setUserId(user.id);
-                    setSelectedUser({
-                      id: user.id,
-                      name: user.name,
-                      mobile: user.mobile,
-                      displayId: user.displayId || user.id.toString()
-                    });
-                    
-                    // Clear search state after a short delay
-                    requestAnimationFrame(() => {
-                      setUserSearchTerm("");
-                      setUsers([]);
-                    });
-                  }, []);
+                 
 
                   {/* And in the selected user display */}
                   {userId !== null && selectedUser && (
