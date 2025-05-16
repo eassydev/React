@@ -414,12 +414,6 @@ interface SearchUserResult {
   mobile: string;
   created_at?: number;
   sampleid?: string; // The decrypted ID from the API
-  first_name: string;
-  last_name: string;
-  email?: string;
-  mobile: string;
-  created_at?: number;
-  sampleid?: string; // The decrypted ID from the API
 }
 
 
