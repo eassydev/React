@@ -12,8 +12,7 @@ import { useToast } from "@/components/ui/use-toast";
 import { fetchPayoutById, updatePayout } from "@/lib/api";
 import { ArrowLeft, Save, X } from "lucide-react";
 import Link from "next/link";
-import { format, parseISO } from "date-fns";
-import { utcToZonedTime, format as formatTz } from "date-fns-tz";
+import { format, parseISO, addHours } from "date-fns";
 
 interface Provider {
   id: string;
@@ -101,15 +100,46 @@ export default function EditSpPayoutPage() {
     try {
       // Parse the date string to a Date object
       const date = new Date(dateString);
-      
-      // Convert to IST timezone
-      const istDate = utcToZonedTime(date, 'Asia/Kolkata');
-      
+
+      // Add 5 hours and 30 minutes to convert to IST timezone (UTC+5:30)
+      // First add 5 hours
+      let istDate = addHours(date, 5);
+      // Then add 30 minutes (0.5 hours doesn't work with addHours)
+      istDate = new Date(istDate.getTime() + 30 * 60 * 1000);
+
       // Format with explicit timezone
-      return formatTz(istDate, "yyyy-MM-dd'T'HH:mm:ss.SSS'+05:30'", { timeZone: 'Asia/Kolkata' });
+      const formattedDate = format(istDate, "yyyy-MM-dd'T'HH:mm:ss.SSS");
+      return `${formattedDate}+05:30`;
     } catch (error) {
       console.error("Date formatting error:", error);
       return "";
+    }
+  };
+
+  // Helper function to safely format timestamps
+  const formatTimestamp = (timestamp: string | number) => {
+    if (!timestamp) return "N/A";
+
+    try {
+      // If it's a string, try to use it directly
+      if (typeof timestamp === 'string') {
+        return timestamp;
+      }
+
+      // If it's a number, check if it's seconds or milliseconds
+      if (typeof timestamp === 'number') {
+        // Unix timestamps are typically 10 digits (seconds since epoch)
+        const date = timestamp < 10000000000
+          ? new Date(timestamp * 1000)  // Convert seconds to milliseconds
+          : new Date(timestamp);        // Already in milliseconds
+
+        return format(date, "dd/MM/yyyy HH:mm");
+      }
+
+      return "N/A";
+    } catch (error) {
+      console.error("Error formatting timestamp:", timestamp, error);
+      return "Invalid Date";
     }
   };
 
@@ -160,7 +190,7 @@ export default function EditSpPayoutPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!validateForm()) {
       return;
     }
@@ -171,20 +201,20 @@ export default function EditSpPayoutPage() {
       // Format the date for API if it exists
       const formattedData = {
         ...formData,
-        scheduled_transfer: formData.scheduled_transfer 
+        scheduled_transfer: formData.scheduled_transfer
           ? formatDateForAPI(formData.scheduled_transfer)
           : undefined
       };
 
       await updatePayout(String(id), formattedData);
-      
+
       toast({
         title: "Success",
         description: "Payout updated successfully.",
       });
-      
+
       setIsEditing(false);
-      
+
       // Refresh the payout data
       const updatedPayout = await fetchPayoutById(String(id));
       setPayout(updatedPayout);
@@ -236,24 +266,24 @@ export default function EditSpPayoutPage() {
             </Link>
             <h1 className="text-3xl font-bold text-gray-900">Payout Details</h1>
           </div>
-          
+
           {canEdit && !isEditing && (
             <Button onClick={() => setIsEditing(true)}>
               Edit Payout
             </Button>
           )}
-          
+
           {isEditing && (
             <div className="flex space-x-2">
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 onClick={() => setIsEditing(false)}
                 disabled={isSubmitting}
               >
                 <X className="h-4 w-4 mr-2" />
                 Cancel
               </Button>
-              <Button 
+              <Button
                 onClick={handleSubmit}
                 disabled={isSubmitting}
               >
@@ -288,93 +318,91 @@ export default function EditSpPayoutPage() {
                   <Label className="text-sm font-medium text-gray-500">Payout ID</Label>
                   <div className="text-sm font-medium">{payout.id}</div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Order ID</Label>
                   <div className="text-sm font-medium">{payout.order_id}</div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Provider Name</Label>
                   <div className="text-sm font-medium">{payout.provider_name}</div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Provider Email</Label>
                   <div className="text-sm font-medium">{payout.provider?.email || "N/A"}</div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Service Amount</Label>
                   <div className="text-sm font-medium">₹{payout.service_amount.toFixed(2)}</div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Commission Rate</Label>
                   <div className="text-sm font-medium">{payout.commission_rate}%</div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Commission Amount</Label>
                   <div className="text-sm font-medium">₹{payout.commission_amount.toFixed(2)}</div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">TCS</Label>
                   <div className="text-sm font-medium">₹{payout.base_tcs.toFixed(2)}</div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">TDS</Label>
                   <div className="text-sm font-medium">₹{payout.base_tds.toFixed(2)}</div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Base Payable</Label>
                   <div className="text-sm font-medium">₹{payout.base_payable.toFixed(2)}</div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Total Payable</Label>
                   <div className="text-sm font-medium">₹{payout.total_payable.toFixed(2)}</div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Settled Amount</Label>
                   <div className="text-sm font-medium">₹{payout.settled_amount.toFixed(2)}</div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Status</Label>
-                  <div className={`inline-flex px-2 py-1 rounded-full text-xs font-medium 
-                    ${payout.payout_status === "Paid" ? "bg-green-100 text-green-600" : 
-                      payout.payout_status === "Partially Paid" ? "bg-yellow-100 text-yellow-600" : 
+                  <div className={`inline-flex px-2 py-1 rounded-full text-xs font-medium
+                    ${payout.payout_status === "Paid" ? "bg-green-100 text-green-600" :
+                      payout.payout_status === "Partially Paid" ? "bg-yellow-100 text-yellow-600" :
                       "bg-red-100 text-red-600"}`}>
                     {payout.payout_status}
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Razorpay Transfer ID</Label>
                   <div className="text-sm font-medium">{payout.razorpay_transfer_id || "N/A"}</div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Created At</Label>
                   <div className="text-sm font-medium">
-                    {typeof payout.created_at === 'string' ? payout.created_at : 
-                     format(new Date(payout.created_at), "dd/MM/yyyy HH:mm")}
+                    {formatTimestamp(payout.created_at)}
                   </div>
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Updated At</Label>
                   <div className="text-sm font-medium">
-                    {typeof payout.updated_at === 'string' ? payout.updated_at : 
-                     format(new Date(payout.updated_at), "dd/MM/yyyy HH:mm")}
+                    {formatTimestamp(payout.updated_at)}
                   </div>
                 </div>
-                
+
                 {/* Editable fields */}
                 <div className="space-y-2">
                   <Label htmlFor="remaining_amount" className="text-sm font-medium">
@@ -399,7 +427,7 @@ export default function EditSpPayoutPage() {
                     <div className="text-sm font-medium">₹{payout.remaining_amount.toFixed(2)}</div>
                   )}
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="scheduled_transfer" className="text-sm font-medium">
                     Scheduled Transfer
@@ -427,7 +455,7 @@ export default function EditSpPayoutPage() {
                     </div>
                   )}
                 </div>
-                
+
                 <div className="space-y-2">
                   <Label htmlFor="allow_transfer" className="text-sm font-medium">
                     Allow Transfer
@@ -451,7 +479,7 @@ export default function EditSpPayoutPage() {
                   )}
                 </div>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="notes" className="text-sm font-medium">
                   Notes

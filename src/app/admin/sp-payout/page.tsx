@@ -135,12 +135,12 @@ export default function SpPayoutPage() {
       header: "S.No",
       cell: (info) => info.row.index + 1,
     },
-    { 
-      accessorKey: "id", 
+    {
+      accessorKey: "id",
       header: "Payout ID",
     },
-    { 
-      accessorKey: "provider_name", 
+    {
+      accessorKey: "provider_name",
       header: "Provider Name",
     },
     {
@@ -148,15 +148,15 @@ export default function SpPayoutPage() {
       cell: ({ row }) => {
         const payout = row.original;
         const rateCard = payout.bookingItem?.rateCard;
-        
+
         if (!rateCard) return "N/A";
-        
+
         const attributes = rateCard.attributes?.map(attr => {
           const attrName = attr.filterAttribute?.title || attr.filterAttribute?.name || "Unknown";
           const attrValue = attr.filterOption?.title || attr.filterOption?.value || "N/A";
           return `${attrName}: ${attrValue}`;
         }).join("\n") || "None";
-        
+
         return (
           <div className="whitespace-pre-line text-sm">
             <strong>Service:</strong> {rateCard.name}<br />
@@ -169,59 +169,59 @@ export default function SpPayoutPage() {
         );
       },
     },
-    { 
-      accessorKey: "service_amount", 
+    {
+      accessorKey: "service_amount",
       header: "Service Amount",
       cell: (info) => `₹${info.getValue<number>()}`,
     },
-    { 
-      accessorKey: "commission_rate", 
+    {
+      accessorKey: "commission_rate",
       header: "Commission Rate",
       cell: (info) => `${info.getValue<number>()}%`,
     },
-    { 
-      accessorKey: "commission_amount", 
+    {
+      accessorKey: "commission_amount",
       header: "Commission Amount",
       cell: (info) => `₹${info.getValue<number>()}`,
     },
-    { 
-      accessorKey: "base_tcs", 
+    {
+      accessorKey: "base_tcs",
       header: "TCS",
       cell: (info) => `₹${info.getValue<number>()}`,
     },
-    { 
-      accessorKey: "base_tds", 
+    {
+      accessorKey: "base_tds",
       header: "TDS",
       cell: (info) => `₹${info.getValue<number>()}`,
     },
-    { 
-      accessorKey: "base_payable", 
+    {
+      accessorKey: "base_payable",
       header: "Base Payable",
       cell: (info) => `₹${info.getValue<number>()}`,
     },
-    { 
-      accessorKey: "total_payable", 
+    {
+      accessorKey: "total_payable",
       header: "Total Payable",
       cell: (info) => `₹${info.getValue<number>()}`,
     },
-    { 
-      accessorKey: "remaining_amount", 
+    {
+      accessorKey: "remaining_amount",
       header: "Remaining Amount",
       cell: (info) => `₹${info.getValue<number>()}`,
     },
-    { 
-      accessorKey: "settled_amount", 
+    {
+      accessorKey: "settled_amount",
       header: "Settled Amount",
       cell: (info) => `₹${info.getValue<number>()}`,
     },
-    { 
-      accessorKey: "payout_status", 
+    {
+      accessorKey: "payout_status",
       header: "Status",
       cell: (info) => {
         const status = info.getValue<string>();
         let bgColor = "bg-gray-100";
         let textColor = "text-gray-600";
-        
+
         if (status === "Paid") {
           bgColor = "bg-green-100";
           textColor = "text-green-600";
@@ -232,7 +232,7 @@ export default function SpPayoutPage() {
           bgColor = "bg-red-100";
           textColor = "text-red-600";
         }
-        
+
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${bgColor} ${textColor}`}>
             {status}
@@ -240,35 +240,62 @@ export default function SpPayoutPage() {
         );
       },
     },
-    { 
-      accessorKey: "scheduled_transfer", 
+    {
+      accessorKey: "scheduled_transfer",
       header: "Scheduled Transfer",
       cell: (info) => {
         const date = info.getValue<string>();
-        return date ? format(new Date(date), "dd/MM/yyyy") : "N/A";
+        if (!date) return "N/A";
+
+        try {
+          return format(new Date(date), "dd/MM/yyyy");
+        } catch (error) {
+          console.error("Error formatting scheduled transfer date:", date, error);
+          return "Invalid Date";
+        }
       },
     },
-    { 
-      accessorKey: "allow_transfer", 
+    {
+      accessorKey: "allow_transfer",
       header: "Allow Transfer",
       cell: (info) => info.getValue<string>(),
     },
-    { 
-      accessorKey: "razorpay_transfer_id", 
+    {
+      accessorKey: "razorpay_transfer_id",
       header: "Razorpay Transfer ID",
       cell: (info) => info.getValue<string>() || "N/A",
     },
-    { 
-      accessorKey: "notes", 
+    {
+      accessorKey: "notes",
       header: "Notes",
       cell: (info) => info.getValue<string>() || "N/A",
     },
-    { 
-      accessorKey: "created_at", 
+    {
+      accessorKey: "created_at",
       header: "Created At",
       cell: (info) => {
-        const timestamp = info.getValue<number>();
-        return timestamp ? format(new Date(timestamp * 1000), "dd/MM/yyyy HH:mm") : "N/A";
+        const timestamp = info.getValue<number | string>();
+        if (!timestamp) return "N/A";
+
+        try {
+          // Check if timestamp is a valid number
+          if (typeof timestamp === 'number') {
+            // Check if timestamp is in seconds (Unix timestamp) or milliseconds
+            // Unix timestamps are typically 10 digits (seconds since epoch)
+            const date = timestamp < 10000000000
+              ? new Date(timestamp * 1000)  // Convert seconds to milliseconds
+              : new Date(timestamp);        // Already in milliseconds
+
+            return format(date, "dd/MM/yyyy HH:mm");
+          } else if (typeof timestamp === 'string') {
+            // Handle string timestamps
+            return format(new Date(timestamp), "dd/MM/yyyy HH:mm");
+          }
+          return "N/A";
+        } catch (error) {
+          console.error("Error formatting date:", timestamp, error);
+          return "Invalid Date";
+        }
       },
     },
     {

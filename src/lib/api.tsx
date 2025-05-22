@@ -3,8 +3,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // Access environment variables
-// const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-const BASE_URL ='http://localhost:5001/admin-api';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+// const BASE_URL ='http://localhost:5001/admin-api';
 
 // Set the base URL for your API
 // const BASE_URL = 'http://localhost:5001/admin';
@@ -2658,9 +2658,102 @@ export const deleteProviderBankDetail = async (id: string): Promise<ApiResponse>
   }
 };
 
+// SP Payout API functions
+export const fetchPayoutsDetailed = async (page = 1, size = 10): Promise<any> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/payouts/detailed', {
+      params: { page, limit: size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
 
+    // Format the response to match our expected structure
+    return {
+      data: response.data.data.payouts,
+      meta: {
+        totalItems: response.data.data.pagination.total,
+        totalPages: response.data.data.pagination.totalPages,
+        currentPage: response.data.data.pagination.page,
+        pageSize: response.data.data.pagination.limit
+      }
+    };
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Failed to fetch payout details.');
+  }
+};
 
+// Fetch detailed payout by ID
+export const fetchPayoutById = async (id: string): Promise<any> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/payouts/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
 
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Failed to fetch payout details.');
+  }
+};
+
+// Update payout details
+export const updatePayout = async (id: string, data: any): Promise<any> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.patch(`/payouts/${id}`, data, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Failed to update payout details.');
+  }
+};
+
+// Export payouts to Excel
+// export const exportPayoutsToExcel = async (): Promise<void> => {
+//   try {
+//     const token = getToken();
+    
+//     const response: AxiosResponse = await apiClient.get('/payouts/export', {
+//       headers: {
+//         'admin-auth-token': token || '',
+//       },
+//       responseType: 'blob', // Treat the response as a binary file
+//     });
+    
+//     // Create a URL for the blob
+//     const url = window.URL.createObjectURL(new Blob([response.data]));
+    
+//     // Create a temporary link element
+//     const link = document.createElement('a');
+//     link.href = url;
+    
+//     // Set the filename from the Content-Disposition header or use a default
+//     const contentDisposition = response.headers['content-disposition'];
+//     const filename = contentDisposition
+//       ? contentDisposition.split('filename=')[1].replace(/"/g, '')
+//       : 'payouts-export.xlsx';
+    
+//     link.setAttribute('download', filename);
+    
+//     // Append to the document, click it, and remove it
+//     document.body.appendChild(link);
+//     link.click();
+//     document.body.removeChild(link);
+    
+//     // Clean up the URL object
+//     window.URL.revokeObjectURL(url);
+//   } catch (error: any) {
+//     throw new Error(error.response?.data?.error || 'Failed to export payouts.');
+//   }
+// };
 
 // Function to fetch a specific banner by ID
 export const getBanner = async (id: string | number): Promise<Banner> => {
@@ -7214,60 +7307,60 @@ export const exportBookings = async (startDate: string, endDate: string): Promis
 
 
 // SP Payout API functions
-export const fetchPayoutsDetailed = async (page = 1, size = 10): Promise<any> => {
-  try {
-    const token = getToken();
-    const response: AxiosResponse = await apiClient.get('/payouts/detailed', {
-      params: { page, limit: size },
-      headers: {
-        'admin-auth-token': token || '',
-      },
-    });
+// export const fetchPayoutsDetailed = async (page = 1, size = 10): Promise<any> => {
+//   try {
+//     const token = getToken();
+//     const response: AxiosResponse = await apiClient.get('/payouts/detailed', {
+//       params: { page, limit: size },
+//       headers: {
+//         'admin-auth-token': token || '',
+//       },
+//     });
 
-    // Format the response to match our expected structure
-    return {
-      data: response.data.data.payouts,
-      meta: {
-        totalItems: response.data.data.pagination.total,
-        totalPages: response.data.data.pagination.totalPages,
-        currentPage: response.data.data.pagination.page,
-        pageSize: response.data.data.pagination.limit
-      }
-    };
-  } catch (error: any) {
-    throw new Error(error.response?.data?.error || 'Failed to fetch payout details.');
-  }
-};
+//     // Format the response to match our expected structure
+//     return {
+//       data: response.data.data.payouts,
+//       meta: {
+//         totalItems: response.data.data.pagination.total,
+//         totalPages: response.data.data.pagination.totalPages,
+//         currentPage: response.data.data.pagination.page,
+//         pageSize: response.data.data.pagination.limit
+//       }
+//     };
+//   } catch (error: any) {
+//     throw new Error(error.response?.data?.error || 'Failed to fetch payout details.');
+//   }
+// };
 
 
-// Fetch detailed payout by ID
-export const fetchPayoutById = async (id: string): Promise<any> => {
-  try {
-    const token = getToken();
-    const response: AxiosResponse = await apiClient.get(`/payouts/${id}`, {
-      headers: {
-        'admin-auth-token': token || '',
-      },
-    });
+// // Fetch detailed payout by ID
+// export const fetchPayoutById = async (id: string): Promise<any> => {
+//   try {
+//     const token = getToken();
+//     const response: AxiosResponse = await apiClient.get(`/payouts/${id}`, {
+//       headers: {
+//         'admin-auth-token': token || '',
+//       },
+//     });
 
-    return response.data.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.error || 'Failed to fetch payout details.');
-  }
-};
+//     return response.data.data;
+//   } catch (error: any) {
+//     throw new Error(error.response?.data?.error || 'Failed to fetch payout details.');
+//   }
+// };
 
-// Update payout details
-export const updatePayout = async (id: string, data: any): Promise<any> => {
-  try {
-    const token = getToken();
-    const response: AxiosResponse = await apiClient.patch(`/payouts/${id}`, data, {
-      headers: {
-        'admin-auth-token': token || '',
-      },
-    });
+// // Update payout details
+// export const updatePayout = async (id: string, data: any): Promise<any> => {
+//   try {
+//     const token = getToken();
+//     const response: AxiosResponse = await apiClient.patch(`/payouts/${id}`, data, {
+//       headers: {
+//         'admin-auth-token': token || '',
+//       },
+//     });
 
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.error || 'Failed to update payout details.');
-  }
-};
+//     return response.data;
+//   } catch (error: any) {
+//     throw new Error(error.response?.data?.error || 'Failed to update payout details.');
+//   }
+// };
