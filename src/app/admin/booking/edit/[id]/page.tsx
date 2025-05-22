@@ -7,7 +7,7 @@ import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, usePathname } from "next/navigation";
 import { Save, FileText, Loader2, Type, Globe2 } from 'lucide-react';
-import { fetchAllCategories,fetchBookingById, updateBooking, fetchSubCategoriesByCategoryId,fetchAllUsersWithouPagination,fetchUserAddresses, fetchProvidersByFilters, Provider, Package, fetchFilterOptionsByAttributeId, fetchFilterAttributes, AttributeOption, createRateCard, Category, Subcategory, Attribute } from '@/lib/api';
+import { fetchAllCategories, fetchBookingById, updateBooking, fetchSubCategoriesByCategoryId, fetchAllUsersWithouPagination, fetchUserAddresses, fetchProvidersByFilters, fetchAllProvidersWithoupagination, Provider, Package, fetchFilterOptionsByAttributeId, fetchFilterAttributes, AttributeOption, createRateCard, Category, Subcategory, Attribute } from '@/lib/api';
 
 
 const EditBookingForm: React.FC = () => {
@@ -22,7 +22,7 @@ const EditBookingForm: React.FC = () => {
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [filterAttributes, setFilterAttributes] = useState<Attribute[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
-  const [selectedPackageId, setSelectedPackageId] = useState<string>('');    
+  const [selectedPackageId, setSelectedPackageId] = useState<string>('');
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>('');
   const [selectedFilterAttributesId, setSelectedFilterAttributesId] = useState<string>('');
   const [serviceDate, setServiceDate] = useState<string>('');
@@ -70,7 +70,7 @@ const EditBookingForm: React.FC = () => {
           const subcategoryData = await fetchSubCategoriesByCategoryId(selectedCategoryId);
           setSubcategories(subcategoryData);
           try {
-           
+
           } catch (error) {
             setFilterAttributes([]);
           }
@@ -87,22 +87,22 @@ const EditBookingForm: React.FC = () => {
 
 
 
-    // Fetch filter attributes when a subcategory is selected
-    useEffect(() => {
-      if (selectedCategoryId || selectedSubcategoryId ) {
-        const loadFilterAttributes = async () => {
-          try {
-            const filterAttributeData = await fetchFilterAttributes(selectedCategoryId, selectedSubcategoryId);
-            setFilterAttributes(filterAttributeData);
-          } catch (error) {
-            setFilterAttributes([]);
-          }
-        };
-        loadFilterAttributes();
-      }
-    }, [selectedCategoryId, selectedSubcategoryId]);
-  
-  
+  // Fetch filter attributes when a subcategory is selected
+  useEffect(() => {
+    if (selectedCategoryId || selectedSubcategoryId) {
+      const loadFilterAttributes = async () => {
+        try {
+          const filterAttributeData = await fetchFilterAttributes(selectedCategoryId, selectedSubcategoryId);
+          setFilterAttributes(filterAttributeData);
+        } catch (error) {
+          setFilterAttributes([]);
+        }
+      };
+      loadFilterAttributes();
+    }
+  }, [selectedCategoryId, selectedSubcategoryId]);
+
+
   useEffect(() => {
     if (selectedFilterAttributesId) {
       const loadFilterOptions = async () => {
@@ -146,7 +146,7 @@ const EditBookingForm: React.FC = () => {
 
       try {
         const booking = await fetchBookingById(bookingId.toString());
-        
+
         // Set basic booking details
         setUserId(booking.user_id);
         setProviderId(booking.provider_id);
@@ -164,28 +164,28 @@ const EditBookingForm: React.FC = () => {
         if (booking.category_id) {
           // Load and set category
           setSelectedCategoryId(booking.category_id.toString());
-          
+
           // Load and set subcategories
           const subcategoryData = await fetchSubCategoriesByCategoryId(booking.category_id.toString());
           setSubcategories(subcategoryData);
-          
+
           if (booking.subcategory_id) {
             setSelectedSubcategoryId(booking.subcategory_id.toString());
-            
+
             // Load and set filter attributes
             const filterAttributeData = await fetchFilterAttributes(
               booking.category_id.toString(),
               booking.subcategory_id.toString()
             );
             setFilterAttributes(filterAttributeData);
-            
+
             if (booking.filter_attribute_id) {
               setSelectedFilterAttributesId(booking.filter_attribute_id.toString());
-              
+
               // Load and set filter options
               const optionsData = await fetchFilterOptionsByAttributeId(booking.filter_attribute_id.toString());
               setFilterOptions(optionsData);
-              
+
               if (booking.filter_option_id) {
                 setSelectedFilterOptionId(booking.filter_option_id.toString());
               }
@@ -193,27 +193,20 @@ const EditBookingForm: React.FC = () => {
           }
         }
 
-        if(booking.address_id)
-          {
-            const providerData = await fetchProvidersByFilters(
-              booking.category_id || '',
-              booking.subcategory_id || '',
-              booking.filter_attribute_id || '',
-              booking.filter_option_id || ''
-            );
-            setProviders(
-              providerData.map((provider: any) => ({
-                id: provider.id,
-                name: `${provider.name}`,
-              }))
-            );
-          }
+        if (booking.address_id) {
+          const providerData = await fetchAllProvidersWithoupagination();
+          setProviders(
+            providerData.map((provider: any) => ({
+              id: provider.id,
+              name: `${provider.first_name} ${provider.last_name || ''}`,
+            }))
+          );
+        }
         setProviderId(booking.provider_id);
 
-        if(booking.address_id)
-        {
+        if (booking.address_id) {
           const addressData = await fetchUserAddresses(booking.user_id);
-          setAddresses(addressData); 
+          setAddresses(addressData);
         }
         setDeliveryAddressId(booking.address_id);
 
@@ -234,27 +227,23 @@ const EditBookingForm: React.FC = () => {
   useEffect(() => {
     const loadInitialDataProvider = async () => {
       try {
-        const providerData = await fetchProvidersByFilters(
-          selectedCategoryId || '',
-          selectedSubcategoryId || '',
-          selectedFilterAttributesId || '',
-          selectedFilterOptionId || ''
-        );
+        // Replace fetchProvidersByFilters with fetchAllProvidersWithoupagination
+        const providerData = await fetchAllProvidersWithoupagination();
         setProviders(
           providerData.map((provider: any) => ({
             id: provider.id,
-            name: `${provider.name}`,
+            name: `${provider.first_name} ${provider.last_name || ''}`,
           }))
         );
       } catch (error) {
-        toast({ variant: "error", title: "Error", description: "Failed to load initial data." });
+        toast({ variant: "error", title: "Error", description: "Failed to load providers." });
       }
     };
-  
+
     loadInitialDataProvider();
-  }, [selectedCategoryId, selectedSubcategoryId, selectedFilterAttributesId, selectedFilterOptionId]);
-  
- 
+  }, [toast]); // Remove the dependencies that were related to filters
+
+
 
   useEffect(() => {
     // Fetch addresses when a user is selected
@@ -280,7 +269,7 @@ const EditBookingForm: React.FC = () => {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
-  
+
     const bookingData: any = {
       service_date: serviceDate,
       service_time: serviceTime,
@@ -295,7 +284,7 @@ const EditBookingForm: React.FC = () => {
       delivery_address_id: deliveryAddressId, // Include selected delivery address
       status,
     };
-  
+
     // Add category or package-specific data based on selectionType
     if (selectionType === "Category") {
       bookingData.category_id = parseInt(selectedCategoryId) || null;
@@ -305,9 +294,9 @@ const EditBookingForm: React.FC = () => {
     } else if (selectionType === "Package") {
       bookingData.package_id = selectedPackageId ? parseInt(selectedPackageId) : null;
     }
-  
+
     try {
-      await updateBooking(bookingId!.toString(),  bookingData);
+      await updateBooking(bookingId!.toString(), bookingData);
 
       toast({
         variant: "success",
@@ -325,7 +314,7 @@ const EditBookingForm: React.FC = () => {
       setIsSubmitting(false);
     }
   };
-  
+
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
@@ -340,8 +329,8 @@ const EditBookingForm: React.FC = () => {
             <div className="flex items-center space-x-2">
               <div className="h-8 w-1 bg-blue-600 rounded-full" />
               <div>
-              <CardTitle>Update Booking</CardTitle>
-              <CardDescription>Fill in the details below to update </CardDescription>
+                <CardTitle>Update Booking</CardTitle>
+                <CardDescription>Fill in the details below to update </CardDescription>
               </div>
             </div>
           </CardHeader>
@@ -362,145 +351,145 @@ const EditBookingForm: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-             
+
 
 
               {selectionType === 'Category' && (
-  <div className="space-y-4">
-    {/* Category Selector */}
-    <div className="space-y-2">
-      <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-        <Globe2 className="w-4 h-4 text-blue-500" />
-        <span>Select Category</span>
-      </label>
-      <Select
-        value={selectedCategoryId}
-        onValueChange={(value) => setSelectedCategoryId(value)}
-      >
-        <SelectTrigger className="bg-white border-gray-200">
-          <SelectValue placeholder="Select a category" />
-        </SelectTrigger>
-        <SelectContent>
-          {categories.map((category) =>
-            category?.id && category?.name ? (
-              <SelectItem key={category.id} value={category.id.toString()}>
-                {category.name}
-              </SelectItem>
-            ) : null
-          )}
-        </SelectContent>
-      </Select>
-    </div>
+                <div className="space-y-4">
+                  {/* Category Selector */}
+                  <div className="space-y-2">
+                    <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                      <Globe2 className="w-4 h-4 text-blue-500" />
+                      <span>Select Category</span>
+                    </label>
+                    <Select
+                      value={selectedCategoryId}
+                      onValueChange={(value) => setSelectedCategoryId(value)}
+                    >
+                      <SelectTrigger className="bg-white border-gray-200">
+                        <SelectValue placeholder="Select a category" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {categories.map((category) =>
+                          category?.id && category?.name ? (
+                            <SelectItem key={category.id} value={category.id.toString()}>
+                              {category.name}
+                            </SelectItem>
+                          ) : null
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-    {/* Subcategory Selector */}
-    {subcategories.length > 0 && (
-      <div className="space-y-2">
-        <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-          <Globe2 className="w-4 h-4 text-blue-500" />
-          <span>Select Subcategory</span>
-        </label>
-        <Select
-          value={selectedSubcategoryId}
-          onValueChange={(value) => setSelectedSubcategoryId(value)}
-        >
-          <SelectTrigger className="bg-white border-gray-200">
-            <SelectValue placeholder="Select a subcategory" />
-          </SelectTrigger>
-          <SelectContent>
-            {subcategories.map((subcategory) =>
-              subcategory?.id && subcategory?.name ? (
-                <SelectItem key={subcategory.id} value={subcategory.id.toString()}>
-                  {subcategory.name}
-                </SelectItem>
-              ) : null
-            )}
-          </SelectContent>
-        </Select>
-      </div>
-    )}
+                  {/* Subcategory Selector */}
+                  {subcategories.length > 0 && (
+                    <div className="space-y-2">
+                      <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                        <Globe2 className="w-4 h-4 text-blue-500" />
+                        <span>Select Subcategory</span>
+                      </label>
+                      <Select
+                        value={selectedSubcategoryId}
+                        onValueChange={(value) => setSelectedSubcategoryId(value)}
+                      >
+                        <SelectTrigger className="bg-white border-gray-200">
+                          <SelectValue placeholder="Select a subcategory" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {subcategories.map((subcategory) =>
+                            subcategory?.id && subcategory?.name ? (
+                              <SelectItem key={subcategory.id} value={subcategory.id.toString()}>
+                                {subcategory.name}
+                              </SelectItem>
+                            ) : null
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
 
-    {/* Filter Attributes Selector */}
-    {filterAttributes.length > 0 && (
-      <div className="space-y-2">
-        <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-          <Globe2 className="w-4 h-4 text-blue-500" />
-          <span>Select Filter Attributes</span>
-        </label>
-        <Select
-          value={selectedFilterAttributesId}
-          onValueChange={(value) => setSelectedFilterAttributesId(value)}
-        >
-          <SelectTrigger className="bg-white border-gray-200">
-            <SelectValue placeholder="Select filter attributes" />
-          </SelectTrigger>
-          <SelectContent>
-            {filterAttributes.map((attribute) =>
-              attribute?.id && attribute?.name ? (
-                <SelectItem key={attribute.id} value={attribute.id.toString()}>
-                  {attribute.name}
-                </SelectItem>
-              ) : null
-            )}
-          </SelectContent>
-        </Select>
-      </div>
-    )}
+                  {/* Filter Attributes Selector */}
+                  {filterAttributes.length > 0 && (
+                    <div className="space-y-2">
+                      <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                        <Globe2 className="w-4 h-4 text-blue-500" />
+                        <span>Select Filter Attributes</span>
+                      </label>
+                      <Select
+                        value={selectedFilterAttributesId}
+                        onValueChange={(value) => setSelectedFilterAttributesId(value)}
+                      >
+                        <SelectTrigger className="bg-white border-gray-200">
+                          <SelectValue placeholder="Select filter attributes" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {filterAttributes.map((attribute) =>
+                            attribute?.id && attribute?.name ? (
+                              <SelectItem key={attribute.id} value={attribute.id.toString()}>
+                                {attribute.name}
+                              </SelectItem>
+                            ) : null
+                          )}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
 
-    {/* Filter Options Selector */}
-    {filterOptions.length > 0 && (
-      <div className="space-y-2">
-        <label className="text-sm font-medium text-gray-700">Select Filter Option</label>
-        <Select
-          value={selectedFilterOptionId}
-          onValueChange={(value) => setSelectedFilterOptionId(value)}
-        >
-          <SelectTrigger className="bg-white border-gray-200">
-            <SelectValue placeholder="Select a filter option" />
-          </SelectTrigger>
-          <SelectContent>
-            {filterOptions.map((option) => (
-              <SelectItem key={option.id} value={option.id!.toString()}>
-                {option.value}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-      </div>
-    )}
-  </div>
-)}
+                  {/* Filter Options Selector */}
+                  {filterOptions.length > 0 && (
+                    <div className="space-y-2">
+                      <label className="text-sm font-medium text-gray-700">Select Filter Option</label>
+                      <Select
+                        value={selectedFilterOptionId}
+                        onValueChange={(value) => setSelectedFilterOptionId(value)}
+                      >
+                        <SelectTrigger className="bg-white border-gray-200">
+                          <SelectValue placeholder="Select a filter option" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {filterOptions.map((option) => (
+                            <SelectItem key={option.id} value={option.id!.toString()}>
+                              {option.value}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+                </div>
+              )}
 
-{selectionType === 'Package' && (
-  <div className="space-y-4">
-    {/* Package Selector */}
-    <div className="space-y-2">
-      <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-        <Globe2 className="w-4 h-4 text-blue-500" />
-        <span>Select Package</span>
-      </label>
-      <Select
-        value={selectedPackageId} // State variable to track selected package
-        onValueChange={(value) => setSelectedPackageId(value)} // Update the state when a package is selected
-      >
-        <SelectTrigger className="bg-white border-gray-200">
-          <SelectValue placeholder="Select a package" />
-        </SelectTrigger>
-        <SelectContent>
-          {packages.map((pkg) =>
-            pkg?.id && pkg?.name ? (
-              <SelectItem key={pkg.id} value={pkg.id.toString()}>
-                {pkg.name}
-              </SelectItem>
-            ) : null
-          )}
-        </SelectContent>
-      </Select>
-    </div>
-  </div>
-)}
+              {selectionType === 'Package' && (
+                <div className="space-y-4">
+                  {/* Package Selector */}
+                  <div className="space-y-2">
+                    <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                      <Globe2 className="w-4 h-4 text-blue-500" />
+                      <span>Select Package</span>
+                    </label>
+                    <Select
+                      value={selectedPackageId} // State variable to track selected package
+                      onValueChange={(value) => setSelectedPackageId(value)} // Update the state when a package is selected
+                    >
+                      <SelectTrigger className="bg-white border-gray-200">
+                        <SelectValue placeholder="Select a package" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {packages.map((pkg) =>
+                          pkg?.id && pkg?.name ? (
+                            <SelectItem key={pkg.id} value={pkg.id.toString()}>
+                              {pkg.name}
+                            </SelectItem>
+                          ) : null
+                        )}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+              )}
 
 
-<div>
+              <div>
                 <label className="text-sm font-medium text-gray-700">Select User</label>
                 <Select value={String(userId)} onValueChange={(value) => setUserId(Number(value))}>
                   <SelectTrigger className="bg-white border-gray-200">
@@ -649,23 +638,23 @@ const EditBookingForm: React.FC = () => {
                 />
               </div>
 
-<div className="space-y-2">
-  <label className="text-sm font-medium text-gray-700">Status</label>
-  <select
-    name="status"
-    id="statusSelect"
-    className="form-control bg-white border-gray-200 p-2 rounded"
-    value={status}
-    onChange={(e) => setStatus(e.target.value)}
-  >
-    <option value="Completed">Completed</option>
-    <option value="Cancelled">Cancelled</option>
-    <option value="Pending">Pending</option>
-    <option value="Accepted">Accepted</option>
-    <option value="Running">Running</option>
-    <option value="Initiated">Initiated</option>
-  </select>
-</div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Status</label>
+                <select
+                  name="status"
+                  id="statusSelect"
+                  className="form-control bg-white border-gray-200 p-2 rounded"
+                  value={status}
+                  onChange={(e) => setStatus(e.target.value)}
+                >
+                  <option value="Completed">Completed</option>
+                  <option value="Cancelled">Cancelled</option>
+                  <option value="Pending">Pending</option>
+                  <option value="Accepted">Accepted</option>
+                  <option value="Running">Running</option>
+                  <option value="Initiated">Initiated</option>
+                </select>
+              </div>
 
 
               <div className="flex space-x-3 pt-6">

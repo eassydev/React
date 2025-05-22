@@ -12,7 +12,8 @@ import {
   Receipt,
   LucideIcon,
   PanelsTopLeft,
-  ListCheckIcon
+  ListCheckIcon,
+  CreditCard
 } from "lucide-react"
 
 export interface NavItem {
@@ -74,6 +75,14 @@ export const sidebarItems: SidebarItem[] = [
     title: "Live cart",
     icon: ListCheckIcon,
     route: `${basePath}/live-cart`,
+  },
+  {
+    title: "SP Payout",
+    icon: CreditCard,
+    children: [
+      { title: "Payout Details", route: `${basePath}/sp-payout` },
+      { title: "Transactions", route: `${basePath}/sp-payout/transactions` },
+    ],
   },
   {
     title: "Service",

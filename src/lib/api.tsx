@@ -3,8 +3,8 @@ import dotenv from "dotenv";
 dotenv.config();
 
 // Access environment variables
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-// const BASE_URL ='http://localhost:5001/admin-api';
+// const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+const BASE_URL ='http://localhost:5001/admin-api';
 
 // Set the base URL for your API
 // const BASE_URL = 'http://localhost:5001/admin';
@@ -39,7 +39,8 @@ const getToken = (): string | null => {
   if (typeof window !== 'undefined') {
     const token = localStorage.getItem('token');
     if (!token) {
-      window.location.href = '/auth/login'; // Redirect to login
+      // Don't redirect here to avoid infinite loops or incorrect redirects
+      // The interceptor will handle redirects for 401/403 responses
       return null;
     }
     return token;
@@ -366,8 +367,8 @@ export interface Banner {
   end_date?: string; // End date for banner visibility (ISO format: YYYY-MM-DD)
   add_to_cart?: boolean; // Flag to indicate if the banner is for a cart item
   hub_ids?: string[]; // Array of hub IDs associated with the banner
-  is_free: boolean; 
-  rate_card_id: string | null; 
+  is_free: boolean;
+  rate_card_id: string | null;
 }
 
 
@@ -483,8 +484,8 @@ export interface Promocode {
   is_active: boolean; // Indicates if the promocode is active
   provider_id: string; // ID of the associated provider
   image?: File; // Optional image file for the promocode
-  is_free: boolean; 
-  rate_card_id: string | null; 
+  is_free: boolean;
+  rate_card_id: string | null;
   category_ids?: string[]; // Array of addon category IDs
   categories?: string[]; // Array of addon category IDs
 
@@ -819,7 +820,7 @@ export const createCategory = async (category: Category): Promise<ApiResponse> =
   formData.append('locationType', category.location_type);
   formData.append('locationMethod', category.location_method);
   formData.append('locations', JSON.stringify(category.locations));
- 
+
   if (category.service_time !== null && category.service_time !== undefined) {
     formData.append('service_time', category.service_time.toString());
   }
@@ -910,7 +911,7 @@ export const updateCategory = async (id: string, category: Category): Promise<Ap
   formData.append('locationType', category.location_type);
   formData.append('locationMethod', category.location_method);
   formData.append('locations', JSON.stringify(category.locations));
- 
+
   if (category.service_time !== null && category.service_time !== undefined) {
     formData.append('service_time', category.service_time.toString());
   }
@@ -938,7 +939,7 @@ export const updateCategory = async (id: string, category: Category): Promise<Ap
     formData.append('attributes', JSON.stringify(attributes));
   }
 
- 
+
 
 
   // Exclude Items
@@ -1124,7 +1125,7 @@ export const fetchSubcategories = async (
 ) => {
   try {
     const token = getToken(); // Retrieve the token
-    
+
     // Prepare query parameters
     const params: Record<string, any> = {
       page,
@@ -1202,7 +1203,7 @@ export const fetchSubcategoryById = async (id: string): Promise<Subcategory> => 
 export const updateSubcategory = async (id: string, subcategory: Subcategory): Promise<ApiResponse> => {
   const formData = new FormData();
 
-  
+
   // Add required fields
   formData.append('name', subcategory.name);
   formData.append('category_id', subcategory.category_id.toString());
@@ -1213,7 +1214,7 @@ export const updateSubcategory = async (id: string, subcategory: Subcategory): P
   }
   if (subcategory.weight) {
     formData.append('weight', subcategory.weight?.toString());
-  } 
+  }
   if (subcategory.service_time !== null && subcategory.service_time !== undefined) {
     formData.append('service_time', subcategory.service_time.toString());
   }
@@ -1347,7 +1348,7 @@ export const fetchRateCards = async (
 ) => {
   try {
     const token = getToken();
-    
+
     // Prepare query parameters
     const params: Record<string, any> = {
       page,
@@ -1954,20 +1955,20 @@ export const fetchAllUsersWithouPagination = async (): Promise<User[]> => {
 export const searchUser = async (searchTerm: string, page = 1, size = 10): Promise<any> => {
   try {
     const token = getToken();
-    
+
     // Build query parameters
     const params = new URLSearchParams({
       search: searchTerm,
       page: page.toString(),
       size: size.toString()
     });
-    
+
     const response: AxiosResponse = await apiClient.get(`/user/search?${params.toString()}`, {
       headers: {
         "admin-auth-token": token || "",
       },
     });
-    
+
     // Check if the response has the expected structure
     if (response.data && response.data.status) {
       // Return both the data and metadata for pagination
@@ -2332,19 +2333,19 @@ export const restoreProvider = async (id: string): Promise<ApiResponse> => {
 // Function to create a new VIP plan
 export const createVIPPlan = async (vipPlan: VIPPlan): Promise<ApiResponse> => {
   const formData = new FormData();
-  
+
   formData.append("plan_name", vipPlan.plan_name);
   formData.append("price", vipPlan.price.toString());
-  
+
   // Optional discount price
   if (vipPlan.discount_price !== undefined) {
     formData.append("discount_price", vipPlan.discount_price.toString());
   }
-  
+
   formData.append("description", vipPlan.description);
   formData.append("validity_period", vipPlan.validity_period.toString());
   formData.append("status", vipPlan.status ? "0" : "1");
-  
+
   // New fields
   formData.append("platform_fees", vipPlan.platform_fees ? "1" : "0");
   formData.append("no_of_bookings", vipPlan.no_of_bookings.toString());
@@ -2412,12 +2413,12 @@ export const updateVIPPlan = async (id: string, vipPlan: VIPPlan): Promise<ApiRe
 
   formData.append("plan_name", vipPlan.plan_name);
   formData.append("price", vipPlan.price.toString());
-  
+
   // Optional discount price
   if (vipPlan.discount_price !== undefined) {
     formData.append("discount_price", vipPlan.discount_price.toString());
   }
-  
+
   formData.append("description", vipPlan.description);
   formData.append("validity_period", vipPlan.validity_period.toString());
   formData.append("status", vipPlan.status ? "0" : "1");
@@ -3757,7 +3758,7 @@ export const createNotification = async (notification: Notification) => {
   if (notification.recipients) formData.append("recipients", JSON.stringify(notification.recipients));
   formData.append("notification_type_id", notification.notification_type_id!.toString());
 
-  
+
   // const response = await apiClient.post("/notification", formData);
   const token = getToken();
 
@@ -4321,7 +4322,7 @@ export const createQuickService = async (data: QuickService): Promise<any> => {
   if (data.active !== undefined) {
     formData.append('active', data.active ? '0' : '1');
   }
- 
+
   try {
     const token = getToken();
     const response: AxiosResponse = await apiClient.post('/quick-service', formData, {
@@ -6921,7 +6922,7 @@ export const createServiceVideo = async (serviceVideo: Omit<ServiceVideo, 'video
     if (videoFile) {
       formData.append('video_file', videoFile);
     }
-   
+
 
     const response = await apiClient.post('/service-video', formData, {
       headers: {
@@ -6951,7 +6952,7 @@ export const updateServiceVideo = async (id: string, serviceVideo: Omit<ServiceV
     if (videoFile) {
       formData.append('video_file', videoFile);
     }
-   
+
 
     const response = await apiClient.put(`/service-video/${id}`, formData, {
       headers: {
@@ -6985,7 +6986,7 @@ export const deleteServiceVideo = async (id: string): Promise<any> => {
 
 // **Create a new Ratecard BOGO**
 export const createRatecardBogo = async (ratecardBogo: RatecardBogo): Promise<ApiResponse> => {
- 
+
   try {
     const token = getToken();
     const response: AxiosResponse<ApiResponse> = await apiClient.post('/ratecard-bogo', ratecardBogo, {
@@ -7036,7 +7037,7 @@ export const getRatecardBogoById = async (id: string): Promise<RatecardBogo> => 
 
 // **Update a Ratecard BOGO**
 export const updateRatecardBogo = async (id: string, ratecardBogo: RatecardBogo): Promise<ApiResponse> => {
-  
+
   const token = getToken();
   const response: AxiosResponse<ApiResponse> = await apiClient.put(`/ratecard-bogo/${id}`, ratecardBogo, {
     headers: {
@@ -7154,7 +7155,7 @@ export const createPackageDetail = async (packageDetail: PackageDetail) => {
     const formData = new FormData();
 
     formData.append("package_id", packageDetail.package_id);
-    
+
     packageDetail.details.forEach((detail, index) => {
       formData.append(`details[${index}][position]`, detail.position);
       formData.append(`details[${index}][title]`, detail.title);
@@ -7207,5 +7208,66 @@ export const exportBookings = async (startDate: string, endDate: string): Promis
   } catch (error) {
     console.error('Error exporting live cart:', error);
     throw new Error('Failed to export live cart');
+  }
+};
+
+
+
+// SP Payout API functions
+export const fetchPayoutsDetailed = async (page = 1, size = 10): Promise<any> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/payouts/detailed', {
+      params: { page, limit: size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    // Format the response to match our expected structure
+    return {
+      data: response.data.data.payouts,
+      meta: {
+        totalItems: response.data.data.pagination.total,
+        totalPages: response.data.data.pagination.totalPages,
+        currentPage: response.data.data.pagination.page,
+        pageSize: response.data.data.pagination.limit
+      }
+    };
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Failed to fetch payout details.');
+  }
+};
+
+
+// Fetch detailed payout by ID
+export const fetchPayoutById = async (id: string): Promise<any> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/payouts/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Failed to fetch payout details.');
+  }
+};
+
+// Update payout details
+export const updatePayout = async (id: string, data: any): Promise<any> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.patch(`/payouts/${id}`, data, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Failed to update payout details.');
   }
 };
