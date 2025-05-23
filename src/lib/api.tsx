@@ -1,13 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
-import dotenv from "dotenv";
-dotenv.config();
 
 // Access environment variables
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
-// const BASE_URL ='http://localhost:5001/admin-api';
-
-// Set the base URL for your API
-// const BASE_URL = 'http://localhost:5001/admin';
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/admin-api';
 
 // Initialize Axios instance with base URL
 const apiClient = axios.create({
@@ -2720,40 +2714,126 @@ export const updatePayout = async (id: string, data: any): Promise<any> => {
 // export const exportPayoutsToExcel = async (): Promise<void> => {
 //   try {
 //     const token = getToken();
-    
+
 //     const response: AxiosResponse = await apiClient.get('/payouts/export', {
 //       headers: {
 //         'admin-auth-token': token || '',
 //       },
 //       responseType: 'blob', // Treat the response as a binary file
 //     });
-    
+
 //     // Create a URL for the blob
 //     const url = window.URL.createObjectURL(new Blob([response.data]));
-    
+
 //     // Create a temporary link element
 //     const link = document.createElement('a');
 //     link.href = url;
-    
+
 //     // Set the filename from the Content-Disposition header or use a default
 //     const contentDisposition = response.headers['content-disposition'];
 //     const filename = contentDisposition
 //       ? contentDisposition.split('filename=')[1].replace(/"/g, '')
 //       : 'payouts-export.xlsx';
-    
+
 //     link.setAttribute('download', filename);
-    
+
 //     // Append to the document, click it, and remove it
 //     document.body.appendChild(link);
 //     link.click();
 //     document.body.removeChild(link);
-    
+
 //     // Clean up the URL object
 //     window.URL.revokeObjectURL(url);
 //   } catch (error: any) {
 //     throw new Error(error.response?.data?.error || 'Failed to export payouts.');
 //   }
 // };
+
+// Payout Transactions API functions
+export interface PayoutTransaction {
+  id: string;
+  booking_id: number;
+  provider_id: string;
+  razorpay_transfer_id: string;
+  amount: string;
+  status: "Success" | "Failed";
+  response_details: string;
+  created_at: string;
+  provider?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string;
+    linked_account_id?: string;
+  };
+  bookingItem?: {
+    id: number;
+    order_id: string;
+    rate_card_id: number;
+    booking_date: string;
+    booking_time_from: string;
+    booking_time_to: string;
+    status: string;
+    rateCard?: {
+      id: number;
+      name: string;
+      price: string;
+      category_id: number;
+      subcategory_id: number;
+      category?: {
+        id: number;
+        name: string;
+      };
+      subcategory?: {
+        id: number;
+        name: string;
+      };
+    };
+  };
+}
+
+// Fetch all payout transactions with pagination
+export const fetchPayoutTransactions = async (page = 1, size = 10): Promise<any> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/transactions', {
+      params: { page, limit: size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    // Format the response to match our expected structure
+    return {
+      data: response.data.data.transactions,
+      meta: {
+        totalItems: response.data.data.pagination.total,
+        totalPages: response.data.data.pagination.totalPages,
+        currentPage: response.data.data.pagination.page,
+        pageSize: response.data.data.pagination.limit
+      }
+    };
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Failed to fetch transaction details.');
+  }
+};
+
+// Fetch detailed transaction by ID
+export const fetchTransactionById = async (id: string): Promise<PayoutTransaction> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/transactions/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Failed to fetch transaction details.');
+  }
+};
 
 // Function to fetch a specific banner by ID
 export const getBanner = async (id: string | number): Promise<Banner> => {

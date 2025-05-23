@@ -10,9 +10,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/components/ui/use-toast";
 import { fetchPayoutById, updatePayout } from "@/lib/api";
-import { ArrowLeft, Save, X } from "lucide-react";
+import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
-import { format, parseISO, addHours } from "date-fns";
+import { format, addHours } from "date-fns";
 
 interface Provider {
   id: string;
@@ -79,6 +79,11 @@ export default function EditSpPayoutPage() {
           allow_transfer: data.allow_transfer || "no",
           notes: data.notes || ""
         });
+
+        // Automatically set editing mode if status is not "Paid"
+        if (data.payout_status !== "Paid") {
+          setIsEditing(true);
+        }
       } catch (error) {
         console.error("Error fetching payout details:", error);
         toast({
@@ -159,7 +164,10 @@ export default function EditSpPayoutPage() {
       newErrors.remaining_amount = "Remaining amount cannot be negative.";
       valid = false;
     } else if (payout && remainingAmount > (payout.total_payable - payout.settled_amount)) {
-      newErrors.remaining_amount = `Remaining amount cannot exceed ${(payout.total_payable - payout.settled_amount).toFixed(2)}.`;
+      const maxAmount = typeof payout.total_payable === 'number' && typeof payout.settled_amount === 'number'
+        ? (payout.total_payable - payout.settled_amount).toFixed(2)
+        : (payout.total_payable - payout.settled_amount);
+      newErrors.remaining_amount = `Remaining amount cannot exceed ${maxAmount}.`;
       valid = false;
     }
 
@@ -213,17 +221,8 @@ export default function EditSpPayoutPage() {
         description: "Payout updated successfully.",
       });
 
-      setIsEditing(false);
-
-      // Refresh the payout data
-      const updatedPayout = await fetchPayoutById(String(id));
-      setPayout(updatedPayout);
-      setFormData({
-        remaining_amount: updatedPayout.remaining_amount,
-        scheduled_transfer: updatedPayout.scheduled_transfer || "",
-        allow_transfer: updatedPayout.allow_transfer || "no",
-        notes: updatedPayout.notes || ""
-      });
+      // Redirect to the listing page after successful update
+      router.push("/admin/sp-payout");
     } catch (error: any) {
       console.error("Error updating payout:", error);
       toast({
@@ -236,7 +235,7 @@ export default function EditSpPayoutPage() {
     }
   };
 
-  const canEdit = payout && (payout.payout_status === "Not Initiated" || payout.payout_status === "Partially Paid");
+  // Check if fields should be editable based on payout status
 
   if (isLoading) {
     return (
@@ -267,42 +266,34 @@ export default function EditSpPayoutPage() {
             <h1 className="text-3xl font-bold text-gray-900">Payout Details</h1>
           </div>
 
-          {canEdit && !isEditing && (
-            <Button onClick={() => setIsEditing(true)}>
-              Edit Payout
-            </Button>
-          )}
-
-          {isEditing && (
-            <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsEditing(false)}
-                disabled={isSubmitting}
-              >
-                <X className="h-4 w-4 mr-2" />
-                Cancel
-              </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={isSubmitting}
-              >
-                {isSubmitting ? (
-                  <span className="flex items-center">
-                    <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Saving...
-                  </span>
-                ) : (
-                  <>
-                    <Save className="h-4 w-4 mr-2" />
-                    Save Changes
-                  </>
-                )}
-              </Button>
+          {payout && payout.payout_status === "Paid" ? (
+            <div className="bg-green-100 text-green-800 px-4 py-2 rounded-md text-sm">
+              This payout is already paid and cannot be edited
             </div>
+          ) : (
+            isEditing && (
+              <div className="flex space-x-2">
+                <Button
+                  onClick={handleSubmit}
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <span className="flex items-center">
+                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      </svg>
+                      Saving...
+                    </span>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save & Return
+                    </>
+                  )}
+                </Button>
+              </div>
+            )
           )}
         </div>
 
@@ -336,7 +327,7 @@ export default function EditSpPayoutPage() {
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Service Amount</Label>
-                  <div className="text-sm font-medium">₹{payout.service_amount.toFixed(2)}</div>
+                  <div className="text-sm font-medium">₹{typeof payout.service_amount === 'number' ? payout.service_amount.toFixed(2) : payout.service_amount}</div>
                 </div>
 
                 <div className="space-y-2">
@@ -346,32 +337,32 @@ export default function EditSpPayoutPage() {
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Commission Amount</Label>
-                  <div className="text-sm font-medium">₹{payout.commission_amount.toFixed(2)}</div>
+                  <div className="text-sm font-medium">₹{typeof payout.commission_amount === 'number' ? payout.commission_amount.toFixed(2) : payout.commission_amount}</div>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">TCS</Label>
-                  <div className="text-sm font-medium">₹{payout.base_tcs.toFixed(2)}</div>
+                  <div className="text-sm font-medium">₹{typeof payout.base_tcs === 'number' ? payout.base_tcs.toFixed(2) : payout.base_tcs}</div>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">TDS</Label>
-                  <div className="text-sm font-medium">₹{payout.base_tds.toFixed(2)}</div>
+                  <div className="text-sm font-medium">₹{typeof payout.base_tds === 'number' ? payout.base_tds.toFixed(2) : payout.base_tds}</div>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Base Payable</Label>
-                  <div className="text-sm font-medium">₹{payout.base_payable.toFixed(2)}</div>
+                  <div className="text-sm font-medium">₹{typeof payout.base_payable === 'number' ? payout.base_payable.toFixed(2) : payout.base_payable}</div>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Total Payable</Label>
-                  <div className="text-sm font-medium">₹{payout.total_payable.toFixed(2)}</div>
+                  <div className="text-sm font-medium">₹{typeof payout.total_payable === 'number' ? payout.total_payable.toFixed(2) : payout.total_payable}</div>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Settled Amount</Label>
-                  <div className="text-sm font-medium">₹{payout.settled_amount.toFixed(2)}</div>
+                  <div className="text-sm font-medium">₹{typeof payout.settled_amount === 'number' ? payout.settled_amount.toFixed(2) : payout.settled_amount}</div>
                 </div>
 
                 <div className="space-y-2">
@@ -424,7 +415,7 @@ export default function EditSpPayoutPage() {
                       )}
                     </div>
                   ) : (
-                    <div className="text-sm font-medium">₹{payout.remaining_amount.toFixed(2)}</div>
+                    <div className="text-sm font-medium">₹{typeof payout.remaining_amount === 'number' ? payout.remaining_amount.toFixed(2) : payout.remaining_amount}</div>
                   )}
                 </div>
 

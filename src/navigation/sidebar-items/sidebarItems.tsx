@@ -81,7 +81,7 @@ export const sidebarItems: SidebarItem[] = [
     icon: CreditCard,
     children: [
       { title: "Payout Details", route: `${basePath}/sp-payout` },
-      { title: "Transactions", route: `${basePath}/sp-payout/transactions` },
+      { title: "Transactions", route: `${basePath}/transactions` },
     ],
   },
   {
@@ -91,7 +91,7 @@ export const sidebarItems: SidebarItem[] = [
       { title: "Category", route: `${basePath}/category` },
        { title: "Sub category", route: `${basePath}/sub-category` },
        { title: "Segment", route: `${basePath}/segment` },
-       { title: "Service Video", route: `${basePath}/video` }, 
+       { title: "Service Video", route: `${basePath}/video` },
        { title: "Description", route: `${basePath}/description` },
        { title: "Nested Attributes ", route: `${basePath}/attribute-nested/add` }
       ],

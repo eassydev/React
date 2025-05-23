@@ -301,15 +301,30 @@ export default function SpPayoutPage() {
     {
       id: "actions",
       header: "Actions",
-      cell: ({ row }) => (
-        <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="icon">
-            <Link href={`/admin/sp-payout/edit/${row.original.id}`} passHref>
-              <Edit className="w-4 h-4 text-blue-600" />
-            </Link>
-          </Button>
-        </div>
-      ),
+      cell: ({ row }) => {
+        const payout = row.original;
+        const isPaid = payout.payout_status === "Paid";
+
+        return (
+          <div className="flex items-center space-x-2">
+            <Button variant="ghost" size="icon">
+              <Link href={`/admin/sp-payout/edit/${payout.id}`} passHref>
+                {isPaid ? (
+                  <div className="flex items-center">
+                    <span className="mr-1 text-xs">View</span>
+                    <Edit className="w-4 h-4 text-gray-600" />
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    <span className="mr-1 text-xs">Edit</span>
+                    <Edit className="w-4 h-4 text-blue-600" />
+                  </div>
+                )}
+              </Link>
+            </Button>
+          </div>
+        );
+      },
     },
   ];
 
