@@ -180,7 +180,9 @@ const AddBookingForm: React.FC = () => {
         setProviders(
           providerData.map((provider: any) => ({
             id: provider.id,
-            name: `${provider.name}`,
+            name: provider.name ?
+              `${provider.name}` :
+              `${provider.first_name} ${provider.last_name || ''} - ${provider.phone || 'No Phone'}`,
           }))
         );
       } catch (error) {

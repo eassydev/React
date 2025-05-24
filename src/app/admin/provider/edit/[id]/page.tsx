@@ -20,16 +20,17 @@ const EditProviderForm: React.FC = () => {
   const [gstNumber, setGstNumber] = useState<string>("");
   const [image, setImage] = useState<File | null>(null);
   const [panNumber, setPanNumber] = useState<string>("");
+  const [linkedAccountId, setLinkedAccountId] = useState<string>("");
   const [isActive, setIsActive] = useState<boolean>(true);
   const [rating, setRating] = useState<string>("0.0");
   const [country, setCountry] = useState<string>("");
   const [state, setState] = useState<string>("");
   const [city, setCity] = useState<string>("");
-    const [existingImage, setExistingImage] = useState<string>("");
-  
+  const [existingImage, setExistingImage] = useState<string>("");
+
   const [postalCode, setPostalCode] = useState<string>("");
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-const [gstError, setGstError] = useState("");
+  const [gstError, setGstError] = useState("");
   const [panError, setPanError] = useState("");
 
   const { toast } = useToast();
@@ -48,6 +49,7 @@ const [gstError, setGstError] = useState("");
         setCompanyName(providerData.company_name || "");
         setGstNumber(providerData.gst_number || "");
         setPanNumber(providerData.pan_number || "");
+        setLinkedAccountId(providerData.linked_account_id || "");
         if (typeof providerData.image === "string") {
           setExistingImage(providerData.image); // Set existing image URL
         } else {
@@ -77,7 +79,7 @@ const [gstError, setGstError] = useState("");
         setImage(e.target.files[0]);
       }
     };
-  
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -102,6 +104,7 @@ const [gstError, setGstError] = useState("");
       company_name: companyName,
       gst_number: gstNumber,
       pan_number: panNumber,
+      linked_account_id: linkedAccountId,
       active: isActive ? 0 : 1,
       rating: parseFloat(rating),
       country,
@@ -138,7 +141,7 @@ const [gstError, setGstError] = useState("");
       setGstError("");
     }
   };
-  
+
   const validatePAN = (value: string) => {
     const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
     setPanNumber(value); // Allow updating the input value
@@ -240,7 +243,7 @@ const [gstError, setGstError] = useState("");
                />
                {gstError && <p className="text-sm text-red-500">{gstError}</p>}
              </div>
-             
+
              {/* PAN Number */}
              <div className="space-y-2">
                <label className="text-sm font-medium text-gray-700">PAN Number</label>
@@ -250,6 +253,16 @@ const [gstError, setGstError] = useState("");
                  placeholder="Enter PAN number"
                />
                {panError && <p className="text-sm text-red-500">{panError}</p>}
+             </div>
+
+             {/* Linked Account ID */}
+             <div className="space-y-2">
+               <label className="text-sm font-medium text-gray-700">Razorpay Linked Account ID</label>
+               <Input
+                 value={linkedAccountId}
+                 onChange={(e) => setLinkedAccountId(e.target.value)}
+                 placeholder="Enter Razorpay linked account ID"
+               />
              </div>
 
               <div className="space-y-2">

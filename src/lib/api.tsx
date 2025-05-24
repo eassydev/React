@@ -278,6 +278,7 @@ export interface Provider {
   postal_code?: string;
   latitude?: number;
   longitude?: number;
+  linked_account_id?: string; // Razorpay linked account ID
 }
 
 
@@ -2148,7 +2149,7 @@ export const fetchAllProviders = async (page = 1, size = 10, status: string = "a
 
 
 // Function to fetch all banks
-export const fetchAllProvidersWithoupagination = async (): Promise<Provider[]> => {
+export const fetchAllProvidersWithoutpagination = async (): Promise<Provider[]> => {
   try {
     const token = getToken();
     const response: AxiosResponse<ApiResponse> = await apiClient.get('/provider/all', {

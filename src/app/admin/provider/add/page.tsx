@@ -20,6 +20,7 @@ const AddProviderForm: React.FC = () => {
   const [companyName, setCompanyName] = useState<string>("");
   const [gstNumber, setGstNumber] = useState<string>("");
   const [panNumber, setPanNumber] = useState<string>("");
+  const [linkedAccountId, setLinkedAccountId] = useState<string>("");
   const [isActive, setIsActive] = useState<boolean>(true);
   const [rating, setRating] = useState<string>("0.0");
   const [country, setCountry] = useState<string>("");
@@ -43,7 +44,7 @@ const AddProviderForm: React.FC = () => {
       setGstError("");
     }
   };
-  
+
   const validatePAN = (value: string) => {
     const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
     setPanNumber(value); // Allow updating the input value
@@ -53,8 +54,8 @@ const AddProviderForm: React.FC = () => {
       setPanError("");
     }
   };
-  
- 
+
+
 const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setImage(e.target.files[0]);
@@ -85,6 +86,7 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       company_name: companyName,
       gst_number: gstNumber,
       pan_number: panNumber,
+      linked_account_id: linkedAccountId,
       active: isActive ? 0 : 1,
       rating: parseFloat(rating),
       country,
@@ -92,7 +94,7 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
       city,
       postal_code: postalCode,
     };
-    
+
     try {
       await createProvider(newProvider);
       toast({
@@ -230,6 +232,16 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     placeholder="Enter PAN number"
   />
   {panError && <p className="text-sm text-red-500">{panError}</p>}
+</div>
+
+{/* Linked Account ID */}
+<div className="space-y-2">
+  <label className="text-sm font-medium text-gray-700">Razorpay Linked Account ID</label>
+  <Input
+    value={linkedAccountId}
+    onChange={(e) => setLinkedAccountId(e.target.value)}
+    placeholder="Enter Razorpay linked account ID"
+  />
 </div>
 
               {/* Country */}

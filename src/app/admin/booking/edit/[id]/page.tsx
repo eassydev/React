@@ -7,7 +7,7 @@ import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@
 import { useToast } from "@/hooks/use-toast";
 import { useRouter, usePathname } from "next/navigation";
 import { Save, FileText, Loader2, Type, Globe2 } from 'lucide-react';
-import { fetchAllCategories, fetchBookingById, updateBooking, fetchSubCategoriesByCategoryId, fetchAllUsersWithouPagination, fetchUserAddresses, fetchProvidersByFilters, fetchAllProvidersWithoupagination, Provider, Package, fetchFilterOptionsByAttributeId, fetchFilterAttributes, AttributeOption, createRateCard, Category, Subcategory, Attribute } from '@/lib/api';
+import { fetchAllCategories, fetchBookingById, updateBooking, fetchSubCategoriesByCategoryId, fetchAllUsersWithouPagination, fetchUserAddresses, fetchProvidersByFilters, fetchAllProvidersWithoutpagination, Provider, Package, fetchFilterOptionsByAttributeId, fetchFilterAttributes, AttributeOption, createRateCard, Category, Subcategory, Attribute } from '@/lib/api';
 
 
 const EditBookingForm: React.FC = () => {
@@ -194,11 +194,11 @@ const EditBookingForm: React.FC = () => {
         }
 
         if (booking.address_id) {
-          const providerData = await fetchAllProvidersWithoupagination();
+          const providerData = await fetchAllProvidersWithoutpagination();
           setProviders(
             providerData.map((provider: any) => ({
-              id: provider.id,
-              name: `${provider.first_name} ${provider.last_name || ''}`,
+              id: provider.id,              
+            name: `${provider.first_name} ${provider.last_name || ''} - ${provider.phone || 'No Phone'}`,
             }))
           );
         }
@@ -227,12 +227,12 @@ const EditBookingForm: React.FC = () => {
   useEffect(() => {
     const loadInitialDataProvider = async () => {
       try {
-        // Replace fetchProvidersByFilters with fetchAllProvidersWithoupagination
-        const providerData = await fetchAllProvidersWithoupagination();
+        // Replace fetchProvidersByFilters with fetchAllProvidersWithoutpagination
+        const providerData = await fetchAllProvidersWithoutpagination();
         setProviders(
           providerData.map((provider: any) => ({
             id: provider.id,
-            name: `${provider.first_name} ${provider.last_name || ''}`,
+            name: `${provider.first_name} ${provider.last_name || ''} - ${provider.phone || 'No Phone'}`,
           }))
         );
       } catch (error) {
