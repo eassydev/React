@@ -7452,3 +7452,195 @@ export const exportBookings = async (startDate: string, endDate: string): Promis
 //     throw new Error(error.response?.data?.error || 'Failed to update payout details.');
 //   }
 // };
+
+// ===== FEEDBACK/BOOKING EXPERIENCE API FUNCTIONS =====
+
+export interface BookingFeedback {
+  id: string;
+  sampleid: string;
+  user_id: string;
+  booking_id: string;
+  provider_id: string;
+  category_id: string;
+  subcategory_id: string;
+  package_id: string;
+  app: string;
+  rating: number;
+  comment: string;
+  status: string;
+  created_at: string;
+  updated_at: string;
+  deleted_at: string;
+  created_at_formatted: string;
+  updated_at_formatted: string;
+  user?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    email: string;
+    mobile: string;
+    country_code: string;
+  };
+  booking?: {
+    id: string;
+    order_id: string;
+    booking_date: string;
+    status: string;
+    total_amount: number;
+  };
+  provider?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    mobile: string;
+  };
+  category?: {
+    id: string;
+    name: string;
+  };
+  subcategory?: {
+    id: string;
+    name: string;
+  };
+  package?: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface BookingFeedbackResponse {
+  status: boolean;
+  data: BookingFeedback[];
+  totalItems: number;
+  totalPages: number;
+  currentPage: number;
+  pageSize: number;
+  filters: {
+    search: string;
+    rating: string;
+    startDate: string;
+    endDate: string;
+  };
+}
+
+// Fetch all booking feedback with pagination and filters
+export const fetchBookingFeedback = async (
+  page = 1,
+  size = 10,
+  filters: {
+    search?: string;
+    rating?: string;
+    startDate?: string;
+    endDate?: string;
+  } = {}
+): Promise<BookingFeedbackResponse> => {
+  try {
+    const token = getToken();
+
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Add filters if provided
+    if (filters.search?.trim()) {
+      params.search = filters.search.trim();
+    }
+
+    if (filters.rating && filters.rating !== "all") {
+      params.rating = filters.rating;
+    }
+
+    if (filters.startDate?.trim()) {
+      params.startDate = filters.startDate.trim();
+    }
+
+    if (filters.endDate?.trim()) {
+      params.endDate = filters.endDate.trim();
+    }
+
+    const response: AxiosResponse<BookingFeedbackResponse> = await apiClient.get("/feedback", {
+      params,
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error("Error fetching booking feedback:", error);
+    throw new Error(error.response?.data?.message || "Failed to fetch booking feedback");
+  }
+};
+
+// Fetch a single booking feedback by ID
+export const fetchBookingFeedbackById = async (id: string): Promise<BookingFeedback> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<{ status: boolean; data: BookingFeedback }> = await apiClient.get(`/feedback/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error('Failed to fetch booking feedback.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch booking feedback.");
+  }
+};
+
+// Delete booking feedback
+export const deleteBookingFeedback = async (id: string): Promise<void> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.delete(`/feedback/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (!response.data.status) {
+      throw new Error(response.data.message || 'Failed to delete booking feedback.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete booking feedback.');
+  }
+};
+
+// Export booking feedback to Excel
+export const exportBookingFeedback = async (startDate?: string, endDate?: string): Promise<void> => {
+  try {
+    const token = getToken();
+
+    const params: Record<string, any> = {};
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+
+    const response: AxiosResponse = await apiClient.get('/feedback/export', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      params,
+      responseType: 'blob', // Treat the response as a binary file
+    });
+
+    // Create a blob URL and trigger download
+    const blob = new Blob([response.data], {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `booking_feedback_${new Date().toISOString().split('T')[0]}.xlsx`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to export booking feedback.');
+  }
+};

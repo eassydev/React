@@ -13,7 +13,8 @@ import {
   LucideIcon,
   PanelsTopLeft,
   ListCheckIcon,
-  CreditCard
+  CreditCard,
+  Star
 } from "lucide-react"
 
 export interface NavItem {
@@ -144,6 +145,11 @@ export const sidebarItems: SidebarItem[] = [
     title: "Booking",
     icon: ListCheckIcon,
     route: `${basePath}/booking`,
+  },
+  {
+    title: "Booking Feedback",
+    icon: Star,
+    route: `${basePath}/booking-experience`,
   },
   {
     title: "Customer",
