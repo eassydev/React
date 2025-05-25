@@ -14,12 +14,14 @@ import { fetchAllCategories, createBooking, fetchSubCategoriesByCategoryId, fetc
 declare global {
   interface Window {
     searchTimeout: NodeJS.Timeout | null;
+    providerSearchTimeout: NodeJS.Timeout | null;
   }
 }
 
-// Initialize the timeout
+// Initialize the timeouts
 if (typeof window !== 'undefined') {
   window.searchTimeout = null;
+  window.providerSearchTimeout = null;
 }
 
 const AddBookingForm: React.FC = () => {
@@ -46,7 +48,7 @@ const AddBookingForm: React.FC = () => {
   const [filterOptions, setFilterOptions] = useState<AttributeOption[]>([]);
   const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>('');
   const [packages, setPackages] = useState<Package[]>([]);
-  const [userId, setUserId] = useState<number | null>(null);
+  const [userId, setUserId] = useState<string | null>(null); // Store encrypted ID
   // Update the state to include more user details
   const [users, setUsers] = useState<SearchUserResult[]>([]);
   // Update the selectedUser state type
@@ -57,11 +59,16 @@ const AddBookingForm: React.FC = () => {
     displayId?: string;
   } | null>(null);
   const [userSearchTerm, setUserSearchTerm] = useState<string>("");
-  const [providerId, setProviderId] = useState<number | null>(null);
-  const [providers, setProviders] = useState<{ id: number; name: string }[]>([]);
+  const [providerId, setProviderId] = useState<string | null>(null); // Store encrypted ID
+  const [providers, setProviders] = useState<{ id: string; sampleid: number; name: string }[]>([]); // id encrypted, sampleid decrypted
+  const [providerSearchTerm, setProviderSearchTerm] = useState<string>('');
+  const [providerPage, setProviderPage] = useState<number>(1);
+  const [hasMoreProviders, setHasMoreProviders] = useState<boolean>(false);
+  const [isLoadingProviders, setIsLoadingProviders] = useState<boolean>(false);
+  const [isLoadingMoreProviders, setIsLoadingMoreProviders] = useState<boolean>(false);
   // const [users, setUsers] = useState<{ id: number; name: string }[]>([]);
-  const [addresses, setAddresses] = useState<{ id: number; full_address: string }[]>([]);
-  const [deliveryAddressId, setDeliveryAddressId] = useState<number | null>(null);
+  const [addresses, setAddresses] = useState<{ id: string; sampleid: number; full_address: string }[]>([]);
+  const [deliveryAddressId, setDeliveryAddressId] = useState<string | null>(null); // Store encrypted ID
 
   // Add these state variables for pagination
   const [searchPage, setSearchPage] = useState<number>(1);
@@ -168,39 +175,88 @@ const AddBookingForm: React.FC = () => {
   }, [toast]);
 
 
-  useEffect(() => {
-    const loadInitialDataProvider = async () => {
-      try {
-        const providerData = await fetchProvidersByFilters(
-          selectedCategoryId || '',
-          selectedSubcategoryId || '',
-          selectedFilterAttributesId || '',
-          selectedFilterOptionId || ''
-        );
-        setProviders(
-          providerData.map((provider: any) => ({
-            id: provider.id,
-            name: provider.name ?
-              `${provider.name}` :
-              `${provider.first_name} ${provider.last_name || ''} - ${provider.phone || 'No Phone'}`,
-          }))
-        );
-      } catch (error) {
-        toast({ variant: "error", title: "Error", description: "Failed to load initial data." });
+  // Load providers with pagination and search support
+  const loadProviders = useCallback(async (page = 1, search = '', append = false) => {
+    try {
+      if (page === 1) {
+        setIsLoadingProviders(true);
+      } else {
+        setIsLoadingMoreProviders(true);
       }
-    };
 
-    loadInitialDataProvider();
+      console.log('Loading providers with fetchProvidersByFilters...', { page, search });
+
+      // Use the updated API function with pagination and search
+      const result = await fetchProvidersByFilters(
+        selectedCategoryId || '',
+        selectedSubcategoryId || '',
+        selectedFilterAttributesId || '',
+        selectedFilterOptionId || '',
+        page,
+        50,
+        search
+      );
+
+      if (result.data) {
+        const formattedProviders = result.data.map((provider: any) => ({
+          id: provider.id, // Encrypted ID
+          sampleid: provider.sampleid, // Decrypted ID for selection
+          name: provider.company_name || provider.name || `${provider.first_name} ${provider.last_name || ''} - ${provider.phone || 'No Phone'}`,
+        }));
+
+        if (append) {
+          setProviders(prev => [...prev, ...formattedProviders]);
+        } else {
+          setProviders(formattedProviders);
+        }
+
+        // Update pagination state
+        setHasMoreProviders(result.meta?.hasMore || false);
+        setProviderPage(page);
+
+        console.log(`Loaded ${formattedProviders.length} providers - Page ${page}`);
+      }
+    } catch (error) {
+      console.error('Error loading providers:', error);
+      if (!append) {
+        setProviders([]);
+      }
+    } finally {
+      setIsLoadingProviders(false);
+      setIsLoadingMoreProviders(false);
+    }
   }, [selectedCategoryId, selectedSubcategoryId, selectedFilterAttributesId, selectedFilterOptionId]);
+
+  // Load providers when filters change
+  useEffect(() => {
+    setProviderPage(1);
+    setProviders([]);
+    loadProviders(1, providerSearchTerm);
+  }, [selectedCategoryId, selectedSubcategoryId, selectedFilterAttributesId, selectedFilterOptionId, loadProviders]);
+
+  // Handle provider search
+  const handleProviderSearch = useCallback((searchTerm: string) => {
+    setProviderSearchTerm(searchTerm);
+    setProviderPage(1);
+    setProviders([]);
+    loadProviders(1, searchTerm);
+  }, [loadProviders]);
+
+  // Load more providers
+  const loadMoreProviders = useCallback(() => {
+    if (hasMoreProviders && !isLoadingMoreProviders) {
+      loadProviders(providerPage + 1, providerSearchTerm, true);
+    }
+  }, [hasMoreProviders, isLoadingMoreProviders, providerPage, providerSearchTerm, loadProviders]);
 
 
 
   useEffect(() => {
     // Fetch addresses when a user is selected
-    if (userId) {
+    if (userId && selectedUser) {
       const loadAddresses = async () => {
         try {
-          const addressData = await fetchUserAddresses(userId);
+          const addressData = await fetchUserAddresses(selectedUser.id); // Use decrypted ID for API call
           setAddresses(addressData); // addressData is already mapped in fetchUserAddresses
         } catch (error: any) {
           toast({
@@ -264,7 +320,8 @@ const AddBookingForm: React.FC = () => {
         setHasMoreResults(hasMore);
 
         const formattedUsers: SearchUserResult[] = userData.map((user: any) => ({
-          id: user.id,
+          id: user.id, // Encrypted ID (for reference)
+          sampleid: user.sampleid, // Decrypted ID (for selection)
           first_name: user.first_name,
           last_name: user.last_name,
           mobile: user.mobile,
@@ -304,12 +361,12 @@ const AddBookingForm: React.FC = () => {
 
   // Update the handleUserSelect function
   const handleUserSelect = useCallback((user: SearchUserResult) => {
-    setUserId(user.id);
+    setUserId(user.id); // Use encrypted ID for backend
     setSelectedUser({
-      id: user.id,
+      id: user.sampleid || 0, // Use decrypted sampleid for display
       name: user.name || `${user.first_name || ''} ${user.last_name || ''}`,
       mobile: user.mobile,
-      displayId: user.displayId || user.sampleid || user.id.toString()
+      displayId: user.displayId || user.sampleid?.toString() || user.id.toString()
     });
 
     // Clear search state after a short delay
@@ -370,17 +427,25 @@ const AddBookingForm: React.FC = () => {
       user_id: userId, // Include selected user
       provider_id: providerId, // Include selected provider
       delivery_address_id: deliveryAddressId, // Include selected delivery address
+      selection_type: selectionType, // Include selection type
     };
 
     // Add category or package-specific data based on selectionType
     if (selectionType === "Category") {
-      bookingData.category_id = parseInt(selectedCategoryId) || null;
-      bookingData.subcategory_id = selectedSubcategoryId ? parseInt(selectedSubcategoryId) : null;
-      bookingData.filter_attribute_id = selectedFilterAttributesId ? parseInt(selectedFilterAttributesId) : null;
-      bookingData.filter_option_id = selectedFilterOptionId ? parseInt(selectedFilterOptionId) : null;
+      // Send encrypted IDs directly to backend (don't use parseInt on encrypted strings)
+      bookingData.category_id = selectedCategoryId || null;
+      bookingData.subcategory_id = selectedSubcategoryId || null;
+      bookingData.filter_attribute_id = selectedFilterAttributesId || null;
+      bookingData.filter_option_id = selectedFilterOptionId || null;
+
+      // Debug logging
+      console.log('Frontend Debug - selectedCategoryId:', selectedCategoryId);
+      console.log('Frontend Debug - bookingData.category_id:', bookingData.category_id);
     } else if (selectionType === "Package") {
-      bookingData.package_id = selectedPackageId ? parseInt(selectedPackageId) : null;
+      bookingData.package_id = selectedPackageId || null;
     }
+
+    console.log('Frontend Debug - Final bookingData:', bookingData);
 
     try {
       await createBooking(bookingData);
@@ -632,7 +697,7 @@ const AddBookingForm: React.FC = () => {
                               <div className="flex flex-col">
                                 <div className="font-medium">{user.name}</div>
                                 <div className="text-xs text-gray-500 flex justify-between">
-                                  <span>ID: {user.displayId || user.id}</span>
+                                  <span>ID: {user.sampleid || user.displayId || user.id}</span>
                                   <span>Mobile: {user.mobile}</span>
                                 </div>
                               </div>
@@ -693,41 +758,129 @@ const AddBookingForm: React.FC = () => {
 
 
 
-              {/* <div>
+              {/* Provider Search and Selection */}
+              <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Select Provider</label>
-                <Select value={String(providerId)} onValueChange={(value) => setProviderId(Number(value))}>
-                  <SelectTrigger className="bg-white border-gray-200">
-                    <SelectValue placeholder="Select Provider" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {providers.map((provider) => (
-                      <SelectItem key={provider.id} value={String(provider.id)}>
-                        {provider.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div> */}
+
+                {/* Provider Search Input */}
+                <div className="relative">
+                  <Input
+                    type="text"
+                    placeholder="Search providers by name, company, or phone..."
+                    value={providerSearchTerm}
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      setProviderSearchTerm(value);
+
+                      // Debounce search
+                      if (window.providerSearchTimeout) {
+                        clearTimeout(window.providerSearchTimeout);
+                      }
+
+                      window.providerSearchTimeout = setTimeout(() => {
+                        handleProviderSearch(value);
+                      }, 500);
+                    }}
+                    className="bg-white border-gray-200"
+                  />
+                  {isLoadingProviders && (
+                    <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                      <Loader2 className="h-4 w-4 animate-spin text-gray-400" />
+                    </div>
+                  )}
+                </div>
+
+                {/* Provider Results */}
+                {providers.length > 0 && (
+                  <div className="border border-gray-200 rounded-md bg-white max-h-60 overflow-y-auto">
+                    <div className="p-2">
+                      <div className="text-xs text-gray-500 mb-2">
+                        {providers.length} provider{providers.length !== 1 ? 's' : ''} found
+                      </div>
+
+                      {providers.map((provider) => (
+                        <div
+                          key={provider.id}
+                          className={`p-2 rounded cursor-pointer hover:bg-gray-50 border-b border-gray-100 last:border-b-0 ${
+                            providerId === provider.id ? 'bg-blue-50 border-blue-200' : ''
+                          }`}
+                          onClick={() => setProviderId(provider.id)}
+                        >
+                          <div className="font-medium text-sm">{provider.name}</div>
+                          <div className="text-xs text-gray-500">ID: {provider.sampleid}</div>
+                        </div>
+                      ))}
+
+                      {/* Load More Button */}
+                      {hasMoreProviders && (
+                        <div className="pt-2 border-t border-gray-100">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={loadMoreProviders}
+                            disabled={isLoadingMoreProviders}
+                            className="w-full"
+                          >
+                            {isLoadingMoreProviders ? (
+                              <div className="flex items-center space-x-2">
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                <span>Loading more...</span>
+                              </div>
+                            ) : (
+                              <span>Load More Providers</span>
+                            )}
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Selected Provider Display */}
+                {providerId && (
+                  <div className="p-2 bg-green-50 rounded-md">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium text-sm">Selected Provider</span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setProviderId(null)}
+                      >
+                        Clear
+                      </Button>
+                    </div>
+                    <div className="mt-1 text-sm">
+                      <div><strong>Name:</strong> {providers.find(p => p.id === providerId)?.name}</div>
+                      <div><strong>ID:</strong> {providers.find(p => p.id === providerId)?.sampleid}</div>
+                    </div>
+                  </div>
+                )}
+              </div>
 
 
               {userId && (
                 <div>
                   <label className="text-sm font-medium text-gray-700">Delivery Address</label>
                   <Select
-                    value={String(deliveryAddressId)}
-                    onValueChange={(value) => setDeliveryAddressId(Number(value))}
+                    value={deliveryAddressId || ""}
+                    onValueChange={(value) => setDeliveryAddressId(value || null)}
                   >
                     <SelectTrigger className="bg-white border-gray-200">
                       <SelectValue placeholder="Select Address" />
                     </SelectTrigger>
                     <SelectContent>
                       {addresses.map((address) => (
-                        <SelectItem key={address.id} value={String(address.id)}>
+                        <SelectItem key={address.id} value={address.id}>
                           {address.full_address}
                         </SelectItem>
                       ))}
                     </SelectContent>
                   </Select>
+                  {deliveryAddressId && (
+                    <div className="mt-1 text-sm text-gray-600">
+                      Selected Address ID: {addresses.find(a => a.id === deliveryAddressId)?.sampleid}
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -779,49 +932,45 @@ const AddBookingForm: React.FC = () => {
 
               {/* Razorpay Order ID */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Razorpay Order ID</label>
+                <label className="text-sm font-medium text-gray-700">Razorpay Order ID (Optional)</label>
                 <Input
                   type="text"
-                  placeholder="Enter Razorpay order ID"
+                  placeholder="Enter Razorpay order ID (optional)"
                   value={razorpayOrderId}
                   onChange={(e) => setRazorpayOrderId(e.target.value)}
-                  required
                 />
               </div>
 
               {/* Invoice Number */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Invoice Number</label>
+                <label className="text-sm font-medium text-gray-700">Invoice Number (Optional)</label>
                 <Input
                   type="text"
-                  placeholder="Enter invoice number"
+                  placeholder="Enter invoice number (auto-generated if empty)"
                   value={invoiceNumber}
                   onChange={(e) => setInvoiceNumber(e.target.value)}
-                  required
                 />
               </div>
 
               {/* Advance Receipt Number */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Advance Receipt Number</label>
+                <label className="text-sm font-medium text-gray-700">Advance Receipt Number (Optional)</label>
                 <Input
                   type="text"
-                  placeholder="Enter advance receipt number"
+                  placeholder="Enter advance receipt number (auto-generated if empty)"
                   value={advanceReceiptNumber}
                   onChange={(e) => setAdvanceReceiptNumber(e.target.value)}
-                  required
                 />
               </div>
 
               {/* Transaction ID */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Transaction ID</label>
+                <label className="text-sm font-medium text-gray-700">Transaction ID (Optional)</label>
                 <Input
                   type="text"
-                  placeholder="Enter transaction ID"
+                  placeholder="Enter transaction ID (optional)"
                   value={transactionId}
                   onChange={(e) => setTransactionId(e.target.value)}
-                  required
                 />
               </div>
 

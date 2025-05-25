@@ -2083,7 +2083,10 @@ export const fetchProvidersByFilters = async (
   categoryId?: any,
   subcategoryId?: any,
   filterAttributeId?: any,
-  filterOptionId?: any
+  filterOptionId?: any,
+  page: number = 1,
+  size: number = 50,
+  search?: string
 ) => {
   try {
     const token = getToken();
@@ -2096,10 +2099,13 @@ export const fetchProvidersByFilters = async (
          subcategoryId,
          filterAttributeId,
          filterOptionId,
+         page,
+         size,
+         search,
       },
     });
     if (response.data.status) {
-      return response.data.data;
+      return response.data; // Return full response including meta
     } else {
       throw new Error(response.data.message || 'Failed to fetch providers.');
     }
@@ -3461,7 +3467,7 @@ export const restoreGstRate = async (id: string): Promise<ApiResponse> => {
 
 
 // Function to fetch delivery addresses by user ID
-export const fetchUserAddresses = async (userId: number): Promise<{ id: number; full_address: string }[]> => {
+export const fetchUserAddresses = async (userId: number): Promise<{ id: string; sampleid: number; full_address: string }[]> => {
   try {
     const token = getToken();
     const response: AxiosResponse<ApiResponse> = await apiClient.get(`user/${userId}/addresses`, {
@@ -3472,9 +3478,10 @@ export const fetchUserAddresses = async (userId: number): Promise<{ id: number; 
 
     if (response?.data?.status && Array.isArray(response.data.data)) {
       return response.data.data.map((address: any) => {
-        const { id, street_address, city, state, postal_code } = address;
+        const { id, sampleid, street_address, city, state, postal_code } = address;
         return {
-          id,
+          id, // Encrypted ID
+          sampleid, // Decrypted ID for selection
           full_address: `${street_address || ""}, ${city || ""}, ${state || ""}, ${postal_code || ""}`.replace(/,\s*$/, ""),
         };
       });

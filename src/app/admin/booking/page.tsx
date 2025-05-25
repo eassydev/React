@@ -233,11 +233,14 @@ const BookingList = () => {
     { accessorKey: 'user.first_name', header: 'User' },
     { accessorKey: 'user.mobile', header: 'Customer Mobile' },
     {
-      accessorFn: (row) => row.rateCard?.provider?.first_name || 'N/A',
+      accessorFn: (row) => {
+        const provider = row.provider;
+        return provider ? `${provider.first_name} ${provider.last_name || ''}`.trim() : 'N/A';
+      },
       header: 'Provider'
     },
     {
-      accessorFn: (row) => row.rateCard?.provider?.phone || 'N/A',
+      accessorFn: (row) => row.provider?.phone || 'N/A',
       header: 'Provider Mobile'
     },
     {
