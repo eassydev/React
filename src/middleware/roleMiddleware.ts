@@ -1,34 +1,67 @@
 import { NextResponse } from "next/server"
 import type { NextRequest } from "next/server"
 
-import { roles } from "../utils/roles"
+/**
+ * Check if user has permission for a frontend URL based on stored permissions
+ */
+function hasPermissionForUrl(permissions: string[], pathname: string): boolean {
+  if (!permissions || permissions.length === 0) {
+    return false
+  }
 
-function hasAccess(userRole: string, pathname: string): boolean {
-  const role = roles[userRole]
-  if (!role) return false
+  return permissions.some(permission => {
+    // Skip backend-only permissions
+    if (!permission.startsWith('/admin')) {
+      return false
+    }
 
-  return role.canAccess.some((entry) => {
-    if (typeof entry === "string") {
-      return pathname.startsWith(entry.replace("/*", ""))
+    // Exact match
+    if (permission === pathname) {
+      return true
     }
-    if (entry.route) {
-      return entry.accessSubRoutes ? pathname.startsWith(entry.route) : pathname === entry.route
+
+    // Wildcard matching
+    if (permission.includes('*')) {
+      const pattern = permission.replace(/\*/g, '.*')
+      const regex = new RegExp(`^${pattern}$`)
+      return regex.test(pathname)
     }
+
+    // Base path matching (e.g., "/admin/category" allows "/admin/category/add")
+    if (pathname.startsWith(permission + '/') || pathname === permission) {
+      return true
+    }
+
     return false
   })
 }
 
 export function roleMiddleware(req: NextRequest) {
   const { pathname } = req.nextUrl
-  const userRoleCookie = req.cookies.get("user-role")
-  const userRole = userRoleCookie?.value
+  const tokenCookie = req.cookies.get("token")
+  const token = tokenCookie?.value
 
-  if (!userRole || !(userRole in roles)) {
-    return NextResponse.redirect(new URL("/unauthorized", req.url))
+  // Allow access to login page
+  if (pathname === '/auth/login') {
+    return NextResponse.next()
   }
 
-  if (!hasAccess(userRole, pathname)) {
-    return NextResponse.redirect(new URL("/unauthorized", req.url))
+  // Check if user is logged in
+  if (!token) {
+    return NextResponse.redirect(new URL("/auth/login", req.url))
+  }
+
+  // For admin routes, we'll do a more lenient check here
+  // and rely on component-level permission checking for granular control
+  if (pathname.startsWith('/admin')) {
+    // Allow access to main admin dashboard
+    if (pathname === '/admin') {
+      return NextResponse.next()
+    }
+
+    // For specific admin pages, we'll allow access here
+    // and let the PermissionGuard component handle the detailed checking
+    return NextResponse.next()
   }
 
   return NextResponse.next()

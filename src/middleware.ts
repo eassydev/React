@@ -4,17 +4,17 @@ import { authMiddleware } from "./middleware/authMiddleware"
 import { roleMiddleware } from "./middleware/roleMiddleware"
 
 export function middleware(req: NextRequest) {
-  // authMiddleware
-  // const response = authMiddleware(req)
-  // if (response) {
-  //   return response
-  // }
+  // authMiddleware - Check if user is logged in
+  const response = authMiddleware(req)
+  if (response) {
+    return response
+  }
 
-  // roleMiddleware
-  // const roleResponse = roleMiddleware(req)
-  // if (roleResponse) {
-  //   return roleResponse
-  // }
+  // roleMiddleware - Check if user has permission for the route
+  const roleResponse = roleMiddleware(req)
+  if (roleResponse) {
+    return roleResponse
+  }
 
   return NextResponse.next()
 }
