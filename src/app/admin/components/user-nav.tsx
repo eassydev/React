@@ -10,8 +10,9 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { logout } from "@/lib/api"; // Import logout API function
-import { useRouter, useParams } from "next/navigation";
+import { logout } from "@/lib/auth"; // Import logout from auth library
+import { tokenUtils } from "@/lib/utils"; // Import token utilities
+import { useRouter } from "next/navigation";
 
 export function UserNav() {
   const router = useRouter();
@@ -19,10 +20,13 @@ export function UserNav() {
   const handleLogout = async () => {
     try {
       await logout(); // Call the logout API
-      localStorage.removeItem("token"); // Clear the auth token from storage
+      tokenUtils.remove(); // Clear tokens from both localStorage and cookies
       router.push("/auth/login"); // Redirect to login page
     } catch (error) {
-      console.error("Logout failed:");
+      console.error("Logout failed:", error);
+      // Even if logout API fails, clear local tokens and redirect
+      tokenUtils.remove();
+      router.push("/auth/login");
     }
   };
 
