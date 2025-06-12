@@ -718,6 +718,52 @@ export interface RatecardBogo {
   bogo_rate_card_id: string;
   is_active: boolean;
 }
+
+export interface Course {
+  id?: string; // Optional for editing (encrypted ID)
+  title: string; // Course title
+  description?: string; // Optional course description
+  module_type: 'beginner' | 'advanced'; // Type of module
+  video_url?: File | null; // Optional video file input for upload
+  length_in_minutes: number; // Total course length in minutes
+  category_id: string; // Encrypted category ID
+  is_active?: boolean; // Optional: for admin control
+  created_at?: string; // Optional: timestamp when created
+  updated_at?: string; // Optional: timestamp when updated
+}
+
+
+export interface Badge {
+  id?: string; // Optional: encrypted ID for editing
+  name: string; // Badge name
+  image?: File | string | null; // Image file (for upload) or URL (from DB)
+  total_course: number; // Number of courses required for this badge
+  next_badge_time?: number | null; // Optional: Time/days until next badge
+  is_active?: boolean; // Optional: Admin toggle
+  created_at?: string; // Optional: Timestamp
+  updated_at?: string; // Optional: Timestamp
+}
+
+
+export interface CourseQuizQuestion {
+  id?: string;
+  question_text: string;
+  option_1: string;
+  option_2: string;
+  option_3: string;
+  option_4: string;
+  correct_answer: 'option_1' | 'option_2' | 'option_3' | 'option_4';
+}
+
+export interface CourseQuiz {
+  id?: string;
+  category_id: string;
+  course_id: string;
+  quiz_text?: string;
+  is_active?: boolean;
+  questions: CourseQuizQuestion[];
+}
+
 // Define the structure of the API response
 interface ApiResponse {
   status: boolean;
@@ -2233,6 +2279,30 @@ export const fetchProviderById = async (id: string): Promise<Provider> => {
     throw new Error(error.response?.data?.message || 'Failed to fetch provider.');
   }
 };
+export const approvedProvider = async (id: string, is_approved: number): Promise<Provider> => {
+  try {
+    const token = getToken();
+
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(
+      `/provider/update-approval/${id}`,
+      { is_approved },
+      {
+        headers: {
+          'admin-auth-token': token || '',
+        },
+      }
+    );
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to approve provider.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to approve provider.');
+  }
+};
+
 
 // Create a new provider
 export const createProvider = async (provider: Provider): Promise<ApiResponse> => {
@@ -7710,5 +7780,375 @@ export const exportBookingFeedback = async (startDate?: string, endDate?: string
     window.URL.revokeObjectURL(url);
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to export booking feedback.');
+  }
+};
+
+
+
+// Fetch single course
+export const getCourse = async (id: string | number): Promise<Course> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/course/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch course.');
+  }
+};
+
+
+
+export const fetchCourses = async (page = 1, size = 10, status: string = "all",search?: string
+) => {
+  try {
+    const token = getToken(); // Retrieve the token
+
+    // Prepare query parameters
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Include status filter only if it's not 'all'
+    if (status !== "all") {
+      params.status = status;
+    }
+
+    if (search && search.trim() !== "") {
+      params.search = search.trim();
+    }
+
+    // Make API call
+    const response: AxiosResponse = await apiClient.get("/course", {
+      params, // Query params (page, size, status)
+      headers: {
+        "admin-auth-token": token || "", // Add the token to the request headers
+      },
+    });
+
+    return response.data; // Return the data
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    throw new Error("Failed to fetch categories");
+  }
+};
+
+
+// Create course
+export const createCourse = async (courseData: Course) => {
+  const formData = new FormData();
+  formData.append('title', courseData.title);
+  formData.append('description', courseData.description || '');
+  formData.append('module_type', courseData.module_type);
+  formData.append('length_in_minutes', courseData.length_in_minutes.toString());
+  formData.append('category_id', courseData.category_id.toString());
+  formData.append("is_active", courseData.is_active ? "1" : "0");
+
+  if (courseData.video_url) {
+    formData.append('video_url', courseData.video_url);
+  }
+
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post('/course', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create course.');
+  }
+};
+
+// Update course
+export const updateCourse = async (id: string | number, courseData: Course) => {
+  const formData = new FormData();
+  formData.append('title', courseData.title);
+  formData.append('description', courseData.description || '');
+  formData.append('module_type', courseData.module_type);
+  formData.append('length_in_minutes', courseData.length_in_minutes.toString());
+  formData.append('category_id', courseData.category_id.toString());
+  formData.append("is_active", courseData.is_active ? "1" : "0");
+
+  if (courseData.video_url) {
+    formData.append('video_url', courseData.video_url);
+  }
+
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.put(`/course/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update course.');
+  }
+};
+
+
+
+export const fetchCoursesByCategory = async (categoryId: string): Promise<Course[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/course/byCategory?category_id=${categoryId}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+     if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch categories.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch Course.");
+  }
+};
+
+
+
+
+// Delete course
+export const deleteCourse = async (id: string | number) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.delete(`/course/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete course.');
+  }
+};
+
+export const getCourseById = async (id: string | number): Promise<Course> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/course/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+    return response.data.data; // Assuming banner data is under `data` key
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch Course.");
+  }
+};
+
+
+export const createCourseQuiz = async (quizData: CourseQuiz) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post('/course-quizzes', quizData, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create course quiz.');
+  }
+};
+
+
+export const updateCourseQuiz = async (id: string, quizData: CourseQuiz) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.put(`/course-quizzes/${id}`, quizData, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update course quiz.');
+  }
+};
+
+
+export const getCourseQuizById = async (id: string | number): Promise<CourseQuiz> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/course-quizzes/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+    return response.data.data;
+  } catch (error: any) {
+    console.log(error)
+    throw new Error(error.response?.data?.message || "Failed to fetch course quiz.");
+  }
+};
+
+
+// Fetch all quizzes with pagination, status filter, and search
+export const fetchCourseQuizzes = async (
+  page = 1,
+  size = 10,
+  status: string = "all",
+  search?: string
+) => {
+  try {
+    const token = getToken();
+    const params: Record<string, any> = { page, size };
+
+    if (status !== "all") {
+      params.status = status;
+    }
+
+    if (search?.trim()) {
+      params.search = search.trim();
+    }
+
+    const response: AxiosResponse = await apiClient.get("/course-quizzes", {
+      params,
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to fetch course quizzes.");
+  }
+};
+
+
+export const deleteCourseQuiz = async (id: string | number) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.delete(`/course-quizzes/${id}`, {
+      headers: {
+        "admin-auth-token": token || "",
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || "Failed to delete course quiz.");
+  }
+};
+
+
+// Fetch single badge
+export const getBadge = async (id: string | number): Promise<Badge> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/badge/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch badge.');
+  }
+};
+
+// Fetch badges (with pagination, status, search)
+export const fetchBadges = async (
+  page = 1,
+  size = 10,
+  status: string = 'all',
+  search?: string
+) => {
+  try {
+    const token = getToken();
+
+    const params: Record<string, any> = { page, size };
+    if (status !== 'all') params.status = status;
+    if (search?.trim()) params.search = search.trim();
+
+    const response: AxiosResponse = await apiClient.get('/badge', {
+      params,
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching badges:', error);
+    throw new Error('Failed to fetch badges.');
+  }
+};
+
+// Create badge
+export const createBadge = async (badgeData: Badge) => {
+  const formData = new FormData();
+  formData.append('name', badgeData.name);
+  formData.append('total_course', badgeData.total_course.toString());
+  if (badgeData.next_badge_time !== undefined && badgeData.next_badge_time !== null) {
+    formData.append('next_badge_time', badgeData.next_badge_time.toString());
+  }
+  if (badgeData.image instanceof File) {
+    formData.append('image', badgeData.image);
+  }
+    formData.append("is_active", badgeData.is_active ? "1" : "0");
+
+
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post('/badge', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create badge.');
+  }
+};
+
+// Update badge
+export const updateBadge = async (id: string | number, badgeData: Badge) => {
+  const formData = new FormData();
+  formData.append('name', badgeData.name);
+  formData.append('total_course', badgeData.total_course.toString());
+  if (badgeData.next_badge_time !== undefined && badgeData.next_badge_time !== null) {
+    formData.append('next_badge_time', badgeData.next_badge_time.toString());
+  }
+  if (badgeData.image instanceof File) {
+    formData.append('image', badgeData.image);
+  }
+
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.put(`/badge/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update badge.');
+  }
+};
+
+// Delete badge
+export const deleteBadge = async (id: string | number) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.delete(`/badge/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete badge.');
   }
 };

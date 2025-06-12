@@ -221,6 +221,15 @@ export const sidebarItems: SidebarItem[] = [
     icon: Receipt,
     children: [{ title: "Quick service", route: `${basePath}/quick-service/add` }, { title: "Onboarding", route: `${basePath}/onboarding` }],
   },
+   {
+    title: "Traning",
+    icon: Receipt,
+    children: [
+      { title: "Course", route: `${basePath}/course` },
+       { title: "Course-quiz", route: `${basePath}/course-quiz` },
+       { title: "Badge", route: `${basePath}/badge` },
+      ],
+  },
   // {
   //   title: "Auth",
   //   icon: Receipt,
