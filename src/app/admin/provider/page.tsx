@@ -26,7 +26,7 @@ import {
   Plus,
   Download, Copy,
 } from "lucide-react";
-import { fetchAllProviders, deleteProvider, exportProvider } from "@/lib/api";
+import { fetchAllProviders, deleteProvider, exportProvider,approvedProvider } from "@/lib/api";
 import Link from "next/link";
 import {
   AlertDialog,
@@ -36,6 +36,7 @@ import {
   AlertDialogFooter,
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
+import { Switch } from "@/components/ui/switch";
 
 const ProviderList = () => {
   const [providers, setProviders] = useState<any[]>([]);
@@ -149,6 +150,45 @@ const ProviderList = () => {
     { accessorKey: "last_name", header: "Last Name" },
     { accessorKey: "email", header: "Email" },
     { accessorKey: "phone", header: "Phone" },
+  {
+  accessorKey: "account_approved",
+  header: "Approved",
+  cell: ({ row }) => {
+    const approved = row.original.account_approved === 1;
+
+    const handleToggle = async () => {
+      const newStatus = approved ? 0 : 1;
+      try {
+        await approvedProvider(row.original.id, newStatus);
+
+        // Update the providers list to reflect the change locally
+        setProviders((prev) =>
+          prev.map((prov) =>
+            prov.id === row.original.id
+              ? { ...prov, account_approved: newStatus }
+              : prov
+          )
+        );
+
+        toast({
+          title: "Success",
+          description: `Provider account ${newStatus ? "approved" : "disapproved"}.`,
+          variant: "success",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: String(error),
+          variant: "destructive",
+        });
+      }
+    };
+
+    return <Switch checked={approved} onCheckedChange={handleToggle} />;
+  },
+},
+
+
     {
       accessorKey: "is_active",
       header: "Status",
