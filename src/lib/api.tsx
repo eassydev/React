@@ -2303,6 +2303,24 @@ export const approvedProvider = async (id: string, is_approved: number): Promise
   }
 };
 
+// Function to fetch all banks
+export const fetchAllProvidersWithoupagination = async (): Promise<Provider[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/provider/all', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch banks.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch banks.');
+  }
+};
 
 // Create a new provider
 export const createProvider = async (provider: Provider): Promise<ApiResponse> => {
