@@ -19,6 +19,7 @@ import { format } from "date-fns";
 
 interface SpPayout {
   id: string;
+  sampleid: number; // Decrypted ID for display
   provider_id: string;
   provider_name: string;
   service_amount: number;
@@ -136,8 +137,9 @@ export default function SpPayoutPage() {
       cell: (info) => info.row.index + 1,
     },
     {
-      accessorKey: "id",
+      accessorKey: "sampleid",
       header: "Payout ID",
+      cell: (info) => <span className="font-mono text-sm">{info.getValue<number>()}</span>,
     },
     {
       accessorKey: "provider_name",

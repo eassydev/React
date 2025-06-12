@@ -115,7 +115,7 @@ export default function TransactionDetailPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
                 <Label className="text-sm font-medium text-gray-500">Transaction ID</Label>
-                <div className="text-sm font-medium">{transaction.id}</div>
+                <div className="text-sm font-medium font-mono">{transaction.sampleid}</div>
               </div>
               
               <div className="space-y-2">

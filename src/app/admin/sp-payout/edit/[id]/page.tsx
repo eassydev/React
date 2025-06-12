@@ -25,6 +25,7 @@ interface Provider {
 
 interface PayoutDetails {
   id: string;
+  sampleid: number; // Decrypted ID for display
   booking_id: number;
   order_id: string;
   provider_id: string;
@@ -307,7 +308,7 @@ export default function EditSpPayoutPage() {
                 {/* Read-only fields */}
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Payout ID</Label>
-                  <div className="text-sm font-medium">{payout.id}</div>
+                  <div className="text-sm font-medium font-mono">{payout.sampleid}</div>
                 </div>
 
                 <div className="space-y-2">

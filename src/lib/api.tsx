@@ -2759,6 +2759,7 @@ export const updatePayout = async (id: string, data: any): Promise<any> => {
 // Payout Transactions API functions
 export interface PayoutTransaction {
   id: string;
+  sampleid: number; // Decrypted ID for display
   booking_id: number;
   provider_id: string;
   razorpay_transfer_id: string;

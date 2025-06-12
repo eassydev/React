@@ -58,9 +58,10 @@ export default function TransactionsPage() {
       header: "S.No",
       cell: (info) => info.row.index + 1,
     },
-    { 
-      accessorKey: "id", 
+    {
+      accessorKey: "sampleid",
       header: "Transaction ID",
+      cell: (info) => <span className="font-mono text-sm">{info.getValue<number>()}</span>,
     },
     { 
       accessorKey: "provider", 
