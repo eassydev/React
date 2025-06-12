@@ -12,6 +12,7 @@ import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { login } from "@/lib/auth";
+import { tokenUtils } from "@/lib/utils";
 
 const FormSchema = z.object({
   username: z.string().min(3, { message: "Username must be at least 3 characters long" }),
@@ -22,17 +23,43 @@ type FormSchemaType = z.infer<typeof FormSchema>;
 
 export default function LoginForm() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
-  const [isRedirecting, setIsRedirecting] = useState<boolean>(true); // Prevent rendering until check is complete
+  const [isRedirecting, setIsRedirecting] = useState<boolean>(false); // Changed to false initially
   const router = useRouter();
   const { toast } = useToast();
 
   useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      router.replace("/admin"); // Redirect immediately
-    } else {
-      setIsRedirecting(false); // Allow form rendering when no token exists
-    }
+    const checkAuth = async () => {
+      const token = tokenUtils.get();
+
+      if (token) {
+        setIsRedirecting(true);
+        try {
+          // Verify token is still valid by making a test request
+          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin`, {
+            headers: {
+              'admin-auth-token': token
+            }
+          });
+
+          if (response.ok) {
+            // Ensure token is stored in both places
+            tokenUtils.set(token);
+            router.replace("/admin");
+          } else {
+            // Token is invalid, remove it
+            tokenUtils.remove();
+            setIsRedirecting(false);
+          }
+        } catch (error) {
+          // Network error or token invalid
+          console.error("Auth check error:", error);
+          tokenUtils.remove();
+          setIsRedirecting(false);
+        }
+      }
+    };
+
+    checkAuth();
   }, [router]);
 
   const form = useForm<FormSchemaType>({
@@ -46,23 +73,41 @@ export default function LoginForm() {
   const onSubmit: SubmitHandler<FormSchemaType> = async (data) => {
     setIsLoading(true);
     try {
+      console.log("Attempting login with:", { username: data.username });
       const response = await login(data.username, data.password);
-      localStorage.setItem("token", response.token);
+      console.log("Login response received:", response);
+
+      if (response.token) {
+        // Store token using utility function
+        tokenUtils.set(response.token);
+        console.log("Token stored successfully");
+
+        toast({
+          title: "Login successful",
+          description: response.message || "You are now logged in.",
+        });
+
+        console.log("Redirecting to /admin...");
+        // Use router.push for better Next.js navigation
+        router.push("/admin");
+      } else {
+        throw new Error("No token received from server");
+      }
+    } catch (error: any) {
+      console.error("Login error:", error);
+
+      let errorMessage = "An error occurred during login";
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
 
       toast({
-        title: "Login successful",
-        description: response.message || "You are now logged in.",
+        title: "Login failed",
+        description: errorMessage,
+        variant: "destructive",
       });
-
-      router.replace("/admin");
-    } catch (error: any) {
-      console.log("error",error.message)
-    
-    toast({
-      title: "Login failed",
-      description: error.message,
-      variant: "destructive",
-    });
     } finally {
       setIsLoading(false);
     }
@@ -78,7 +123,14 @@ export default function LoginForm() {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          form.handleSubmit(onSubmit)(e);
+        }}
+        className="space-y-4"
+        method="post"
+      >
         <FormField
           control={form.control}
           name="username"
@@ -86,7 +138,11 @@ export default function LoginForm() {
             <FormItem>
               <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder="Enter your username or email" {...field} />
+                <Input
+                  placeholder="Enter your username or email"
+                  {...field}
+                  autoComplete="username"
+                />
               </FormControl>
               <FormMessage>{fieldState.error?.message}</FormMessage>
             </FormItem>
@@ -99,15 +155,24 @@ export default function LoginForm() {
             <FormItem>
               <FormLabel>Password</FormLabel>
               <FormControl>
-                <Input type="password" placeholder="Password" {...field} />
+                <Input
+                  type="password"
+                  placeholder="Password"
+                  {...field}
+                  autoComplete="current-password"
+                />
               </FormControl>
               <FormMessage>{fieldState.error?.message}</FormMessage>
             </FormItem>
           )}
         />
-        <Button disabled={isLoading} className="w-full">
+        <Button
+          type="submit"
+          disabled={isLoading}
+          className="w-full"
+        >
           {isLoading && <LoaderCircle className="mr-2 size-4 animate-spin" />}
-          Login
+          {isLoading ? "Logging in..." : "Login"}
         </Button>
       </form>
     </Form>
