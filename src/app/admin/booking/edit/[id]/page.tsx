@@ -36,10 +36,10 @@ const EditBookingForm: React.FC = () => {
   const [filterOptions, setFilterOptions] = useState<AttributeOption[]>([]);
   const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>('');
   const [packages, setPackages] = useState<Package[]>([]);
-  const [userId, setUserId] = useState<number | null>(null);
+  const [userId, setUserId] = useState<string | null>(null);
   const [providerId, setProviderId] = useState<number | null>(null);
   const [providers, setProviders] = useState<{ id: number; name: string }[]>([]);
-  const [users, setUsers] = useState<{ id: number; name: string }[]>([]);
+  const [users, setUsers] = useState<{ id: string; name: string }[]>([]);
   const [addresses, setAddresses] = useState<{ id: string; sampleid: number; full_address: string }[]>([]);
   const [deliveryAddressId, setDeliveryAddressId] = useState<number | null>(null);
   const [status, setStatus] = useState<string>('accepted');
@@ -148,7 +148,7 @@ const EditBookingForm: React.FC = () => {
         const booking = await fetchBookingById(bookingId.toString());
 
         // Set basic booking details
-        setUserId(booking.user_id);
+        setUserId(booking.user?.id || null); // Use encrypted user ID from user object
         setProviderId(booking.provider_id);
         setDeliveryAddressId(booking.delivery_address_id);
         setServiceDate(booking.service_date ?? '');
@@ -204,8 +204,8 @@ const EditBookingForm: React.FC = () => {
         }
         setProviderId(booking.provider_id);
 
-        if (booking.address_id) {
-          const addressData = await fetchUserAddresses(booking.user_id);
+        if (booking.address_id && booking.user?.id) {
+          const addressData = await fetchUserAddresses(booking.user.id); // Use encrypted user ID from user object
           setAddresses(addressData);
         }
         setDeliveryAddressId(booking.address_id);
@@ -491,13 +491,13 @@ const EditBookingForm: React.FC = () => {
 
               <div>
                 <label className="text-sm font-medium text-gray-700">Select User</label>
-                <Select value={String(userId)} onValueChange={(value) => setUserId(Number(value))}>
+                <Select value={userId || ""} onValueChange={(value) => setUserId(value)}>
                   <SelectTrigger className="bg-white border-gray-200">
                     <SelectValue placeholder="Select User" />
                   </SelectTrigger>
                   <SelectContent>
                     {users.map((user) => (
-                      <SelectItem key={user.id} value={String(user.id)}>
+                      <SelectItem key={user.id} value={user.id}>
                         {user.name}
                       </SelectItem>
                     ))}
