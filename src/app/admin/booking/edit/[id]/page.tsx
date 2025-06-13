@@ -40,7 +40,7 @@ const EditBookingForm: React.FC = () => {
   const [providerId, setProviderId] = useState<number | null>(null);
   const [providers, setProviders] = useState<{ id: number; name: string }[]>([]);
   const [users, setUsers] = useState<{ id: number; name: string }[]>([]);
-  const [addresses, setAddresses] = useState<{ id: number; full_address: string }[]>([]);
+  const [addresses, setAddresses] = useState<{ id: string; sampleid: number; full_address: string }[]>([]);
   const [deliveryAddressId, setDeliveryAddressId] = useState<number | null>(null);
   const [status, setStatus] = useState<string>('accepted');
 
@@ -535,7 +535,7 @@ const EditBookingForm: React.FC = () => {
                     </SelectTrigger>
                     <SelectContent>
                       {addresses.map((address) => (
-                        <SelectItem key={address.id} value={String(address.id)}>
+                        <SelectItem key={address.id} value={String(address.sampleid)}>
                           {address.full_address}
                         </SelectItem>
                       ))}
