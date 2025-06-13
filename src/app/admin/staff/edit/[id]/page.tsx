@@ -6,7 +6,7 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { fetchAllProvidersWithoupagination, fetchStaffById, updateStaff, Staff, Provider } from "@/lib/api";
+import { fetchAllProvidersWithoutpagination, fetchStaffById, updateStaff, Staff, Provider } from "@/lib/api";
 import { useRouter, usePathname } from "next/navigation";
 import { Save, Loader2 } from "lucide-react";
 
@@ -35,7 +35,7 @@ const EditStaffForm: React.FC = () => {
   useEffect(() => {
     const loadProvidersAndStaff = async () => {
       try {
-        const providerData = await fetchAllProvidersWithoupagination();
+        const providerData = await fetchAllProvidersWithoutpagination();
         setProviders(providerData);
 
         if (staffId) {

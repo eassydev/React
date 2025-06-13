@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Save, Loader2 } from "lucide-react";
-import { fetchAllProvidersWithoupagination, createStaff, Staff, Provider} from "@/lib/api"; // Add staff creation API
+import { fetchAllProvidersWithoutpagination, createStaff, Staff, Provider} from "@/lib/api"; // Add staff creation API
 import { useRouter, useParams } from "next/navigation";
 
 const AddStaffForm: React.FC = () => {
@@ -32,7 +32,7 @@ const AddStaffForm: React.FC = () => {
   useEffect(() => {
     const loadProviders = async () => {
       try {
-        const data = await fetchAllProvidersWithoupagination();
+        const data = await fetchAllProvidersWithoutpagination();
         setProviders(data);
       } catch (error: any) {
         toast({

@@ -403,14 +403,14 @@ export interface GstRate {
 }
 // Update the SearchUserResult interface to match the API response
 export interface SearchUserResult {
-  id: number;
+  id: string; // Encrypted ID for backend operations
   // API response fields
   first_name?: string;
   last_name?: string;
   email?: string;
   mobile: string;
   created_at?: string;
-  sampleid?: string;
+  sampleid?: number; // Decrypted ID for display
   // Our formatted fields
   name?: string;
   displayId?: string;

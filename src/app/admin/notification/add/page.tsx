@@ -20,7 +20,7 @@ import {
   createNotification,
   fetchAllCategories,
   fetchSubCategoriesByCategoryId,
-  fetchAllProvidersWithoupagination,
+  fetchAllProvidersWithoutpagination,
   fetchAllUsersWithouPagination,
   getAllNotifications,
   Notification,
@@ -100,7 +100,7 @@ const AddNotificationForm: React.FC = () => {
         try {
           let data: any[] = [];
           if (notification.type === "provider") {
-            data = await fetchAllProvidersWithoupagination();
+            data = await fetchAllProvidersWithoutpagination();
           } else if (notification.type === "customer") {
             data = await fetchAllUsersWithouPagination();
           }
