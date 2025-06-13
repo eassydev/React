@@ -256,7 +256,7 @@ const AddBookingForm: React.FC = () => {
     if (userId && selectedUser) {
       const loadAddresses = async () => {
         try {
-          const addressData = await fetchUserAddresses(selectedUser.id); // Use decrypted ID for API call
+          const addressData = await fetchUserAddresses(userId); // Use encrypted userId for API call
           setAddresses(addressData); // addressData is already mapped in fetchUserAddresses
         } catch (error: any) {
           toast({
