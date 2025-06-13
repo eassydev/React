@@ -3488,7 +3488,7 @@ export const restoreGstRate = async (id: string): Promise<ApiResponse> => {
 
 
 // Function to fetch delivery addresses by user ID
-export const fetchUserAddresses = async (userId: number): Promise<{ id: string; sampleid: number; full_address: string }[]> => {
+export const fetchUserAddresses = async (userId: string): Promise<{ id: string; sampleid: number; full_address: string }[]> => {
   try {
     const token = getToken();
     const response: AxiosResponse<ApiResponse> = await apiClient.get(`user/${userId}/addresses`, {
