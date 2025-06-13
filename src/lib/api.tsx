@@ -2330,6 +2330,26 @@ export const restoreProvider = async (id: string): Promise<ApiResponse> => {
   }
 };
 
+// Function to fetch all providers
+export const fetchAllProvidersWithoupagination = async (): Promise<Provider[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/provider/all', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch banks.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch banks.');
+  }
+};
+
+
 
 // Function to create a new VIP plan
 export const createVIPPlan = async (vipPlan: VIPPlan): Promise<ApiResponse> => {
