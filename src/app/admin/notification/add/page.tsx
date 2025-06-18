@@ -291,6 +291,8 @@ const AddNotificationForm: React.FC = () => {
               </div>
             </div>
 
+
+
             {!notification.send_to_all && recipients.length > 0 && (
               <div>
                 <label className="block text-sm font-medium">Recipients</label>
@@ -298,10 +300,19 @@ const AddNotificationForm: React.FC = () => {
                   isMulti
                   options={recipients.map((recipient) => ({
                     value: recipient.id,
-                    label: recipient.first_name,
+                    label: `${recipient.first_name || 'No Name'} ${recipient.last_name || ''} (${recipient.mobile || recipient.phone || 'No Phone'})`,
                   }))}
                   onChange={handleMultiSelect}
                 />
+              </div>
+            )}
+
+            {!notification.send_to_all && recipients.length === 0 && (
+              <div className="p-4 bg-yellow-100 border border-yellow-400 rounded">
+                <p className="text-yellow-800">
+                  ⚠️ No recipients found for type "{notification.type}".
+                  Please check if there are any {notification.type}s in the database.
+                </p>
               </div>
             )}
 

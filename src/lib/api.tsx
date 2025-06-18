@@ -416,6 +416,19 @@ export interface SearchUserResult {
   displayId?: string;
 }
 
+// Address Interface
+export interface Address {
+  id?: string; // Optional for editing
+  user_id: string; // Encrypted user ID
+  street_address: string;
+  city: string;
+  state: string;
+  postal_code: string;
+  country?: string;
+  is_default?: boolean;
+  created_at?: number;
+  updated_at?: number;
+}
 
 export interface Booking {
   id?: string; // Optional for editing
@@ -3511,6 +3524,40 @@ export const fetchUserAddresses = async (userId: string): Promise<{ id: string; 
     }
   } catch (error: any) {
     const errorMessage = error?.response?.data?.message || error.message || "Failed to fetch delivery addresses.";
+    throw new Error(errorMessage);
+  }
+};
+
+// Function to create a new address for a user
+export const createUserAddress = async (address: Address): Promise<{ id: string; sampleid: number; full_address: string }> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post(`/user/${address.user_id}/addresses`, {
+      street_address: address.street_address,
+      city: address.city,
+      state: address.state,
+      postal_code: address.postal_code,
+      country: address.country || 'India',
+      is_default: address.is_default || false
+    }, {
+      headers: {
+        "Content-Type": "application/json",
+        "admin-auth-token": token || "",
+      },
+    });
+
+    if (response?.data?.status && response.data.data) {
+      const newAddress = response.data.data;
+      return {
+        id: newAddress.id, // Encrypted ID
+        sampleid: newAddress.sampleid, // Decrypted ID for selection
+        full_address: `${newAddress.street_address || ""}, ${newAddress.city || ""}, ${newAddress.state || ""}, ${newAddress.postal_code || ""}`.replace(/,\s*$/, ""),
+      };
+    } else {
+      throw new Error(response?.data?.message || "Failed to create address.");
+    }
+  } catch (error: any) {
+    const errorMessage = error?.response?.data?.message || error.message || "Failed to create address.";
     throw new Error(errorMessage);
   }
 };

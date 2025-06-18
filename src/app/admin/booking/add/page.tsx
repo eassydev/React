@@ -8,8 +8,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Virtuoso } from "react-virtuoso";
 import { useRouter } from 'next/navigation';
 
-import { Save, FileText, Loader2, Type, Globe2 } from 'lucide-react';
+import { Save, FileText, Loader2, Type, Globe2, Plus } from 'lucide-react';
 import { fetchAllCategories, createBooking, fetchSubCategoriesByCategoryId, fetchAllUsersWithouPagination, searchUser, fetchUserAddresses, fetchProvidersByFilters, Provider, Package, fetchFilterOptionsByAttributeId, fetchFilterAttributes, AttributeOption, createRateCard, Category, Subcategory, Attribute, SearchUserResult } from '@/lib/api';
+import { AddressModal } from '@/components/AddressModal';
 // Add this at the top of your file, after the imports
 declare global {
   interface Window {
@@ -69,6 +70,7 @@ const AddBookingForm: React.FC = () => {
   // const [users, setUsers] = useState<{ id: number; name: string }[]>([]);
   const [addresses, setAddresses] = useState<{ id: string; sampleid: number; full_address: string }[]>([]);
   const [deliveryAddressId, setDeliveryAddressId] = useState<string | null>(null); // Store encrypted ID
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
 
   // Add these state variables for pagination
   const [searchPage, setSearchPage] = useState<number>(1);
@@ -411,6 +413,13 @@ const AddBookingForm: React.FC = () => {
       handleUserSearch(value, 1, false);
     }, 600);
   }, [handleUserSearch]);
+
+  // Handler for when a new address is created
+  const handleAddressCreated = (newAddress: { id: string; sampleid: number; full_address: string }) => {
+    setAddresses(prev => [...prev, newAddress]);
+    setDeliveryAddressId(newAddress.id); // Auto-select the newly created address
+  };
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -859,26 +868,55 @@ const AddBookingForm: React.FC = () => {
 
 
               {userId && (
-                <div>
-                  <label className="text-sm font-medium text-gray-700">Delivery Address</label>
-                  <Select
-                    value={deliveryAddressId || ""}
-                    onValueChange={(value) => setDeliveryAddressId(value || null)}
-                  >
-                    <SelectTrigger className="bg-white border-gray-200">
-                      <SelectValue placeholder="Select Address" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {addresses.map((address) => (
-                        <SelectItem key={address.id} value={address.id}>
-                          {address.full_address}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {deliveryAddressId && (
-                    <div className="mt-1 text-sm text-gray-600">
-                      Selected Address ID: {addresses.find(a => a.id === deliveryAddressId)?.sampleid}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-sm font-medium text-gray-700">Delivery Address</label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsAddressModalOpen(true)}
+                      className="text-xs"
+                    >
+                      <Plus className="w-3 h-3 mr-1" />
+                      Add New Address
+                    </Button>
+                  </div>
+
+                  {addresses.length > 0 ? (
+                    <>
+                      <Select
+                        value={deliveryAddressId || ""}
+                        onValueChange={(value) => setDeliveryAddressId(value || null)}
+                      >
+                        <SelectTrigger className="bg-white border-gray-200">
+                          <SelectValue placeholder="Select Address" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {addresses.map((address) => (
+                            <SelectItem key={address.id} value={address.id}>
+                              {address.full_address}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      {deliveryAddressId && (
+                        <div className="mt-1 text-sm text-gray-600">
+                          Selected Address ID: {addresses.find(a => a.id === deliveryAddressId)?.sampleid}
+                        </div>
+                      )}
+                    </>
+                  ) : (
+                    <div className="p-4 border-2 border-dashed border-gray-300 rounded-md text-center">
+                      <p className="text-sm text-gray-500 mb-2">No addresses found for this user</p>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => setIsAddressModalOpen(true)}
+                      >
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add First Address
+                      </Button>
                     </div>
                   )}
                 </div>
@@ -990,6 +1028,16 @@ const AddBookingForm: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Address Modal */}
+      {userId && (
+        <AddressModal
+          isOpen={isAddressModalOpen}
+          onClose={() => setIsAddressModalOpen(false)}
+          userId={userId}
+          onAddressCreated={handleAddressCreated}
+        />
+      )}
     </div>
   );
 };
