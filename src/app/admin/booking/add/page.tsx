@@ -361,22 +361,21 @@ const AddBookingForm: React.FC = () => {
     }
   }, [toast]);
 
-  // Update the handleUserSelect function
   const handleUserSelect = useCallback((user: SearchUserResult) => {
-    setUserId(user.id.toString()); // Use encrypted ID for backend
-    setSelectedUser({
-      id: parseInt(user.sampleid), // Use decrypted sampleid for display
-      name: user.name || `${user.first_name || ''} ${user.last_name || ''}`,
-      mobile: user.mobile,
-      displayId: user.displayId || user.sampleid?.toString() || user.id.toString()
-    });
+  setUserId(user.id.toString()); // Use encrypted ID for backend
+  setSelectedUser({
+    id: parseInt(user.sampleid?.toString() || '0'), // Use decrypted sampleid for display, fallback to '0'
+    name: user.name || `${user.first_name || ''} ${user.last_name || ''}`,
+    mobile: user.mobile,
+    displayId: user.displayId || user.sampleid?.toString() || user.id.toString()
+  });
 
-    // Clear search state after a short delay
-    requestAnimationFrame(() => {
-      setUserSearchTerm("");
-      setUsers([]);
-    });
-  }, []);
+  // Clear search state after a short delay
+  requestAnimationFrame(() => {
+    setUserSearchTerm("");
+    setUsers([]);
+  });
+}, []);
 
   // Function to load more results
   const loadMoreResults = useCallback(() => {
