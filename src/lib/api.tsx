@@ -2214,23 +2214,23 @@ export const fetchAllProviders = async (page = 1, size = 10, status: string = "a
 
 
 // Function to fetch all banks
-export const fetchAllProvidersWithoutpagination = async (): Promise<Provider[]> => {
-  try {
-    const token = getToken();
-    const response: AxiosResponse<ApiResponse> = await apiClient.get('/provider/all', {
-      headers: {
-        'admin-auth-token': token || '',
-      },
-    });
-    if (response.data.status) {
-      return response.data.data;
-    } else {
-      throw new Error(response.data.message || 'Failed to fetch banks.');
-    }
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch banks.');
-  }
-};
+// export const fetchAllProvidersWithoutpagination = async (): Promise<Provider[]> => {
+//   try {
+//     const token = getToken();
+//     const response: AxiosResponse<ApiResponse> = await apiClient.get('/provider/all', {
+//       headers: {
+//         'admin-auth-token': token || '',
+//       },
+//     });
+//     if (response.data.status) {
+//       return response.data.data;
+//     } else {
+//       throw new Error(response.data.message || 'Failed to fetch banks.');
+//     }
+//   } catch (error: any) {
+//     throw new Error(error.response?.data?.message || 'Failed to fetch banks.');
+//   }
+// };
 
 
 
@@ -2304,23 +2304,23 @@ export const approvedProvider = async (id: string, is_approved: number): Promise
 };
 
 // Function to fetch all banks
-export const fetchAllProvidersWithoupagination = async (): Promise<Provider[]> => {
-  try {
-    const token = getToken();
-    const response: AxiosResponse<ApiResponse> = await apiClient.get('/provider/all', {
-      headers: {
-        'admin-auth-token': token || '',
-      },
-    });
-    if (response.data.status) {
-      return response.data.data;
-    } else {
-      throw new Error(response.data.message || 'Failed to fetch banks.');
-    }
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch banks.');
-  }
-};
+// export const fetchAllProvidersWithoupagination = async (): Promise<Provider[]> => {
+//   try {
+//     const token = getToken();
+//     const response: AxiosResponse<ApiResponse> = await apiClient.get('/provider/all', {
+//       headers: {
+//         'admin-auth-token': token || '',
+//       },
+//     });
+//     if (response.data.status) {
+//       return response.data.data;
+//     } else {
+//       throw new Error(response.data.message || 'Failed to fetch banks.');
+//     }
+//   } catch (error: any) {
+//     throw new Error(error.response?.data?.message || 'Failed to fetch banks.');
+//   }
+// };
 
 // Create a new provider
 export const createProvider = async (provider: Provider): Promise<ApiResponse> => {
@@ -2432,7 +2432,7 @@ export const restoreProvider = async (id: string): Promise<ApiResponse> => {
 };
 
 // Function to fetch all providers
-export const fetchAllProvidersWithoupagination = async (): Promise<Provider[]> => {
+export const fetchAllProvidersWithoutpagination = async (): Promise<Provider[]> => {
   try {
     const token = getToken();
     const response: AxiosResponse<ApiResponse> = await apiClient.get('/provider/all', {
