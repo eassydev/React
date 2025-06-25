@@ -279,7 +279,6 @@ const ManageAttributeOptions = () => {
                   }
                 </p>
               </div>
-                <>
                   {/* Add/Edit Form */}
                   {editingOption && (
                     <div className="mb-6 p-4 border rounded-lg bg-gray-50">
@@ -422,8 +421,6 @@ const ManageAttributeOptions = () => {
                       </TableBody>
                     </Table>
                   )}
-                </>
-              )}
             </CardContent>
           </Card>
         </div>
