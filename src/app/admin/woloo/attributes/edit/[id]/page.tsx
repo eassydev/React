@@ -62,13 +62,13 @@ const EditWolooAttribute = () => {
         if (attribute) {
           // Find the encrypted category ID that matches the attribute's category_id
           let selectedCategoryId = "";
-          const matchingCategory = categoriesResponse.data.find(cat => cat.sampleid == attribute.category_id);
+          const matchingCategory = categoriesResponse.data.find((cat: WolooCategory) => cat.sampleid == attribute.category_id);
           selectedCategoryId = matchingCategory?.id || "";
-          
+
           // Find the encrypted subcategory ID that matches the attribute's subcategory_id
           let selectedSubcategoryId = "none";
           if (attribute.subcategory_id) {
-            const matchingSubcategory = subcategoriesResponse.data.find(sub => sub.sampleid == attribute.subcategory_id);
+            const matchingSubcategory = subcategoriesResponse.data.find((sub: WolooSubcategory) => sub.sampleid == attribute.subcategory_id);
             selectedSubcategoryId = matchingSubcategory?.id || "none";
           }
           

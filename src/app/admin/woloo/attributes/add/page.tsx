@@ -72,14 +72,14 @@ const AddWolooAttribute = () => {
   useEffect(() => {
     if (formData.category_id) {
       // Try both encrypted and decrypted ID matching
-      const filtered = subcategories.filter(sub => {
+      const filtered = subcategories.filter((sub: WolooSubcategory) => {
         // Check if subcategory's category_id matches the selected category's encrypted ID
         if (sub.category_id === formData.category_id) {
           return true;
         }
 
         // Also check if subcategory's category_id matches the selected category's decrypted ID
-        const selectedCategory = categories.find(cat => cat.id === formData.category_id);
+        const selectedCategory = categories.find((cat: WolooCategory) => cat.id === formData.category_id);
         if (selectedCategory && sub.category_id == selectedCategory.sampleid) {
           return true;
         }
