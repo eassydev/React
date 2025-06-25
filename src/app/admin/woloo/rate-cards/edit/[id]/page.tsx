@@ -89,13 +89,13 @@ const EditWolooRateCard: React.FC = () => {
         if (rateCard) {
           // Find the encrypted category ID that matches the rate card's category_id (same logic as attributes)
           let selectedCategoryId = "";
-          const matchingCategory = categories.find(cat => (cat as any).sampleid == rateCard.category_id);
+          const matchingCategory = categories.find((cat: WolooCategory) => (cat as any).sampleid == rateCard.category_id);
           selectedCategoryId = matchingCategory?.id || "";
 
           // Find the encrypted subcategory ID that matches the rate card's subcategory_id (same logic as attributes)
           let selectedSubcategoryId = "none";
           if (rateCard.subcategory_id) {
-            const matchingSubcategory = subcategories.find(sub => (sub as any).sampleid == rateCard.subcategory_id);
+            const matchingSubcategory = subcategories.find((sub: WolooSubcategory) => (sub as any).sampleid == rateCard.subcategory_id);
             selectedSubcategoryId = matchingSubcategory?.id || "none";
           }
 
@@ -147,14 +147,14 @@ const EditWolooRateCard: React.FC = () => {
   useEffect(() => {
     if (formData.category_id) {
       // Try both encrypted and decrypted ID matching
-      const filtered = subcategories.filter(sub => {
+      const filtered = subcategories.filter((sub: WolooSubcategory) => {
         // Check if subcategory's category_id matches the selected category's encrypted ID
         if (sub.category_id === formData.category_id) {
           return true;
         }
 
         // Also check if subcategory's category_id matches the selected category's decrypted ID
-        const selectedCategory = categories.find(cat => cat.id === formData.category_id);
+        const selectedCategory = categories.find((cat: WolooCategory) => cat.id === formData.category_id);
         if (selectedCategory && sub.category_id == (selectedCategory as any).sampleid) {
           return true;
         }
@@ -232,9 +232,9 @@ const EditWolooRateCard: React.FC = () => {
 
     try {
       // Convert encrypted IDs back to raw database IDs for backend
-      const selectedCategory = categories.find(cat => cat.id === formData.category_id);
+      const selectedCategory = categories.find((cat: WolooCategory) => cat.id === formData.category_id);
       const selectedSubcategory = formData.subcategory_id && formData.subcategory_id !== 'none'
-        ? subcategories.find(sub => sub.id === formData.subcategory_id)
+        ? subcategories.find((sub: WolooSubcategory) => sub.id === formData.subcategory_id)
         : null;
 
       const submitData = {
