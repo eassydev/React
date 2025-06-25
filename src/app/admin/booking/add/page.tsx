@@ -364,7 +364,7 @@ const AddBookingForm: React.FC = () => {
   const handleUserSelect = useCallback((user: SearchUserResult) => {
     setUserId(user.id.toString()); // Use encrypted ID for backend
     setSelectedUser({
-      id: parseInt(user.sampleid|| '0'), // Use decrypted sampleid for display
+      id: parseInt(String(user.sampleid) || '0'), // Use decrypted sampleid for display
       name: user.name || `${user.first_name || ''} ${user.last_name || ''}`,
       mobile: user.mobile,
       displayId: user.displayId || user.sampleid?.toString() || user.id.toString()

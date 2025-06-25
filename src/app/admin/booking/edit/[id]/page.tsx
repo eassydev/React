@@ -497,7 +497,7 @@ const EditBookingForm: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {users.map((user) => (
-                      <SelectItem key={user.id} value={user.id}>
+                      <SelectItem key={user.id} value={user.id.toString()}>
                         {user.name}
                       </SelectItem>
                     ))}
