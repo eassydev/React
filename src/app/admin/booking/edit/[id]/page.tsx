@@ -39,7 +39,7 @@ const EditBookingForm: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [providerId, setProviderId] = useState<number | null>(null);
   const [providers, setProviders] = useState<{ id: number; name: string }[]>([]);
-  const [users, setUsers] = useState<{ id: string; name: string }[]>([]);
+  const [users, setUsers] = useState<{ id: number; name: string }[]>([]);
   const [addresses, setAddresses] = useState<{ id: string; sampleid: number; full_address: string }[]>([]);
   const [deliveryAddressId, setDeliveryAddressId] = useState<number | null>(null);
   const [status, setStatus] = useState<string>('accepted');

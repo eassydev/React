@@ -234,17 +234,6 @@ export const sidebarItems: SidebarItem[] = [
        { title: "Badge", route: `${basePath}/badge` },
       ],
   },
-  {
-    title: "Woloo",
-    icon: Building2,
-    children: [
-      { title: "Categories", route: `${basePath}/woloo/categories` },
-      { title: "Subcategories", route: `${basePath}/woloo/subcategories` },
-      { title: "Attributes", route: `${basePath}/woloo/attributes` },
-      { title: "Rate Cards", route: `${basePath}/woloo/rate-cards` },
-      { title: "Bookings", route: `${basePath}/woloo/bookings` },
-    ],
-  },
   // {
   //   title: "Auth",
   //   icon: Receipt,
