@@ -115,14 +115,14 @@ const AddWolooRateCard: React.FC = () => {
   useEffect(() => {
     if (formData.category_id) {
       // Try both encrypted and decrypted ID matching
-      const filtered = subcategories.filter(sub => {
+      const filtered = subcategories.filter((sub: WolooSubcategory) => {
         // Check if subcategory's category_id matches the selected category's encrypted ID
         if (sub.category_id === formData.category_id) {
           return true;
         }
 
         // Also check if subcategory's category_id matches the selected category's decrypted ID
-        const selectedCategory = categories.find(cat => cat.id === formData.category_id);
+        const selectedCategory = categories.find((cat: WolooCategory) => cat.id === formData.category_id);
         if (selectedCategory && sub.category_id == (selectedCategory as any).sampleid) {
           return true;
         }
@@ -197,23 +197,42 @@ const AddWolooRateCard: React.FC = () => {
       return;
     }
 
+    // Additional validations
+    if (formData.strike_price && parseFloat(formData.strike_price) < parseFloat(formData.price)) {
+      toast({
+        title: 'Validation Error',
+        description: 'Strike price must be greater than or equal to price',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (formData.weight && parseInt(formData.weight) < 0) {
+      toast({
+        title: 'Validation Error',
+        description: 'Weight cannot be negative',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
       // Convert encrypted IDs back to raw database IDs for backend
-      const selectedCategory = categories.find(cat => cat.id === formData.category_id);
+      const selectedCategory = categories.find((cat: WolooCategory) => cat.id === formData.category_id);
       const selectedSubcategory = formData.subcategory_id && formData.subcategory_id !== 'none'
-        ? subcategories.find(sub => sub.id === formData.subcategory_id)
+        ? subcategories.find((sub: WolooSubcategory) => sub.id === formData.subcategory_id)
         : null;
 
       const submitData = {
         name: formData.name.trim(),
-        category_id: parseInt((selectedCategory as any)?.sampleid || formData.category_id),
-        subcategory_id: selectedSubcategory ? parseInt((selectedSubcategory as any)?.sampleid) : null,
-        segment_id: formData.segment_id ? parseInt(formData.segment_id) : null,
-        user_id: formData.user_id ? parseInt(formData.user_id) : null,
+        category_id: (selectedCategory as any)?.sampleid?.toString() || formData.category_id,
+        subcategory_id: selectedSubcategory ? (selectedSubcategory as any)?.sampleid?.toString() : undefined,
+        segment_id: formData.segment_id ? parseInt(formData.segment_id) : undefined,
+        user_id: formData.user_id ? parseInt(formData.user_id) : undefined,
         price: parseFloat(formData.price),
-        strike_price: formData.strike_price ? parseFloat(formData.strike_price) : null,
+        strike_price: formData.strike_price ? parseFloat(formData.strike_price) : undefined,
         weight: parseInt(formData.weight) || 0,
         recommended: formData.recommended,
         best_deal: formData.best_deal,
@@ -222,7 +241,7 @@ const AddWolooRateCard: React.FC = () => {
       };
 
       // Additional validation to prevent sending invalid category_id
-      if (!submitData.category_id || submitData.category_id === 0) {
+      if (!submitData.category_id) {
         toast({
           title: 'Validation Error',
           description: 'Invalid category selected. Please select a valid category.',
@@ -248,11 +267,20 @@ const AddWolooRateCard: React.FC = () => {
           variant: 'destructive',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error creating rate card:', error);
+
+      // More specific error handling
+      let errorMessage = 'Failed to create rate card. Please check if the backend server is running.';
+      if (error?.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      } else if (error?.message) {
+        errorMessage = error.message;
+      }
+
       toast({
         title: 'Error',
-        description: 'Failed to create rate card. Please check if the backend server is running.',
+        description: errorMessage,
         variant: 'destructive',
       });
     } finally {
@@ -300,7 +328,7 @@ const AddWolooRateCard: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
+                      <SelectItem key={category.id} value={category.id || ''}>
                         {category.name}
                       </SelectItem>
                     ))}
@@ -318,7 +346,7 @@ const AddWolooRateCard: React.FC = () => {
                   <SelectContent>
                     <SelectItem value="none">No Subcategory</SelectItem>
                     {filteredSubcategories.map((subcategory) => (
-                      <SelectItem key={subcategory.id} value={subcategory.id}>
+                      <SelectItem key={subcategory.id} value={subcategory.id || ''}>
                         {subcategory.name}
                       </SelectItem>
                     ))}
