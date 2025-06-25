@@ -13,6 +13,15 @@ import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
 import { fetchWolooCategories, fetchWolooSubcategories, fetchWolooRateCardById, updateWolooRateCard, WolooCategory, WolooSubcategory } from '@/lib/api';
 
+// Utility functions for safe data handling
+const isValidCategory = (category: WolooCategory): category is WolooCategory & { id: string } => {
+  return !!(category.id && category.name);
+};
+
+const isValidSubcategory = (subcategory: WolooSubcategory): subcategory is WolooSubcategory & { id: string } => {
+  return !!(subcategory.id && subcategory.name);
+};
+
 
 
 interface RateCardFormData {
@@ -330,11 +339,13 @@ const EditWolooRateCard: React.FC = () => {
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id}>
-                        {category.name}
-                      </SelectItem>
-                    ))}
+                    {categories
+                      .filter(isValidCategory) // Only show categories with valid IDs and names
+                      .map((category) => (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -348,11 +359,13 @@ const EditWolooRateCard: React.FC = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="none">No Subcategory</SelectItem>
-                    {filteredSubcategories.map((subcategory) => (
-                      <SelectItem key={subcategory.id} value={subcategory.id}>
-                        {subcategory.name}
-                      </SelectItem>
-                    ))}
+                    {filteredSubcategories
+                      .filter(isValidSubcategory) // Only show subcategories with valid IDs and names
+                      .map((subcategory) => (
+                        <SelectItem key={subcategory.id} value={subcategory.id}>
+                          {subcategory.name}
+                        </SelectItem>
+                      ))}
                   </SelectContent>
                 </Select>
               </div>
