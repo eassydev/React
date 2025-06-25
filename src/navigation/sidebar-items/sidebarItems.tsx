@@ -14,7 +14,11 @@ import {
   PanelsTopLeft,
   ListCheckIcon,
   CreditCard,
-  Star
+  Star,
+  Building2,
+  Calendar,
+  Settings,
+  Tags
 } from "lucide-react"
 
 export interface NavItem {
@@ -229,6 +233,17 @@ export const sidebarItems: SidebarItem[] = [
        { title: "Course-quiz", route: `${basePath}/course-quiz` },
        { title: "Badge", route: `${basePath}/badge` },
       ],
+  },
+  {
+    title: "Woloo",
+    icon: Building2,
+    children: [
+      { title: "Categories", route: `${basePath}/woloo/categories` },
+      { title: "Subcategories", route: `${basePath}/woloo/subcategories` },
+      { title: "Attributes", route: `${basePath}/woloo/attributes` },
+      { title: "Rate Cards", route: `${basePath}/woloo/rate-cards` },
+      { title: "Bookings", route: `${basePath}/woloo/bookings` },
+    ],
   },
   // {
   //   title: "Auth",

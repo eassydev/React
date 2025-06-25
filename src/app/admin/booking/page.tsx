@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   ColumnDef,
   flexRender,
@@ -51,6 +51,7 @@ const BookingList = () => {
   });
 
   const { toast } = useToast();
+  const datePickerRef = useRef<HTMLDivElement>(null);
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFilterStatus(e.target.value);
@@ -135,6 +136,23 @@ const BookingList = () => {
     fetchBookingsData();
   }, [pagination, filterStatus, searchTerm, pincode, serviceDate, filters, dateRange]);
 
+  // Close date picker when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (datePickerRef.current && !datePickerRef.current.contains(event.target as Node)) {
+        setShowDatePicker(false);
+      }
+    };
+
+    if (showDatePicker) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showDatePicker]);
+
   const handleBookingDelete = async (booking: any) => {
     try {
       await deleteBooking(booking.id);
@@ -152,6 +170,8 @@ const BookingList = () => {
       });
     }
   };
+
+
 
   const bookingColumns: ColumnDef<any>[] = [
     {
@@ -408,7 +428,7 @@ const BookingList = () => {
               <option value="0">Deactivated</option>
               <option value="2">Deleted</option>
             </select>
-            <div className="relative">
+            <div className="relative" ref={datePickerRef}>
               <input
                 type="text"
                 placeholder="Date Range"
@@ -418,7 +438,7 @@ const BookingList = () => {
                 readOnly
               />
               {showDatePicker && (
-                <div className="absolute z-10 mt-1 bg-white shadow-lg">
+                <div className="absolute z-50 mt-1 bg-white shadow-lg border rounded-lg right-0">
                   <DateRange
                     editableDateInputs={true}
                     onChange={(item: any) => {
@@ -555,6 +575,8 @@ const BookingList = () => {
             </Button>
           </div>
         </Card>
+
+
       </div>
     </div>
   );
