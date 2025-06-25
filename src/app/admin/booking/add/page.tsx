@@ -377,7 +377,6 @@ const AddBookingForm: React.FC = () => {
   });
 }, []);
 
-
   // Function to load more results
   const loadMoreResults = useCallback(() => {
     if (hasMoreResults && !isLoadingMore && userSearchTerm.trim()) {
