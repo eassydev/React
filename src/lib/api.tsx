@@ -501,6 +501,7 @@ export interface Promocode {
 // Woloo Interfaces
 export interface WolooCategory {
   id?: string;
+  sampleid?: string;
   name: string;
   service_time?: string;
   image?: File | null;
