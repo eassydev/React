@@ -12,18 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
-import { fetchWolooCategories, fetchWolooSubcategories, createWolooRateCard } from '@/lib/api';
-
-interface WolooCategory {
-  id: string;
-  name: string;
-}
-
-interface WolooSubcategory {
-  id: string;
-  name: string;
-  category_id: string;
-}
+import { fetchWolooCategories, fetchWolooSubcategories, createWolooRateCard, WolooCategory, WolooSubcategory } from '@/lib/api';
 
 
 
@@ -92,11 +81,11 @@ const AddWolooRateCard: React.FC = () => {
         setCategories(categories);
         setSubcategories(subcategories);
 
-        console.log('Categories structure:', categories.map(c => ({
+        console.log('Categories structure:', categories.map((c: WolooCategory) => ({
           id: c.id,
           name: c.name
         })));
-        console.log('Subcategories structure:', subcategories.map(s => ({
+        console.log('Subcategories structure:', subcategories.map((s: WolooSubcategory) => ({
           id: s.id,
           name: s.name,
           category_id: s.category_id

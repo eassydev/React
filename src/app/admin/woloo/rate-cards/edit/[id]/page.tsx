@@ -11,18 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
-import { fetchWolooCategories, fetchWolooSubcategories, fetchWolooRateCardById, updateWolooRateCard } from '@/lib/api';
-
-interface WolooCategory {
-  id: string;
-  name: string;
-}
-
-interface WolooSubcategory {
-  id: string;
-  name: string;
-  category_id: string;
-}
+import { fetchWolooCategories, fetchWolooSubcategories, fetchWolooRateCardById, updateWolooRateCard, WolooCategory, WolooSubcategory } from '@/lib/api';
 
 
 
