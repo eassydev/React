@@ -81,13 +81,10 @@ const EditWolooSubcategory = ({ params }: EditWolooSubcategoryProps) => {
             // Use the included category data if available
             selectedCategoryId = subcategory.category.id;
           } else {
-            // Fallback: find category by matching sampleid with category_id
-            const matchingCategory = categoriesData.find(
-              (cat) => cat.sampleid == subcategory.category_id,
-            );
-            selectedCategoryId = matchingCategory?.id || "";
-          }
-
+  // Fallback: find category by matching sampleid with category_id
+  const matchingCategory = categoriesData.find((cat: WolooCategory) => cat.sampleid === subcategory.category_id);
+  selectedCategoryId = matchingCategory?.id || "";
+}
           setFormData({
             name: subcategory.name || "",
             category_id: selectedCategoryId,
