@@ -8,8 +8,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { updateWolooSubcategory, fetchWolooCategories, fetchWolooSubcategories, WolooSubcategory, WolooCategory } from "@/lib/api";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  updateWolooSubcategory,
+  fetchWolooCategories,
+  fetchWolooSubcategories,
+  WolooSubcategory,
+  WolooCategory,
+} from "@/lib/api";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Save } from "lucide-react";
 import Link from "next/link";
@@ -41,15 +53,27 @@ const EditWolooSubcategory = ({ params }: EditWolooSubcategoryProps) => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        
+
         // Fetch categories
-        const { data: categoriesData } = await fetchWolooCategories(1, 1000, 'all', '');
+        const { data: categoriesData } = await fetchWolooCategories(
+          1,
+          1000,
+          "all",
+          "",
+        );
         setCategories(categoriesData);
-        
+
         // Fetch subcategories and find the one we're editing
-        const { data: subcategoriesData } = await fetchWolooSubcategories(1, 1000, 'all', '');
-        const subcategory = subcategoriesData.find((sub: WolooSubcategory) => sub.id === subcategoryId);
-        
+        const { data: subcategoriesData } = await fetchWolooSubcategories(
+          1,
+          1000,
+          "all",
+          "",
+        );
+        const subcategory = subcategoriesData.find(
+          (sub: WolooSubcategory) => sub.id === subcategoryId,
+        );
+
         if (subcategory) {
           // Find the encrypted category ID that matches the subcategory's category_id
           let selectedCategoryId = "";
@@ -58,7 +82,9 @@ const EditWolooSubcategory = ({ params }: EditWolooSubcategoryProps) => {
             selectedCategoryId = subcategory.category.id;
           } else {
             // Fallback: find category by matching sampleid with category_id
-            const matchingCategory = categoriesData.find(cat => cat.sampleid == subcategory.category_id);
+            const matchingCategory = categoriesData.find(
+              (cat) => cat.sampleid == subcategory.category_id,
+            );
             selectedCategoryId = matchingCategory?.id || "";
           }
 
@@ -89,43 +115,45 @@ const EditWolooSubcategory = ({ params }: EditWolooSubcategoryProps) => {
         setIsLoading(false);
       }
     };
-    
+
     fetchData();
   }, [subcategoryId, toast, router]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSelectChange = (value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      category_id: value
+      category_id: value,
     }));
   };
 
   const handleSwitchChange = (checked: boolean) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      active: checked
+      active: checked,
     }));
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      image: file
+      image: file,
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       toast({
         title: "Validation Error",
@@ -215,7 +243,10 @@ const EditWolooSubcategory = ({ params }: EditWolooSubcategoryProps) => {
 
               <div className="space-y-2">
                 <Label htmlFor="category_id">Category *</Label>
-                <Select value={formData.category_id} onValueChange={handleSelectChange}>
+                <Select
+                  value={formData.category_id}
+                  onValueChange={handleSelectChange}
+                >
                   <SelectTrigger>
                     <SelectValue placeholder="Select a category" />
                   </SelectTrigger>
