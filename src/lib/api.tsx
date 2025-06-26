@@ -235,6 +235,8 @@ export interface Page {
   title: string;
   slug: string;
   description: string;
+  page_type?: 'privacy-policy' | 'terms-conditions' | 'faq' | 'about-us' | 'custom';
+  target_audience?: 'customer' | 'provider' | 'both';
   is_active: boolean;
   created_at?: number; // UNIX timestamp
   updated_at?: number; // UNIX timestamp
@@ -1984,6 +1986,8 @@ export const createPage = async (page: Page): Promise<ApiResponse> => {
       title: page.title,
       slug: page.slug,
       description: page.description,
+      page_type: page.page_type || 'custom',
+      target_audience: page.target_audience || 'both',
       is_active: page.is_active,
     };
 
@@ -2002,11 +2006,15 @@ export const createPage = async (page: Page): Promise<ApiResponse> => {
 };
 
 // Function to fetch all pages with pagination
-export const fetchPages = async (page = 1, size = 10) => {
+export const fetchPages = async (page = 1, size = 10, page_type?: string, target_audience?: string) => {
   try {
     const token = getToken();
+    const params: any = { page, size };
+    if (page_type) params.page_type = page_type;
+    if (target_audience) params.target_audience = target_audience;
+
     const response= await apiClient.get('/page', {
-      params: { page, size },
+      params,
       headers: {
         'admin-auth-token': token || '',
       },
@@ -2043,6 +2051,8 @@ export const updatePage = async (id: string, page: Page): Promise<ApiResponse> =
     title: page.title,
     slug: page.slug,
     description: page.description,
+    page_type: page.page_type,
+    target_audience: page.target_audience,
     is_active: page.is_active,
   };
 
@@ -2087,6 +2097,36 @@ export const restorePage = async (id: string): Promise<ApiResponse> => {
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to restore page.');
+  }
+};
+
+// Function to fetch CMS page types with counts
+export const fetchCMSPageTypes = async (): Promise<any> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/page/cms/types', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch CMS page types.');
+  }
+};
+
+// Function to fetch pages by type and audience
+export const fetchPagesByTypeAndAudience = async (page_type: string, target_audience: string): Promise<any> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/page/cms/${page_type}/${target_audience}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch pages by type and audience.');
   }
 };
 

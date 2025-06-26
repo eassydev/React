@@ -18,7 +18,9 @@ import {
   Building2,
   Calendar,
   Settings,
-  Tags
+  Tags,
+  FileText,
+  HelpCircle
 } from "lucide-react"
 
 export interface NavItem {
@@ -141,9 +143,15 @@ export const sidebarItems: SidebarItem[] = [
     route: `${basePath}/sp-hubs`,
   },
   {
-    title: "Pages",
-    icon: ListCheckIcon,
-    route: `${basePath}/pages`,
+    title: "CMS Pages",
+    icon: FileText,
+    children: [
+      { title: "All Pages", route: `${basePath}/pages` },
+      { title: "Privacy Policy", route: `${basePath}/pages?type=privacy-policy` },
+      { title: "Terms & Conditions", route: `${basePath}/pages?type=terms-conditions` },
+      { title: "About Us", route: `${basePath}/pages?type=about-us` },
+      { title: "Custom Pages", route: `${basePath}/pages?type=custom` },
+    ],
   },
   {
     title: "Booking",
@@ -212,7 +220,7 @@ export const sidebarItems: SidebarItem[] = [
   },
   {
     title: "FAQ",
-    icon: ListCheckIcon,
+    icon: HelpCircle,
     route: `${basePath}/faq`,
   },
   {

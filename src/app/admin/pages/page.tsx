@@ -11,24 +11,42 @@ import {
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/components/ui/table';
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from 'lucide-react';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Filter } from 'lucide-react';
 import { fetchPages, deletePage } from '@/lib/api';
 import Link from 'next/link';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { useToast } from "@/hooks/use-toast";
+import { useSearchParams } from 'next/navigation';
 
 const PageList = () => {
   const [pages, setPages] = useState<any[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
+  const [pageTypeFilter, setPageTypeFilter] = useState<string>('');
+  const [audienceFilter, setAudienceFilter] = useState<string>('');
 
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+
+  // Initialize filters from URL parameters
+  useEffect(() => {
+    const typeParam = searchParams.get('type');
+    const audienceParam = searchParams.get('audience');
+
+    if (typeParam) {
+      setPageTypeFilter(typeParam);
+    }
+    if (audienceParam) {
+      setAudienceFilter(audienceParam);
+    }
+  }, [searchParams]);
 
   // Fetch pages from the backend with pagination
   const fetchPagesData = async (page = 1, size = 50) => {
     try {
-      const { data, meta } = await fetchPages(page, size);
+      const { data, meta } = await fetchPages(page, size, pageTypeFilter || undefined, audienceFilter || undefined);
       setPages(data);
       setTotalPages(meta.totalPages);
       setTotalItems(meta.totalItems);
@@ -40,7 +58,7 @@ const PageList = () => {
 
   useEffect(() => {
     fetchPagesData(pagination.pageIndex + 1, pagination.pageSize);
-  }, [pagination.pageIndex, pagination.pageSize]);
+  }, [pagination.pageIndex, pagination.pageSize, pageTypeFilter, audienceFilter]);
 
   const handlePageDelete = async (page: any) => {
     try {
@@ -74,7 +92,43 @@ const PageList = () => {
         const slug = getValue() as string; // Ensure it's a string
         return <span>{slug}</span>;
       },
-    },    
+    },
+    {
+      accessorKey: 'page_type',
+      header: 'Type',
+      cell: ({ getValue }) => {
+        const type = getValue() as string;
+        const typeLabels: { [key: string]: string } = {
+          'privacy-policy': 'Privacy Policy',
+          'terms-conditions': 'Terms & Conditions',
+          'faq': 'FAQ',
+          'about-us': 'About Us',
+          'custom': 'Custom'
+        };
+        return (
+          <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-600">
+            {typeLabels[type] || type}
+          </span>
+        );
+      },
+    },
+    {
+      accessorKey: 'target_audience',
+      header: 'Audience',
+      cell: ({ getValue }) => {
+        const audience = getValue() as string;
+        const audienceColors: { [key: string]: string } = {
+          'customer': 'bg-green-100 text-green-600',
+          'provider': 'bg-purple-100 text-purple-600',
+          'both': 'bg-orange-100 text-orange-600'
+        };
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${audienceColors[audience] || 'bg-gray-100 text-gray-600'}`}>
+            {audience?.charAt(0).toUpperCase() + audience?.slice(1)}
+          </span>
+        );
+      },
+    },
     {
       accessorKey: 'is_active',
       header: 'Status',
@@ -91,7 +145,7 @@ const PageList = () => {
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="icon">
             <Link href={`/admin/pages/edit/${row.original.id}`} passHref>
-              <Edit className="w-4 h-4 text-blue-600" />
+              <Edit className="w-4 h-4 text-orange-600" />
             </Link>
           </Button>
           <AlertDialog>
@@ -132,13 +186,60 @@ const PageList = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-12xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900">Page List</h1>
+          <h1 className="text-3xl font-bold text-gray-900">CMS Pages Management</h1>
           <Button asChild variant="default" className="flex items-center space-x-2">
             <Link href="/admin/pages/add">
               <Plus className="w-4 h-4 mr-1" />
               <span>Add Page</span>
             </Link>
           </Button>
+        </div>
+
+        {/* Filters */}
+        <div className="flex items-center space-x-4 bg-white p-4 rounded-lg shadow">
+          <div className="flex items-center space-x-2">
+            <Filter className="w-4 h-4 text-gray-500" />
+            <span className="text-sm font-medium text-gray-700">Filters:</span>
+          </div>
+
+          <Select value={pageTypeFilter || "all"} onValueChange={(value) => setPageTypeFilter(value === "all" ? "" : value)}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="All Page Types" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Page Types</SelectItem>
+              <SelectItem value="privacy-policy">Privacy Policy</SelectItem>
+              <SelectItem value="terms-conditions">Terms & Conditions</SelectItem>
+              <SelectItem value="faq">FAQ</SelectItem>
+              <SelectItem value="about-us">About Us</SelectItem>
+              <SelectItem value="custom">Custom</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={audienceFilter || "all"} onValueChange={(value) => setAudienceFilter(value === "all" ? "" : value)}>
+            <SelectTrigger className="w-48">
+              <SelectValue placeholder="All Audiences" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Audiences</SelectItem>
+              <SelectItem value="customer">Customer</SelectItem>
+              <SelectItem value="provider">Provider</SelectItem>
+              <SelectItem value="both">Both</SelectItem>
+            </SelectContent>
+          </Select>
+
+          {(pageTypeFilter || audienceFilter) && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setPageTypeFilter('');
+                setAudienceFilter('');
+              }}
+            >
+              Clear Filters
+            </Button>
+          )}
         </div>
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">

@@ -7,8 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2, FileText } from "lucide-react";
+import { Save, Loader2, FileText, Tag, Users } from "lucide-react";
 import { fetchPageById, updatePage, Page } from "@/lib/api"; // Import the API functions and Page interface
 
 // Import React-Quill dynamically for client-side rendering
@@ -31,6 +32,8 @@ const EditPageForm: React.FC = () => {
   const [title, setTitle] = useState<string>("");
   const [slug, setSlug] = useState<string>("");
   const [description, setDescription] = useState<string>("");
+  const [pageType, setPageType] = useState<string>("custom");
+  const [targetAudience, setTargetAudience] = useState<string>("both");
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -54,6 +57,8 @@ const EditPageForm: React.FC = () => {
       setTitle(pageData.title);
       setSlug(pageData.slug);
       setDescription(pageData.description || "");
+      setPageType(pageData.page_type || "custom");
+      setTargetAudience(pageData.target_audience || "both");
       setIsActive(pageData.is_active);
     } catch (error) {
       toast({
@@ -92,6 +97,8 @@ const EditPageForm: React.FC = () => {
       title,
       slug,
       description,
+      page_type: pageType as any,
+      target_audience: targetAudience as any,
       is_active: isActive,
     };
 
@@ -125,7 +132,7 @@ const EditPageForm: React.FC = () => {
       <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
         <CardHeader className="border-b border-gray-100 pb-6">
           <div className="flex items-center space-x-2">
-            <div className="h-8 w-1 bg-blue-600 rounded-full" />
+            <div className="h-8 w-1 bg-orange-500 rounded-full" />
             <div>
               <CardTitle className="text-xl text-gray-800">Edit Category</CardTitle>
               <CardDescription className="text-gray-500">
@@ -162,10 +169,48 @@ const EditPageForm: React.FC = () => {
                 />
               </div>
 
+              {/* Page Type Field */}
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <Tag className="w-4 h-4 text-orange-500" />
+                  <span>Page Type</span>
+                </label>
+                <Select value={pageType} onValueChange={setPageType}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select page type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="custom">Custom</SelectItem>
+                    <SelectItem value="privacy-policy">Privacy Policy</SelectItem>
+                    <SelectItem value="terms-conditions">Terms & Conditions</SelectItem>
+                    <SelectItem value="faq">FAQ</SelectItem>
+                    <SelectItem value="about-us">About Us</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Target Audience Field */}
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <Users className="w-4 h-4 text-green-500" />
+                  <span>Target Audience</span>
+                </label>
+                <Select value={targetAudience} onValueChange={setTargetAudience}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select target audience" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="both">Both (Customer & Provider)</SelectItem>
+                    <SelectItem value="customer">Customer Only</SelectItem>
+                    <SelectItem value="provider">Provider Only</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
               {/* Description Field with React-Quill */}
               <div className="space-y-2" style={{ height: "270px" }}>
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-                  <FileText className="w-4 h-5 text-blue-500" />
+                  <FileText className="w-4 h-5 text-orange-500" />
                   <span>Description</span>
                 </label>
                 <ReactQuill
