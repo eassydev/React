@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import {
   ColumnDef,
   flexRender,
@@ -19,7 +19,7 @@ import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader,
 import { useToast } from "@/hooks/use-toast";
 import { useSearchParams } from 'next/navigation';
 
-const PageList = () => {
+const PageListContent = () => {
   const [pages, setPages] = useState<any[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
@@ -311,6 +311,14 @@ const PageList = () => {
         </Card>
       </div>
     </div>
+  );
+};
+
+const PageList = () => {
+  return (
+    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+      <PageListContent />
+    </Suspense>
   );
 };
 
