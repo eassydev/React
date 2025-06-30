@@ -69,6 +69,7 @@ const RateCardForm: React.FC = () => {
   const [segmentsId, setsegmentsId] = useState<string>("");
   const [selectedProviderName, setSelectedProviderName] = useState<string>("Select an option");
   const [providers, setProviders] = useState<Provider[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>("");
 
   const [weight, setWeight] = useState<number>(0);
 
@@ -476,25 +477,74 @@ const RateCardForm: React.FC = () => {
                     </div>
                       )}
 
- <div className="space-y-2 w-full">
-      <label className="text-sm font-medium text-gray-700">Select Provider</label>
-      <Select value={selectedProviderId || ""} onValueChange={handleValueChange}>
-        <SelectTrigger className="w-full"> {/* Full width */}
-          {selectedProviderName || "Select an option"}
-        </SelectTrigger>
-        <SelectContent className="w-full"> {/* Full width dropdown */}
-          <Virtuoso
-            style={{ height: "200px", width: "100%" }} // Full width and fixed height
-            totalCount={providers.length}
-            itemContent={(index:any) => (
-              <SelectItem key={providers[index].id} value={providers[index].id?.toString() ?? ''}>
-                {providers[index].first_name} {providers[index].last_name || ""}
+<div className="space-y-2 w-full">
+  <label className="text-sm font-medium text-gray-700">Select Provider</label>
+  <Select value={selectedProviderId || ""} onValueChange={handleValueChange}>
+    <SelectTrigger className="w-full">
+      {selectedProviderName || "Select an option"}
+    </SelectTrigger>
+    <SelectContent className="w-full p-0">
+      {/* Search input */}
+      <div className="sticky top-0 z-10 bg-background p-2 border-b">
+        <Input
+          placeholder="Search by name, company, phone, or ID..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="w-full"
+          autoFocus
+        />
+      </div>
+
+      {/* Filtered provider list */}
+      {providers.filter(provider =>
+        `${provider.first_name} ${provider.last_name || ''} ${provider.company_name || ''} ${provider.phone || ''}`
+          .toLowerCase()
+          .includes(searchTerm.toLowerCase())
+      ).length > 0 ? (
+        <Virtuoso
+          style={{ height: "200px", width: "100%" }}
+          totalCount={providers.filter(provider =>
+            `${provider.first_name} ${provider.last_name || ''} ${provider.company_name || ''} ${provider.phone || ''}`
+              .toLowerCase()
+              .includes(searchTerm.toLowerCase())
+          ).length}
+          itemContent={(index) => {
+            const filteredProviders = providers.filter(provider =>
+              `${provider.first_name} ${provider.last_name || ''} ${provider.company_name || ''} ${provider.phone || ''}`
+                .toLowerCase()
+                .includes(searchTerm.toLowerCase())
+            );
+            const provider = filteredProviders[index];
+            return (
+              <SelectItem
+                key={provider.id}
+                value={provider.id?.toString() ?? ''}
+              >
+                <div className="flex flex-col">
+                  <span className="font-medium">
+                    {provider.first_name} {provider.last_name || ""}
+                  </span>
+                  {provider.company_name && (
+                    <span className="text-sm text-gray-600">
+                      {provider.company_name}
+                    </span>
+                  )}
+                  <span className="text-xs text-gray-500">
+                    📞 {provider.phone || 'No Phone'} • ID: {(provider as any).sampleid || provider.id}
+                  </span>
+                </div>
               </SelectItem>
-            )}
-          />
-        </SelectContent>
-      </Select>
-    </div>
+            );
+          }}
+        />
+      ) : (
+        <div className="py-6 text-center text-sm text-muted-foreground">
+          No providers found
+        </div>
+      )}
+    </SelectContent>
+  </Select>
+</div>
              
 
               {/* Active/Inactive Switch */}
