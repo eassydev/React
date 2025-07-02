@@ -6,9 +6,10 @@ import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 ,FileImage} from "lucide-react";
+import { Save, Loader2, FileImage, Eye, Upload } from "lucide-react";
 import { fetchProviderById, updateProvider, Provider } from "@/lib/api";
 import { useRouter, useParams } from "next/navigation";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 const EditProviderForm: React.FC = () => {
   const [firstName, setFirstName] = useState<string>("");
@@ -32,10 +33,76 @@ const EditProviderForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [gstError, setGstError] = useState("");
   const [panError, setPanError] = useState("");
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [newAadharFront, setNewAadharFront] = useState<File | null>(null);
+  const [newAadharBack, setNewAadharBack] = useState<File | null>(null);
+  const [newPanCard, setNewPanCard] = useState<File | null>(null);
+  const [newGstCertificate, setNewGstCertificate] = useState<File | null>(null);
 
   const { toast } = useToast();
   const router = useRouter();
   const { id } = useParams();
+
+  // Function to fetch provider documents
+  const fetchProviderDocuments = async (providerId: string) => {
+    try {
+      const response = await fetch(`/admin-api/provider/${providerId}/documents`, {
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setDocuments(data.documents || []);
+      }
+    } catch (error) {
+      console.error('Error fetching documents:', error);
+    }
+  };
+
+  // Function to upload new documents
+  const uploadDocuments = async () => {
+    try {
+      const formData = new FormData();
+
+      if (newAadharFront) formData.append('adhaarCardFront', newAadharFront);
+      if (newAadharBack) formData.append('adhaarCardBack', newAadharBack);
+      if (newPanCard) formData.append('panCard', newPanCard);
+      if (newGstCertificate) formData.append('gstCertificate', newGstCertificate);
+
+      const response = await fetch(`/admin-api/provider/${id}/documents`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+        },
+        body: formData,
+      });
+
+      if (response.ok) {
+        toast({
+          title: "Success",
+          description: "Documents uploaded successfully.",
+        });
+
+        // Reset file inputs
+        setNewAadharFront(null);
+        setNewAadharBack(null);
+        setNewPanCard(null);
+        setNewGstCertificate(null);
+
+        // Refresh documents
+        await fetchProviderDocuments(id as string);
+      } else {
+        throw new Error('Failed to upload documents');
+      }
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: "Failed to upload documents.",
+      });
+    }
+  };
 
   useEffect(() => {
     const fetchProviderData = async () => {
@@ -61,6 +128,9 @@ const EditProviderForm: React.FC = () => {
         setState(providerData.state || "");
         setCity(providerData.city || "");
         setPostalCode(providerData.postal_code || "");
+
+        // Fetch provider documents
+        await fetchProviderDocuments(id as string);
       } catch (error) {
         toast({
           variant: "error",
@@ -356,6 +426,180 @@ const EditProviderForm: React.FC = () => {
               </Button>
             </div>
           </CardFooter>
+        </Card>
+
+        {/* Documents Section */}
+        <Card className="shadow-lg border-0 bg-white">
+          <CardHeader className="border-b border-gray-100 pb-6">
+            <CardTitle className="text-2xl font-bold text-gray-800 flex items-center space-x-2">
+              <FileImage className="w-6 h-6 text-primary" />
+              <span>Provider Documents</span>
+            </CardTitle>
+            <CardDescription>
+              View and manage provider documents (Aadhar, PAN, GST certificates)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {/* Aadhar Card Front */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-gray-700">Aadhar Card Front</label>
+                {documents.find(doc => doc.document_type === 'adhaarCardFront') ? (
+                  <div className="space-y-2">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" className="w-full">
+                          <Eye className="w-4 h-4 mr-2" />
+                          View Current
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                          <DialogTitle>Aadhar Card Front</DialogTitle>
+                        </DialogHeader>
+                        <img
+                          src={documents.find(doc => doc.document_type === 'adhaarCardFront')?.document_url}
+                          alt="Aadhar Front"
+                          className="w-full h-auto rounded-lg"
+                          onError={(e) => {
+                            e.currentTarget.src = '/placeholder-image.png';
+                          }}
+                        />
+                      </DialogContent>
+                    </Dialog>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setNewAadharFront(e.target.files?.[0] || null)}
+                      className="text-sm"
+                      placeholder="Upload new Aadhar front"
+                    />
+                    {newAadharFront && (
+                      <p className="text-xs text-green-600">New file selected: {newAadharFront.name}</p>
+                    )}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500">No document uploaded</p>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setNewAadharFront(e.target.files?.[0] || null)}
+                      className="text-sm"
+                      placeholder="Upload Aadhar front"
+                    />
+                    {newAadharFront && (
+                      <p className="text-xs text-green-600">File selected: {newAadharFront.name}</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* Aadhar Card Back */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-gray-700">Aadhar Card Back</label>
+                {documents.find(doc => doc.document_type === 'adhaarCardBack') ? (
+                  <div className="space-y-2">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" className="w-full">
+                          <Eye className="w-4 h-4 mr-2" />
+                          View Current
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                          <DialogTitle>Aadhar Card Back</DialogTitle>
+                        </DialogHeader>
+                        <img
+                          src={documents.find(doc => doc.document_type === 'adhaarCardBack')?.document_url}
+                          alt="Aadhar Back"
+                          className="w-full h-auto rounded-lg"
+                        />
+                      </DialogContent>
+                    </Dialog>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setNewAadharBack(e.target.files?.[0] || null)}
+                      className="text-sm"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500">No document uploaded</p>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setNewAadharBack(e.target.files?.[0] || null)}
+                      className="text-sm"
+                    />
+                  </div>
+                )}
+              </div>
+
+              {/* PAN Card */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-gray-700">PAN Card</label>
+                {documents.find(doc => doc.document_type === 'panCard') ? (
+                  <div className="space-y-2">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" className="w-full">
+                          <Eye className="w-4 h-4 mr-2" />
+                          View Current
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-2xl">
+                        <DialogHeader>
+                          <DialogTitle>PAN Card</DialogTitle>
+                        </DialogHeader>
+                        <img
+                          src={documents.find(doc => doc.document_type === 'panCard')?.document_url}
+                          alt="PAN Card"
+                          className="w-full h-auto rounded-lg"
+                        />
+                      </DialogContent>
+                    </Dialog>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setNewPanCard(e.target.files?.[0] || null)}
+                      className="text-sm"
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    <p className="text-sm text-gray-500">No document uploaded</p>
+                    <Input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => setNewPanCard(e.target.files?.[0] || null)}
+                      className="text-sm"
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Upload Documents Button */}
+            {(newAadharFront || newAadharBack || newPanCard || newGstCertificate) && (
+              <div className="mt-6 pt-6 border-t border-gray-100">
+                <Button
+                  onClick={uploadDocuments}
+                  className="w-full bg-primary"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  ) : (
+                    <Upload className="w-4 h-4 mr-2" />
+                  )}
+                  {isSubmitting ? 'Uploading...' : 'Upload New Documents'}
+                </Button>
+              </div>
+            )}
+          </CardContent>
         </Card>
       </div>
     </div>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useSearchParams } from "next/navigation";
 import {
   ColumnDef,
   flexRender,
@@ -53,10 +54,14 @@ const StaffList = () => {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
+  const searchParams = useSearchParams();
+  const providerIdFilter = searchParams.get('provider_id');
 
   const fetchStaffData = async (page = 1, size = 5, status = "all") => {
     try {
-      const { data, meta } = await fetchAllStaff("", page, size, filterStatus);
+      // Add provider filter to search if provider_id is in URL
+      const searchQuery = providerIdFilter ? `provider_id:${providerIdFilter}` : "";
+      const { data, meta } = await fetchAllStaff(searchQuery, page, size, filterStatus);
       setStaff(data);
       setTotalPages(meta.totalPages);
       setTotalItems(meta.totalItems);
@@ -247,7 +252,9 @@ const StaffList = () => {
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-12xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900">Staff List</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            {providerIdFilter ? 'Provider Staff List' : 'Staff List'}
+          </h1>
           <div className="flex space-x-2">
             <select
               value={filterStatus}

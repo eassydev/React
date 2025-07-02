@@ -84,63 +84,40 @@ export default function ContactUsPage() {
     setIsLoading(true)
 
     try {
-      // Try multiple endpoints for better reliability
-      const endpoints = [
-        'https://app.eassylife.in/public/contact',  // Production endpoint
-        '/api/contact-submit',                      // Next.js fallback endpoint
-      ]
+      // Submit directly to backend API
+      console.log('📞 Submitting contact form to backend...')
 
-      let success = false
-      let lastError = null
+      const response = await fetch('https://app.eassylife.in/public/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData)
+      })
 
-      for (const endpoint of endpoints) {
-        try {
-          console.log(`Trying endpoint: ${endpoint}`)
-
-          const response = await fetch(endpoint, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify(formData)
-          })
-
-          if (!response.ok) {
-            throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-          }
-
-          const result = await response.json()
-
-          if (result.status) {
-            success = true
-            toast({
-              title: "Message Sent Successfully!",
-              description: "Thank you for contacting us! We will get back to you soon.",
-            })
-
-            // Reset form
-            setFormData({
-              name: '',
-              email: '',
-              phone: '',
-              message: ''
-            })
-            break
-          } else {
-            lastError = result.message || 'Failed to submit contact form.'
-          }
-        } catch (error) {
-          console.error(`Error with endpoint ${endpoint}:`, error)
-          lastError = error instanceof Error ? error.message : 'Network error'
-          continue // Try next endpoint
-        }
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
       }
 
-      if (!success) {
-        // If all endpoints fail, show a user-friendly message
+      const result = await response.json()
+
+      if (result.status) {
+        toast({
+          title: "Message Sent Successfully!",
+          description: "Thank you for contacting us! We will get back to you soon.",
+        })
+
+        // Reset form
+        setFormData({
+          name: '',
+          email: '',
+          phone: '',
+          message: ''
+        })
+      } else {
         toast({
           title: "Submission Failed",
-          description: "We're experiencing technical difficulties. Please try again later or contact us directly at support@eassylife.in",
+          description: result.message || 'Failed to submit contact form. Please try again.',
           variant: "destructive"
         })
       }

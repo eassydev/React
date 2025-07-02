@@ -24,7 +24,9 @@ import {
   Edit,
   Trash2,
   Plus,
-  Download, Copy,
+  Download,
+  Copy,
+  Users,
 } from "lucide-react";
 import { fetchAllProviders, deleteProvider, exportProvider,approvedProvider } from "@/lib/api";
 import Link from "next/link";
@@ -225,14 +227,19 @@ const ProviderList = () => {
       header: "Actions",
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
-          <Button variant="ghost" size="icon">
+          <Button variant="ghost" size="icon" title="Edit Provider">
             <Link href={`/admin/provider/edit/${row.original.id}`} passHref>
               <Edit className="w-4 h-4 text-blue-600" />
             </Link>
           </Button>
+          <Button variant="ghost" size="icon" title="View Staff">
+            <Link href={`/admin/staff?provider_id=${row.original.id}`} passHref>
+              <Users className="w-4 h-4 text-green-600" />
+            </Link>
+          </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" title="Delete Provider">
                 <Trash2 className="w-4 h-4 text-red-600" />
               </Button>
             </AlertDialogTrigger>
