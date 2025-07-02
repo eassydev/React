@@ -170,7 +170,8 @@ console.log("booking.provider_id",booking.provider_id)
 
               <div>
                 <h3 className="font-semibold text-lg">Booking Details</h3>
-                <p><strong>Order ID:</strong> {bookingDetails.booking_id || "N/A"}</p>
+                <p><strong>Order ID:</strong> {bookingDetails.order_id || "N/A"}</p>
+                <p><strong>Booking ID:</strong> {bookingDetails.order_id_display || "N/A"}</p>
                 <p><strong>Service Date:</strong> {bookingDetails.booking_date || "N/A"}</p>
                 <p><strong>Service Time:</strong> {bookingDetails.booking_time_from || "N/A"} -  {bookingDetails.booking_time_to || "N/A"}</p>
                
