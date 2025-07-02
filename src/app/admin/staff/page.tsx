@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import {
   ColumnDef,
@@ -43,7 +43,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 
-const StaffList = () => {
+const StaffListContent = () => {
   const [staff, setStaff] = useState<any[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
@@ -361,6 +361,14 @@ const StaffList = () => {
         </Card>
       </div>
     </div>
+  );
+};
+
+const StaffList = () => {
+  return (
+    <Suspense fallback={<div>Loading staff...</div>}>
+      <StaffListContent />
+    </Suspense>
   );
 };
 
