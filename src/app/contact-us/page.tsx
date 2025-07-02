@@ -84,10 +84,10 @@ export default function ContactUsPage() {
     setIsLoading(true)
 
     try {
-      // Submit directly to backend API
-      console.log('📞 Submitting contact form to backend...')
+      // Submit to admin panel API (same domain, no CORS issues)
+      console.log('📞 Submitting contact form...')
 
-      const response = await fetch('https://app.eassylife.in/public/contact', {
+      const response = await fetch('/api/contact', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
