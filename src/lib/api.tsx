@@ -9039,3 +9039,28 @@ export const downloadWolooRateCardSampleCSV = async () => {
     throw new Error(error.response?.data?.message || 'Failed to download Woloo rate card sample CSV.');
   }
 };
+
+// Contact Form API - Submit contact form from public contact us page
+export const submitContactForm = async (contactData: {
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+}): Promise<ApiResponse> => {
+  try {
+    console.log('📞 Submitting contact form via admin API...');
+
+    // No token required for public contact form submission
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/contact', contactData, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+
+    console.log('✅ Contact form submitted successfully');
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error submitting contact form:', error);
+    throw error;
+  }
+};

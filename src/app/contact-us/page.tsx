@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { Loader2, MessageSquare, User, Send, Mail, Phone } from "lucide-react"
+import { submitContactForm } from "@/lib/api"
 
 interface ContactFormData {
   name: string
@@ -84,22 +85,10 @@ export default function ContactUsPage() {
     setIsLoading(true)
 
     try {
-      // Submit to admin panel API (same domain, no CORS issues)
+      // Submit using admin API function (same pattern as other admin pages)
       console.log('📞 Submitting contact form...')
 
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData)
-      })
-
-      if (!response.ok) {
-        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
-      }
-
-      const result = await response.json()
+      const result = await submitContactForm(formData)
 
       if (result.status) {
         toast({
