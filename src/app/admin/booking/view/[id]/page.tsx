@@ -161,10 +161,10 @@ console.log("booking.provider_id",booking.provider_id)
 
               <div>
                 <h3 className="font-semibold text-lg">Provider Information</h3>
-                <p><strong>Current Provider:</strong> {bookingDetails.rateCard.provider?.first_name || "N/A"}</p>
-                <p><strong>Mobile:</strong> {bookingDetails.rateCard.provider?.phone || "N/A"}</p>
-                <p><strong>Email:</strong> {bookingDetails.rateCard.provider?.company_name || "N/A"}</p>
-                <p><strong>Gender:</strong> {bookingDetails.rateCard.provider?.gender || "N/A"}</p>
+                <p><strong>Current Provider:</strong> {bookingDetails.rateCard?.provider?.first_name || bookingDetails.provider?.first_name || "N/A"}</p>
+                <p><strong>Mobile:</strong> {bookingDetails.rateCard?.provider?.phone || bookingDetails.provider?.phone || "N/A"}</p>
+                <p><strong>Email:</strong> {bookingDetails.rateCard?.provider?.company_name || bookingDetails.provider?.company_name || "N/A"}</p>
+                <p><strong>Gender:</strong> {bookingDetails.rateCard?.provider?.gender || bookingDetails.provider?.gender || "N/A"}</p>
                 <p><strong>Address:</strong> {bookingDetails.address?.flat_no || "N/A"}-{bookingDetails.address?.building_name || "N/A"}-{bookingDetails.address?.street_address || "N/A"}-{bookingDetails.address?.city || "N/A"}</p>
               </div>
 

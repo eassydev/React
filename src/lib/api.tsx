@@ -3907,7 +3907,16 @@ export const fetchBookings = async (
       },
     });
 
-    return response.data;
+    // Transform response to match expected structure
+    return {
+      data: response.data.data || [],
+      meta: {
+        totalPages: response.data.totalPages || 0,
+        totalItems: response.data.totalItems || 0,
+        currentPage: response.data.currentPage || 1,
+        pageSize: response.data.pageSize || size,
+      }
+    };
   } catch (error) {
     console.error("Error fetching bookings:", error);
     throw new Error("Failed to fetch bookings");
