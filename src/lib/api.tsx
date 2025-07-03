@@ -6548,8 +6548,8 @@ export const fetchAllSpHubs = async (page = 1, size = 10, status: string = "all"
       }
     };
   } catch (error) {
-    console.error("Error fetching categories:", error);
-    throw new Error("Failed to fetch categories");
+    console.error("Error fetching SP Hubs:", error);
+    throw new Error("Failed to fetch SP Hubs");
   }
 };
 
