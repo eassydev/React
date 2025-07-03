@@ -6537,7 +6537,16 @@ export const fetchAllSpHubs = async (page = 1, size = 10, status: string = "all"
       },
     });
 
-    return response.data; // Return the data
+    // Transform response to match expected structure
+    return {
+      data: response.data.data || [],
+      meta: {
+        totalPages: response.data.meta?.totalPages || 0,
+        totalItems: response.data.meta?.totalItems || 0,
+        currentPage: response.data.meta?.currentPage || 1,
+        pageSize: response.data.meta?.pageSize || size,
+      }
+    };
   } catch (error) {
     console.error("Error fetching categories:", error);
     throw new Error("Failed to fetch categories");
@@ -6702,7 +6711,7 @@ export const downloadSampleSpHubExcel = async (): Promise<void> => {
       responseType: 'blob',
     });
 
-    const uniqueFilename = generateUniqueFilename('sp_hubs_sample', 'csv');
+    const uniqueFilename = generateUniqueFilename('sp_hubs_sample', 'xlsx');
 
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');

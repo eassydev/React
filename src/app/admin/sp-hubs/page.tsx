@@ -243,11 +243,11 @@ const [filterStatus, setFilterStatus] = useState<string>("all");
                 <Upload className="w-4 h-4 mr-2" />
                 <input
                   type="file"
-                  accept=".csv"
+                  accept=".csv,.xlsx,.xls"
                   onChange={(e) => e.target.files && handleImport(e.target.files[0])}
                   className="hidden"
                 />
-                Import CSV
+                Import File
               </label>
             </Button>
             <Button variant="outline" onClick={handleExport}>
