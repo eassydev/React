@@ -77,7 +77,117 @@ const AddBookingForm: React.FC = () => {
   const [hasMoreResults, setHasMoreResults] = useState<boolean>(true);
   const [isLoadingMore, setIsLoadingMore] = useState<boolean>(false);
 
+  // **UPDATED: Auto-calculated price state variables**
+  const [autoCalculatedPrice, setAutoCalculatedPrice] = useState<number>(0);
+  const [quantity, setQuantity] = useState<string>('1');
+  const [calculatedTotal, setCalculatedTotal] = useState<number | null>(null);
+  const [priceBreakdown, setPriceBreakdown] = useState<{
+    basePrice: number;
+    gst: number;
+    convenienceCharge: number;
+    total: number;
+  } | null>(null);
+  const [isLoadingPrice, setIsLoadingPrice] = useState<boolean>(false);
+
   const { toast } = useToast();
+
+  // **NEW: Auto-fetch price when service selection changes**
+  useEffect(() => {
+    const fetchServicePrice = async () => {
+      // Debug: Log all selection states
+      console.log('Price calculation check:', {
+        selectedCategoryId,
+        selectedSubcategoryId,
+        providerId,
+        selectedFilterAttributesId,
+        selectedFilterOptionId,
+        quantity
+      });
+
+      // Only fetch price if we have the required selections
+      if (!selectedCategoryId || !selectedSubcategoryId || !providerId) {
+        console.log('Missing required fields for price calculation:', {
+          hasCategory: !!selectedCategoryId,
+          hasSubcategory: !!selectedSubcategoryId,
+          hasProvider: !!providerId
+        });
+        setPriceBreakdown(null);
+        setAutoCalculatedPrice(0);
+        return;
+      }
+
+      setIsLoadingPrice(true);
+      try {
+        // Create a rate card lookup request
+        const priceRequest = {
+          category_id: selectedCategoryId,
+          subcategory_id: selectedSubcategoryId,
+          provider_id: providerId,
+          filter_attribute_id: selectedFilterAttributesId || null,
+          filter_option_id: selectedFilterOptionId || null,
+          quantity: parseInt(quantity) || 1
+        };
+
+        console.log('Fetching price for:', priceRequest);
+
+        // Use environment variable or fallback to relative path
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/admin-api';
+        // Correct path for admin booking routes
+        const fullUrl = `${apiUrl}/booking/calculate-price`;
+        console.log('API URL:', fullUrl);
+
+        // Call backend to get calculated price
+        const response = await fetch(fullUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'admin-auth-token': localStorage.getItem('token') || '',
+          },
+          body: JSON.stringify(priceRequest)
+        });
+
+        console.log('Price API response status:', response.status);
+
+        if (response.ok) {
+          const priceData = await response.json();
+          console.log('Price API response data:', priceData);
+
+          // Validate response structure
+          if (priceData.status && priceData.basePrice !== undefined) {
+            setAutoCalculatedPrice(priceData.basePrice);
+            setPriceBreakdown({
+              basePrice: priceData.itemTotal || (priceData.basePrice * parseInt(quantity)),
+              gst: priceData.gstAmount || 0,
+              convenienceCharge: priceData.convenienceCharge || 0,
+              total: priceData.finalAmount || 0
+            });
+            setCalculatedTotal(priceData.finalAmount || 0);
+            console.log('Price calculation successful:', {
+              basePrice: priceData.basePrice,
+              itemTotal: priceData.itemTotal,
+              gstAmount: priceData.gstAmount,
+              convenienceCharge: priceData.convenienceCharge,
+              finalAmount: priceData.finalAmount
+            });
+          } else {
+            console.error('Invalid response structure:', priceData);
+            setPriceBreakdown(null);
+          }
+        } else {
+          const errorData = await response.text();
+          console.error('Failed to fetch price:', response.status, errorData);
+          setPriceBreakdown(null);
+        }
+      } catch (error) {
+        console.error('Error fetching price:', error);
+        setPriceBreakdown(null);
+      } finally {
+        setIsLoadingPrice(false);
+      }
+    };
+
+    fetchServicePrice();
+  }, [selectedCategoryId, selectedSubcategoryId, providerId, selectedFilterAttributesId, selectedFilterOptionId, quantity]);
 
   // Fetch categories on load
   useEffect(() => {
@@ -423,6 +533,17 @@ const AddBookingForm: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
+    // **NEW: Validate that price has been calculated**
+    if (!priceBreakdown || !calculatedTotal || calculatedTotal <= 0) {
+      toast({
+        variant: "error",
+        title: "Error",
+        description: "Please select all required fields to calculate the price before submitting.",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     const bookingData: any = {
       service_date: serviceDate,
       service_time: serviceTime,
@@ -436,6 +557,13 @@ const AddBookingForm: React.FC = () => {
       provider_id: providerId, // Include selected provider
       delivery_address_id: deliveryAddressId, // Include selected delivery address
       selection_type: selectionType, // Include selection type
+      // **UPDATED: Send calculated price data to backend**
+      base_price: autoCalculatedPrice || 0,
+      quantity: parseInt(quantity) || 1,
+      // **NEW: Send calculated amounts to ensure consistency**
+      calculated_total: calculatedTotal,
+      calculated_gst: priceBreakdown?.gst || 0,
+      calculated_convenience_charge: priceBreakdown?.convenienceCharge || 0,
     };
 
     // Add category or package-specific data based on selectionType
@@ -967,6 +1095,171 @@ const AddBookingForm: React.FC = () => {
                 />
               </div>
 
+              {/* **NEW: Selection Status & Quantity** */}
+              <div className="p-4 bg-blue-50 rounded-lg border space-y-4">
+                {/* Debug: Show current selections */}
+                <div className="text-xs text-gray-600 bg-white p-2 rounded border">
+                  <strong>Debug - Current Selections:</strong>
+                  <div>Category: {selectedCategoryId ? '✅ Selected' : '❌ Not Selected'}</div>
+                  <div>Subcategory: {selectedSubcategoryId ? '✅ Selected' : '❌ Not Selected'}</div>
+                  <div>Provider: {providerId ? '✅ Selected' : '❌ Not Selected'}</div>
+                  <div>Filter Attribute: {selectedFilterAttributesId ? '✅ Selected' : '⚪ Optional'}</div>
+                  <div>Filter Option: {selectedFilterOptionId ? '✅ Selected' : '⚪ Optional'}</div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Quantity</label>
+                  <Input
+                    type="number"
+                    placeholder="Enter quantity"
+                    value={quantity}
+                    onChange={(e) => setQuantity(e.target.value)}
+                    className="w-full max-w-xs"
+                    min="1"
+                  />
+                  <p className="text-xs text-gray-500">Price will be calculated automatically based on your selections</p>
+
+                  {/* Manual trigger button for debugging */}
+                  <Button
+                    type="button"
+                    onClick={() => {
+                      console.log('Manual price calculation triggered');
+                      // Manually trigger the price calculation
+                      const fetchServicePrice = async () => {
+                        console.log('Manual fetch - Current selections:', {
+                          selectedCategoryId,
+                          selectedSubcategoryId,
+                          providerId,
+                          selectedFilterAttributesId,
+                          selectedFilterOptionId,
+                          quantity
+                        });
+
+                        if (!selectedCategoryId || !selectedSubcategoryId || !providerId) {
+                          console.log('Manual fetch - Missing required fields');
+                          return;
+                        }
+
+                        setIsLoadingPrice(true);
+                        try {
+                          const priceRequest = {
+                            category_id: selectedCategoryId,
+                            subcategory_id: selectedSubcategoryId,
+                            provider_id: providerId,
+                            filter_attribute_id: selectedFilterAttributesId || null,
+                            filter_option_id: selectedFilterOptionId || null,
+                            quantity: parseInt(quantity) || 1
+                          };
+
+                          console.log('Manual fetch - Request:', priceRequest);
+
+                          const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/admin-api';
+                          // Correct path for admin booking routes
+                          const fullUrl = `${apiUrl}/booking/calculate-price`;
+                          console.log('Manual fetch - URL:', fullUrl);
+
+                          const response = await fetch(fullUrl, {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'admin-auth-token': localStorage.getItem('token') || '',
+                            },
+                            body: JSON.stringify(priceRequest)
+                          });
+
+                          console.log('Manual fetch - Response status:', response.status);
+
+                          if (response.ok) {
+                            const priceData = await response.json();
+                            console.log('Manual fetch - Success:', priceData);
+
+                            // Validate response structure
+                            if (priceData.status && priceData.basePrice !== undefined) {
+                              setAutoCalculatedPrice(priceData.basePrice);
+                              setPriceBreakdown({
+                                basePrice: priceData.itemTotal || (priceData.basePrice * parseInt(quantity)),
+                                gst: priceData.gstAmount || 0,
+                                convenienceCharge: priceData.convenienceCharge || 0,
+                                total: priceData.finalAmount || 0
+                              });
+                              setCalculatedTotal(priceData.finalAmount || 0);
+                              console.log('Manual calculation successful:', {
+                                basePrice: priceData.basePrice,
+                                itemTotal: priceData.itemTotal,
+                                gstAmount: priceData.gstAmount,
+                                convenienceCharge: priceData.convenienceCharge,
+                                finalAmount: priceData.finalAmount
+                              });
+                            } else {
+                              console.error('Manual fetch - Invalid response structure:', priceData);
+                              setPriceBreakdown(null);
+                            }
+                          } else {
+                            const errorData = await response.text();
+                            console.error('Manual fetch - Error:', response.status, errorData);
+                          }
+                        } catch (error) {
+                          console.error('Manual fetch - Exception:', error);
+                        } finally {
+                          setIsLoadingPrice(false);
+                        }
+                      };
+
+                      fetchServicePrice();
+                    }}
+                    className="bg-orange-500 hover:bg-orange-600 text-white text-xs px-3 py-1"
+                  >
+                    🔄 Manual Calculate Price (Debug)
+                  </Button>
+                </div>
+              </div>
+
+              {/* **NEW: Auto-Calculated Price Display** */}
+              {isLoadingPrice && (
+                <div className="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                  <div className="flex items-center space-x-2">
+                    <Loader2 className="h-4 w-4 animate-spin text-yellow-600" />
+                    <span className="text-sm text-yellow-700">Calculating price...</span>
+                  </div>
+                </div>
+              )}
+
+              {priceBreakdown && !isLoadingPrice && (
+                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                  <h3 className="text-sm font-medium text-green-800 mb-3">💰 Automatically Calculated Price</h3>
+                  <div className="space-y-2 text-sm text-green-700">
+                    <div className="flex justify-between">
+                      <span>Service Price × {quantity}:</span>
+                      <span>₹{(priceBreakdown.basePrice || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>GST (18%):</span>
+                      <span>₹{(priceBreakdown.gst || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Convenience Charge:</span>
+                      <span>₹{(priceBreakdown.convenienceCharge || 0).toFixed(2)}</span>
+                    </div>
+                    <hr className="border-green-300 my-2" />
+                    <div className="flex justify-between font-bold text-base">
+                      <span>Total Amount:</span>
+                      <span>₹{(priceBreakdown.total || 0).toFixed(2)}</span>
+                    </div>
+                  </div>
+                  <div className="mt-3 p-2 bg-green-100 rounded text-xs text-green-600">
+                    ✅ Price calculated automatically like the customer app
+                  </div>
+                </div>
+              )}
+
+              {!priceBreakdown && !isLoadingPrice && (selectedCategoryId || selectedSubcategoryId) && (
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="text-sm text-gray-600">
+                    📋 Please select Category, Subcategory, and Provider to see automatic price calculation
+                  </div>
+                </div>
+              )}
+
               {/* Razorpay Order ID */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Razorpay Order ID (Optional)</label>
@@ -1012,14 +1305,20 @@ const AddBookingForm: React.FC = () => {
               </div>
 
               <div className="flex space-x-3 pt-6">
-                <Button className="w-100 flex-1 h-11 bg-primary" disabled={isSubmitting} type="submit">
+                <Button
+                  className="w-100 flex-1 h-11 bg-primary"
+                  disabled={isSubmitting || !priceBreakdown || !calculatedTotal || calculatedTotal <= 0}
+                  type="submit"
+                >
                   {isSubmitting ? (
                     <div className="flex items-center justify-center space-x-2">
                       <span className="loader" />
-                      <span>Saving...</span>
+                      <span>Creating Booking...</span>
                     </div>
+                  ) : priceBreakdown && calculatedTotal && calculatedTotal > 0 ? (
+                    <span>Create Booking (₹{calculatedTotal.toFixed(2)})</span>
                   ) : (
-                    <span>Save Rate Card</span>
+                    <span>Select Service to Calculate Price</span>
                   )}
                 </Button>
               </div>
