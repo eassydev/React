@@ -89,6 +89,9 @@ const AddBookingForm: React.FC = () => {
   } | null>(null);
   const [isLoadingPrice, setIsLoadingPrice] = useState<boolean>(false);
 
+  // **NEW: Payment link option**
+  const [sendPaymentLink, setSendPaymentLink] = useState<boolean>(true);
+
   const { toast } = useToast();
 
   // **NEW: Auto-fetch price when service selection changes**
@@ -564,6 +567,11 @@ const AddBookingForm: React.FC = () => {
       calculated_total: calculatedTotal,
       calculated_gst: priceBreakdown?.gst || 0,
       calculated_convenience_charge: priceBreakdown?.convenienceCharge || 0,
+
+      // **FIXED: Add missing payment parameters**
+      payment_status: 'unpaid', // Default to unpaid for admin bookings
+      send_payment_link: true, // Always send payment link for admin bookings
+      status: 'pending', // Default booking status
     };
 
     // Add category or package-specific data based on selectionType
