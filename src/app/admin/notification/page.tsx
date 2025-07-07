@@ -1,29 +1,36 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from "lucide-react";
+} from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from 'lucide-react';
 import {
   fetchNotifications, // Fetch notifications API
-} from "@/lib/api";
-import Link from "next/link";
+} from '@/lib/api';
+import Link from 'next/link';
 import {
   AlertDialog,
   AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogFooter,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const NotificationList = () => {
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -42,7 +49,7 @@ const NotificationList = () => {
       setTotalItems(meta.totalItems);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.error("Error fetching notifications:", error);
+      console.error('Error fetching notifications:', error);
     }
   };
 
@@ -50,34 +57,32 @@ const NotificationList = () => {
     fetchNotificationsData(pagination.pageIndex + 1, pagination.pageSize);
   }, [pagination.pageIndex, pagination.pageSize]);
 
-  
   const notificationColumns: ColumnDef<any>[] = [
     {
-      accessorKey: "sno", // Placeholder key for S.No
-      header: "S.No",
+      accessorKey: 'sno', // Placeholder key for S.No
+      header: 'S.No',
       cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
     },
-    { accessorKey: "title", header: "Title" },
-    { accessorKey: "message", header: "Message" },
+    { accessorKey: 'title', header: 'Title' },
+    { accessorKey: 'message', header: 'Message' },
     {
-      accessorKey: "type",
-      header: "Type",
-      cell: ({ getValue }) => <span>{getValue() === "provider" ? "Provider" : "Customer"}</span>,
+      accessorKey: 'type',
+      header: 'Type',
+      cell: ({ getValue }) => <span>{getValue() === 'provider' ? 'Provider' : 'Customer'}</span>,
     },
     {
-      accessorKey: "status",
-      header: "Status",
+      accessorKey: 'status',
+      header: 'Status',
       cell: (info) => (
         <span
           className={`px-2 py-1 rounded-full text-xs font-medium ${
-            info.getValue() === "send" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+            info.getValue() === 'send' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
           }`}
         >
-          {info.getValue() === "send" ? "Sent" : "Failed"}
+          {info.getValue() === 'send' ? 'Sent' : 'Failed'}
         </span>
       ),
     },
-   
   ];
 
   const notificationTable = useReactTable({

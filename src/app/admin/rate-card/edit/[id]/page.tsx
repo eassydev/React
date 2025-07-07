@@ -1,25 +1,19 @@
-"use client";
-import React, { useState, useEffect, FormEvent } from "react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+'use client';
+import React, { useState, useEffect, FormEvent } from 'react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectItem,
   SelectTrigger,
   SelectContent,
   SelectValue,
-} from "@/components/ui/select";
-import { Virtuoso } from "react-virtuoso";
+} from '@/components/ui/select';
+import { Virtuoso } from 'react-virtuoso';
 
-import { Switch } from "@/components/ui/switch";
-import { Save, Loader2, Type, Globe2 } from "lucide-react";
+import { Switch } from '@/components/ui/switch';
+import { Save, Loader2, Type, Globe2 } from 'lucide-react';
 import {
   fetchAllCategories,
   fetchSubCategoriesByCategoryId,
@@ -35,9 +29,9 @@ import {
   fetchProviderById,
   fetchServiceSegments,
   ServiceSegment,
-} from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-import { useRouter, usePathname } from "next/navigation";
+} from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter, usePathname } from 'next/navigation';
 
 // For dynamic attributes
 interface FilterAttributeOption {
@@ -50,7 +44,7 @@ const RateCardForm: React.FC = () => {
   const { toast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
-  const rateCardId = pathname?.split("/").pop();
+  const rateCardId = pathname?.split('/').pop();
 
   // ------------------------------
   // Form State
@@ -61,23 +55,23 @@ const RateCardForm: React.FC = () => {
   const [filterAttributes, setFilterAttributes] = useState<Attribute[]>([]);
   const [filterAttributeOptions, setFilterAttributeOptions] = useState<FilterAttributeOption[]>([]);
 
-  const [rateCardName, setRateCardName] = useState("");
-  const [price, setPrice] = useState("");
-  const [strikePrice, setStrikePrice] = useState("");
+  const [rateCardName, setRateCardName] = useState('');
+  const [price, setPrice] = useState('');
+  const [strikePrice, setStrikePrice] = useState('');
   const [isActive, setIsActive] = useState(true);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
-  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>('');
   const [segments, setSegments] = useState<ServiceSegment[]>([]);
-  const [segmentsId, setsegmentsId] = useState<string>("");
+  const [segmentsId, setsegmentsId] = useState<string>('');
   const [weight, setWeight] = useState<number>(0);
 
   // Provider-related state
   const [providers, setProviders] = useState<Provider[]>([]);
-  const [selectedProviderId, setSelectedProviderId] = useState<string>("");
-  const [selectedProviderName, setSelectedProviderName] = useState<string>("Select an option");
-  const [searchTerm, setSearchTerm] = useState<string>("");
-  const [priceError, setPriceError] = useState("");
-  const [strikePriceError, setStrikePriceError] = useState("");
+  const [selectedProviderId, setSelectedProviderId] = useState<string>('');
+  const [selectedProviderName, setSelectedProviderName] = useState<string>('Select an option');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [priceError, setPriceError] = useState('');
+  const [strikePriceError, setStrikePriceError] = useState('');
 
   // ------------------------------
   // 1. Fetch Categories & RateCard for Edit
@@ -93,19 +87,18 @@ const RateCardForm: React.FC = () => {
         if (rateCardId) {
           const rateCardData = await fetchRateCardById(rateCardId.toString());
           setRateCardName(rateCardData.name);
-          setSelectedCategoryId(rateCardData.category_id?.toString() || "");
-          setSelectedSubcategoryId(rateCardData.subcategory_id?.toString() || "");
-          setPrice(rateCardData.price?.toString() || "");
-          setStrikePrice(rateCardData.strike_price?.toString() || "");
+          setSelectedCategoryId(rateCardData.category_id?.toString() || '');
+          setSelectedSubcategoryId(rateCardData.subcategory_id?.toString() || '');
+          setPrice(rateCardData.price?.toString() || '');
+          setStrikePrice(rateCardData.strike_price?.toString() || '');
           setIsActive(rateCardData.active);
-          setSelectedProviderId(rateCardData.provider_id?.toString() || "");
+          setSelectedProviderId(rateCardData.provider_id?.toString() || '');
 
           if (rateCardData.provider_id) {
             await loadProviders(rateCardData.provider_id);
-           
           }
 
-          setsegmentsId(rateCardData.segment_id?.toString() || "");
+          setsegmentsId(rateCardData.segment_id?.toString() || '');
 
           // Fetch dynamic attributes if any
           if (rateCardData.attributes && Array.isArray(rateCardData.attributes)) {
@@ -115,17 +108,20 @@ const RateCardForm: React.FC = () => {
                   const options = await fetchFilterOptionsByAttributeId(attr.filter_attribute_id);
                   return {
                     attributeId: attr.filter_attribute_id.toString(),
-                    optionId: attr.filter_option_id?.toString() || "",
+                    optionId: attr.filter_option_id?.toString() || '',
                     options: options.map((o: any) => ({
                       id: o.id.toString(),
                       value: o.value,
                     })),
                   };
                 } catch (error) {
-                  console.error(`Error fetching options for attribute ${attr.filter_attribute_id}:`, error);
+                  console.error(
+                    `Error fetching options for attribute ${attr.filter_attribute_id}:`,
+                    error
+                  );
                   return {
                     attributeId: attr.filter_attribute_id.toString(),
-                    optionId: attr.filter_option_id?.toString() || "",
+                    optionId: attr.filter_option_id?.toString() || '',
                     options: [],
                   };
                 }
@@ -140,7 +136,8 @@ const RateCardForm: React.FC = () => {
           }
 
           // Fetch filter attributes
-          const subcategoryId = rateCardData.subcategory_id !== null ? rateCardData.subcategory_id : undefined;
+          const subcategoryId =
+            rateCardData.subcategory_id !== null ? rateCardData.subcategory_id : undefined;
           await fetchFilters(rateCardData.category_id, subcategoryId);
 
           // Fetch segments if any
@@ -154,9 +151,9 @@ const RateCardForm: React.FC = () => {
         }
       } catch (error) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load data.",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load data.',
         });
       }
     };
@@ -164,16 +161,16 @@ const RateCardForm: React.FC = () => {
     fetchData();
   }, [rateCardId, toast]);
 
-
-
-  const loadProviders = async (providerid:string) => {
+  const loadProviders = async (providerid: string) => {
     try {
       const fetchedProviders = await fetchProviders();
       setProviders(fetchedProviders);
-      const selectedProvider = fetchedProviders.find((provider) => provider.id?.toString() === providerid);
+      const selectedProvider = fetchedProviders.find(
+        (provider) => provider.id?.toString() === providerid
+      );
 
-        setSelectedProviderName(`${selectedProvider?.first_name} ${selectedProvider?.last_name}`);
-        console.log("tSelectedProviderName",selectedProviderId)
+      setSelectedProviderName(`${selectedProvider?.first_name} ${selectedProvider?.last_name}`);
+      console.log('tSelectedProviderName', selectedProviderId);
     } catch (error) {
       setSubcategories([]);
     }
@@ -181,7 +178,7 @@ const RateCardForm: React.FC = () => {
   // ------------------------------
   // 3. Load the Selected Provider (for Edit Preselect)
   // ------------------------------
- 
+
   // ------------------------------
   // Helpers for Subcategory & Filter Attributes
   // ------------------------------
@@ -212,17 +209,17 @@ const RateCardForm: React.FC = () => {
           setSubcategories(subcategoryData);
           // Only reset selectedSubcategoryId if it doesn't match any subcategory in the new list
           if (!subcategoryData.some((sub) => sub.id?.toString() === selectedSubcategoryId)) {
-            setSelectedSubcategoryId("");
+            setSelectedSubcategoryId('');
           }
         } catch (error) {
           setSubcategories([]);
           // Only reset selectedSubcategoryId if there's an error and no subcategories are fetched
-          setSelectedSubcategoryId("");
+          setSelectedSubcategoryId('');
         }
       })();
     } else {
       setSubcategories([]);
-      setSelectedSubcategoryId("");
+      setSelectedSubcategoryId('');
     }
   }, [selectedCategoryId]);
 
@@ -259,10 +256,7 @@ const RateCardForm: React.FC = () => {
   // Handlers for Dynamic Filters
   // ------------------------------
   const handleAddFilterAttributeOption = () => {
-    setFilterAttributeOptions((prev) => [
-      ...prev,
-      { attributeId: "", optionId: "" },
-    ]);
+    setFilterAttributeOptions((prev) => [...prev, { attributeId: '', optionId: '' }]);
   };
 
   const handleRemoveFilterAttributeOption = (index: number) => {
@@ -271,13 +265,13 @@ const RateCardForm: React.FC = () => {
 
   const handleUpdateFilterAttributeOption = async (
     index: number,
-    key: "attributeId" | "optionId",
+    key: 'attributeId' | 'optionId',
     value: string
   ) => {
     const updated = [...filterAttributeOptions];
     updated[index][key] = value;
 
-    if (key === "attributeId") {
+    if (key === 'attributeId') {
       try {
         const options = await fetchFilterOptionsByAttributeId(value);
         updated[index].options = options.map((option) => ({
@@ -285,7 +279,7 @@ const RateCardForm: React.FC = () => {
           value: option.value,
         }));
       } catch (error) {
-        console.error("Error fetching filter options:", error);
+        console.error('Error fetching filter options:', error);
         updated[index].options = [];
       }
     }
@@ -293,14 +287,13 @@ const RateCardForm: React.FC = () => {
     setFilterAttributeOptions(updated);
   };
 
-
   const handleValueChange = (value: string) => {
     const selectedProvider = providers.find((provider) => provider.id?.toString() === value);
     if (selectedProvider) {
       setSelectedProviderId(value);
       setSelectedProviderName(`${selectedProvider.first_name} ${selectedProvider.last_name}`);
     } else {
-      setSelectedProviderName("Select an option");
+      setSelectedProviderName('Select an option');
     }
   };
   // ------------------------------
@@ -334,17 +327,17 @@ const RateCardForm: React.FC = () => {
 
       const response = await updateRateCard(rateCardId!.toString(), rateCardData);
       toast({
-        variant: "success",
-        title: "Success",
+        variant: 'success',
+        title: 'Success',
         description: response.message,
       });
 
-      router.push("/admin/rate-card");
+      router.push('/admin/rate-card');
     } catch (error) {
-      console.log("rateCardData", error);
+      console.log('rateCardData', error);
       toast({
-        variant: "error",
-        title: "Error",
+        variant: 'error',
+        title: 'Error',
         description: `${error}`,
       });
     } finally {
@@ -369,10 +362,10 @@ const RateCardForm: React.FC = () => {
               <div className="h-8 w-1 bg-blue-600 rounded-full" />
               <div>
                 <CardTitle className="text-xl text-gray-800">
-                  {rateCardId ? "Edit Rate Card" : "New Rate Card"}
+                  {rateCardId ? 'Edit Rate Card' : 'New Rate Card'}
                 </CardTitle>
                 <CardDescription className="text-gray-500">
-                  Fill in the details below {rateCardId ? "to update" : "to create"} a rate card
+                  Fill in the details below {rateCardId ? 'to update' : 'to create'} a rate card
                 </CardDescription>
               </div>
             </div>
@@ -411,7 +404,8 @@ const RateCardForm: React.FC = () => {
                   <SelectContent>
                     {categories.map(
                       (category) =>
-                        category?.id && category?.name && (
+                        category?.id &&
+                        category?.name && (
                           <SelectItem key={category.id} value={category.id.toString()}>
                             {category.name}
                           </SelectItem>
@@ -420,36 +414,37 @@ const RateCardForm: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-{/* Subcategory Selector */}
-{subcategories.length > 0 && (
-  <div className="space-y-2">
-    <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-      <Globe2 className="w-4 h-4 text-blue-500" />
-      <span>Select Subcategory</span>
-    </label>
-    <Select
-      value={selectedSubcategoryId} // Ensure this is a string
-      onValueChange={(value) => setSelectedSubcategoryId(value)} // value is already a string
-    >
-      <SelectTrigger className="bg-white border-gray-200">
-        <SelectValue placeholder="Select a subcategory" />
-      </SelectTrigger>
-      <SelectContent>
-        {subcategories.map(
-          (subcategory) =>
-            subcategory?.id && subcategory?.name && (
-              <SelectItem
-                key={subcategory.id.toString()} // Ensure key is a string
-                value={subcategory.id.toString()} // Ensure value is a string
-              >
-                {subcategory.name}
-              </SelectItem>
-            )
-        )}
-      </SelectContent>
-    </Select>
-  </div>
-)}
+              {/* Subcategory Selector */}
+              {subcategories.length > 0 && (
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                    <Globe2 className="w-4 h-4 text-blue-500" />
+                    <span>Select Subcategory</span>
+                  </label>
+                  <Select
+                    value={selectedSubcategoryId} // Ensure this is a string
+                    onValueChange={(value) => setSelectedSubcategoryId(value)} // value is already a string
+                  >
+                    <SelectTrigger className="bg-white border-gray-200">
+                      <SelectValue placeholder="Select a subcategory" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subcategories.map(
+                        (subcategory) =>
+                          subcategory?.id &&
+                          subcategory?.name && (
+                            <SelectItem
+                              key={subcategory.id.toString()} // Ensure key is a string
+                              value={subcategory.id.toString()} // Ensure value is a string
+                            >
+                              {subcategory.name}
+                            </SelectItem>
+                          )
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               {/* Dynamic Filter Attribute Options */}
               {filterAttributes.length > 0 && (
                 <div className="space-y-2">
@@ -458,7 +453,9 @@ const RateCardForm: React.FC = () => {
                       {/* Attribute Selector */}
                       <Select
                         value={pair.attributeId}
-                        onValueChange={(value) => handleUpdateFilterAttributeOption(index, "attributeId", value)}
+                        onValueChange={(value) =>
+                          handleUpdateFilterAttributeOption(index, 'attributeId', value)
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select Attribute" />
@@ -476,7 +473,9 @@ const RateCardForm: React.FC = () => {
                       {/* Option Selector */}
                       <Select
                         value={pair.optionId}
-                        onValueChange={(value) => handleUpdateFilterAttributeOption(index, "optionId", value)}
+                        onValueChange={(value) =>
+                          handleUpdateFilterAttributeOption(index, 'optionId', value)
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select Option" />
@@ -518,10 +517,10 @@ const RateCardForm: React.FC = () => {
                   onChange={(e) => {
                     const value = e.target.value;
                     if (parseFloat(value) < 0) {
-                      setPriceError("Price cannot be negative.");
+                      setPriceError('Price cannot be negative.');
                       setPrice(value);
                     } else {
-                      setPriceError("");
+                      setPriceError('');
                       setPrice(value);
                     }
                   }}
@@ -543,10 +542,10 @@ const RateCardForm: React.FC = () => {
                   onChange={(e) => {
                     const value = e.target.value;
                     if (parseFloat(value) < 0) {
-                      setStrikePriceError("Price cannot be negative.");
+                      setStrikePriceError('Price cannot be negative.');
                       setStrikePrice(value);
                     } else {
-                      setStrikePriceError("");
+                      setStrikePriceError('');
                       setStrikePrice(value);
                     }
                   }}
@@ -576,7 +575,7 @@ const RateCardForm: React.FC = () => {
                   </Select>
                 </div>
               )}
-{/* 
+              {/* 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Select Provider {selectedProviderId}</label>
                 <Select value={selectedProviderId} onValueChange={(value) => setSelectedProviderId(value)}>
@@ -610,74 +609,74 @@ const RateCardForm: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div> */}
-<div className="space-y-2 w-full">
-  <label className="text-sm font-medium text-gray-700">Select Provider</label>
-  <Select value={selectedProviderId || ""} onValueChange={handleValueChange}>
-    <SelectTrigger className="w-full">
-      {selectedProviderName || "Select an option"}
-    </SelectTrigger>
-    <SelectContent className="w-full p-0">
-      {/* Search input */}
-      <div className="sticky top-0 z-10 bg-background p-2 border-b">
-        <Input
-          placeholder="Search by name, company, phone, or ID..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full"
-          autoFocus
-        />
-      </div>
+              <div className="space-y-2 w-full">
+                <label className="text-sm font-medium text-gray-700">Select Provider</label>
+                <Select value={selectedProviderId || ''} onValueChange={handleValueChange}>
+                  <SelectTrigger className="w-full">
+                    {selectedProviderName || 'Select an option'}
+                  </SelectTrigger>
+                  <SelectContent className="w-full p-0">
+                    {/* Search input */}
+                    <div className="sticky top-0 z-10 bg-background p-2 border-b">
+                      <Input
+                        placeholder="Search by name, company, phone, or ID..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full"
+                        autoFocus
+                      />
+                    </div>
 
-      {/* Filtered provider list */}
-      {providers.filter(provider =>
-        `${provider.first_name} ${provider.last_name || ''} ${provider.company_name || ''} ${provider.phone || ''}`
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase())
-      ).length > 0 ? (
-        <Virtuoso
-          style={{ height: "200px", width: "100%" }}
-          totalCount={providers.filter(provider =>
-            `${provider.first_name} ${provider.last_name || ''} ${provider.company_name || ''} ${provider.phone || ''}`
-              .toLowerCase()
-              .includes(searchTerm.toLowerCase())
-          ).length}
-          itemContent={(index) => {
-            const filteredProviders = providers.filter(provider =>
-              `${provider.first_name} ${provider.last_name || ''} ${provider.company_name || ''} ${provider.phone || ''}`
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase())
-            );
-            const provider = filteredProviders[index];
-            return (
-              <SelectItem
-                key={provider.id}
-                value={provider.id?.toString() ?? ''}
-              >
-                <div className="flex flex-col">
-                  <span className="font-medium">
-                    {provider.first_name} {provider.last_name || ""}
-                  </span>
-                  {provider.company_name && (
-                    <span className="text-sm text-gray-600">
-                      {provider.company_name}
-                    </span>
-                  )}
-                  <span className="text-xs text-gray-500">
-                    📞 {provider.phone || 'No Phone'} • ID: {(provider as any).sampleid || provider.id}
-                  </span>
-                </div>
-              </SelectItem>
-            );
-          }}
-        />
-      ) : (
-        <div className="py-6 text-center text-sm text-muted-foreground">
-          No providers found
-        </div>
-      )}
-    </SelectContent>
-  </Select>
-</div>
+                    {/* Filtered provider list */}
+                    {providers.filter((provider) =>
+                      `${provider.first_name} ${provider.last_name || ''} ${provider.company_name || ''} ${provider.phone || ''}`
+                        .toLowerCase()
+                        .includes(searchTerm.toLowerCase())
+                    ).length > 0 ? (
+                      <Virtuoso
+                        style={{ height: '200px', width: '100%' }}
+                        totalCount={
+                          providers.filter((provider) =>
+                            `${provider.first_name} ${provider.last_name || ''} ${provider.company_name || ''} ${provider.phone || ''}`
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase())
+                          ).length
+                        }
+                        itemContent={(index) => {
+                          const filteredProviders = providers.filter((provider) =>
+                            `${provider.first_name} ${provider.last_name || ''} ${provider.company_name || ''} ${provider.phone || ''}`
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase())
+                          );
+                          const provider = filteredProviders[index];
+                          return (
+                            <SelectItem key={provider.id} value={provider.id?.toString() ?? ''}>
+                              <div className="flex flex-col">
+                                <span className="font-medium">
+                                  {provider.first_name} {provider.last_name || ''}
+                                </span>
+                                {provider.company_name && (
+                                  <span className="text-sm text-gray-600">
+                                    {provider.company_name}
+                                  </span>
+                                )}
+                                <span className="text-xs text-gray-500">
+                                  📞 {provider.phone || 'No Phone'} • ID:{' '}
+                                  {(provider as any).sampleid || provider.id}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          );
+                        }}
+                      />
+                    ) : (
+                      <div className="py-6 text-center text-sm text-muted-foreground">
+                        No providers found
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
               {/* Weight (optional) */}
               <div className="space-y-2">
                 <label className="block text-sm font-medium">Ratecard Weightage</label>
@@ -708,7 +707,11 @@ const RateCardForm: React.FC = () => {
 
               {/* Submit Button */}
               <div className="flex space-x-3 pt-6">
-                <Button className="w-100 flex-1 h-11 bg-primary" disabled={isSubmitting} type="submit">
+                <Button
+                  className="w-100 flex-1 h-11 bg-primary"
+                  disabled={isSubmitting}
+                  type="submit"
+                >
                   {isSubmitting ? (
                     <div className="flex items-center justify-center space-x-2">
                       <Loader2 className="w-4 h-4 animate-spin" />

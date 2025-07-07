@@ -1,19 +1,25 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2, Plus, Trash2, Image as ImageIcon } from "lucide-react";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createPackageDetail, PackageDetail, fetchAllpackages } from "@/lib/api";
+import React, { useState, useEffect, FormEvent } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2, Plus, Trash2, Image as ImageIcon } from 'lucide-react';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { createPackageDetail, PackageDetail, fetchAllpackages } from '@/lib/api';
 
 const AddPackageDetailsForm: React.FC = () => {
   const [packages, setPackages] = useState<{ id: string; name: string }[]>([]);
-  const [selectedPackage, setSelectedPackage] = useState<string>("");
-  const [details, setDetails] = useState<PackageDetail["details"]>([
-    { position: "Top", title: "", image: null }
+  const [selectedPackage, setSelectedPackage] = useState<string>('');
+  const [details, setDetails] = useState<PackageDetail['details']>([
+    { position: 'Top', title: '', image: null },
   ]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const { toast } = useToast();
@@ -24,15 +30,15 @@ const AddPackageDetailsForm: React.FC = () => {
       try {
         const response = await fetchAllpackages();
         const data = response.map((pkg: any) => ({
-          id: pkg.id || "",
-          name: pkg.name || "Unnamed Package",
+          id: pkg.id || '',
+          name: pkg.name || 'Unnamed Package',
         }));
         setPackages(data);
       } catch (error: any) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: error.message || "Failed to load packages.",
+          variant: 'error',
+          title: 'Error',
+          description: error.message || 'Failed to load packages.',
         });
       }
     };
@@ -41,7 +47,7 @@ const AddPackageDetailsForm: React.FC = () => {
 
   // Add a new detail row
   const addDetail = () => {
-    setDetails([...details, { position: "Top", title: "", image: null }]);
+    setDetails([...details, { position: 'Top', title: '', image: null }]);
   };
 
   // Remove a detail row
@@ -51,7 +57,7 @@ const AddPackageDetailsForm: React.FC = () => {
   };
 
   // Update details state
-  const updateDetail = (index: number, field: keyof PackageDetail["details"][0], value: any) => {
+  const updateDetail = (index: number, field: keyof PackageDetail['details'][0], value: any) => {
     const newDetails = [...details];
     newDetails[index] = { ...newDetails[index], [field]: value };
     setDetails(newDetails);
@@ -62,11 +68,11 @@ const AddPackageDetailsForm: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    if (!selectedPackage || details.some(detail => !detail.title)) {
+    if (!selectedPackage || details.some((detail) => !detail.title)) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Please select a package and fill in all detail titles.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Please select a package and fill in all detail titles.',
       });
       setIsSubmitting(false);
       return;
@@ -76,19 +82,19 @@ const AddPackageDetailsForm: React.FC = () => {
       await createPackageDetail({ package_id: selectedPackage, details });
 
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Package details added successfully!",
+        variant: 'success',
+        title: 'Success',
+        description: 'Package details added successfully!',
       });
 
       // Reset form
-      setSelectedPackage("");
-      setDetails([{ position: "Top", title: "", image: null }]);
+      setSelectedPackage('');
+      setDetails([{ position: 'Top', title: '', image: null }]);
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to add package details.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to add package details.',
       });
     } finally {
       setIsSubmitting(false);
@@ -117,7 +123,7 @@ const AddPackageDetailsForm: React.FC = () => {
                     <SelectValue placeholder="Choose a package" />
                   </SelectTrigger>
                   <SelectContent>
-                    {packages.map(pkg => (
+                    {packages.map((pkg) => (
                       <SelectItem key={pkg.id} value={pkg.id}>
                         {pkg.name}
                       </SelectItem>
@@ -136,7 +142,7 @@ const AddPackageDetailsForm: React.FC = () => {
                       {/* Position Dropdown */}
                       <Select
                         value={detail.position}
-                        onValueChange={(value) => updateDetail(index, "position", value)}
+                        onValueChange={(value) => updateDetail(index, 'position', value)}
                       >
                         <SelectTrigger className="w-28">
                           <SelectValue placeholder="Position" />
@@ -150,7 +156,7 @@ const AddPackageDetailsForm: React.FC = () => {
                       {/* Title Input */}
                       <Input
                         value={detail.title}
-                        onChange={(e) => updateDetail(index, "title", e.target.value)}
+                        onChange={(e) => updateDetail(index, 'title', e.target.value)}
                         placeholder="Enter detail title"
                         required
                         className="flex-1"
@@ -179,11 +185,13 @@ const AddPackageDetailsForm: React.FC = () => {
                           accept="image/*"
                           className="hidden"
                           onChange={(e) =>
-                            updateDetail(index, "image", e.target.files ? e.target.files[0] : null)
+                            updateDetail(index, 'image', e.target.files ? e.target.files[0] : null)
                           }
                         />
                       </label>
-                      {detail.image && <span className="text-xs text-gray-500">{detail.image.name}</span>}
+                      {detail.image && (
+                        <span className="text-xs text-gray-500">{detail.image.name}</span>
+                      )}
                     </div>
                   </div>
                 ))}

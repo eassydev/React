@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+} from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableHead,
@@ -17,19 +17,19 @@ import {
   TableBody,
   TableRow,
   TableCell,
-} from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from "lucide-react";
-import { fetchProviderBankDetails, deleteProviderBankDetail } from "@/lib/api";
-import Link from "next/link";
+} from '@/components/ui/table';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from 'lucide-react';
+import { fetchProviderBankDetails, deleteProviderBankDetail } from '@/lib/api';
+import Link from 'next/link';
 import {
   AlertDialog,
   AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogFooter,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
-import { useParams } from "next/navigation";
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { useParams } from 'next/navigation';
 
 const ProviderBankList = () => {
   const [bankDetails, setBankDetails] = useState<any[]>([]);
@@ -52,7 +52,7 @@ const ProviderBankList = () => {
       setTotalItems(meta.totalItems);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.error("Error fetching bank details:", error);
+      console.error('Error fetching bank details:', error);
     }
   };
 
@@ -64,37 +64,39 @@ const ProviderBankList = () => {
     try {
       await deleteProviderBankDetail(bankDetail.id);
       toast({
-        title: "Success",
+        title: 'Success',
         description: `Bank detail deleted successfully`,
-        variant: "success",
+        variant: 'success',
       });
       fetchBankDetailsData(pagination.pageIndex + 1, pagination.pageSize);
     } catch (error) {
       toast({
-        title: "Error",
+        title: 'Error',
         description: `Failed to delete bank detail: ${error}`,
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
 
   const bankDetailColumns: ColumnDef<any>[] = [
-    { accessorKey: "id", header: "ID" },
-    { 
-      accessorKey: "bank.name", // Access the bank name from related data
-      header: "Bank Name",
-      cell: (info) => info.row.original.bank?.name || "N/A", // Fallback if bank relation is missing
-    },
-    { accessorKey: "account_holder_name", header: "Account Holder" },
-    { accessorKey: "account_number", header: "Account Number" },
-    { accessorKey: "ifsc_code", header: "IFSC Code" },
+    { accessorKey: 'id', header: 'ID' },
     {
-      accessorKey: "status",
-      header: "Status",
+      accessorKey: 'bank.name', // Access the bank name from related data
+      header: 'Bank Name',
+      cell: (info) => info.row.original.bank?.name || 'N/A', // Fallback if bank relation is missing
+    },
+    { accessorKey: 'account_holder_name', header: 'Account Holder' },
+    { accessorKey: 'account_number', header: 'Account Number' },
+    { accessorKey: 'ifsc_code', header: 'IFSC Code' },
+    {
+      accessorKey: 'status',
+      header: 'Status',
       cell: (info) => (
         <span
           className={`px-2 py-1 rounded-full text-xs font-medium ${
-            info.getValue() === "verified" ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+            info.getValue() === 'verified'
+              ? 'bg-green-100 text-green-600'
+              : 'bg-red-100 text-red-600'
           }`}
         >
           {info.getValue() as string}
@@ -102,8 +104,8 @@ const ProviderBankList = () => {
       ),
     },
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="icon">
@@ -170,7 +172,9 @@ const ProviderBankList = () => {
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
                       <TableHead key={header.id} className="text-left">
-                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
                       </TableHead>
                     ))}
                   </TableRow>

@@ -1,14 +1,38 @@
-"use client";
+'use client';
 import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
 import dynamic from 'next/dynamic';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectItem,
+  SelectTrigger,
+  SelectContent,
+  SelectValue,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { Save, ImageIcon, Type, FileText, Loader2, Plus, Trash2, Globe2 } from 'lucide-react';
-import { createSubcategory, fetchAllGstRates, fetchAllCategories, Subcategory, ServiceSegment, Attribute, ServiceDetail, ExcludeImage, IncludeItem, Category } from '@/lib/api';
-import { useToast } from "@/hooks/use-toast";
+import {
+  createSubcategory,
+  fetchAllGstRates,
+  fetchAllCategories,
+  Subcategory,
+  ServiceSegment,
+  Attribute,
+  ServiceDetail,
+  ExcludeImage,
+  IncludeItem,
+  Category,
+} from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 
 // Importing React-Quill dynamically
@@ -18,10 +42,10 @@ import 'react-quill/dist/quill.snow.css';
 // Custom toolbar configuration for React-Quill
 const quillModules = {
   toolbar: [
-    [{ 'header': '1' }, { 'header': '2' }, { 'font': [] }],
-    [{ 'size': [] }],
+    [{ header: '1' }, { header: '2' }, { font: [] }],
+    [{ size: [] }],
     ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-    [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+    [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
     ['link', 'image', 'video'],
     ['clean'],
   ],
@@ -45,8 +69,8 @@ const SubcategoryForm: React.FC = () => {
   const [attributes, setAttributes] = useState<Attribute[]>([]);
   const [serviceSegments, setServiceSegments] = useState<ServiceSegment[]>([]);
   const [showExcludeSection, setShowExcludeSection] = useState<boolean>(false);
-  const [excludeHeading, setExcludeHeading] = useState<string>("");
-  const [excludeDescription, setExcludeDescription] = useState<string>("");
+  const [excludeHeading, setExcludeHeading] = useState<string>('');
+  const [excludeDescription, setExcludeDescription] = useState<string>('');
   const [excludeItems, setExcludeItems] = useState<string[]>([]);
   const [excludeImages, setExcludeImages] = useState<File[]>([]);
   const [includeItems, setIncludeItems] = useState<IncludeItem[]>([]);
@@ -71,7 +95,6 @@ const SubcategoryForm: React.FC = () => {
     loadCategories();
   }, []);
 
-
   useEffect(() => {
     const fetchTaxRates = async () => {
       try {
@@ -79,9 +102,9 @@ const SubcategoryForm: React.FC = () => {
         setHstRates(rates);
       } catch (error) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load tax rates.",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load tax rates.',
         });
       }
     };
@@ -96,10 +119,9 @@ const SubcategoryForm: React.FC = () => {
     }
   };
 
-
   // Add a new exclude item
   const addExcludeItem = () => {
-    setExcludeItems((prev) => [...prev, ""]);
+    setExcludeItems((prev) => [...prev, '']);
   };
 
   // Update an exclude item
@@ -114,10 +136,8 @@ const SubcategoryForm: React.FC = () => {
     setExcludeItems((prev) => prev.filter((_, i) => i !== index));
   };
 
-
-
   const addIncludeItem = () => {
-    setIncludeItems((prev) => [...prev, { title: "", description: "" }]);
+    setIncludeItems((prev) => [...prev, { title: '', description: '' }]);
   };
 
   // Update an include item
@@ -133,7 +153,7 @@ const SubcategoryForm: React.FC = () => {
   };
 
   const handleExcludeImageUpload = (files: FileList | null) => {
-    console.log("files", files); // Log incoming FileList
+    console.log('files', files); // Log incoming FileList
     if (files) {
       const uploadedImages = Array.from(files); // Convert FileList to an array of File objects
       setExcludeImages((prev) => [...prev, ...uploadedImages]); // Store raw File objects
@@ -144,67 +164,72 @@ const SubcategoryForm: React.FC = () => {
   const removeImage = (index: number) => {
     setExcludeImages((prev) => prev.filter((_, i) => i !== index));
   };
-// Add a new attribute
-const addAttribute = () => {
-  setAttributes((prev) => [
-    ...prev,
-    {
-      name: "",
-      title: "", // Added title field
-      weight: 0, // Added weight field
-      type: "list",
-      options: [{ title:"",value: "", weight: 0}], // Initialize options with weight
-    },
-  ]);
-};
+  // Add a new attribute
+  const addAttribute = () => {
+    setAttributes((prev) => [
+      ...prev,
+      {
+        name: '',
+        title: '', // Added title field
+        weight: 0, // Added weight field
+        type: 'list',
+        options: [{ title: '', value: '', weight: 0 }], // Initialize options with weight
+      },
+    ]);
+  };
 
-// Update attribute fields
-const updateAttribute = (index: number, field: string, value: string) => {
-  const updatedAttributes = [...attributes];
-  updatedAttributes[index] = { ...updatedAttributes[index], [field]: value };
-  setAttributes(updatedAttributes);
-};
+  // Update attribute fields
+  const updateAttribute = (index: number, field: string, value: string) => {
+    const updatedAttributes = [...attributes];
+    updatedAttributes[index] = { ...updatedAttributes[index], [field]: value };
+    setAttributes(updatedAttributes);
+  };
 
-// Add a new option to a specific attribute
-const addOption = (attrIndex: number) => {
-  setAttributes((prev) => {
-    const updatedAttributes = [...prev];
-    updatedAttributes[attrIndex].options.push({
-      title: "", // Initialize with an empty title
-      value: "", // Initialize with an empty value
-      weight: 0, // Changed from 0 to "" to maintain consistency in form inputs
+  // Add a new option to a specific attribute
+  const addOption = (attrIndex: number) => {
+    setAttributes((prev) => {
+      const updatedAttributes = [...prev];
+      updatedAttributes[attrIndex].options.push({
+        title: '', // Initialize with an empty title
+        value: '', // Initialize with an empty value
+        weight: 0, // Changed from 0 to "" to maintain consistency in form inputs
+      });
+      return updatedAttributes;
     });
-    return updatedAttributes;
-  });
-};
+  };
 
-// Update an option for a specific attribute
-const updateOption = (attrIndex: number, optIndex: number, field: string, value: string | number) => {
-  setAttributes((prev) => {
-    const updatedAttributes = [...prev];
-    updatedAttributes[attrIndex].options[optIndex] = {
-      ...updatedAttributes[attrIndex].options[optIndex], // Retain existing properties
-      [field]: value, // Update only the specific field dynamically
-    };
-    return updatedAttributes;
-  });
-};
+  // Update an option for a specific attribute
+  const updateOption = (
+    attrIndex: number,
+    optIndex: number,
+    field: string,
+    value: string | number
+  ) => {
+    setAttributes((prev) => {
+      const updatedAttributes = [...prev];
+      updatedAttributes[attrIndex].options[optIndex] = {
+        ...updatedAttributes[attrIndex].options[optIndex], // Retain existing properties
+        [field]: value, // Update only the specific field dynamically
+      };
+      return updatedAttributes;
+    });
+  };
 
-// Remove an option from a specific attribute
-const removeOption = (attrIndex: number, optIndex: number) => {
-  setAttributes((prev) => {
-    const updatedAttributes = [...prev];
-    updatedAttributes[attrIndex].options = updatedAttributes[attrIndex].options.filter(
-      (_, i) => i !== optIndex
-    );
-    return updatedAttributes;
-  });
-};
+  // Remove an option from a specific attribute
+  const removeOption = (attrIndex: number, optIndex: number) => {
+    setAttributes((prev) => {
+      const updatedAttributes = [...prev];
+      updatedAttributes[attrIndex].options = updatedAttributes[attrIndex].options.filter(
+        (_, i) => i !== optIndex
+      );
+      return updatedAttributes;
+    });
+  };
 
-// Remove an entire attribute
-const removeAttribute = (index: number) => {
-  setAttributes((prev) => prev.filter((_, i) => i !== index));
-};
+  // Remove an entire attribute
+  const removeAttribute = (index: number) => {
+    setAttributes((prev) => prev.filter((_, i) => i !== index));
+  };
 
   const handleDropdownChange = (value: string, setter: (value: number) => void) => {
     setter(parseFloat(value));
@@ -227,7 +252,7 @@ const removeAttribute = (index: number) => {
       image: subcategoryImage,
       category_id: selectedCategoryId,
       exclude_heading: excludeHeading,
-      weight:weight,
+      weight: weight,
       exclude_description: excludeDescription,
       service_time: serviceTime,
       active: isActive,
@@ -249,7 +274,6 @@ const removeAttribute = (index: number) => {
       });
       setIsSubmitting(false);
       router.push('/admin/sub-category'); // Redirect after successful update
-
     } catch (error) {
       toast({
         variant: 'error',
@@ -298,8 +322,6 @@ const removeAttribute = (index: number) => {
                 />
               </div>
 
-            
-
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <Type className="w-4 h-4 text-blue-500" />
@@ -313,10 +335,6 @@ const removeAttribute = (index: number) => {
                   required
                 />
               </div>
-
-
-
-
 
               {/* Category Selector */}
               <div className="space-y-2">
@@ -343,7 +361,6 @@ const removeAttribute = (index: number) => {
                 </Select>
               </div>
 
-
               {/* Subcategory Image Field */}
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
@@ -353,11 +370,14 @@ const removeAttribute = (index: number) => {
                 <Input type="file" accept="image/*" onChange={handleImageUpload} className="h-11" />
                 {imagePreview && (
                   <div className="mt-2">
-                    <img src={imagePreview} alt="Subcategory Preview" className="h-32 w-32 object-cover rounded-md" />
+                    <img
+                      src={imagePreview}
+                      alt="Subcategory Preview"
+                      className="h-32 w-32 object-cover rounded-md"
+                    />
                   </div>
                 )}
               </div>
-
 
               {/* SAC Code Field */}
               <div className="space-y-2">
@@ -398,16 +418,16 @@ const removeAttribute = (index: number) => {
                   className="h-11"
                 />
               </div>
-   <div className="space-y-4">
-        <label className="block text-sm font-medium">Sub Category Weight</label>
-        <Input
-          placeholder="Subcategory Weight"
-          type="number"
-          value={weight}
-          onChange={(e) => setWeight(Number(e.target.value))}
-          className="h-10"
-        />
-      </div>
+              <div className="space-y-4">
+                <label className="block text-sm font-medium">Sub Category Weight</label>
+                <Input
+                  placeholder="Subcategory Weight"
+                  type="number"
+                  value={weight}
+                  onChange={(e) => setWeight(Number(e.target.value))}
+                  className="h-10"
+                />
+              </div>
               {/* Active/Inactive Switch */}
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
@@ -415,39 +435,42 @@ const removeAttribute = (index: number) => {
                 </label>
                 <div className="flex items-center space-x-3">
                   <span className="text-sm text-gray-600">Inactive</span>
-                  <Switch checked={isActive} onCheckedChange={setIsActive} className="data-[state=checked]:bg-blue-500" />
+                  <Switch
+                    checked={isActive}
+                    onCheckedChange={setIsActive}
+                    className="data-[state=checked]:bg-blue-500"
+                  />
                   <span className="text-sm text-gray-600">Active</span>
                 </div>
               </div>
 
-                {/* Attributes Section */}
+              {/* Attributes Section */}
               <div className="space-y-4">
                 <h3 className="text-lg font-semibold">Attributes</h3>
                 {attributes.map((attribute, attrIndex) => (
                   <div key={attrIndex} className="space-y-2 border p-4 rounded-md bg-gray-50">
-                    
                     {/* Attribute Name */}
                     <div>
                       <label className="block text-sm font-medium">Attribute Name</label>
                       <Input
                         placeholder="Attribute Name"
                         value={attribute.name}
-                        onChange={(e) => updateAttribute(attrIndex, "name", e.target.value)}
+                        onChange={(e) => updateAttribute(attrIndex, 'name', e.target.value)}
                         className="h-10"
                       />
                     </div>
-              
+
                     {/* Attribute Title */}
                     <div>
                       <label className="block text-sm font-medium">Attribute Title</label>
                       <Input
                         placeholder="Attribute Title"
                         value={attribute.title}
-                        onChange={(e) => updateAttribute(attrIndex, "title", e.target.value)}
+                        onChange={(e) => updateAttribute(attrIndex, 'title', e.target.value)}
                         className="h-10"
                       />
                     </div>
-              
+
                     {/* Attribute Weight */}
                     <div>
                       <label className="block text-sm font-medium">Attribute Weight</label>
@@ -455,17 +478,17 @@ const removeAttribute = (index: number) => {
                         placeholder="Attribute Weight"
                         type="number"
                         value={attribute.weight}
-                        onChange={(e) => updateAttribute(attrIndex, "weight", e.target.value)}
+                        onChange={(e) => updateAttribute(attrIndex, 'weight', e.target.value)}
                         className="h-10"
                       />
                     </div>
-              
+
                     {/* Attribute Type */}
                     <div>
                       <label className="block text-sm font-medium">Attribute Type</label>
                       <Select
                         value={attribute.type}
-                        onValueChange={(value) => updateAttribute(attrIndex, "type", value)}
+                        onValueChange={(value) => updateAttribute(attrIndex, 'type', value)}
                       >
                         <SelectTrigger className="bg-white border-gray-200">
                           <SelectValue placeholder="Select Type" />
@@ -477,7 +500,7 @@ const removeAttribute = (index: number) => {
                         </SelectContent>
                       </Select>
                     </div>
-              
+
                     {/* Options Management */}
                     <div className="space-y-2">
                       <h4 className="text-sm font-medium">Options</h4>
@@ -490,22 +513,27 @@ const removeAttribute = (index: number) => {
                             <Input
                               placeholder="Option Title"
                               value={option.title}
-                              onChange={(e) => updateOption(attrIndex, optIndex, "title", e.target.value)}
+                              onChange={(e) =>
+                                updateOption(attrIndex, optIndex, 'title', e.target.value)
+                              }
                               className="h-10"
                             />
                           </div>
-              
+
                           <div className="flex-1">
-                            <label className="block text-sm font-medium">Option {optIndex + 1}</label>
+                            <label className="block text-sm font-medium">
+                              Option {optIndex + 1}
+                            </label>
                             <Input
                               placeholder={`Option ${optIndex + 1}`}
                               value={option.value}
-                              onChange={(e) => updateOption(attrIndex, optIndex, "value", e.target.value)}
+                              onChange={(e) =>
+                                updateOption(attrIndex, optIndex, 'value', e.target.value)
+                              }
                               className="h-10"
                             />
                           </div>
-              
-                          
+
                           {/* Option Weight */}
                           <div className="w-24">
                             <label className="block text-sm font-medium">Weight</label>
@@ -513,11 +541,13 @@ const removeAttribute = (index: number) => {
                               placeholder="Weight"
                               type="number"
                               value={option.weight}
-                              onChange={(e) => updateOption(attrIndex, optIndex, "weight", e.target.value)}
+                              onChange={(e) =>
+                                updateOption(attrIndex, optIndex, 'weight', e.target.value)
+                              }
                               className="h-10"
                             />
                           </div>
-              
+
                           <Button
                             type="button"
                             variant="ghost"
@@ -538,7 +568,7 @@ const removeAttribute = (index: number) => {
                         Add Option
                       </Button>
                     </div>
-              
+
                     {/* Remove Attribute */}
                     <Button
                       type="button"
@@ -551,18 +581,20 @@ const removeAttribute = (index: number) => {
                     </Button>
                   </div>
                 ))}
-              
+
                 <Button type="button" variant="outline" onClick={addAttribute}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Attribute
                 </Button>
               </div>
 
-              
               <div className="space-y-4">
-
-                <Button type="button" onClick={() => setShowExcludeSection(!showExcludeSection)} className="mb-4">
-                  {showExcludeSection ? "Hide Exclude Section" : "Show Exclude Section"}
+                <Button
+                  type="button"
+                  onClick={() => setShowExcludeSection(!showExcludeSection)}
+                  className="mb-4"
+                >
+                  {showExcludeSection ? 'Hide Exclude Section' : 'Show Exclude Section'}
                 </Button>
 
                 {showExcludeSection && (
@@ -656,14 +688,14 @@ const removeAttribute = (index: number) => {
                 )}
               </div>
 
-
-
               <div className="space-y-4">
-
-                <Button type="button" onClick={() => setShowIncludeSection((prev) => !prev)} className="mb-4">
-                  {showIncludeSection ? "Hide Include Section" : "Show Include Section"}
+                <Button
+                  type="button"
+                  onClick={() => setShowIncludeSection((prev) => !prev)}
+                  className="mb-4"
+                >
+                  {showIncludeSection ? 'Hide Include Section' : 'Show Include Section'}
                 </Button>
-
 
                 {/* Include Section */}
                 {showIncludeSection && (
@@ -675,13 +707,13 @@ const removeAttribute = (index: number) => {
                         <Input
                           placeholder="Title"
                           value={item.title}
-                          onChange={(e) => updateIncludeItem(index, "title", e.target.value)}
+                          onChange={(e) => updateIncludeItem(index, 'title', e.target.value)}
                           className="h-10"
                         />
                         <Input
                           placeholder="Description"
                           value={item.description}
-                          onChange={(e) => updateIncludeItem(index, "description", e.target.value)}
+                          onChange={(e) => updateIncludeItem(index, 'description', e.target.value)}
                           className="h-10"
                         />
                         <Button
@@ -695,21 +727,28 @@ const removeAttribute = (index: number) => {
                       </div>
                     ))}
 
-                    <Button type="button" onClick={addIncludeItem} variant="outline" className="mt-2 flex items-center">
+                    <Button
+                      type="button"
+                      onClick={addIncludeItem}
+                      variant="outline"
+                      className="mt-2 flex items-center"
+                    >
                       <Plus className="w-4 h-4 mr-2" />
                       Add More
                     </Button>
                   </div>
-
                 )}
               </div>
-
             </form>
           </CardContent>
 
           <CardFooter className="border-t border-gray-100 mt-6">
             <div className="flex space-x-3 pt-6">
-              <Button className="w-100 flex-1 h-11 bg-primary" disabled={isSubmitting} onClick={onSubmit}>
+              <Button
+                className="w-100 flex-1 h-11 bg-primary"
+                disabled={isSubmitting}
+                onClick={onSubmit}
+              >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center space-x-2">
                     <Loader2 className="w-4 h-4 animate-spin" />

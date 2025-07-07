@@ -1,50 +1,56 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
+} from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Download,
-  Plus,
-  Edit,
-  Trash2,
-  Printer,
-  Copy,
-  Upload,
-} from "lucide-react";
-import { 
-  fetchWolooSubcategories, 
-  deleteWolooSubcategory, 
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import { Download, Plus, Edit, Trash2, Printer, Copy, Upload } from 'lucide-react';
+import {
+  fetchWolooSubcategories,
+  deleteWolooSubcategory,
   downloadWolooSubcategorySampleCSV,
   bulkUploadWolooSubcategories,
   fetchWolooCategories,
   WolooSubcategory,
-  WolooCategory
-} from "@/lib/api";
-import Link from "next/link";
-import { AlertDialog, AlertDialogTrigger, AlertDialogTitle, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+  WolooCategory,
+} from '@/lib/api';
+import Link from 'next/link';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogTitle,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 const WolooSubcategoryList = () => {
   const [subcategories, setSubcategories] = useState<WolooSubcategory[]>([]);
   const [categories, setCategories] = useState<WolooCategory[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [filterCategory, setFilterCategory] = useState<string>("");
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterCategory, setFilterCategory] = useState<string>('');
   const [isExporting, setIsExporting] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
@@ -55,29 +61,45 @@ const WolooSubcategoryList = () => {
         const { data } = await fetchWolooCategories(1, 1000, 'all', '');
         setCategories(data);
       } catch (error) {
-        console.error("Error fetching categories:", error);
+        console.error('Error fetching categories:', error);
       }
     };
     fetchCategoriesData();
   }, []);
 
   // Fetch subcategories with pagination and filters
-  const fetchSubcategoriesData = async (page = 1, size = 50, status = "all", search = "", categoryId = "") => {
+  const fetchSubcategoriesData = async (
+    page = 1,
+    size = 50,
+    status = 'all',
+    search = '',
+    categoryId = ''
+  ) => {
     try {
       const { data, meta } = await fetchWolooSubcategories(page, size, status, search, categoryId);
       setSubcategories(data);
       setTotalPages(meta.totalPages);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.error("Error fetching Woloo subcategories:", error);
-      toast({ title: "Error", description: "Failed to fetch subcategories.", variant: "destructive" });
+      console.error('Error fetching Woloo subcategories:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to fetch subcategories.',
+        variant: 'destructive',
+      });
     }
   };
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      fetchSubcategoriesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm, filterCategory);
-      setPagination(prev => ({ ...prev, pageIndex: 0 }));
+      fetchSubcategoriesData(
+        pagination.pageIndex + 1,
+        pagination.pageSize,
+        filterStatus,
+        searchTerm,
+        filterCategory
+      );
+      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
     }, 500);
 
     return () => clearTimeout(timer);
@@ -86,26 +108,35 @@ const WolooSubcategoryList = () => {
   const handleExport = async () => {
     try {
       setIsExporting(true);
-      toast({ title: "Success", description: "Subcategories exported successfully." });
+      toast({ title: 'Success', description: 'Subcategories exported successfully.' });
     } catch (error) {
-      console.error("Error exporting subcategories:", error);
-      toast({ title: "Error", description: "Failed to export subcategories.", variant: "destructive" });
+      console.error('Error exporting subcategories:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to export subcategories.',
+        variant: 'destructive',
+      });
     } finally {
       setIsExporting(false);
     }
   };
 
   const handleCopy = () => {
-    const formattedData = subcategories.map((item) => `${item.sampleid}, ${item.name}, ${item.active ? 'Active' : 'Inactive'}`).join("\n");
+    const formattedData = subcategories
+      .map((item) => `${item.sampleid}, ${item.name}, ${item.active ? 'Active' : 'Inactive'}`)
+      .join('\n');
     navigator.clipboard.writeText(formattedData);
-    toast({ title: "Copied to Clipboard", description: "Subcategory data copied." });
+    toast({ title: 'Copied to Clipboard', description: 'Subcategory data copied.' });
   };
 
   const handlePrint = () => {
     const printableContent = subcategories
-      .map((item) => `<tr><td>${item.sampleid}</td><td>${item.name}</td><td>${item.active ? 'Active' : 'Inactive'}</td></tr>`)
-      .join("");
-    const newWindow = window.open("", "_blank");
+      .map(
+        (item) =>
+          `<tr><td>${item.sampleid}</td><td>${item.name}</td><td>${item.active ? 'Active' : 'Inactive'}</td></tr>`
+      )
+      .join('');
+    const newWindow = window.open('', '_blank');
     newWindow?.document.write(`
       <html>
         <head>
@@ -142,9 +173,13 @@ const WolooSubcategoryList = () => {
   const handleSampleExport = async () => {
     try {
       await downloadWolooSubcategorySampleCSV();
-      toast({ title: "Success", description: "Sample CSV downloaded successfully." });
+      toast({ title: 'Success', description: 'Sample CSV downloaded successfully.' });
     } catch (error) {
-      toast({ title: "Error", description: "Failed to download sample CSV.", variant: "destructive" });
+      toast({
+        title: 'Error',
+        description: 'Failed to download sample CSV.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -155,10 +190,20 @@ const WolooSubcategoryList = () => {
     try {
       setIsUploading(true);
       await bulkUploadWolooSubcategories(file);
-      toast({ title: "Success", description: "Subcategories uploaded successfully." });
-      fetchSubcategoriesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm, filterCategory);
+      toast({ title: 'Success', description: 'Subcategories uploaded successfully.' });
+      fetchSubcategoriesData(
+        pagination.pageIndex + 1,
+        pagination.pageSize,
+        filterStatus,
+        searchTerm,
+        filterCategory
+      );
     } catch (error) {
-      toast({ title: "Error", description: "Failed to upload subcategories.", variant: "destructive" });
+      toast({
+        title: 'Error',
+        description: 'Failed to upload subcategories.',
+        variant: 'destructive',
+      });
     } finally {
       setIsUploading(false);
       event.target.value = '';
@@ -169,12 +214,22 @@ const WolooSubcategoryList = () => {
     try {
       if (deleteTargetId !== null) {
         await deleteWolooSubcategory(deleteTargetId);
-        toast({ title: "Deleted", description: "Subcategory deleted successfully." });
-        fetchSubcategoriesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm, filterCategory);
+        toast({ title: 'Deleted', description: 'Subcategory deleted successfully.' });
+        fetchSubcategoriesData(
+          pagination.pageIndex + 1,
+          pagination.pageSize,
+          filterStatus,
+          searchTerm,
+          filterCategory
+        );
         setIsDialogOpen(false);
       }
     } catch (error) {
-      toast({ title: "Error", description: "Failed to delete subcategory.", variant: "destructive" });
+      toast({
+        title: 'Error',
+        description: 'Failed to delete subcategory.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -186,47 +241,49 @@ const WolooSubcategoryList = () => {
 
     // Fallback: try to find by category_id
     const categoryId = subcategory.category_id;
-    let category = categories.find(cat => cat.sampleid == categoryId);
+    let category = categories.find((cat) => cat.sampleid == categoryId);
 
     if (!category) {
-      category = categories.find(cat => cat.id === categoryId);
+      category = categories.find((cat) => cat.id === categoryId);
     }
 
     return category?.name || 'Unknown';
   };
 
   const subcategoryColumns: ColumnDef<WolooSubcategory>[] = [
-    { accessorKey: "sampleid", header: "ID" },
-    { accessorKey: "name", header: "Name", size: 200 },
+    { accessorKey: 'sampleid', header: 'ID' },
+    { accessorKey: 'name', header: 'Name', size: 200 },
     {
-      accessorKey: "category_id",
-      header: "Category",
+      accessorKey: 'category_id',
+      header: 'Category',
       cell: ({ row }) => getCategoryName(row.original),
     },
-    { accessorKey: "service_time", header: "Service Time" },
+    { accessorKey: 'service_time', header: 'Service Time' },
     {
-      accessorKey: "active",
-      header: "Status",
+      accessorKey: 'active',
+      header: 'Status',
       cell: ({ row }) => {
         const isActive = row.original.active;
         return (
-          <span className={`badge px-2 py-1 rounded ${isActive ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
+          <span
+            className={`badge px-2 py-1 rounded ${isActive ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}
+          >
             {isActive ? 'Active' : 'Inactive'}
           </span>
         );
       },
     },
     {
-      accessorKey: "created_at",
-      header: "Created At",
+      accessorKey: 'created_at',
+      header: 'Created At',
       cell: ({ row }) => {
         const date = row.original.created_at;
         return date ? new Date(date).toLocaleDateString() : '-';
       },
     },
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Link href={`/admin/woloo/subcategories/edit/${row.original.id}`}>
@@ -249,7 +306,9 @@ const WolooSubcategoryList = () => {
                 <AlertDialogTitle>
                   <VisuallyHidden>Confirm Delete</VisuallyHidden>
                 </AlertDialogTitle>
-                <p className="text-xl font-bold">Are you sure you want to delete subcategory: {row.original.name}?</p>
+                <p className="text-xl font-bold">
+                  Are you sure you want to delete subcategory: {row.original.name}?
+                </p>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <Button variant="secondary" onClick={handleDelete}>
@@ -281,7 +340,11 @@ const WolooSubcategoryList = () => {
       <div className="flex justify-between mb-4">
         <h1 className="text-2xl font-bold">Woloo Subcategories</h1>
         <div className="flex space-x-2">
-          <select value={filterCategory} onChange={handleCategoryChange} className="border p-2 rounded">
+          <select
+            value={filterCategory}
+            onChange={handleCategoryChange}
+            className="border p-2 rounded"
+          >
             <option value="">All Categories</option>
             {categories.map((category) => (
               <option key={category.id} value={category.id}>
@@ -294,13 +357,18 @@ const WolooSubcategoryList = () => {
             <option value="1">Active</option>
             <option value="0">Inactive</option>
           </select>
-          <select value={pagination.pageSize} onChange={handlePageSizeChange} className="border p-2 rounded">
+          <select
+            value={pagination.pageSize}
+            onChange={handlePageSizeChange}
+            className="border p-2 rounded"
+          >
             <option value={50}>50</option>
             <option value={100}>100</option>
             <option value={150}>150</option>
           </select>
           <Button onClick={handleSampleExport}>
-            <Download className="w-4 h-4 mr-2" />Sample CSV
+            <Download className="w-4 h-4 mr-2" />
+            Sample CSV
           </Button>
           <label className="cursor-pointer">
             <Button disabled={isUploading}>
@@ -320,14 +388,17 @@ const WolooSubcategoryList = () => {
             {isExporting ? 'Exporting...' : 'Export'}
           </Button>
           <Button onClick={handleCopy}>
-            <Copy className="w-4 h-4 mr-2" />Copy
+            <Copy className="w-4 h-4 mr-2" />
+            Copy
           </Button>
           <Button onClick={handlePrint}>
-            <Printer className="w-4 h-4 mr-2" />Print
+            <Printer className="w-4 h-4 mr-2" />
+            Print
           </Button>
           <Link href="/admin/woloo/subcategories/add">
             <Button>
-              <Plus className="w-4 h-4 mr-2" />Add Subcategory
+              <Plus className="w-4 h-4 mr-2" />
+              Add Subcategory
             </Button>
           </Link>
         </div>

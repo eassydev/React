@@ -1,18 +1,24 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { fetchHubPincodeById, updateHubPincode, fetchAllHubsWithoutPagination, HubPincode, Hub } from "@/lib/api";
+import React, { useState, useEffect, FormEvent } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import {
+  fetchHubPincodeById,
+  updateHubPincode,
+  fetchAllHubsWithoutPagination,
+  HubPincode,
+  Hub,
+} from '@/lib/api';
 
 const EditHubPincodeForm: React.FC = () => {
-  const [hub_id, setHubId] = useState<string>("");
-  const [pincode, setPincode] = useState<string>("");
+  const [hub_id, setHubId] = useState<string>('');
+  const [pincode, setPincode] = useState<string>('');
   const [is_active, setIsActive] = useState<boolean>(true); // Active switch state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [hubs, setHubs] = useState<Hub[]>([]);
@@ -22,7 +28,7 @@ const EditHubPincodeForm: React.FC = () => {
   const pathname = usePathname();
 
   // Extract the HubPincode ID from the URL path
-  const hubPincodeId = pathname?.split("/").pop();
+  const hubPincodeId = pathname?.split('/').pop();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,9 +44,9 @@ const EditHubPincodeForm: React.FC = () => {
         }
       } catch (error: any) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: error.message || "Failed to fetch hub pincode details.",
+          variant: 'error',
+          title: 'Error',
+          description: error.message || 'Failed to fetch hub pincode details.',
         });
       }
     };
@@ -54,9 +60,9 @@ const EditHubPincodeForm: React.FC = () => {
 
     if (!hub_id || !pincode) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Hub and Pincode are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Hub and Pincode are required.',
       });
       setIsSubmitting(false);
       return;
@@ -73,18 +79,18 @@ const EditHubPincodeForm: React.FC = () => {
       await updateHubPincode(hubPincodeId as string, updatedHubPincode);
 
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Hub Pincode updated successfully!",
+        variant: 'success',
+        title: 'Success',
+        description: 'Hub Pincode updated successfully!',
       });
 
       // Redirect to hub pincode list
-      router.push("/admin/hub-pincode");
+      router.push('/admin/hub-pincode');
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to update hub pincode.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to update hub pincode.',
       });
     } finally {
       setIsSubmitting(false);
@@ -100,7 +106,9 @@ const EditHubPincodeForm: React.FC = () => {
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
           <CardHeader>
             <CardTitle>Edit Hub Pincode</CardTitle>
-            <CardDescription>Update the details below to edit the hub pincode entry.</CardDescription>
+            <CardDescription>
+              Update the details below to edit the hub pincode entry.
+            </CardDescription>
           </CardHeader>
 
           <CardContent>

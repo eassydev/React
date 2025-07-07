@@ -1,6 +1,6 @@
 const appConfig = {
-  appName: "Eassylife Admin",
-  appShortName: "EA",
-}
+  appName: 'Eassylife Admin',
+  appShortName: 'EA',
+};
 
-export default appConfig
+export default appConfig;

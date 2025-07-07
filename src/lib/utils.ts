@@ -1,8 +1,8 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from 'clsx';
+import { twMerge } from 'tailwind-merge';
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 // Cookie utility functions
@@ -15,29 +15,29 @@ export const cookieUtils = {
   get: (name: string): string | null => {
     const value = document.cookie
       .split('; ')
-      .find(row => row.startsWith(`${name}=`))
+      .find((row) => row.startsWith(`${name}=`))
       ?.split('=')[1];
     return value || null;
   },
 
   remove: (name: string) => {
     document.cookie = `${name}=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`;
-  }
+  },
 };
 
 // Token management utilities
 export const tokenUtils = {
   set: (token: string) => {
-    localStorage.setItem("token", token);
-    cookieUtils.set("token", token, 7);
+    localStorage.setItem('token', token);
+    cookieUtils.set('token', token, 7);
   },
 
   get: (): string | null => {
-    return localStorage.getItem("token") || cookieUtils.get("token");
+    return localStorage.getItem('token') || cookieUtils.get('token');
   },
 
   remove: () => {
-    localStorage.removeItem("token");
-    cookieUtils.remove("token");
-  }
+    localStorage.removeItem('token');
+    cookieUtils.remove('token');
+  },
 };

@@ -1,5 +1,5 @@
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -9,10 +9,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuShortcut,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { logout } from "@/lib/auth"; // Import logout from auth library
-import { tokenUtils } from "@/lib/utils"; // Import token utilities
-import { useRouter } from "next/navigation";
+} from '@/components/ui/dropdown-menu';
+import { logout } from '@/lib/auth'; // Import logout from auth library
+import { tokenUtils } from '@/lib/utils'; // Import token utilities
+import { useRouter } from 'next/navigation';
 
 export function UserNav() {
   const router = useRouter();
@@ -21,12 +21,12 @@ export function UserNav() {
     try {
       await logout(); // Call the logout API
       tokenUtils.remove(); // Clear tokens from both localStorage and cookies
-      router.push("/auth/login"); // Redirect to login page
+      router.push('/auth/login'); // Redirect to login page
     } catch (error) {
-      console.error("Logout failed:", error);
+      console.error('Logout failed:', error);
       // Even if logout API fails, clear local tokens and redirect
       tokenUtils.remove();
-      router.push("/auth/login");
+      router.push('/auth/login');
     }
   };
 

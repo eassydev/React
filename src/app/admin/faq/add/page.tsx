@@ -1,34 +1,41 @@
-"use client";
+'use client';
 
-import React, { useState, FormEvent } from "react";
-import dynamic from "next/dynamic";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2, FileText } from "lucide-react";
-import { createFAQ, FAQ } from "@/lib/api"; // Import the API function and FAQ interface
+import React, { useState, FormEvent } from 'react';
+import dynamic from 'next/dynamic';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2, FileText } from 'lucide-react';
+import { createFAQ, FAQ } from '@/lib/api'; // Import the API function and FAQ interface
 
 // Import React-Quill dynamically for client-side rendering
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-import "react-quill/dist/quill.snow.css";
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import 'react-quill/dist/quill.snow.css';
 
 // Quill modules configuration
 const quillModules = {
   toolbar: [
-    [{ header: "1" }, { header: "2" }, { font: [] }],
+    [{ header: '1' }, { header: '2' }, { font: [] }],
     [{ size: [] }],
-    ["bold", "italic", "underline", "strike", "blockquote"],
-    [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
-    ["link", "image", "video"],
-    ["clean"],
+    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+    [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+    ['link', 'image', 'video'],
+    ['clean'],
   ],
 };
 
 const AddFAQForm: React.FC = () => {
-  const [question, setQuestion] = useState<string>("");
-  const [answer, setAnswer] = useState<string>("");
+  const [question, setQuestion] = useState<string>('');
+  const [answer, setAnswer] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -41,9 +48,9 @@ const AddFAQForm: React.FC = () => {
 
     if (!question || !answer) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "All fields are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'All fields are required.',
       });
       setIsSubmitting(false);
       return;
@@ -53,15 +60,15 @@ const AddFAQForm: React.FC = () => {
     const newFAQ: FAQ = {
       question,
       answer,
-      status: isActive ? "active" : "inactive",
+      status: isActive ? 'active' : 'inactive',
     };
 
     try {
       await createFAQ(newFAQ); // Submit the FAQ object to the API
       toast({
-        variant: "success",
-        title: "Success",
-        description: "FAQ created successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'FAQ created successfully.',
       });
 
       // Reset form fields after successful submission
@@ -70,9 +77,9 @@ const AddFAQForm: React.FC = () => {
       // setIsActive(true);
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to create FAQ.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to create FAQ.',
       });
     } finally {
       setIsSubmitting(false);
@@ -114,7 +121,7 @@ const AddFAQForm: React.FC = () => {
               </div>
 
               {/* Answer Field with React-Quill */}
-              <div className="space-y-2" style={{ height: "270px" }}>
+              <div className="space-y-2" style={{ height: '270px' }}>
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <FileText className="w-4 h-5 text-blue-500" />
                   <span>Answer</span>
@@ -124,7 +131,7 @@ const AddFAQForm: React.FC = () => {
                   onChange={setAnswer}
                   theme="snow"
                   modules={quillModules}
-                  style={{ height: "200px" }}
+                  style={{ height: '200px' }}
                 />
               </div>
 
@@ -138,7 +145,11 @@ const AddFAQForm: React.FC = () => {
 
           <CardFooter className="border-t border-gray-100 mt-6">
             <div className="flex space-x-3 pt-6">
-              <Button className="w-100 flex-1 h-11 bg-primary" disabled={isSubmitting} onClick={onSubmit}>
+              <Button
+                className="w-100 flex-1 h-11 bg-primary"
+                disabled={isSubmitting}
+                onClick={onSubmit}
+              >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center space-x-2">
                     <Loader2 className="w-4 h-4 animate-spin" />

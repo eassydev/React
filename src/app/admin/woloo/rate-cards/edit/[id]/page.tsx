@@ -7,22 +7,35 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Switch } from '@/components/ui/switch';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Save } from 'lucide-react';
 import Link from 'next/link';
-import { fetchWolooCategories, fetchWolooSubcategories, fetchWolooRateCardById, updateWolooRateCard, WolooCategory, WolooSubcategory } from '@/lib/api';
+import {
+  fetchWolooCategories,
+  fetchWolooSubcategories,
+  fetchWolooRateCardById,
+  updateWolooRateCard,
+  WolooCategory,
+  WolooSubcategory,
+} from '@/lib/api';
 
 // Utility functions for safe data handling
 const isValidCategory = (category: WolooCategory): category is WolooCategory & { id: string } => {
   return !!(category.id && category.name);
 };
 
-const isValidSubcategory = (subcategory: WolooSubcategory): subcategory is WolooSubcategory & { id: string } => {
+const isValidSubcategory = (
+  subcategory: WolooSubcategory
+): subcategory is WolooSubcategory & { id: string } => {
   return !!(subcategory.id && subcategory.name);
 };
-
-
 
 interface RateCardFormData {
   name: string;
@@ -72,13 +85,13 @@ const EditWolooRateCard: React.FC = () => {
         const [categoriesData, subcategoriesData, rateCardData] = await Promise.all([
           fetchWolooCategories(1, 1000, '1', ''),
           fetchWolooSubcategories(1, 1000, '1', '', ''),
-          fetchWolooRateCardById(params.id as string)
+          fetchWolooRateCardById(params.id as string),
         ]);
 
         console.log('API responses received:', {
           categoriesData,
           subcategoriesData,
-          rateCardData
+          rateCardData,
         });
 
         // Extract data arrays from responses
@@ -89,7 +102,7 @@ const EditWolooRateCard: React.FC = () => {
         console.log('Extracted data:', {
           categories: categories.length,
           subcategories: subcategories.length,
-          rateCard: rateCard ? 'loaded' : 'not found'
+          rateCard: rateCard ? 'loaded' : 'not found',
         });
 
         setCategories(categories);
@@ -97,19 +110,28 @@ const EditWolooRateCard: React.FC = () => {
 
         if (rateCard) {
           // Find the encrypted category ID that matches the rate card's category_id (same logic as attributes)
-          let selectedCategoryId = "";
-          const matchingCategory = categories.find((cat: WolooCategory) => (cat as any).sampleid == rateCard.category_id);
-          selectedCategoryId = matchingCategory?.id || "";
+          let selectedCategoryId = '';
+          const matchingCategory = categories.find(
+            (cat: WolooCategory) => (cat as any).sampleid == rateCard.category_id
+          );
+          selectedCategoryId = matchingCategory?.id || '';
 
           // Find the encrypted subcategory ID that matches the rate card's subcategory_id (same logic as attributes)
-          let selectedSubcategoryId = "none";
+          let selectedSubcategoryId = 'none';
           if (rateCard.subcategory_id) {
-            const matchingSubcategory = subcategories.find((sub: WolooSubcategory) => (sub as any).sampleid == rateCard.subcategory_id);
-            selectedSubcategoryId = matchingSubcategory?.id || "none";
+            const matchingSubcategory = subcategories.find(
+              (sub: WolooSubcategory) => (sub as any).sampleid == rateCard.subcategory_id
+            );
+            selectedSubcategoryId = matchingSubcategory?.id || 'none';
           }
 
           console.log('Rate card data:', rateCard);
-          console.log('Matching category:', matchingCategory, 'selectedCategoryId:', selectedCategoryId);
+          console.log(
+            'Matching category:',
+            matchingCategory,
+            'selectedCategoryId:',
+            selectedCategoryId
+          );
           console.log('Matching subcategory:', selectedSubcategoryId);
 
           setFormData({
@@ -133,12 +155,12 @@ const EditWolooRateCard: React.FC = () => {
           });
           router.push('/admin/woloo/rate-cards');
         }
-
       } catch (error) {
         console.error('Error fetching data:', error);
         toast({
           title: 'Error',
-          description: 'Failed to load rate card data. Please check if the backend server is running.',
+          description:
+            'Failed to load rate card data. Please check if the backend server is running.',
           variant: 'destructive',
         });
         router.push('/admin/woloo/rate-cards');
@@ -163,7 +185,9 @@ const EditWolooRateCard: React.FC = () => {
         }
 
         // Also check if subcategory's category_id matches the selected category's decrypted ID
-        const selectedCategory = categories.find((cat: WolooCategory) => cat.id === formData.category_id);
+        const selectedCategory = categories.find(
+          (cat: WolooCategory) => cat.id === formData.category_id
+        );
         if (selectedCategory && sub.category_id == (selectedCategory as any).sampleid) {
           return true;
         }
@@ -177,23 +201,25 @@ const EditWolooRateCard: React.FC = () => {
     }
   }, [formData.category_id, subcategories, categories]);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>
+  ) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: value,
     }));
   };
 
   const handleSwitchChange = (name: string, checked: boolean) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       [name]: checked,
     }));
   };
 
   const handleCategoryChange = (value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       category_id: value,
       subcategory_id: 'none', // Reset subcategory when category changes
@@ -201,15 +227,15 @@ const EditWolooRateCard: React.FC = () => {
   };
 
   const handleSubcategoryChange = (value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      subcategory_id: value === 'none' ? '' : value
+      subcategory_id: value === 'none' ? '' : value,
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       toast({
         title: 'Validation Error',
@@ -241,10 +267,13 @@ const EditWolooRateCard: React.FC = () => {
 
     try {
       // Convert encrypted IDs back to raw database IDs for backend
-      const selectedCategory = categories.find((cat: WolooCategory) => cat.id === formData.category_id);
-      const selectedSubcategory = formData.subcategory_id && formData.subcategory_id !== 'none'
-        ? subcategories.find((sub: WolooSubcategory) => sub.id === formData.subcategory_id)
-        : null;
+      const selectedCategory = categories.find(
+        (cat: WolooCategory) => cat.id === formData.category_id
+      );
+      const selectedSubcategory =
+        formData.subcategory_id && formData.subcategory_id !== 'none'
+          ? subcategories.find((sub: WolooSubcategory) => sub.id === formData.subcategory_id)
+          : null;
 
       const submitData = {
         name: formData.name.trim(),

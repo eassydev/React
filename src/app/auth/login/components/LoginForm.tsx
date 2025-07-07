@@ -1,22 +1,29 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { LoaderCircle } from "lucide-react";
-import { useForm, SubmitHandler } from "react-hook-form";
-import { z } from "zod";
-import { useRouter } from "next/navigation";
+import React, { useState, useEffect } from 'react';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { LoaderCircle } from 'lucide-react';
+import { useForm, SubmitHandler } from 'react-hook-form';
+import { z } from 'zod';
+import { useRouter } from 'next/navigation';
 
-import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { useToast } from "@/hooks/use-toast";
-import { login } from "@/lib/auth";
-import { tokenUtils } from "@/lib/utils";
+import { Button } from '@/components/ui/button';
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { useToast } from '@/hooks/use-toast';
+import { login } from '@/lib/auth';
+import { tokenUtils } from '@/lib/utils';
 
 const FormSchema = z.object({
-  username: z.string().min(3, { message: "Username must be at least 3 characters long" }),
-  password: z.string().min(4, { message: "Password must be at least 4 characters long" }),
+  username: z.string().min(3, { message: 'Username must be at least 3 characters long' }),
+  password: z.string().min(4, { message: 'Password must be at least 4 characters long' }),
 });
 
 type FormSchemaType = z.infer<typeof FormSchema>;
@@ -37,14 +44,14 @@ export default function LoginForm() {
           // Verify token is still valid by making a test request
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/admin`, {
             headers: {
-              'admin-auth-token': token
-            }
+              'admin-auth-token': token,
+            },
           });
 
           if (response.ok) {
             // Ensure token is stored in both places
             tokenUtils.set(token);
-            router.replace("/admin");
+            router.replace('/admin');
           } else {
             // Token is invalid, remove it
             tokenUtils.remove();
@@ -52,7 +59,7 @@ export default function LoginForm() {
           }
         } catch (error) {
           // Network error or token invalid
-          console.error("Auth check error:", error);
+          console.error('Auth check error:', error);
           tokenUtils.remove();
           setIsRedirecting(false);
         }
@@ -65,38 +72,38 @@ export default function LoginForm() {
   const form = useForm<FormSchemaType>({
     resolver: zodResolver(FormSchema),
     defaultValues: {
-      username: "",
-      password: "",
+      username: '',
+      password: '',
     },
   });
 
   const onSubmit: SubmitHandler<FormSchemaType> = async (data) => {
     setIsLoading(true);
     try {
-      console.log("Attempting login with:", { username: data.username });
+      console.log('Attempting login with:', { username: data.username });
       const response = await login(data.username, data.password);
-      console.log("Login response received:", response);
+      console.log('Login response received:', response);
 
       if (response.token) {
         // Store token using utility function
         tokenUtils.set(response.token);
-        console.log("Token stored successfully");
+        console.log('Token stored successfully');
 
         toast({
-          title: "Login successful",
-          description: response.message || "You are now logged in.",
+          title: 'Login successful',
+          description: response.message || 'You are now logged in.',
         });
 
-        console.log("Redirecting to /admin...");
+        console.log('Redirecting to /admin...');
         // Use router.push for better Next.js navigation
-        router.push("/admin");
+        router.push('/admin');
       } else {
-        throw new Error("No token received from server");
+        throw new Error('No token received from server');
       }
     } catch (error: any) {
-      console.error("Login error:", error);
+      console.error('Login error:', error);
 
-      let errorMessage = "An error occurred during login";
+      let errorMessage = 'An error occurred during login';
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       } else if (error.message) {
@@ -104,9 +111,9 @@ export default function LoginForm() {
       }
 
       toast({
-        title: "Login failed",
+        title: 'Login failed',
         description: errorMessage,
-        variant: "destructive",
+        variant: 'destructive',
       });
     } finally {
       setIsLoading(false);
@@ -166,13 +173,9 @@ export default function LoginForm() {
             </FormItem>
           )}
         />
-        <Button
-          type="submit"
-          disabled={isLoading}
-          className="w-full"
-        >
+        <Button type="submit" disabled={isLoading} className="w-full">
           {isLoading && <LoaderCircle className="mr-2 size-4 animate-spin" />}
-          {isLoading ? "Logging in..." : "Login"}
+          {isLoading ? 'Logging in...' : 'Login'}
         </Button>
       </form>
     </Form>

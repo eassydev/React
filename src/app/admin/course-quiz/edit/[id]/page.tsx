@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { Input } from "@/components/ui/input";
+import React, { useState, useEffect, FormEvent } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectTrigger,
   SelectContent,
   SelectValue,
   SelectItem,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardHeader,
@@ -18,8 +18,8 @@ import {
   CardContent,
   CardFooter,
   CardDescription,
-} from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
 import {
   fetchAllCategories,
   fetchCoursesByCategory,
@@ -27,19 +27,19 @@ import {
   updateCourseQuiz,
   CourseQuiz,
   CourseQuizQuestion,
-  Category
-} from "@/lib/api";
-import { Plus, Trash, Save, Loader2 } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+  Category,
+} from '@/lib/api';
+import { Plus, Trash, Save, Loader2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 
 const CourseQuizEditForm: React.FC = () => {
   const router = useRouter();
   const { toast } = useToast();
   const { id } = useParams();
 
-  const [categoryId, setCategoryId] = useState<string>("");
-  const [courseId, setCourseId] = useState<string>("");
-  const [title, setTitle] = useState<string>("");
+  const [categoryId, setCategoryId] = useState<string>('');
+  const [courseId, setCourseId] = useState<string>('');
+  const [title, setTitle] = useState<string>('');
   const [questions, setQuestions] = useState<CourseQuizQuestion[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
@@ -54,17 +54,17 @@ const CourseQuizEditForm: React.FC = () => {
           getCourseQuizById(id.toString()),
           fetchAllCategories(),
         ]);
-        setCategoryId(data.category_id?.toString() ?? "");
-        setCourseId(data.course_id?.toString() ?? "");
-        setTitle(data.quiz_text || "");
+        setCategoryId(data.category_id?.toString() ?? '');
+        setCourseId(data.course_id?.toString() ?? '');
+        setTitle(data.quiz_text || '');
         setIsActive(data.is_active ?? true);
         setQuestions(data.questions || []);
         setCategories(categoryData);
       } catch (error) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load course details.",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load course details.',
         });
       }
     };
@@ -87,16 +87,16 @@ const CourseQuizEditForm: React.FC = () => {
           );
         } catch (error) {
           toast({
-            variant: "error",
-            title: "Error",
-            description: "Failed to load courses.",
+            variant: 'error',
+            title: 'Error',
+            description: 'Failed to load courses.',
           });
         }
       };
       loadCategoriesCourse();
     } else {
       setCourses([]);
-      setCourseId(""); // Reset courseId if category changes
+      setCourseId(''); // Reset courseId if category changes
     }
   }, [categoryId, toast]);
 
@@ -104,7 +104,7 @@ const CourseQuizEditForm: React.FC = () => {
   useEffect(() => {
     if (courses.length > 0 && courseId) {
       const found = courses.find((c) => c.id === courseId);
-      if (!found) setCourseId("");
+      if (!found) setCourseId('');
     }
   }, [courses, courseId]);
 
@@ -112,21 +112,17 @@ const CourseQuizEditForm: React.FC = () => {
     setQuestions([
       ...questions,
       {
-        question_text: "",
-        option_1: "",
-        option_2: "",
-        option_3: "",
-        option_4: "",
-        correct_answer: "option_1",
+        question_text: '',
+        option_1: '',
+        option_2: '',
+        option_3: '',
+        option_4: '',
+        correct_answer: 'option_1',
       },
     ]);
   };
 
-  const updateQuestion = (
-    index: number,
-    key: keyof CourseQuizQuestion,
-    value: any
-  ) => {
+  const updateQuestion = (index: number, key: keyof CourseQuizQuestion, value: any) => {
     const updated = [...questions];
     updated[index][key] = value;
     setQuestions(updated);
@@ -142,9 +138,9 @@ const CourseQuizEditForm: React.FC = () => {
 
     if (!categoryId || !courseId || !title || questions.length === 0) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "All fields are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'All fields are required.',
       });
       return;
     }
@@ -163,15 +159,15 @@ const CourseQuizEditForm: React.FC = () => {
       await updateCourseQuiz(id.toString(), payload);
 
       toast({
-        variant: "success",
-        title: "Quiz Updated",
-        description: "Course quiz has been updated successfully.",
+        variant: 'success',
+        title: 'Quiz Updated',
+        description: 'Course quiz has been updated successfully.',
       });
-      router.push("/admin/course-quiz");
+      router.push('/admin/course-quiz');
     } catch (err) {
       toast({
-        variant: "error",
-        title: "Error",
+        variant: 'error',
+        title: 'Error',
         description: `${err}`,
       });
     } finally {
@@ -186,20 +182,13 @@ const CourseQuizEditForm: React.FC = () => {
           <form onSubmit={handleSubmit} className="space-y-6">
             <CardHeader>
               <CardTitle>Edit Course Quiz</CardTitle>
-              <CardDescription>
-                Update details and manage questions
-              </CardDescription>
+              <CardDescription>Update details and manage questions</CardDescription>
             </CardHeader>
 
             <CardContent className="space-y-6">
               <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Select Category
-                </label>
-                <Select
-                  value={categoryId}
-                  onValueChange={(val) => setCategoryId(val)}
-                >
+                <label className="text-sm font-medium text-gray-700">Select Category</label>
+                <Select value={categoryId} onValueChange={(val) => setCategoryId(val)}>
                   <SelectTrigger className="bg-white border-gray-200">
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
@@ -208,10 +197,7 @@ const CourseQuizEditForm: React.FC = () => {
                       (category) =>
                         category?.id &&
                         category?.name && (
-                          <SelectItem
-                            key={category.id}
-                            value={category.id.toString()}
-                          >
+                          <SelectItem key={category.id} value={category.id.toString()}>
                             {category.name}
                           </SelectItem>
                         )
@@ -221,9 +207,7 @@ const CourseQuizEditForm: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Select Course
-                </label>
+                <label className="text-sm font-medium text-gray-700">Select Course</label>
                 <Select
                   value={courseId}
                   onValueChange={(val) => setCourseId(val)}
@@ -243,9 +227,7 @@ const CourseQuizEditForm: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700">
-                  Quiz Title
-                </label>
+                <label className="text-sm font-medium text-gray-700">Quiz Title</label>
                 <Input
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
@@ -255,19 +237,12 @@ const CourseQuizEditForm: React.FC = () => {
               </div>
 
               <div className="flex items-center space-x-2">
-                <Switch
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
-                  className="bg-primary"
-                />
+                <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
                 <span>Active</span>
               </div>
 
               {questions.map((q, index) => (
-                <div
-                  key={index}
-                  className="p-4 border rounded-md bg-gray-50 space-y-4 relative"
-                >
+                <div key={index} className="p-4 border rounded-md bg-gray-50 space-y-4 relative">
                   <div className="flex justify-between items-center">
                     <label className="text-sm font-medium text-gray-700">
                       Question {index + 1}
@@ -281,45 +256,35 @@ const CourseQuizEditForm: React.FC = () => {
                   <Input
                     placeholder="Enter question text"
                     value={q.question_text}
-                    onChange={(e) =>
-                      updateQuestion(index, "question_text", e.target.value)
-                    }
+                    onChange={(e) => updateQuestion(index, 'question_text', e.target.value)}
                     required
                   />
 
-                  {["option_1", "option_2", "option_3", "option_4"].map(
-                    (optKey) => (
-                      <div key={optKey} className="flex items-center space-x-2">
-                        <input
-                          type="radio"
-                          name={`correct-${index}`}
-                          value={optKey}
-                          checked={q.correct_answer === optKey}
-                          onChange={() =>
-                            updateQuestion(
-                              index,
-                              "correct_answer",
-                              optKey as CourseQuizQuestion["correct_answer"]
-                            )
-                          }
-                        />
-                        <Input
-                          placeholder={`Enter ${optKey.replace("_", " ")}`}
-                          value={
-                            q[optKey as keyof CourseQuizQuestion] as string
-                          }
-                          onChange={(e) =>
-                            updateQuestion(
-                              index,
-                              optKey as keyof CourseQuizQuestion,
-                              e.target.value
-                            )
-                          }
-                          required
-                        />
-                      </div>
-                    )
-                  )}
+                  {['option_1', 'option_2', 'option_3', 'option_4'].map((optKey) => (
+                    <div key={optKey} className="flex items-center space-x-2">
+                      <input
+                        type="radio"
+                        name={`correct-${index}`}
+                        value={optKey}
+                        checked={q.correct_answer === optKey}
+                        onChange={() =>
+                          updateQuestion(
+                            index,
+                            'correct_answer',
+                            optKey as CourseQuizQuestion['correct_answer']
+                          )
+                        }
+                      />
+                      <Input
+                        placeholder={`Enter ${optKey.replace('_', ' ')}`}
+                        value={q[optKey as keyof CourseQuizQuestion] as string}
+                        onChange={(e) =>
+                          updateQuestion(index, optKey as keyof CourseQuizQuestion, e.target.value)
+                        }
+                        required
+                      />
+                    </div>
+                  ))}
                 </div>
               ))}
 

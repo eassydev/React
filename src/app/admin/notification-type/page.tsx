@@ -1,30 +1,34 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Download, Upload } from "lucide-react";
+} from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  getNotifications,
-  deleteNotificationType,
-} from "@/lib/api";
-import Link from "next/link";
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Download, Upload } from 'lucide-react';
+import { getNotifications, deleteNotificationType } from '@/lib/api';
+import Link from 'next/link';
 import {
   AlertDialog,
   AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogFooter,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const NotificationTypeList = () => {
   const [notificationTypes, setNotificationTypes] = useState<any[]>([]);
@@ -41,7 +45,7 @@ const NotificationTypeList = () => {
       setTotalPages(meta.totalPages);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.error("Error fetching notification types:", error);
+      console.error('Error fetching notification types:', error);
     }
   };
 
@@ -53,46 +57,44 @@ const NotificationTypeList = () => {
     try {
       await deleteNotificationType(notificationType.id);
       toast({
-        title: "Success",
+        title: 'Success',
         description: `Notification Type "${notificationType.title}" deleted successfully`,
-        variant: "success",
+        variant: 'success',
       });
       fetchNotificationTypesData(pagination.pageIndex + 1, pagination.pageSize);
     } catch (error) {
       toast({
-        title: "Error",
+        title: 'Error',
         description: `Failed to delete notification type: ${error}`,
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
 
-
-
   const notificationTypeColumns: ColumnDef<any>[] = [
     {
-      accessorKey: "sno", // Placeholder key for S.No
-      header: "S.No",
+      accessorKey: 'sno', // Placeholder key for S.No
+      header: 'S.No',
       cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
     },
-        { accessorKey: "title", header: "Title" },
-    { accessorKey: "type", header: "Type" },
+    { accessorKey: 'title', header: 'Title' },
+    { accessorKey: 'type', header: 'Type' },
     {
-      accessorKey: "is_active",
-      header: "Status",
+      accessorKey: 'is_active',
+      header: 'Status',
       cell: (info) => (
         <span
           className={`px-2 py-1 rounded-full text-xs font-medium ${
-            info.getValue() ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+            info.getValue() ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
           }`}
         >
-          {info.getValue() ? "Active" : "Inactive"}
+          {info.getValue() ? 'Active' : 'Inactive'}
         </span>
       ),
     },
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="icon">
@@ -112,7 +114,10 @@ const NotificationTypeList = () => {
                 <p>Are you sure you want to delete notification: {row.original.title}?</p>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <Button variant="secondary" onClick={() => handleNotificationTypeDelete(row.original)}>
+                <Button
+                  variant="secondary"
+                  onClick={() => handleNotificationTypeDelete(row.original)}
+                >
                   Yes, Delete
                 </Button>
                 <Button variant="outline">Cancel</Button>
@@ -146,7 +151,6 @@ const NotificationTypeList = () => {
                 <span>Add Notification</span>
               </Link>
             </Button>
-           
           </div>
         </div>
 
@@ -184,7 +188,10 @@ const NotificationTypeList = () => {
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={notificationTypeColumns.length} className="h-24 text-center">
+                    <TableCell
+                      colSpan={notificationTypeColumns.length}
+                      className="h-24 text-center"
+                    >
                       No notification types found.
                     </TableCell>
                   </TableRow>

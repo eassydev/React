@@ -1,28 +1,23 @@
-"use client";
-import React, { useState, useEffect, FormEvent } from "react";
-import dynamic from "next/dynamic";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+'use client';
+import React, { useState, useEffect, FormEvent } from 'react';
+import dynamic from 'next/dynamic';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectItem,
   SelectTrigger,
   SelectContent,
   SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Save, FileText, Loader2, Type, Globe2 } from "lucide-react";
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Save, FileText, Loader2, Type, Globe2 } from 'lucide-react';
 import {
   fetchAllCategories,
   fetchSubCategoriesByCategoryId,
-  fetchProviders, fetchProviderById,
+  fetchProviders,
+  fetchProviderById,
   fetchFilterOptionsByAttributeId,
   fetchFilterAttributes,
   createRateCard,
@@ -32,25 +27,24 @@ import {
   ServiceSegment,
   Provider,
   ServiceDetail,
-    createServiceDetail,
-  fetchServiceSegments
-} from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
-import { Virtuoso } from "react-virtuoso";
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-import "react-quill/dist/quill.snow.css";
+  createServiceDetail,
+  fetchServiceSegments,
+} from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+import { Virtuoso } from 'react-virtuoso';
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import 'react-quill/dist/quill.snow.css';
 
 const quillModules = {
   toolbar: [
-    [{ header: "1" }, { header: "2" }, { font: [] }],
+    [{ header: '1' }, { header: '2' }, { font: [] }],
     [{ size: [] }],
-    ["bold", "italic", "underline", "strike", "blockquote"],
-    [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
-    ["link", "image", "video"],
-    ["clean"],
+    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+    [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+    ['link', 'image', 'video'],
+    ['clean'],
   ],
-  
 };
 
 interface FilterAttributeOption {
@@ -67,28 +61,26 @@ const ServiceAddForm: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [filterAttributes, setFilterAttributes] = useState<Attribute[]>([]);
-  const [filterAttributeOptions, setFilterAttributeOptions] = useState<
-    FilterAttributeOption[]
+  const [filterAttributeOptions, setFilterAttributeOptions] = useState<FilterAttributeOption[]>([]);
+  const [serviceDescriptions, setServiceDescriptions] = useState<
+    { name: string; description: string }[]
   >([]);
-   const [serviceDescriptions, setServiceDescriptions] = useState<
-      { name: string; description: string }[]
-    >([]);
   const [isActive, setIsActive] = useState(true);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
-  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>('');
   const [segments, setSegments] = useState<ServiceSegment[]>([]);
-  const [segmentsId, setsegmentsId] = useState<string>("");
+  const [segmentsId, setsegmentsId] = useState<string>('');
 
   useEffect(() => {
     const loadCategories = async () => {
       try {
         const categoryData = await fetchAllCategories();
-        setCategories(categoryData);        
+        setCategories(categoryData);
       } catch {
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load categories.",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load categories.',
         });
       }
     };
@@ -101,16 +93,16 @@ const ServiceAddForm: React.FC = () => {
         try {
           const subcategoryData = await fetchSubCategoriesByCategoryId(selectedCategoryId);
           setSubcategories(subcategoryData);
-          setSelectedSubcategoryId("");
+          setSelectedSubcategoryId('');
         } catch (error) {
           setSubcategories([]);
-          setSelectedSubcategoryId("");
+          setSelectedSubcategoryId('');
         }
       };
       loadSubcategories();
     } else {
       setSubcategories([]);
-      setSelectedSubcategoryId("");
+      setSelectedSubcategoryId('');
     }
   }, [selectedCategoryId]);
 
@@ -124,41 +116,32 @@ const ServiceAddForm: React.FC = () => {
             selectedSubcategoryId ? selectedSubcategoryId : null
           );
           setFilterAttributes(attributeData);
-
-
         } catch (error) {
           setFilterAttributes([]);
         }
       };
       loadFilterAttributes();
-    
     }
   }, [selectedCategoryId, selectedSubcategoryId]);
 
-
   const handleAddFilterAttributeOption = () => {
-    setFilterAttributeOptions([
-      ...filterAttributeOptions,
-      { attributeId: "", optionId: "" },
-    ]);
+    setFilterAttributeOptions([...filterAttributeOptions, { attributeId: '', optionId: '' }]);
   };
 
   const handleRemoveFilterAttributeOption = (index: number) => {
-    setFilterAttributeOptions((prev) =>
-      prev.filter((_, i) => i !== index)
-    );
+    setFilterAttributeOptions((prev) => prev.filter((_, i) => i !== index));
   };
   const handleUpdateFilterAttributeOption = async (
     index: number,
-    key: "attributeId" | "optionId",
+    key: 'attributeId' | 'optionId',
     value: string
   ) => {
-    console.log("Updating attribute option");
+    console.log('Updating attribute option');
 
     const updated = [...filterAttributeOptions];
     updated[index][key] = value;
 
-    if (key === "attributeId") {
+    if (key === 'attributeId') {
       try {
         const options = await fetchFilterOptionsByAttributeId(value);
         updated[index].options = options.map((option) => ({
@@ -167,8 +150,11 @@ const ServiceAddForm: React.FC = () => {
         }));
         const loadServiceDetails = async () => {
           try {
-            const segmentData = await fetchServiceSegments(selectedCategoryId,
-              selectedSubcategoryId ? selectedSubcategoryId : null,value);
+            const segmentData = await fetchServiceSegments(
+              selectedCategoryId,
+              selectedSubcategoryId ? selectedSubcategoryId : null,
+              value
+            );
             setSegments(segmentData);
           } catch (error) {
             setSegments([]);
@@ -176,7 +162,7 @@ const ServiceAddForm: React.FC = () => {
         };
         loadServiceDetails();
       } catch (error) {
-        console.error("Error fetching filter options:", error);
+        console.error('Error fetching filter options:', error);
         updated[index].options = [];
       }
     }
@@ -185,12 +171,12 @@ const ServiceAddForm: React.FC = () => {
   };
 
   const handleAddServiceDescription = () => {
-    setServiceDescriptions((prev) => [...prev, { name: "", description: "" }]);
+    setServiceDescriptions((prev) => [...prev, { name: '', description: '' }]);
   };
 
   const handleUpdateServiceDescription = (
     index: number,
-    key: "name" | "description",
+    key: 'name' | 'description',
     value: string
   ) => {
     const updated = [...serviceDescriptions];
@@ -201,7 +187,7 @@ const ServiceAddForm: React.FC = () => {
   const handleRemoveServiceDescription = (index: number) => {
     setServiceDescriptions((prev) => prev.filter((_, i) => i !== index));
   };
- 
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -224,16 +210,16 @@ const ServiceAddForm: React.FC = () => {
     try {
       const response = await createServiceDetail(serviceDetailsData);
       toast({
-        variant: "success",
-        title: "Success",
+        variant: 'success',
+        title: 'Success',
         description: response.message,
       });
-     // router.push("/admin/description");
+      // router.push("/admin/description");
     } catch {
       toast({
-        variant: "error",
-        title: "Error",
-        description: "Failed to save service details.",
+        variant: 'error',
+        title: 'Error',
+        description: 'Failed to save service details.',
       });
     } finally {
       setIsSubmitting(false);
@@ -321,7 +307,7 @@ const ServiceAddForm: React.FC = () => {
                       <Select
                         value={pair.attributeId}
                         onValueChange={(value) =>
-                          handleUpdateFilterAttributeOption(index, "attributeId", value)
+                          handleUpdateFilterAttributeOption(index, 'attributeId', value)
                         }
                       >
                         <SelectTrigger>
@@ -338,7 +324,7 @@ const ServiceAddForm: React.FC = () => {
                       <Select
                         value={pair.optionId}
                         onValueChange={(value) =>
-                          handleUpdateFilterAttributeOption(index, "optionId", value)
+                          handleUpdateFilterAttributeOption(index, 'optionId', value)
                         }
                       >
                         <SelectTrigger>
@@ -368,28 +354,21 @@ const ServiceAddForm: React.FC = () => {
                 </div>
               )}
               {segments.length > 0 && (
-              <div className="space-y-2">
-              <Select
-                      value={segmentsId}
-                      onValueChange={(value) =>
-                        setsegmentsId(value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Segment" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {segments.map((attr) => (
-                          <SelectItem key={attr.id} value={attr.id!.toString()}>
-                            {attr.segment_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    </div>
-                      )}
-
-             
+                <div className="space-y-2">
+                  <Select value={segmentsId} onValueChange={(value) => setsegmentsId(value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Segment" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {segments.map((attr) => (
+                        <SelectItem key={attr.id} value={attr.id!.toString()}>
+                          {attr.segment_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
 
               {/* Active/Inactive Switch */}
               <div className="space-y-2">
@@ -406,41 +385,44 @@ const ServiceAddForm: React.FC = () => {
                   <span className="text-sm text-gray-600">Active</span>
                 </div>
               </div>
-              
-             
-                            <div>
-                              <Button type="button" onClick={handleAddServiceDescription}>
-                                Add Service Description
-                              </Button>
-                              {serviceDescriptions.map((desc, index) => (
-                                <div key={index} className="space-y-2">
-                                  <Input
-                                    value={desc.name}
-                                    placeholder="Title"
-                                    onChange={(e) =>
-                                      handleUpdateServiceDescription(index, "name", e.target.value)
-                                    }
-                                  />
-                                  <ReactQuill
-                                    value={desc.description}
-                                    onChange={(value) =>
-                                      handleUpdateServiceDescription(index, "description", value)
-                                    }
-                                    modules={quillModules}
-                                  />
-                                  <Button
-                                    type="button"
-                                    variant="destructive"
-                                    onClick={() => handleRemoveServiceDescription(index)}
-                                  >
-                                    Remove
-                                  </Button>
-                                </div>
-                              ))}
-                            </div>
+
+              <div>
+                <Button type="button" onClick={handleAddServiceDescription}>
+                  Add Service Description
+                </Button>
+                {serviceDescriptions.map((desc, index) => (
+                  <div key={index} className="space-y-2">
+                    <Input
+                      value={desc.name}
+                      placeholder="Title"
+                      onChange={(e) =>
+                        handleUpdateServiceDescription(index, 'name', e.target.value)
+                      }
+                    />
+                    <ReactQuill
+                      value={desc.description}
+                      onChange={(value) =>
+                        handleUpdateServiceDescription(index, 'description', value)
+                      }
+                      modules={quillModules}
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      onClick={() => handleRemoveServiceDescription(index)}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                ))}
+              </div>
 
               <div className="flex space-x-3 pt-6">
-                <Button className="w-100 flex-1 h-11 bg-primary" disabled={isSubmitting} type="submit">
+                <Button
+                  className="w-100 flex-1 h-11 bg-primary"
+                  disabled={isSubmitting}
+                  type="submit"
+                >
                   {isSubmitting ? (
                     <div className="flex items-center justify-center space-x-2">
                       <Loader2 className="w-4 h-4 animate-spin" />

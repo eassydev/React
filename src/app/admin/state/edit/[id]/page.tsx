@@ -1,18 +1,24 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { fetchStateById, updateState, fetchAllCountriesWithoutPagination, State, Country } from "@/lib/api";
+import React, { useState, useEffect, FormEvent } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import {
+  fetchStateById,
+  updateState,
+  fetchAllCountriesWithoutPagination,
+  State,
+  Country,
+} from '@/lib/api';
 
 const EditStateForm: React.FC = () => {
-  const [name, setName] = useState<string>("");
-  const [country_id, setCountryId] = useState<string>("");
+  const [name, setName] = useState<string>('');
+  const [country_id, setCountryId] = useState<string>('');
   const [countries, setCountries] = useState<Country[]>([]);
   const [is_active, setIsActive] = useState<boolean>(true); // Active switch state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -22,7 +28,7 @@ const EditStateForm: React.FC = () => {
   const pathname = usePathname();
 
   // Extract the state ID from the URL path
-  const stateId = pathname?.split("/").pop();
+  const stateId = pathname?.split('/').pop();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,9 +44,9 @@ const EditStateForm: React.FC = () => {
         }
       } catch (error: any) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: error.message || "Failed to fetch state details.",
+          variant: 'error',
+          title: 'Error',
+          description: error.message || 'Failed to fetch state details.',
         });
       }
     };
@@ -54,9 +60,9 @@ const EditStateForm: React.FC = () => {
 
     if (!name || !country_id) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "State name and country ID are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'State name and country ID are required.',
       });
       setIsSubmitting(false);
       return;
@@ -73,18 +79,18 @@ const EditStateForm: React.FC = () => {
       await updateState(stateId as string, updatedState);
 
       toast({
-        variant: "success",
-        title: "Success",
-        description: "State updated successfully!",
+        variant: 'success',
+        title: 'Success',
+        description: 'State updated successfully!',
       });
 
       // Redirect to state list
-      router.push("/admin/state");
+      router.push('/admin/state');
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to update state.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to update state.',
       });
     } finally {
       setIsSubmitting(false);

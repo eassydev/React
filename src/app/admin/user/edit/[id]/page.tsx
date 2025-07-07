@@ -1,14 +1,21 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { fetchUserById, updateUser, User } from "@/lib/api"; // Import the API functions and User interface
+import React, { useState, useEffect, FormEvent } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import { fetchUserById, updateUser, User } from '@/lib/api'; // Import the API functions and User interface
 
 const EditUserForm: React.FC = () => {
   const { id } = useParams(); // Get the user ID from the URL
@@ -25,9 +32,9 @@ const EditUserForm: React.FC = () => {
         setUser(fetchedUser);
       } catch (error) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load user data.",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load user data.',
         });
       }
     };
@@ -44,16 +51,16 @@ const EditUserForm: React.FC = () => {
     try {
       await updateUser(id.toString(), user); // Update user data through the API
       toast({
-        variant: "success",
-        title: "Success",
-        description: "User updated successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'User updated successfully.',
       });
-      router.push("/admin/user"); // Redirect after successful update
+      router.push('/admin/user'); // Redirect after successful update
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to update user.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to update user.',
       });
     } finally {
       setIsSubmitting(false);
@@ -145,7 +152,11 @@ const EditUserForm: React.FC = () => {
 
           <CardFooter className="border-t border-gray-100 mt-6">
             <div className="flex space-x-3 pt-6">
-              <Button className="w-100 flex-1 h-11 bg-primary" disabled={isSubmitting} onClick={onSubmit}>
+              <Button
+                className="w-100 flex-1 h-11 bg-primary"
+                disabled={isSubmitting}
+                onClick={onSubmit}
+              >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center space-x-2">
                     <Loader2 className="w-4 h-4 animate-spin" />

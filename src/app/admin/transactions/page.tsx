@@ -1,21 +1,28 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, Eye } from "lucide-react";
-import { fetchPayoutTransactions, PayoutTransaction } from "@/lib/api";
-import Link from "next/link";
-import { useToast } from "@/components/ui/use-toast";
-import { format } from "date-fns";
+} from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import { ChevronLeft, ChevronRight, Eye } from 'lucide-react';
+import { fetchPayoutTransactions, PayoutTransaction } from '@/lib/api';
+import Link from 'next/link';
+import { useToast } from '@/components/ui/use-toast';
+import { format } from 'date-fns';
 
 export default function TransactionsPage() {
   const { toast } = useToast();
@@ -37,11 +44,11 @@ export default function TransactionsPage() {
       setTransactions(data);
       setTotalPages(meta.totalPages);
     } catch (error) {
-      console.error("Error fetching transactions:", error);
+      console.error('Error fetching transactions:', error);
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to fetch transactions.",
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to fetch transactions.',
       });
     } finally {
       setIsLoading(false);
@@ -54,63 +61,66 @@ export default function TransactionsPage() {
 
   const transactionColumns: ColumnDef<PayoutTransaction>[] = [
     {
-      accessorKey: "sno",
-      header: "S.No",
+      accessorKey: 'sno',
+      header: 'S.No',
       cell: (info) => info.row.index + 1,
     },
     {
-      accessorKey: "sampleid",
-      header: "Transaction ID",
+      accessorKey: 'sampleid',
+      header: 'Transaction ID',
       cell: (info) => <span className="font-mono text-sm">{info.getValue<number>()}</span>,
     },
-    { 
-      accessorKey: "provider", 
-      header: "Provider Name",
+    {
+      accessorKey: 'provider',
+      header: 'Provider Name',
       cell: (info) => {
         const provider = info.getValue<PayoutTransaction['provider']>();
-        return provider ? `${provider.first_name} ${provider.last_name}` : "N/A";
+        return provider ? `${provider.first_name} ${provider.last_name}` : 'N/A';
       },
     },
-    { 
-      accessorKey: "bookingItem", 
-      header: "Service Details",
+    {
+      accessorKey: 'bookingItem',
+      header: 'Service Details',
       cell: (info) => {
         const bookingItem = info.getValue<PayoutTransaction['bookingItem']>();
-        if (!bookingItem || !bookingItem.rateCard) return "N/A";
-        
+        if (!bookingItem || !bookingItem.rateCard) return 'N/A';
+
         const rateCard = bookingItem.rateCard;
-        
+
         return (
           <div className="whitespace-pre-line text-sm">
-            <strong>Service:</strong> {rateCard.name}<br />
-            <strong>Price:</strong> ₹{rateCard.price}<br />
-            <strong>Category:</strong> {rateCard.category?.name || "N/A"}<br />
-            <strong>Subcategory:</strong> {rateCard.subcategory?.name || "N/A"}
+            <strong>Service:</strong> {rateCard.name}
+            <br />
+            <strong>Price:</strong> ₹{rateCard.price}
+            <br />
+            <strong>Category:</strong> {rateCard.category?.name || 'N/A'}
+            <br />
+            <strong>Subcategory:</strong> {rateCard.subcategory?.name || 'N/A'}
           </div>
         );
       },
     },
-    { 
-      accessorKey: "amount", 
-      header: "Amount",
+    {
+      accessorKey: 'amount',
+      header: 'Amount',
       cell: (info) => `₹${info.getValue<string>()}`,
     },
-    { 
-      accessorKey: "status", 
-      header: "Status",
+    {
+      accessorKey: 'status',
+      header: 'Status',
       cell: (info) => {
         const status = info.getValue<string>();
-        let bgColor = "bg-gray-100";
-        let textColor = "text-gray-600";
-        
-        if (status === "Success") {
-          bgColor = "bg-green-100";
-          textColor = "text-green-600";
-        } else if (status === "Failed") {
-          bgColor = "bg-red-100";
-          textColor = "text-red-600";
+        let bgColor = 'bg-gray-100';
+        let textColor = 'text-gray-600';
+
+        if (status === 'Success') {
+          bgColor = 'bg-green-100';
+          textColor = 'text-green-600';
+        } else if (status === 'Failed') {
+          bgColor = 'bg-red-100';
+          textColor = 'text-red-600';
         }
-        
+
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${bgColor} ${textColor}`}>
             {status}
@@ -118,29 +128,29 @@ export default function TransactionsPage() {
         );
       },
     },
-    { 
-      accessorKey: "razorpay_transfer_id", 
-      header: "Razorpay Transfer ID",
-      cell: (info) => info.getValue<string>() || "N/A",
+    {
+      accessorKey: 'razorpay_transfer_id',
+      header: 'Razorpay Transfer ID',
+      cell: (info) => info.getValue<string>() || 'N/A',
     },
-    { 
-      accessorKey: "created_at", 
-      header: "Created At",
+    {
+      accessorKey: 'created_at',
+      header: 'Created At',
       cell: (info) => {
         const timestamp = info.getValue<string>();
-        if (!timestamp) return "N/A";
-        
+        if (!timestamp) return 'N/A';
+
         try {
-          return format(new Date(timestamp), "dd/MM/yyyy HH:mm");
+          return format(new Date(timestamp), 'dd/MM/yyyy HH:mm');
         } catch (error) {
-          console.error("Error formatting date:", timestamp, error);
-          return "Invalid Date";
+          console.error('Error formatting date:', timestamp, error);
+          return 'Invalid Date';
         }
       },
     },
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="icon">
@@ -222,15 +232,18 @@ export default function TransactionsPage() {
 
             <div className="flex items-center justify-between space-x-2 py-4">
               <div className="text-sm text-gray-500">
-                Showing {transactions.length > 0 ? pagination.pageIndex * pagination.pageSize + 1 : 0} to{" "}
-                {Math.min((pagination.pageIndex + 1) * pagination.pageSize, transactions.length)} of{" "}
+                Showing{' '}
+                {transactions.length > 0 ? pagination.pageIndex * pagination.pageSize + 1 : 0} to{' '}
+                {Math.min((pagination.pageIndex + 1) * pagination.pageSize, transactions.length)} of{' '}
                 {transactions.length} transactions
               </div>
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPagination((prev) => ({ ...prev, pageIndex: prev.pageIndex - 1 }))}
+                  onClick={() =>
+                    setPagination((prev) => ({ ...prev, pageIndex: prev.pageIndex - 1 }))
+                  }
                   disabled={pagination.pageIndex === 0}
                 >
                   <ChevronLeft className="h-4 w-4" />
@@ -239,7 +252,9 @@ export default function TransactionsPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPagination((prev) => ({ ...prev, pageIndex: prev.pageIndex + 1 }))}
+                  onClick={() =>
+                    setPagination((prev) => ({ ...prev, pageIndex: prev.pageIndex + 1 }))
+                  }
                   disabled={pagination.pageIndex >= totalPages - 1}
                 >
                   <ChevronRight className="h-4 w-4" />

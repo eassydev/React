@@ -1,75 +1,82 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table"; 
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Download, Upload } from "lucide-react";
+} from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Download, Upload } from 'lucide-react';
 import {
   fetchAllSpHubs,
   deleteSpHub,
   exportSpHubsToXLS,
   importSpHubsFromCSV,
   downloadSampleSpHubExcel,
-} from "@/lib/api";
-import Link from "next/link";
+} from '@/lib/api';
+import Link from 'next/link';
 import {
   AlertDialog,
   AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogFooter,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const SpHubList = () => {
   const [spHubs, setSpHubs] = useState<any[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
-const [filterStatus, setFilterStatus] = useState<string>("all");
-       const [searchTerm, setSearchTerm] = useState("");
-   
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+
   const { toast } = useToast();
-   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        setFilterStatus(e.target.value);
-      };
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFilterStatus(e.target.value);
+  };
   // Fetch SpHubs from backend with pagination
-  const fetchSpHubsData = async (page = 1, size = 50, status = "all",search = "") => {
+  const fetchSpHubsData = async (page = 1, size = 50, status = 'all', search = '') => {
     try {
-      const { data, meta } = await fetchAllSpHubs(page, size, status,search);
+      const { data, meta } = await fetchAllSpHubs(page, size, status, search);
       setSpHubs(data);
       setTotalPages(meta.totalPages);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.error("Error fetching SpHubs:", error);
+      console.error('Error fetching SpHubs:', error);
     }
   };
 
   useEffect(() => {
-    fetchSpHubsData(pagination.pageIndex + 1, pagination.pageSize,filterStatus,searchTerm);
-  }, [pagination.pageIndex, pagination.pageSize,filterStatus,searchTerm]);
+    fetchSpHubsData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm);
+  }, [pagination.pageIndex, pagination.pageSize, filterStatus, searchTerm]);
 
   const handleSpHubDelete = async (spHub: any) => {
     try {
       await deleteSpHub(spHub.id);
       toast({
-        title: "Success",
+        title: 'Success',
         description: `SpHub deleted successfully`,
-        variant: "success",
+        variant: 'success',
       });
       fetchSpHubsData(pagination.pageIndex + 1, pagination.pageSize);
     } catch (error) {
       toast({
-        title: "Error",
+        title: 'Error',
         description: `Failed to delete SpHub: ${error}`,
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
@@ -78,15 +85,15 @@ const [filterStatus, setFilterStatus] = useState<string>("all");
     try {
       await exportSpHubsToXLS();
       toast({
-        title: "Success",
-        description: "SpHubs exported successfully!",
-        variant: "success",
+        title: 'Success',
+        description: 'SpHubs exported successfully!',
+        variant: 'success',
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to export SpHubs.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to export SpHubs.',
+        variant: 'destructive',
       });
     }
   };
@@ -95,16 +102,16 @@ const [filterStatus, setFilterStatus] = useState<string>("all");
     try {
       await importSpHubsFromCSV(file);
       toast({
-        title: "Success",
-        description: "SpHubs imported successfully!",
-        variant: "success",
+        title: 'Success',
+        description: 'SpHubs imported successfully!',
+        variant: 'success',
       });
       fetchSpHubsData(pagination.pageIndex + 1, pagination.pageSize);
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: 'Error',
         description: error?.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
@@ -113,40 +120,40 @@ const [filterStatus, setFilterStatus] = useState<string>("all");
     try {
       await downloadSampleSpHubExcel();
       toast({
-        title: "Success",
-        description: "Sample file downloaded successfully!",
-        variant: "success",
+        title: 'Success',
+        description: 'Sample file downloaded successfully!',
+        variant: 'success',
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to download sample file.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to download sample file.',
+        variant: 'destructive',
       });
     }
   };
 
   const spHubColumns: ColumnDef<any>[] = [
     {
-      accessorKey: "sno", // Placeholder key for S.No
-      header: "S.No",
+      accessorKey: 'sno', // Placeholder key for S.No
+      header: 'S.No',
       cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
     },
-    { accessorKey: "hub.hub_name", header: "Hub Name" },
-    { accessorKey: "city.name", header: "City" },
-    { accessorKey: "category.name", header: "Category" },
-    { accessorKey: "subcategory.name", header: "Subcategory" },
-    { accessorKey: "staff", header: "Staff" },
-    { accessorKey: "weightage", header: "Weightage" },
+    { accessorKey: 'hub.hub_name', header: 'Hub Name' },
+    { accessorKey: 'city.name', header: 'City' },
+    { accessorKey: 'category.name', header: 'Category' },
+    { accessorKey: 'subcategory.name', header: 'Subcategory' },
+    { accessorKey: 'staff', header: 'Staff' },
+    { accessorKey: 'weightage', header: 'Weightage' },
     {
       accessorKey: 'is_active',
       header: 'Status',
       cell: (info) => {
         const status = info.getValue();
-        console.log("status",status)
+        console.log('status', status);
         let statusText = '';
         let statusClass = '';
-    
+
         switch (status) {
           case false:
             statusText = 'Inactive';
@@ -164,7 +171,7 @@ const [filterStatus, setFilterStatus] = useState<string>("all");
             statusText = 'Unknown';
             statusClass = 'bg-yellow-100 text-yellow-600';
         }
-    
+
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusClass}`}>
             {statusText}
@@ -173,8 +180,8 @@ const [filterStatus, setFilterStatus] = useState<string>("all");
       },
     },
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="icon">
@@ -228,12 +235,16 @@ const [filterStatus, setFilterStatus] = useState<string>("all");
                 <span>Add SpHub</span>
               </Link>
             </Button>
-            <select value={filterStatus} onChange={handleStatusChange} className="border p-2 rounded">
-                    <option value="">All</option>
-                    <option value="1">Active</option>
-                    <option value="0">Deactivated</option>
-                    <option value="2">Deleted</option>
-                  </select>
+            <select
+              value={filterStatus}
+              onChange={handleStatusChange}
+              className="border p-2 rounded"
+            >
+              <option value="">All</option>
+              <option value="1">Active</option>
+              <option value="0">Deactivated</option>
+              <option value="2">Deleted</option>
+            </select>
             <Button variant="outline" onClick={handleDownloadSample}>
               <Download className="w-4 h-4 mr-2" />
               Sample CSV
@@ -259,31 +270,31 @@ const [filterStatus, setFilterStatus] = useState<string>("all");
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
           <CardHeader className="flex flex-row items-center justify-between gap-4">
-                                                                                <CardTitle className="text-xl text-gray-800">Sp Hubs</CardTitle>
-                                                                                <div className="relative">
-                                                                                  <input
-                                                                                    type="text"
-                                                                                    placeholder="Search categories..."
-                                                                                    value={searchTerm}
-                                                                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                                                                    className="border p-2 pl-8 rounded w-64"
-                                                                                  />
-                                                                                  <svg
-                                                                                    className="absolute left-2 top-3 h-4 w-4 text-gray-400"
-                                                                                    fill="none"
-                                                                                    stroke="currentColor"
-                                                                                    viewBox="0 0 24 24"
-                                                                                    xmlns="http://www.w3.org/2000/svg"
-                                                                                  >
-                                                                                    <path
-                                                                                      strokeLinecap="round"
-                                                                                      strokeLinejoin="round"
-                                                                                      strokeWidth="2"
-                                                                                      d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                                                                    ></path>
-                                                                                  </svg>
-                                                                                </div>
-                                                                              </CardHeader>
+            <CardTitle className="text-xl text-gray-800">Sp Hubs</CardTitle>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search categories..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="border p-2 pl-8 rounded w-64"
+              />
+              <svg
+                className="absolute left-2 top-3 h-4 w-4 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                ></path>
+              </svg>
+            </div>
+          </CardHeader>
 
           <CardContent className="overflow-x-auto">
             <Table>
@@ -355,4 +366,3 @@ const [filterStatus, setFilterStatus] = useState<string>("all");
 };
 
 export default SpHubList;
-

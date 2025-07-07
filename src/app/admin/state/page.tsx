@@ -1,64 +1,83 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Download, Upload } from "lucide-react";
-import { fetchAllStates, deleteState, exportStatesToXLS, importStatesFromCSV, downloadSampleStateExcel } from "@/lib/api";
-import Link from "next/link";
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
+} from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Download, Upload } from 'lucide-react';
+import {
+  fetchAllStates,
+  deleteState,
+  exportStatesToXLS,
+  importStatesFromCSV,
+  downloadSampleStateExcel,
+} from '@/lib/api';
+import Link from 'next/link';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const StateList = () => {
   const [states, setStates] = useState<any[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
 
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-         const [searchTerm, setSearchTerm] = useState("");
-     
-    const { toast } = useToast();
-     const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-          setFilterStatus(e.target.value);
-        };
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const { toast } = useToast();
+  const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFilterStatus(e.target.value);
+  };
   // Fetch states from backend with pagination
-  const fetchStatesData = async (page = 1, size = 50, status = "all",search = "") => {
+  const fetchStatesData = async (page = 1, size = 50, status = 'all', search = '') => {
     try {
-      const { data, meta } = await fetchAllStates(page, size, status,search);
+      const { data, meta } = await fetchAllStates(page, size, status, search);
       setStates(data);
       setTotalPages(meta.totalPages);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.error("Error fetching states:", error);
+      console.error('Error fetching states:', error);
     }
   };
 
   useEffect(() => {
-    fetchStatesData(pagination.pageIndex + 1, pagination.pageSize,filterStatus,searchTerm);
-  }, [pagination.pageIndex, pagination.pageSize,filterStatus,searchTerm]);
+    fetchStatesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm);
+  }, [pagination.pageIndex, pagination.pageSize, filterStatus, searchTerm]);
 
   const handleStateDelete = async (state: any) => {
     try {
       await deleteState(state.id);
       toast({
-        title: "Success",
+        title: 'Success',
         description: `State "${state.name}" deleted successfully`,
-        variant: "success",
+        variant: 'success',
       });
       fetchStatesData(pagination.pageIndex + 1, pagination.pageSize);
     } catch (error) {
       toast({
-        title: "Error",
+        title: 'Error',
         description: `Failed to delete state: ${error}`,
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
@@ -67,15 +86,15 @@ const StateList = () => {
     try {
       await exportStatesToXLS();
       toast({
-        title: "Success",
-        description: "States exported successfully!",
-        variant: "success",
+        title: 'Success',
+        description: 'States exported successfully!',
+        variant: 'success',
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to export states.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to export states.',
+        variant: 'destructive',
       });
     }
   };
@@ -84,16 +103,16 @@ const StateList = () => {
     try {
       await importStatesFromCSV(file);
       toast({
-        title: "Success",
-        description: "States imported successfully!",
-        variant: "success",
+        title: 'Success',
+        description: 'States imported successfully!',
+        variant: 'success',
       });
       fetchStatesData(pagination.pageIndex + 1, pagination.pageSize);
     } catch (error: any) {
       toast({
-        title: "Error",
+        title: 'Error',
         description: error?.message,
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
@@ -102,35 +121,35 @@ const StateList = () => {
     try {
       await downloadSampleStateExcel();
       toast({
-        title: "Success",
-        description: "Sample file downloaded successfully!",
-        variant: "success",
+        title: 'Success',
+        description: 'Sample file downloaded successfully!',
+        variant: 'success',
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to download sample file.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to download sample file.',
+        variant: 'destructive',
       });
     }
   };
 
   const stateColumns: ColumnDef<any>[] = [
     {
-      accessorKey: "sno", // Placeholder key for S.No
-      header: "S.No",
+      accessorKey: 'sno', // Placeholder key for S.No
+      header: 'S.No',
       cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
     },
-    { accessorKey: "name", header: "Name" },
+    { accessorKey: 'name', header: 'Name' },
     {
       accessorKey: 'is_active',
       header: 'Status',
       cell: (info) => {
         const status = info.getValue();
-        console.log("status",status)
+        console.log('status', status);
         let statusText = '';
         let statusClass = '';
-    
+
         switch (status) {
           case false:
             statusText = 'Inactive';
@@ -148,7 +167,7 @@ const StateList = () => {
             statusText = 'Unknown';
             statusClass = 'bg-yellow-100 text-yellow-600';
         }
-    
+
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusClass}`}>
             {statusText}
@@ -157,8 +176,8 @@ const StateList = () => {
       },
     },
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="icon">
@@ -212,12 +231,16 @@ const StateList = () => {
                 <span>Add State</span>
               </Link>
             </Button>
-            <select value={filterStatus} onChange={handleStatusChange} className="border p-2 rounded">
-                    <option value="">All</option>
-                    <option value="1">Active</option>
-                    <option value="0">Deactivated</option>
-                    <option value="2">Deleted</option>
-                  </select>
+            <select
+              value={filterStatus}
+              onChange={handleStatusChange}
+              className="border p-2 rounded"
+            >
+              <option value="">All</option>
+              <option value="1">Active</option>
+              <option value="0">Deactivated</option>
+              <option value="2">Deleted</option>
+            </select>
             <Button variant="outline" onClick={handleDownloadSample}>
               <Download className="w-4 h-4 mr-2" />
               Sample CSV
@@ -243,31 +266,31 @@ const StateList = () => {
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
           <CardHeader className="flex flex-row items-center justify-between gap-4">
-                                                           <CardTitle className="text-xl text-gray-800">States</CardTitle>
-                                                           <div className="relative">
-                                                             <input
-                                                               type="text"
-                                                               placeholder="Search categories..."
-                                                               value={searchTerm}
-                                                               onChange={(e) => setSearchTerm(e.target.value)}
-                                                               className="border p-2 pl-8 rounded w-64"
-                                                             />
-                                                             <svg
-                                                               className="absolute left-2 top-3 h-4 w-4 text-gray-400"
-                                                               fill="none"
-                                                               stroke="currentColor"
-                                                               viewBox="0 0 24 24"
-                                                               xmlns="http://www.w3.org/2000/svg"
-                                                             >
-                                                               <path
-                                                                 strokeLinecap="round"
-                                                                 strokeLinejoin="round"
-                                                                 strokeWidth="2"
-                                                                 d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
-                                                               ></path>
-                                                             </svg>
-                                                           </div>
-                                                         </CardHeader>
+            <CardTitle className="text-xl text-gray-800">States</CardTitle>
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search categories..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="border p-2 pl-8 rounded w-64"
+              />
+              <svg
+                className="absolute left-2 top-3 h-4 w-4 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                ></path>
+              </svg>
+            </div>
+          </CardHeader>
 
           <CardContent className="overflow-x-auto">
             <Table>

@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { createState, State, fetchAllCountriesWithoutPagination, Country } from "@/lib/api";
+import React, { useState, useEffect, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import { createState, State, fetchAllCountriesWithoutPagination, Country } from '@/lib/api';
 
 const AddStateForm: React.FC = () => {
-  const [name, setName] = useState<string>("");
-  const [country_id, setCountryId] = useState<string>("");
+  const [name, setName] = useState<string>('');
+  const [country_id, setCountryId] = useState<string>('');
   const [countries, setCountries] = useState<Country[]>([]);
   const [is_active, setIsActive] = useState<boolean>(true); // Active switch state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -27,9 +27,9 @@ const AddStateForm: React.FC = () => {
         setCountries(data);
       } catch (error: any) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: error.message || "Failed to fetch countries.",
+          variant: 'error',
+          title: 'Error',
+          description: error.message || 'Failed to fetch countries.',
         });
       }
     };
@@ -43,9 +43,9 @@ const AddStateForm: React.FC = () => {
 
     if (!name || !country_id) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "State name and country ID are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'State name and country ID are required.',
       });
       setIsSubmitting(false);
       return;
@@ -62,18 +62,18 @@ const AddStateForm: React.FC = () => {
       await createState(newState);
 
       toast({
-        variant: "success",
-        title: "Success",
-        description: "State created successfully!",
+        variant: 'success',
+        title: 'Success',
+        description: 'State created successfully!',
       });
 
       // Redirect to state list
-      router.push("/admin/state");
+      router.push('/admin/state');
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to create state.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to create state.',
       });
     } finally {
       setIsSubmitting(false);
@@ -89,7 +89,9 @@ const AddStateForm: React.FC = () => {
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
           <CardHeader>
             <CardTitle>New State</CardTitle>
-            <CardDescription>Fill in the details below to create a new state entry.</CardDescription>
+            <CardDescription>
+              Fill in the details below to create a new state entry.
+            </CardDescription>
           </CardHeader>
 
           <CardContent>

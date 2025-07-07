@@ -1,48 +1,48 @@
-"use client"
+'use client';
 
-import React, { ReactNode, useState, useRef } from "react"
+import React, { ReactNode, useState, useRef } from 'react';
 
-import { Menu, ArrowLeftToLine } from "lucide-react"
-import { ImperativePanelHandle } from "react-resizable-panels"
-import { Toaster } from "@/components/ui/toaster"
+import { Menu, ArrowLeftToLine } from 'lucide-react';
+import { ImperativePanelHandle } from 'react-resizable-panels';
+import { Toaster } from '@/components/ui/toaster';
 
-import { Button } from "@/components/ui/button"
-import { ResizablePanel, ResizablePanelGroup } from "@/components/ui/resizable"
-import { Separator } from "@/components/ui/separator"
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet"
-import appConfig from "@/constants/appConfig"
-import useRouteChange from "@/hooks/useRouteChange"
-import useScreenSize from "@/hooks/useScreenSize"
-import { cn } from "@/lib/utils"
+import { Button } from '@/components/ui/button';
+import { ResizablePanel, ResizablePanelGroup } from '@/components/ui/resizable';
+import { Separator } from '@/components/ui/separator';
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@/components/ui/sheet';
+import appConfig from '@/constants/appConfig';
+import useRouteChange from '@/hooks/useRouteChange';
+import useScreenSize from '@/hooks/useScreenSize';
+import { cn } from '@/lib/utils';
 
-import { AccountSwitcher } from "./components/account-switcher"
-import Sidebar from "./components/sidebar"
-import { UserNav } from "./components/user-nav"
+import { AccountSwitcher } from './components/account-switcher';
+import Sidebar from './components/sidebar';
+import { UserNav } from './components/user-nav';
 
 interface LayoutProps {
-  readonly children: ReactNode
+  readonly children: ReactNode;
 }
 
 export default function Layout({ children }: LayoutProps) {
-  const isMediumOrSmaller = useScreenSize()
-  const panelRef = useRef<ImperativePanelHandle | null>(null)
-  const [isCollapsed, setIsCollapsed] = useState(false)
-  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false)
+  const isMediumOrSmaller = useScreenSize();
+  const panelRef = useRef<ImperativePanelHandle | null>(null);
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isMobileNavOpen, setIsMobileNavOpen] = useState(false);
 
   useRouteChange(() => {
-    setIsMobileNavOpen(false)
-  })
+    setIsMobileNavOpen(false);
+  });
 
   const handleTogglePanel = () => {
     if (panelRef.current) {
       if (isCollapsed) {
-        panelRef.current.expand()
+        panelRef.current.expand();
       } else {
-        panelRef.current.collapse()
+        panelRef.current.collapse();
       }
-      setIsCollapsed(!isCollapsed)
+      setIsCollapsed(!isCollapsed);
     }
-  }
+  };
 
   return (
     <main>
@@ -55,17 +55,22 @@ export default function Layout({ children }: LayoutProps) {
           minSize={18}
           maxSize={18}
           onCollapse={() => {
-            setIsCollapsed(true)
+            setIsCollapsed(true);
           }}
           onExpand={() => {
-            setIsCollapsed(false)
+            setIsCollapsed(false);
           }}
           className={cn(
-            "hidden lg:block border-r !overflow-visible",
-            isCollapsed && "min-w-[50px] transition-all duration-300 ease-in-out",
+            'hidden lg:block border-r !overflow-visible',
+            isCollapsed && 'min-w-[50px] transition-all duration-300 ease-in-out'
           )}
         >
-          <div className={cn("flex h-[52px] items-center relative", isCollapsed ? "h-[52px] justify-center" : "px-2")}>
+          <div
+            className={cn(
+              'flex h-[52px] items-center relative',
+              isCollapsed ? 'h-[52px] justify-center' : 'px-2'
+            )}
+          >
             <h1>{!isCollapsed ? appConfig.appName : appConfig.appShortName}</h1>
 
             <Button
@@ -75,12 +80,19 @@ export default function Layout({ children }: LayoutProps) {
               onClick={handleTogglePanel}
             >
               <span className="transition-transform duration-300 ease-in-out">
-                <ArrowLeftToLine className={cn("size-4 transform", isCollapsed ? "rotate-180" : "rotate-0")} />
+                <ArrowLeftToLine
+                  className={cn('size-4 transform', isCollapsed ? 'rotate-180' : 'rotate-0')}
+                />
               </span>
             </Button>
           </div>
           <Separator />
-          <div className={cn("flex h-[52px] items-center justify-center", isCollapsed ? "h-[52px]" : "px-2")}>
+          <div
+            className={cn(
+              'flex h-[52px] items-center justify-center',
+              isCollapsed ? 'h-[52px]' : 'px-2'
+            )}
+          >
             <AccountSwitcher isCollapsed={isCollapsed} />
           </div>
           <Sidebar isCollapsed={isCollapsed} />
@@ -118,5 +130,5 @@ export default function Layout({ children }: LayoutProps) {
         </SheetContent>
       </Sheet>
     </main>
-  )
+  );
 }

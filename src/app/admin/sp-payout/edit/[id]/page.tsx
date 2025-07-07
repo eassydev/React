@@ -1,18 +1,24 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Textarea } from "@/components/ui/textarea";
-import { useToast } from "@/components/ui/use-toast";
-import { fetchPayoutById, updatePayout } from "@/lib/api";
-import { ArrowLeft, Save } from "lucide-react";
-import Link from "next/link";
-import { format, addHours } from "date-fns";
+import React, { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Textarea } from '@/components/ui/textarea';
+import { useToast } from '@/components/ui/use-toast';
+import { fetchPayoutById, updatePayout } from '@/lib/api';
+import { ArrowLeft, Save } from 'lucide-react';
+import Link from 'next/link';
+import { format, addHours } from 'date-fns';
 
 interface Provider {
   id: string;
@@ -59,13 +65,13 @@ export default function EditSpPayoutPage() {
   const [payout, setPayout] = useState<PayoutDetails | null>(null);
   const [formData, setFormData] = useState({
     remaining_amount: 0,
-    scheduled_transfer: "",
-    allow_transfer: "no",
-    notes: ""
+    scheduled_transfer: '',
+    allow_transfer: 'no',
+    notes: '',
   });
   const [errors, setErrors] = useState({
-    remaining_amount: "",
-    scheduled_transfer: "",
+    remaining_amount: '',
+    scheduled_transfer: '',
   });
 
   useEffect(() => {
@@ -76,21 +82,21 @@ export default function EditSpPayoutPage() {
         setPayout(data);
         setFormData({
           remaining_amount: data.remaining_amount,
-          scheduled_transfer: data.scheduled_transfer || "",
-          allow_transfer: data.allow_transfer || "no",
-          notes: data.notes || ""
+          scheduled_transfer: data.scheduled_transfer || '',
+          allow_transfer: data.allow_transfer || 'no',
+          notes: data.notes || '',
         });
 
         // Automatically set editing mode if status is not "Paid"
-        if (data.payout_status !== "Paid") {
+        if (data.payout_status !== 'Paid') {
           setIsEditing(true);
         }
       } catch (error) {
-        console.error("Error fetching payout details:", error);
+        console.error('Error fetching payout details:', error);
         toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to fetch payout details.",
+          variant: 'destructive',
+          title: 'Error',
+          description: 'Failed to fetch payout details.',
         });
       } finally {
         setIsLoading(false);
@@ -117,14 +123,14 @@ export default function EditSpPayoutPage() {
       const formattedDate = format(istDate, "yyyy-MM-dd'T'HH:mm:ss.SSS");
       return `${formattedDate}+05:30`;
     } catch (error) {
-      console.error("Date formatting error:", error);
-      return "";
+      console.error('Date formatting error:', error);
+      return '';
     }
   };
 
   // Helper function to safely format timestamps
   const formatTimestamp = (timestamp: string | number) => {
-    if (!timestamp) return "N/A";
+    if (!timestamp) return 'N/A';
 
     try {
       // If it's a string, try to use it directly
@@ -135,46 +141,48 @@ export default function EditSpPayoutPage() {
       // If it's a number, check if it's seconds or milliseconds
       if (typeof timestamp === 'number') {
         // Unix timestamps are typically 10 digits (seconds since epoch)
-        const date = timestamp < 10000000000
-          ? new Date(timestamp * 1000)  // Convert seconds to milliseconds
-          : new Date(timestamp);        // Already in milliseconds
+        const date =
+          timestamp < 10000000000
+            ? new Date(timestamp * 1000) // Convert seconds to milliseconds
+            : new Date(timestamp); // Already in milliseconds
 
-        return format(date, "dd/MM/yyyy HH:mm");
+        return format(date, 'dd/MM/yyyy HH:mm');
       }
 
-      return "N/A";
+      return 'N/A';
     } catch (error) {
-      console.error("Error formatting timestamp:", timestamp, error);
-      return "Invalid Date";
+      console.error('Error formatting timestamp:', timestamp, error);
+      return 'Invalid Date';
     }
   };
 
   const validateForm = () => {
     let valid = true;
     const newErrors = {
-      remaining_amount: "",
-      scheduled_transfer: "",
+      remaining_amount: '',
+      scheduled_transfer: '',
     };
 
     // Validate remaining amount
     const remainingAmount = parseFloat(formData.remaining_amount.toString());
     if (isNaN(remainingAmount)) {
-      newErrors.remaining_amount = "Remaining amount must be a valid number.";
+      newErrors.remaining_amount = 'Remaining amount must be a valid number.';
       valid = false;
     } else if (remainingAmount < 0) {
-      newErrors.remaining_amount = "Remaining amount cannot be negative.";
+      newErrors.remaining_amount = 'Remaining amount cannot be negative.';
       valid = false;
-    } else if (payout && remainingAmount > (payout.total_payable - payout.settled_amount)) {
-      const maxAmount = typeof payout.total_payable === 'number' && typeof payout.settled_amount === 'number'
-        ? (payout.total_payable - payout.settled_amount).toFixed(2)
-        : (payout.total_payable - payout.settled_amount);
+    } else if (payout && remainingAmount > payout.total_payable - payout.settled_amount) {
+      const maxAmount =
+        typeof payout.total_payable === 'number' && typeof payout.settled_amount === 'number'
+          ? (payout.total_payable - payout.settled_amount).toFixed(2)
+          : payout.total_payable - payout.settled_amount;
       newErrors.remaining_amount = `Remaining amount cannot exceed ${maxAmount}.`;
       valid = false;
     }
 
     // Validate scheduled transfer date
     if (formData.scheduled_transfer && !Date.parse(formData.scheduled_transfer)) {
-      newErrors.scheduled_transfer = "Scheduled transfer date is invalid.";
+      newErrors.scheduled_transfer = 'Scheduled transfer date is invalid.';
       valid = false;
     }
 
@@ -192,7 +200,7 @@ export default function EditSpPayoutPage() {
     if (errors[field as keyof typeof errors]) {
       setErrors((prev) => ({
         ...prev,
-        [field]: "",
+        [field]: '',
       }));
     }
   };
@@ -212,24 +220,24 @@ export default function EditSpPayoutPage() {
         ...formData,
         scheduled_transfer: formData.scheduled_transfer
           ? formatDateForAPI(formData.scheduled_transfer)
-          : undefined
+          : undefined,
       };
 
       await updatePayout(String(id), formattedData);
 
       toast({
-        title: "Success",
-        description: "Payout updated successfully.",
+        title: 'Success',
+        description: 'Payout updated successfully.',
       });
 
       // Redirect to the listing page after successful update
-      router.push("/admin/sp-payout");
+      router.push('/admin/sp-payout');
     } catch (error: any) {
-      console.error("Error updating payout:", error);
+      console.error('Error updating payout:', error);
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: error.message || "Failed to update payout.",
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to update payout.',
       });
     } finally {
       setIsSubmitting(false);
@@ -267,22 +275,35 @@ export default function EditSpPayoutPage() {
             <h1 className="text-3xl font-bold text-gray-900">Payout Details</h1>
           </div>
 
-          {payout && payout.payout_status === "Paid" ? (
+          {payout && payout.payout_status === 'Paid' ? (
             <div className="bg-green-100 text-green-800 px-4 py-2 rounded-md text-sm">
               This payout is already paid and cannot be edited
             </div>
           ) : (
             isEditing && (
               <div className="flex space-x-2">
-                <Button
-                  onClick={handleSubmit}
-                  disabled={isSubmitting}
-                >
+                <Button onClick={handleSubmit} disabled={isSubmitting}>
                   {isSubmitting ? (
                     <span className="flex items-center">
-                      <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                      <svg
+                        className="animate-spin -ml-1 mr-2 h-4 w-4 text-white"
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        ></circle>
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        ></path>
                       </svg>
                       Saving...
                     </span>
@@ -300,7 +321,9 @@ export default function EditSpPayoutPage() {
 
         <Card className="bg-white shadow-sm">
           <CardHeader className="border-b border-gray-100">
-            <CardTitle className="text-xl font-semibold text-gray-800">Payout Information</CardTitle>
+            <CardTitle className="text-xl font-semibold text-gray-800">
+              Payout Information
+            </CardTitle>
           </CardHeader>
           <CardContent className="pt-6">
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -323,12 +346,17 @@ export default function EditSpPayoutPage() {
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Provider Email</Label>
-                  <div className="text-sm font-medium">{payout.provider?.email || "N/A"}</div>
+                  <div className="text-sm font-medium">{payout.provider?.email || 'N/A'}</div>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Service Amount</Label>
-                  <div className="text-sm font-medium">₹{typeof payout.service_amount === 'number' ? payout.service_amount.toFixed(2) : payout.service_amount}</div>
+                  <div className="text-sm font-medium">
+                    ₹
+                    {typeof payout.service_amount === 'number'
+                      ? payout.service_amount.toFixed(2)
+                      : payout.service_amount}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
@@ -338,61 +366,93 @@ export default function EditSpPayoutPage() {
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Commission Amount</Label>
-                  <div className="text-sm font-medium">₹{typeof payout.commission_amount === 'number' ? payout.commission_amount.toFixed(2) : payout.commission_amount}</div>
+                  <div className="text-sm font-medium">
+                    ₹
+                    {typeof payout.commission_amount === 'number'
+                      ? payout.commission_amount.toFixed(2)
+                      : payout.commission_amount}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">TCS</Label>
-                  <div className="text-sm font-medium">₹{typeof payout.base_tcs === 'number' ? payout.base_tcs.toFixed(2) : payout.base_tcs}</div>
+                  <div className="text-sm font-medium">
+                    ₹
+                    {typeof payout.base_tcs === 'number'
+                      ? payout.base_tcs.toFixed(2)
+                      : payout.base_tcs}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">TDS</Label>
-                  <div className="text-sm font-medium">₹{typeof payout.base_tds === 'number' ? payout.base_tds.toFixed(2) : payout.base_tds}</div>
+                  <div className="text-sm font-medium">
+                    ₹
+                    {typeof payout.base_tds === 'number'
+                      ? payout.base_tds.toFixed(2)
+                      : payout.base_tds}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Base Payable</Label>
-                  <div className="text-sm font-medium">₹{typeof payout.base_payable === 'number' ? payout.base_payable.toFixed(2) : payout.base_payable}</div>
+                  <div className="text-sm font-medium">
+                    ₹
+                    {typeof payout.base_payable === 'number'
+                      ? payout.base_payable.toFixed(2)
+                      : payout.base_payable}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Total Payable</Label>
-                  <div className="text-sm font-medium">₹{typeof payout.total_payable === 'number' ? payout.total_payable.toFixed(2) : payout.total_payable}</div>
+                  <div className="text-sm font-medium">
+                    ₹
+                    {typeof payout.total_payable === 'number'
+                      ? payout.total_payable.toFixed(2)
+                      : payout.total_payable}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Settled Amount</Label>
-                  <div className="text-sm font-medium">₹{typeof payout.settled_amount === 'number' ? payout.settled_amount.toFixed(2) : payout.settled_amount}</div>
+                  <div className="text-sm font-medium">
+                    ₹
+                    {typeof payout.settled_amount === 'number'
+                      ? payout.settled_amount.toFixed(2)
+                      : payout.settled_amount}
+                  </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Status</Label>
-                  <div className={`inline-flex px-2 py-1 rounded-full text-xs font-medium
-                    ${payout.payout_status === "Paid" ? "bg-green-100 text-green-600" :
-                      payout.payout_status === "Partially Paid" ? "bg-yellow-100 text-yellow-600" :
-                      "bg-red-100 text-red-600"}`}>
+                  <div
+                    className={`inline-flex px-2 py-1 rounded-full text-xs font-medium
+                    ${
+                      payout.payout_status === 'Paid'
+                        ? 'bg-green-100 text-green-600'
+                        : payout.payout_status === 'Partially Paid'
+                          ? 'bg-yellow-100 text-yellow-600'
+                          : 'bg-red-100 text-red-600'
+                    }`}
+                  >
                     {payout.payout_status}
                   </div>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Razorpay Transfer ID</Label>
-                  <div className="text-sm font-medium">{payout.razorpay_transfer_id || "N/A"}</div>
+                  <div className="text-sm font-medium">{payout.razorpay_transfer_id || 'N/A'}</div>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Created At</Label>
-                  <div className="text-sm font-medium">
-                    {formatTimestamp(payout.created_at)}
-                  </div>
+                  <div className="text-sm font-medium">{formatTimestamp(payout.created_at)}</div>
                 </div>
 
                 <div className="space-y-2">
                   <Label className="text-sm font-medium text-gray-500">Updated At</Label>
-                  <div className="text-sm font-medium">
-                    {formatTimestamp(payout.updated_at)}
-                  </div>
+                  <div className="text-sm font-medium">{formatTimestamp(payout.updated_at)}</div>
                 </div>
 
                 {/* Editable fields */}
@@ -407,16 +467,21 @@ export default function EditSpPayoutPage() {
                         type="number"
                         step="0.01"
                         value={formData.remaining_amount}
-                        onChange={(e) => handleChange("remaining_amount", e.target.value)}
+                        onChange={(e) => handleChange('remaining_amount', e.target.value)}
                         disabled={!isEditing || isSubmitting}
-                        className={errors.remaining_amount ? "border-red-500" : ""}
+                        className={errors.remaining_amount ? 'border-red-500' : ''}
                       />
                       {errors.remaining_amount && (
                         <p className="text-red-500 text-xs mt-1">{errors.remaining_amount}</p>
                       )}
                     </div>
                   ) : (
-                    <div className="text-sm font-medium">₹{typeof payout.remaining_amount === 'number' ? payout.remaining_amount.toFixed(2) : payout.remaining_amount}</div>
+                    <div className="text-sm font-medium">
+                      ₹
+                      {typeof payout.remaining_amount === 'number'
+                        ? payout.remaining_amount.toFixed(2)
+                        : payout.remaining_amount}
+                    </div>
                   )}
                 </div>
 
@@ -430,9 +495,9 @@ export default function EditSpPayoutPage() {
                         id="scheduled_transfer"
                         type="datetime-local"
                         value={formData.scheduled_transfer}
-                        onChange={(e) => handleChange("scheduled_transfer", e.target.value)}
+                        onChange={(e) => handleChange('scheduled_transfer', e.target.value)}
                         disabled={!isEditing || isSubmitting}
-                        className={errors.scheduled_transfer ? "border-red-500" : ""}
+                        className={errors.scheduled_transfer ? 'border-red-500' : ''}
                       />
                       {errors.scheduled_transfer && (
                         <p className="text-red-500 text-xs mt-1">{errors.scheduled_transfer}</p>
@@ -443,7 +508,7 @@ export default function EditSpPayoutPage() {
                     </div>
                   ) : (
                     <div className="text-sm font-medium">
-                      {payout.scheduled_transfer || "Not scheduled"}
+                      {payout.scheduled_transfer || 'Not scheduled'}
                     </div>
                   )}
                 </div>
@@ -455,7 +520,7 @@ export default function EditSpPayoutPage() {
                   {isEditing ? (
                     <Select
                       value={formData.allow_transfer}
-                      onValueChange={(value) => handleChange("allow_transfer", value)}
+                      onValueChange={(value) => handleChange('allow_transfer', value)}
                       disabled={!isEditing || isSubmitting}
                     >
                       <SelectTrigger id="allow_transfer">
@@ -480,13 +545,13 @@ export default function EditSpPayoutPage() {
                   <Textarea
                     id="notes"
                     value={formData.notes}
-                    onChange={(e) => handleChange("notes", e.target.value)}
+                    onChange={(e) => handleChange('notes', e.target.value)}
                     disabled={!isEditing || isSubmitting}
                     rows={4}
                   />
                 ) : (
                   <div className="text-sm font-medium whitespace-pre-line border p-3 rounded-md bg-gray-50 min-h-[100px]">
-                    {payout.notes || "No notes available."}
+                    {payout.notes || 'No notes available.'}
                   </div>
                 )}
               </div>

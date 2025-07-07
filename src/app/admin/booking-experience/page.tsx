@@ -1,11 +1,17 @@
-"use client";
+'use client';
 import React, { useState, useEffect } from 'react';
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@/components/ui/select';
-import { useToast } from "@/hooks/use-toast";
-import { Virtuoso } from "react-virtuoso";
+import {
+  Select,
+  SelectItem,
+  SelectTrigger,
+  SelectContent,
+  SelectValue,
+} from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { Virtuoso } from 'react-virtuoso';
 import {
   Search,
   Download,
@@ -15,13 +21,13 @@ import {
   Package,
   Eye,
   Filter,
-  RefreshCw
+  RefreshCw,
 } from 'lucide-react';
 import {
   fetchBookingFeedback,
   exportBookingFeedback,
   BookingFeedback,
-  BookingFeedbackResponse
+  BookingFeedbackResponse,
 } from '@/lib/api';
 
 const BookingExperiencePage: React.FC = () => {
@@ -61,8 +67,8 @@ const BookingExperiencePage: React.FC = () => {
       setCurrentPage(response.currentPage);
     } catch (error) {
       toast({
-        variant: "error",
-        title: "Error",
+        variant: 'error',
+        title: 'Error',
         description: `Failed to fetch booking feedback: ${error}`,
       });
     } finally {
@@ -109,14 +115,14 @@ const BookingExperiencePage: React.FC = () => {
       setIsExporting(true);
       await exportBookingFeedback(startDate, endDate);
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Booking feedback exported successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Booking feedback exported successfully.',
       });
     } catch (error) {
       toast({
-        variant: "error",
-        title: "Error",
+        variant: 'error',
+        title: 'Error',
         description: `Failed to export booking feedback: ${error}`,
       });
     } finally {
@@ -183,21 +189,26 @@ const BookingExperiencePage: React.FC = () => {
           </div>
 
           {/* Rating */}
-          <div>
-            {renderStarRating(feedbackItem.rating)}
-          </div>
+          <div>{renderStarRating(feedbackItem.rating)}</div>
 
           {/* Provider & Service Info */}
           <div className="text-sm">
             <div className="flex items-center space-x-2">
               <span className="text-xs text-gray-500">
-                Provider: {feedbackItem.provider ? `${feedbackItem.provider.first_name} ${feedbackItem.provider.last_name}` : 'N/A'}
+                Provider:{' '}
+                {feedbackItem.provider
+                  ? `${feedbackItem.provider.first_name} ${feedbackItem.provider.last_name}`
+                  : 'N/A'}
               </span>
             </div>
             <div className="flex items-center space-x-2 mt-1">
-              <span className={`px-2 py-1 rounded text-xs ${
-                feedbackItem.status === 'active' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
-              }`}>
+              <span
+                className={`px-2 py-1 rounded text-xs ${
+                  feedbackItem.status === 'active'
+                    ? 'bg-green-100 text-green-800'
+                    : 'bg-red-100 text-red-800'
+                }`}
+              >
                 {feedbackItem.status}
               </span>
             </div>
@@ -241,11 +252,7 @@ const BookingExperiencePage: React.FC = () => {
               </CardDescription>
             </div>
             <div className="flex space-x-2">
-              <Button
-                onClick={handleExport}
-                disabled={isExporting}
-                variant="outline"
-              >
+              <Button onClick={handleExport} disabled={isExporting} variant="outline">
                 {isExporting ? (
                   <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
                 ) : (
@@ -299,19 +306,11 @@ const BookingExperiencePage: React.FC = () => {
             />
 
             <div className="flex space-x-2">
-              <Button
-                onClick={clearFilters}
-                variant="outline"
-                size="sm"
-              >
+              <Button onClick={clearFilters} variant="outline" size="sm">
                 <Filter className="w-4 h-4 mr-2" />
                 Clear
               </Button>
-              <Button
-                onClick={() => fetchFeedbackData(1)}
-                variant="outline"
-                size="sm"
-              >
+              <Button onClick={() => fetchFeedbackData(1)} variant="outline" size="sm">
                 <RefreshCw className="w-4 h-4 mr-2" />
                 Refresh
               </Button>
@@ -323,7 +322,10 @@ const BookingExperiencePage: React.FC = () => {
             <p className="text-sm text-gray-600">
               Showing {feedback.length} of {totalItems} booking feedback
             </p>
-            <Select value={pageSize.toString()} onValueChange={(value) => setPageSize(parseInt(value))}>
+            <Select
+              value={pageSize.toString()}
+              onValueChange={(value) => setPageSize(parseInt(value))}
+            >
               <SelectTrigger className="w-32">
                 <SelectValue />
               </SelectTrigger>

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -10,24 +10,47 @@ import {
 } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/components/ui/table';
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Download, Copy, Printer,Search  } from 'lucide-react';
-import { fetchRateCards,downloadSampleCSV, deleteRateCard, exportRatecard } from '@/lib/api';
+import {
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Edit,
+  Trash2,
+  Plus,
+  Download,
+  Copy,
+  Printer,
+  Search,
+} from 'lucide-react';
+import { fetchRateCards, downloadSampleCSV, deleteRateCard, exportRatecard } from '@/lib/api';
 import Link from 'next/link';
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from '@/components/ui/alert-dialog';
-import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const RateCardList = () => {
   const [rateCards, setRateCards] = useState<any[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
-  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
 
-  const fetchRateCardsData = async (page = 1, size = 50, status = "all", search = "") => {
+  const fetchRateCardsData = async (page = 1, size = 50, status = 'all', search = '') => {
     try {
       const { data, meta } = await fetchRateCards(page, size, status, search);
       setRateCards(data);
@@ -78,7 +101,6 @@ const RateCardList = () => {
     try {
       setIsExporting(true);
       await exportRatecard();
-     
     } catch (error) {
       toast({
         title: 'Error',
@@ -92,25 +114,22 @@ const RateCardList = () => {
 
   const handleSampleExport = async () => {
     try {
-      await   downloadSampleCSV();
+      await downloadSampleCSV();
     } catch (error) {
-     
     } finally {
     }
   };
-
-
 
   const handleStatusChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     setFilterStatus(e.target.value);
   };
 
-    const handlePrint = () => {
-      const printableContent = rateCards
-        .map((item) => `<tr><td>${item.id}</td><td>${item.name}</td><td>${item.status}</td></tr>`)
-        .join("");
-      const newWindow = window.open("", "_blank");
-      newWindow?.document.write(`
+  const handlePrint = () => {
+    const printableContent = rateCards
+      .map((item) => `<tr><td>${item.id}</td><td>${item.name}</td><td>${item.status}</td></tr>`)
+      .join('');
+    const newWindow = window.open('', '_blank');
+    newWindow?.document.write(`
         <html>
           <head>
             <title>Print Categories</title>
@@ -128,24 +147,25 @@ const RateCardList = () => {
           </body>
         </html>
       `);
-      newWindow?.print();
-    };
-  
-    const handleCopy = () => {
-      const formattedData = rateCards.map((item) => `${item.id}, ${item.name}, ${item.status}`).join("\n");
-      navigator.clipboard.writeText(formattedData);
-      toast({ title: "Copied to Clipboard", description: "Category data copied." });
-    };
-  
-    const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
-      setPagination((prev) => ({ ...prev, pageSize: Number(e.target.value) }));
-    };
-  
+    newWindow?.print();
+  };
+
+  const handleCopy = () => {
+    const formattedData = rateCards
+      .map((item) => `${item.id}, ${item.name}, ${item.status}`)
+      .join('\n');
+    navigator.clipboard.writeText(formattedData);
+    toast({ title: 'Copied to Clipboard', description: 'Category data copied.' });
+  };
+
+  const handlePageSizeChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setPagination((prev) => ({ ...prev, pageSize: Number(e.target.value) }));
+  };
 
   const rateCardColumns: ColumnDef<any>[] = [
     {
-      accessorKey: "sno", // Placeholder key for S.No
-      header: "S.No",
+      accessorKey: 'sno', // Placeholder key for S.No
+      header: 'S.No',
       cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
     },
     { accessorKey: 'name', header: 'Name' },
@@ -153,30 +173,30 @@ const RateCardList = () => {
     { accessorKey: 'subcategory_name', header: 'Subcategory' },
     { accessorKey: 'price', header: 'Price' },
     {
-      accessorKey: "active",
-      header: "Status",
+      accessorKey: 'active',
+      header: 'Status',
       cell: ({ row }) => {
         const statusValue = row.original.active;
 
-        let statusLabel = "";
-        let statusClass = "";
+        let statusLabel = '';
+        let statusClass = '';
 
         switch (statusValue) {
           case 1:
-            statusLabel = "Active";
-            statusClass = "bg-green-200 text-green-800";
+            statusLabel = 'Active';
+            statusClass = 'bg-green-200 text-green-800';
             break;
           case 0:
-            statusLabel = "Inactive";
-            statusClass = "bg-yellow-200 text-yellow-800";
+            statusLabel = 'Inactive';
+            statusClass = 'bg-yellow-200 text-yellow-800';
             break;
           case 2:
-            statusLabel = "Deleted";
-            statusClass = "bg-red-200 text-red-800";
+            statusLabel = 'Deleted';
+            statusClass = 'bg-red-200 text-red-800';
             break;
           default:
-            statusLabel = "Unknown";
-            statusClass = "bg-gray-200 text-gray-800";
+            statusLabel = 'Unknown';
+            statusClass = 'bg-gray-200 text-gray-800';
             break;
         }
 
@@ -233,19 +253,33 @@ const RateCardList = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">Rate Card List</h1>
           <div className="flex space-x-2">
-            <select value={filterStatus} onChange={handleStatusChange} className="border p-2 rounded">
-                       <option value="">All</option>
-                       <option value="0">Active</option>
-                       <option value="1">Deactivated</option>
-                       <option value="2">Deleted</option>
-                     </select>
-                     <select value={pagination.pageSize} onChange={handlePageSizeChange} className="border p-2 rounded">
-                       <option value={50}>50</option>
-                       <option value={100}>100</option>
-                       <option value={150}>150</option>
-                     </select>
-                     <Button onClick={handleExport}><Download className="w-4 h-4 mr-2" />Export</Button>
-                     <Button onClick={handleCopy}><Copy className="w-4 h-4 mr-2" />Copy</Button>
+            <select
+              value={filterStatus}
+              onChange={handleStatusChange}
+              className="border p-2 rounded"
+            >
+              <option value="">All</option>
+              <option value="0">Active</option>
+              <option value="1">Deactivated</option>
+              <option value="2">Deleted</option>
+            </select>
+            <select
+              value={pagination.pageSize}
+              onChange={handlePageSizeChange}
+              className="border p-2 rounded"
+            >
+              <option value={50}>50</option>
+              <option value={100}>100</option>
+              <option value={150}>150</option>
+            </select>
+            <Button onClick={handleExport}>
+              <Download className="w-4 h-4 mr-2" />
+              Export
+            </Button>
+            <Button onClick={handleCopy}>
+              <Copy className="w-4 h-4 mr-2" />
+              Copy
+            </Button>
             <Button asChild variant="default" className="flex items-center space-x-2">
               <Link href="/admin/rate-card/add">
                 <Plus className="w-4 h-4 mr-1" />
@@ -256,7 +290,7 @@ const RateCardList = () => {
         </div>
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
-        <CardHeader className="border-b border-gray-100 pb-4 flex flex-row items-center justify-between">
+          <CardHeader className="border-b border-gray-100 pb-4 flex flex-row items-center justify-between">
             <CardTitle className="text-xl text-gray-800">Rate Cards</CardTitle>
             <div className="relative">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -271,20 +305,24 @@ const RateCardList = () => {
           </CardHeader>
 
           <CardContent className="overflow-x-auto">
-          <Button className="mx-2" onClick={handleSampleExport}><span>Sample CSV</span></Button>
-            <Button >
-  <Link href="/admin/rate-card/import">Import</Link>
-</Button>
-<Button   className="mx-2">
-  <Link  href="/admin/rate-card/update-batch">Update in Batch</Link>
-</Button>
+            <Button className="mx-2" onClick={handleSampleExport}>
+              <span>Sample CSV</span>
+            </Button>
+            <Button>
+              <Link href="/admin/rate-card/import">Import</Link>
+            </Button>
+            <Button className="mx-2">
+              <Link href="/admin/rate-card/update-batch">Update in Batch</Link>
+            </Button>
             <Table>
               <TableHeader>
                 {rateCardTable.getHeaderGroups().map((headerGroup) => (
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
                       <TableHead key={header.id} className="text-left">
-                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
                       </TableHead>
                     ))}
                   </TableRow>

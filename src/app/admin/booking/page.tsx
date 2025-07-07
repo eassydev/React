@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
 import {
@@ -10,12 +10,25 @@ import {
 } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/components/ui/table';
+import {
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
 import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Download } from 'lucide-react';
 import { fetchBookings, deleteBooking, exportBookings } from '@/lib/api';
 import Link from 'next/link';
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from '@/components/ui/alert-dialog';
-import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
@@ -27,17 +40,17 @@ const BookingList = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [isExporting, setIsExporting] = useState(false);
 
-  const [filterStatus, setFilterStatus] = useState<string>("all");
-  const [searchTerm, setSearchTerm] = useState("");
-  const [pincode, setPincode] = useState("");
-  const [bookingDate, setBookingDate] = useState("");
-  const [serviceDate, setServiceDate] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [searchTerm, setSearchTerm] = useState('');
+  const [pincode, setPincode] = useState('');
+  const [bookingDate, setBookingDate] = useState('');
+  const [serviceDate, setServiceDate] = useState('');
 
   const [dateRange, setDateRange] = useState([
     {
       startDate: new Date(),
       endDate: new Date(),
-      key: "selection",
+      key: 'selection',
     },
   ]);
   const [showDatePicker, setShowDatePicker] = useState(false);
@@ -47,7 +60,7 @@ const BookingList = () => {
     tomorrow: false,
     yesterday: false,
     initiated: false,
-    past: false
+    past: false,
   });
 
   const { toast } = useToast();
@@ -103,10 +116,7 @@ const BookingList = () => {
       const startDate = dateRange[0].startDate.toISOString().split('T')[0];
       const endDate = dateRange[0].endDate.toISOString().split('T')[0];
 
-      await exportBookings(
-        startDate,
-        endDate
-      );
+      await exportBookings(startDate, endDate);
 
       toast({
         title: 'Success',
@@ -171,8 +181,6 @@ const BookingList = () => {
     }
   };
 
-
-
   const bookingColumns: ColumnDef<any>[] = [
     {
       id: 'actions',
@@ -207,8 +215,8 @@ const BookingList = () => {
       ),
     },
     {
-      accessorKey: "sampleid",
-      header: "ID",
+      accessorKey: 'sampleid',
+      header: 'ID',
     },
     {
       accessorKey: 'booking_date',
@@ -220,17 +228,20 @@ const BookingList = () => {
             {booking.booking_date} {booking.booking_time_from}-{booking.booking_time_to}
           </span>
         );
-      }
+      },
     },
     {
-      header: "Category Details",
+      header: 'Category Details',
       accessorFn: (row) => {
-        const category = row.rateCard?.category?.name || "N/A";
-        const subcategory = row.rateCard?.subcategory?.name || "N/A";
-        const attributes = row.rateCard?.attributes?.map((attr: {
-          filterAttribute: { name: string };
-          filterOption: { value: string };
-        }) => `${attr.filterAttribute?.name}: ${attr.filterOption?.value}`).join(", ") || "N/A";
+        const category = row.rateCard?.category?.name || 'N/A';
+        const subcategory = row.rateCard?.subcategory?.name || 'N/A';
+        const attributes =
+          row.rateCard?.attributes
+            ?.map(
+              (attr: { filterAttribute: { name: string }; filterOption: { value: string } }) =>
+                `${attr.filterAttribute?.name}: ${attr.filterOption?.value}`
+            )
+            .join(', ') || 'N/A';
 
         return { category, subcategory, attributes };
       },
@@ -243,12 +254,18 @@ const BookingList = () => {
 
         return (
           <div style={{ whiteSpace: 'pre-wrap' }}>
-            <p><strong>Category:</strong> {value.category}</p>
-            <p><strong>Subcategory:</strong> {value.subcategory}</p>
-            <p><strong>Attributes:</strong> {value.attributes}</p>
+            <p>
+              <strong>Category:</strong> {value.category}
+            </p>
+            <p>
+              <strong>Subcategory:</strong> {value.subcategory}
+            </p>
+            <p>
+              <strong>Attributes:</strong> {value.attributes}
+            </p>
           </div>
         );
-      }
+      },
     },
     { accessorKey: 'user.first_name', header: 'User' },
     { accessorKey: 'user.mobile', header: 'Customer Mobile' },
@@ -257,11 +274,11 @@ const BookingList = () => {
         const provider = row.provider;
         return provider ? `${provider.first_name} ${provider.last_name || ''}`.trim() : 'N/A';
       },
-      header: 'Provider'
+      header: 'Provider',
     },
     {
       accessorFn: (row) => row.provider?.phone || 'N/A',
-      header: 'Provider Mobile'
+      header: 'Provider Mobile',
     },
     {
       accessorKey: 'is_partial',
@@ -292,11 +309,11 @@ const BookingList = () => {
 
     {
       accessorFn: (row) => row.razorpay_partial_order_id || 'N/A',
-      header: 'Partial order id '
+      header: 'Partial order id ',
     },
     {
       accessorFn: (row) => row.partial_transaction_id || 'N/A',
-      header: 'Partial Transection id '
+      header: 'Partial Transection id ',
     },
     {
       accessorKey: 'is full',
@@ -325,15 +342,15 @@ const BookingList = () => {
     },
     {
       accessorFn: (row) => row.transaction_id || 'N/A',
-      header: 'Transection id '
+      header: 'Transection id ',
     },
     {
       accessorFn: (row) => row.start_service_otp || 'N/A',
-      header: 'Start otp '
+      header: 'Start otp ',
     },
     {
       accessorFn: (row) => row.end_service_otp || 'N/A',
-      header: 'End Otp'
+      header: 'End Otp',
     },
     {
       header: 'Booking date and Time',
@@ -358,33 +375,21 @@ const BookingList = () => {
       header: 'Basic Amount',
       cell: (info) => {
         const row = info.row.original;
-        return (
-          <span>
-            ₹ {row.total_amount}
-          </span>
-        );
+        return <span>₹ {row.total_amount}</span>;
       },
     },
     {
       header: 'GST Amount',
       cell: (info) => {
         const row = info.row.original;
-        return (
-          <span>
-            ₹ {row.total_gst}
-          </span>
-        );
+        return <span>₹ {row.total_gst}</span>;
       },
     },
     {
       header: 'Final Amount',
       cell: (info) => {
         const row = info.row.original;
-        return (
-          <span>
-            ₹ {row.final_amount}
-          </span>
-        );
+        return <span>₹ {row.final_amount}</span>;
       },
     },
     {
@@ -395,7 +400,8 @@ const BookingList = () => {
 
         return (
           <span>
-            {address?.flat_no},{address?.building_name},{address?.street_address},{address?.city},{address?.state},{address?.country} - {address?.postal_code}
+            {address?.flat_no},{address?.building_name},{address?.street_address},{address?.city},
+            {address?.state},{address?.country} - {address?.postal_code}
           </span>
         );
       },
@@ -403,7 +409,6 @@ const BookingList = () => {
 
     { accessorKey: 'payment_status', header: 'Payment Status' },
     { accessorKey: 'status', header: 'Status' },
-
   ];
 
   const bookingTable = useReactTable({
@@ -422,7 +427,11 @@ const BookingList = () => {
         <div className="flex justify-between mb-4">
           <h1 className="text-2xl font-bold">Bookings List</h1>
           <div className="flex space-x-2">
-            <select value={filterStatus} onChange={handleStatusChange} className="border p-2 rounded">
+            <select
+              value={filterStatus}
+              onChange={handleStatusChange}
+              className="border p-2 rounded"
+            >
               <option value="">All</option>
               <option value="1">Active</option>
               <option value="0">Deactivated</option>
@@ -465,7 +474,10 @@ const BookingList = () => {
               )}
             </Button>
             <Link href="/admin/booking/add">
-              <Button><Plus className="w-4 h-4 mr-2" />Add Booking</Button>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Booking
+              </Button>
             </Link>
           </div>
         </div>
@@ -504,11 +516,51 @@ const BookingList = () => {
               />
 
               <div className="flex flex-col">
-                <label><input type="checkbox" name="today" checked={filters.today} onChange={handleCheckboxChange} /> Today Orders</label>
-                <label><input type="checkbox" name="tomorrow" checked={filters.tomorrow} onChange={handleCheckboxChange} /> Tomorrow Orders</label>
-                <label><input type="checkbox" name="yesterday" checked={filters.yesterday} onChange={handleCheckboxChange} /> Yesterday Orders</label>
-                <label><input type="checkbox" name="initiated" checked={filters.initiated} onChange={handleCheckboxChange} /> Initiated Orders</label>
-                <label><input type="checkbox" name="past" checked={filters.past} onChange={handleCheckboxChange} /> Past Orders</label>
+                <label>
+                  <input
+                    type="checkbox"
+                    name="today"
+                    checked={filters.today}
+                    onChange={handleCheckboxChange}
+                  />{' '}
+                  Today Orders
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    name="tomorrow"
+                    checked={filters.tomorrow}
+                    onChange={handleCheckboxChange}
+                  />{' '}
+                  Tomorrow Orders
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    name="yesterday"
+                    checked={filters.yesterday}
+                    onChange={handleCheckboxChange}
+                  />{' '}
+                  Yesterday Orders
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    name="initiated"
+                    checked={filters.initiated}
+                    onChange={handleCheckboxChange}
+                  />{' '}
+                  Initiated Orders
+                </label>
+                <label>
+                  <input
+                    type="checkbox"
+                    name="past"
+                    checked={filters.past}
+                    onChange={handleCheckboxChange}
+                  />{' '}
+                  Past Orders
+                </label>
               </div>
             </div>
           </CardHeader>
@@ -520,7 +572,9 @@ const BookingList = () => {
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
                       <TableHead key={header.id} className="text-left">
-                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
                       </TableHead>
                     ))}
                   </TableRow>
@@ -575,8 +629,6 @@ const BookingList = () => {
             </Button>
           </div>
         </Card>
-
-
       </div>
     </div>
   );

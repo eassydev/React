@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import React, { useState, FormEvent } from "react";
-import dynamic from "next/dynamic";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
+import React, { useState, FormEvent } from 'react';
+import dynamic from 'next/dynamic';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardHeader,
@@ -12,33 +12,33 @@ import {
   CardContent,
   CardFooter,
   CardDescription,
-} from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2, FileImage, FileText } from "lucide-react";
-import { createOnboarding, Onboarding } from "@/lib/api"; // Import the API function and Onboarding interface
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2, FileImage, FileText } from 'lucide-react';
+import { createOnboarding, Onboarding } from '@/lib/api'; // Import the API function and Onboarding interface
 import { useRouter } from 'next/navigation';
 
 // Import React-Quill dynamically for client-side rendering
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-import "react-quill/dist/quill.snow.css";
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import 'react-quill/dist/quill.snow.css';
 
 // Quill modules configuration
 const quillModules = {
   toolbar: [
-    [{ header: "1" }, { header: "2" }, { font: [] }],
+    [{ header: '1' }, { header: '2' }, { font: [] }],
     [{ size: [] }],
-    ["bold", "italic", "underline", "strike", "blockquote"],
-    [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
-    ["link", "image", "video"],
-    ["clean"],
+    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+    [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+    ['link', 'image', 'video'],
+    ['clean'],
   ],
 };
 
 const AddOnboardingForm: React.FC = () => {
-  const [title, setTitle] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
+  const [title, setTitle] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
   const [image, setImage] = useState<File | null>(null);
-  const [type, setType] = useState<"splash" | "onboarding">("onboarding"); // Restrict to valid values
+  const [type, setType] = useState<'splash' | 'onboarding'>('onboarding'); // Restrict to valid values
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const router = useRouter();
@@ -69,16 +69,16 @@ const AddOnboardingForm: React.FC = () => {
     try {
       await createOnboarding(onboarding); // Submit the onboarding object to the API
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Onboarding page created successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Onboarding page created successfully.',
       });
       router.push('/admin/onboarding'); // Redirect after successful update
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to create onboarding page.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to create onboarding page.',
       });
     } finally {
       setIsSubmitting(false);
@@ -109,7 +109,7 @@ const AddOnboardingForm: React.FC = () => {
           <CardContent className="pt-6">
             <form onSubmit={onSubmit} className="space-y-6">
               {/* Title Field with React-Quill */}
-              <div className="space-y-2" style={{ height: "150px" }}>
+              <div className="space-y-2" style={{ height: '150px' }}>
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <FileText className="w-4 h-5 text-blue-500" />
                   <span>Title</span>
@@ -119,12 +119,12 @@ const AddOnboardingForm: React.FC = () => {
                   onChange={setTitle}
                   theme="snow"
                   modules={quillModules}
-                  style={{ height: "100px" }}
+                  style={{ height: '100px' }}
                 />
               </div>
 
               {/* Description Field with React-Quill */}
-              <div className="space-y-2" style={{ height: "270px" }}>
+              <div className="space-y-2" style={{ height: '270px' }}>
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <FileText className="w-4 h-5 text-blue-500" />
                   <span>Description</span>
@@ -134,7 +134,7 @@ const AddOnboardingForm: React.FC = () => {
                   onChange={setDescription}
                   theme="snow"
                   modules={quillModules}
-                  style={{ height: "200px" }}
+                  style={{ height: '200px' }}
                 />
               </div>
 
@@ -143,7 +143,7 @@ const AddOnboardingForm: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Type</label>
                 <select
                   value={type}
-                  onChange={(e) => setType(e.target.value as "splash" | "onboarding")} // Type assertion added here
+                  onChange={(e) => setType(e.target.value as 'splash' | 'onboarding')} // Type assertion added here
                   className="w-full p-2 border border-gray-300 rounded-md"
                   required
                 >
@@ -158,16 +158,12 @@ const AddOnboardingForm: React.FC = () => {
                   <FileImage className="w-4 h-5 text-blue-500" />
                   <span>Image</span>
                 </label>
-                <Input type="file" accept="image/*" onChange={handleImageChange} required/>
+                <Input type="file" accept="image/*" onChange={handleImageChange} required />
               </div>
 
               {/* Active Status */}
               <div className="flex items-center space-x-2">
-                <Switch
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
-                  className="bg-primary"
-                />
+                <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
                 <span className="text-sm text-gray-700">Active</span>
               </div>
             </form>
@@ -175,7 +171,11 @@ const AddOnboardingForm: React.FC = () => {
 
           <CardFooter className="border-t border-gray-100 mt-6">
             <div className="flex space-x-3 pt-6">
-              <Button className="w-100 flex-1 h-11 bg-primary" disabled={isSubmitting} onClick={onSubmit}>
+              <Button
+                className="w-100 flex-1 h-11 bg-primary"
+                disabled={isSubmitting}
+                onClick={onSubmit}
+              >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center space-x-2">
                     <Loader2 className="w-4 h-4 animate-spin" />

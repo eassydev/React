@@ -1,21 +1,28 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, Edit, Download } from "lucide-react";
-import { fetchPayoutsDetailed } from "@/lib/api";
-import Link from "next/link";
-import { useToast } from "@/components/ui/use-toast";
-import { format } from "date-fns";
+} from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import { ChevronLeft, ChevronRight, Edit, Download } from 'lucide-react';
+import { fetchPayoutsDetailed } from '@/lib/api';
+import Link from 'next/link';
+import { useToast } from '@/components/ui/use-toast';
+import { format } from 'date-fns';
 
 interface SpPayout {
   id: string;
@@ -92,18 +99,15 @@ export default function SpPayoutPage() {
     const fetchPayouts = async () => {
       setIsLoading(true);
       try {
-        const response = await fetchPayoutsDetailed(
-          pagination.pageIndex + 1,
-          pagination.pageSize
-        );
+        const response = await fetchPayoutsDetailed(pagination.pageIndex + 1, pagination.pageSize);
         setPayouts(response.data);
         setTotalPages(response.meta.totalPages);
       } catch (error) {
-        console.error("Error fetching payouts:", error);
+        console.error('Error fetching payouts:', error);
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to fetch payout details.",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to fetch payout details.',
         });
       } finally {
         setIsLoading(false);
@@ -132,107 +136,116 @@ export default function SpPayoutPage() {
 
   const payoutColumns: ColumnDef<SpPayout>[] = [
     {
-      accessorKey: "sno",
-      header: "S.No",
+      accessorKey: 'sno',
+      header: 'S.No',
       cell: (info) => info.row.index + 1,
     },
     {
-      accessorKey: "sampleid",
-      header: "Payout ID",
+      accessorKey: 'sampleid',
+      header: 'Payout ID',
       cell: (info) => <span className="font-mono text-sm">{info.getValue<number>()}</span>,
     },
     {
-      accessorKey: "provider_name",
-      header: "Provider Name",
+      accessorKey: 'provider_name',
+      header: 'Provider Name',
     },
     {
-      header: "Services",
+      header: 'Services',
       cell: ({ row }) => {
         const payout = row.original;
         const rateCard = payout.bookingItem?.rateCard;
 
-        if (!rateCard) return "N/A";
+        if (!rateCard) return 'N/A';
 
-        const attributes = rateCard.attributes?.map(attr => {
-          const attrName = attr.filterAttribute?.title || attr.filterAttribute?.name || "Unknown";
-          const attrValue = attr.filterOption?.title || attr.filterOption?.value || "N/A";
-          return `${attrName}: ${attrValue}`;
-        }).join("\n") || "None";
+        const attributes =
+          rateCard.attributes
+            ?.map((attr) => {
+              const attrName =
+                attr.filterAttribute?.title || attr.filterAttribute?.name || 'Unknown';
+              const attrValue = attr.filterOption?.title || attr.filterOption?.value || 'N/A';
+              return `${attrName}: ${attrValue}`;
+            })
+            .join('\n') || 'None';
 
         return (
           <div className="whitespace-pre-line text-sm">
-            <strong>Service:</strong> {rateCard.name}<br />
-            <strong>Price:</strong> ₹{rateCard.price}<br />
-            <strong>Category:</strong> {rateCard.category?.name || "N/A"}<br />
-            <strong>Subcategory:</strong> {rateCard.subcategory?.name || "N/A"}<br />
-            <strong>Attributes:</strong><br />
+            <strong>Service:</strong> {rateCard.name}
+            <br />
+            <strong>Price:</strong> ₹{rateCard.price}
+            <br />
+            <strong>Category:</strong> {rateCard.category?.name || 'N/A'}
+            <br />
+            <strong>Subcategory:</strong> {rateCard.subcategory?.name || 'N/A'}
+            <br />
+            <strong>Attributes:</strong>
+            <br />
             {attributes}
           </div>
         );
       },
     },
     {
-      accessorKey: "service_amount",
-      header: "Service Amount",
+      accessorKey: 'service_amount',
+      header: 'Service Amount',
       cell: (info) => `₹${info.getValue<number>()}`,
     },
     {
-      accessorKey: "commission_rate",
-      header: "Commission Rate",
+      accessorKey: 'commission_rate',
+      header: 'Commission Rate',
       cell: (info) => `${info.getValue<number>()}%`,
     },
     {
-      accessorKey: "commission_amount",
-      header: "Commission Amount",
+      accessorKey: 'commission_amount',
+      header: 'Commission Amount',
       cell: (info) => `₹${info.getValue<number>()}`,
     },
     {
-      accessorKey: "base_tcs",
-      header: "TCS",
+      accessorKey: 'base_tcs',
+      header: 'TCS',
       cell: (info) => `₹${info.getValue<number>()}`,
     },
     {
-      accessorKey: "base_tds",
-      header: "TDS",
+      accessorKey: 'base_tds',
+      header: 'TDS',
       cell: (info) => `₹${info.getValue<number>()}`,
     },
     {
-      accessorKey: "base_payable",
-      header: "Base Payable",
+      accessorKey: 'base_payable',
+      header: 'Base Payable',
       cell: (info) => `₹${info.getValue<number>()}`,
     },
     {
-      accessorKey: "total_payable",
-      header: "Total Payable",
+      accessorKey: 'total_payable',
+      header: 'Total Payable',
       cell: (info) => `₹${info.getValue<number>()}`,
     },
     {
-      accessorKey: "remaining_amount",
-      header: "Remaining Amount",
+      accessorKey: 'remaining_amount',
+      header: 'Remaining Amount',
       cell: (info) => `₹${info.getValue<number>()}`,
     },
     {
-      accessorKey: "settled_amount",
-      header: "Settled Amount",
+      accessorKey: 'settled_amount',
+      header: 'Settled Amount',
       cell: (info) => `₹${info.getValue<number>()}`,
     },
     {
-      accessorKey: "payout_status",
-      header: "Status",
+      accessorKey: 'payout_status',
+      header: 'Status',
       cell: (info) => {
         const status = info.getValue<string>();
-        let bgColor = "bg-gray-100";
-        let textColor = "text-gray-600";
+        let bgColor = 'bg-gray-100';
+        let textColor = 'text-gray-600';
 
-        if (status === "Paid") {
-          bgColor = "bg-green-100";
-          textColor = "text-green-600";
-        } else if (status === "Partially Paid") {
-          bgColor = "bg-yellow-100";
-          textColor = "text-yellow-600";
-        } else if (status === "Not Initiated") {
-          bgColor = "bg-red-100";
-          textColor = "text-red-600";
+        if (status === 'Paid') {
+          bgColor = 'bg-green-100';
+          textColor = 'text-green-600';
+        } else if (status === 'Partially Paid') {
+          bgColor = 'bg-yellow-100';
+          textColor = 'text-yellow-600';
+        } else if (status === 'Not Initiated') {
+          bgColor = 'bg-red-100';
+          textColor = 'text-red-600';
         }
 
         return (
@@ -243,69 +256,70 @@ export default function SpPayoutPage() {
       },
     },
     {
-      accessorKey: "scheduled_transfer",
-      header: "Scheduled Transfer",
+      accessorKey: 'scheduled_transfer',
+      header: 'Scheduled Transfer',
       cell: (info) => {
         const date = info.getValue<string>();
-        if (!date) return "N/A";
+        if (!date) return 'N/A';
 
         try {
-          return format(new Date(date), "dd/MM/yyyy");
+          return format(new Date(date), 'dd/MM/yyyy');
         } catch (error) {
-          console.error("Error formatting scheduled transfer date:", date, error);
-          return "Invalid Date";
+          console.error('Error formatting scheduled transfer date:', date, error);
+          return 'Invalid Date';
         }
       },
     },
     {
-      accessorKey: "allow_transfer",
-      header: "Allow Transfer",
+      accessorKey: 'allow_transfer',
+      header: 'Allow Transfer',
       cell: (info) => info.getValue<string>(),
     },
     {
-      accessorKey: "razorpay_transfer_id",
-      header: "Razorpay Transfer ID",
-      cell: (info) => info.getValue<string>() || "N/A",
+      accessorKey: 'razorpay_transfer_id',
+      header: 'Razorpay Transfer ID',
+      cell: (info) => info.getValue<string>() || 'N/A',
     },
     {
-      accessorKey: "notes",
-      header: "Notes",
-      cell: (info) => info.getValue<string>() || "N/A",
+      accessorKey: 'notes',
+      header: 'Notes',
+      cell: (info) => info.getValue<string>() || 'N/A',
     },
     {
-      accessorKey: "created_at",
-      header: "Created At",
+      accessorKey: 'created_at',
+      header: 'Created At',
       cell: (info) => {
         const timestamp = info.getValue<number | string>();
-        if (!timestamp) return "N/A";
+        if (!timestamp) return 'N/A';
 
         try {
           // Check if timestamp is a valid number
           if (typeof timestamp === 'number') {
             // Check if timestamp is in seconds (Unix timestamp) or milliseconds
             // Unix timestamps are typically 10 digits (seconds since epoch)
-            const date = timestamp < 10000000000
-              ? new Date(timestamp * 1000)  // Convert seconds to milliseconds
-              : new Date(timestamp);        // Already in milliseconds
+            const date =
+              timestamp < 10000000000
+                ? new Date(timestamp * 1000) // Convert seconds to milliseconds
+                : new Date(timestamp); // Already in milliseconds
 
-            return format(date, "dd/MM/yyyy HH:mm");
+            return format(date, 'dd/MM/yyyy HH:mm');
           } else if (typeof timestamp === 'string') {
             // Handle string timestamps
-            return format(new Date(timestamp), "dd/MM/yyyy HH:mm");
+            return format(new Date(timestamp), 'dd/MM/yyyy HH:mm');
           }
-          return "N/A";
+          return 'N/A';
         } catch (error) {
-          console.error("Error formatting date:", timestamp, error);
-          return "Invalid Date";
+          console.error('Error formatting date:', timestamp, error);
+          return 'Invalid Date';
         }
       },
     },
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => {
         const payout = row.original;
-        const isPaid = payout.payout_status === "Paid";
+        const isPaid = payout.payout_status === 'Paid';
 
         return (
           <div className="flex items-center space-x-2">
@@ -406,7 +420,9 @@ export default function SpPayoutPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPagination((prev) => ({ ...prev, pageIndex: prev.pageIndex - 1 }))}
+                  onClick={() =>
+                    setPagination((prev) => ({ ...prev, pageIndex: prev.pageIndex - 1 }))
+                  }
                   disabled={pagination.pageIndex === 0}
                 >
                   <ChevronLeft className="w-4 h-4" />
@@ -414,7 +430,9 @@ export default function SpPayoutPage() {
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setPagination((prev) => ({ ...prev, pageIndex: prev.pageIndex + 1 }))}
+                  onClick={() =>
+                    setPagination((prev) => ({ ...prev, pageIndex: prev.pageIndex + 1 }))
+                  }
                   disabled={pagination.pageIndex + 1 >= totalPages}
                 >
                   <ChevronRight className="w-4 h-4" />

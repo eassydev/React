@@ -1,25 +1,38 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from "lucide-react";
-import { fetchGstRates, deleteGstRate } from "@/lib/api";
-import Link from "next/link";
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
+} from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from 'lucide-react';
+import { fetchGstRates, deleteGstRate } from '@/lib/api';
+import Link from 'next/link';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const GSTRateList = () => {
   const [gstRates, setGstRates] = useState<any[]>([]);
-  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50});
+  const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
 
@@ -34,7 +47,7 @@ const GSTRateList = () => {
       setTotalItems(meta.totalItems);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.error("Error fetching GST rates:", error);
+      console.error('Error fetching GST rates:', error);
     }
   };
 
@@ -46,37 +59,39 @@ const GSTRateList = () => {
     try {
       await deleteGstRate(gstRate.id);
       toast({
-        title: "Success",
+        title: 'Success',
         description: `GST Rate deleted successfully`,
-        variant: "success",
+        variant: 'success',
       });
       fetchGstRatesData(pagination.pageIndex + 1, pagination.pageSize);
     } catch (error) {
       toast({
-        title: "Error",
+        title: 'Error',
         description: `Failed to delete GST rate: ${error}`,
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
 
   const gstRateColumns: ColumnDef<any>[] = [
-    { accessorKey: "id", header: "ID" },
-    { accessorKey: "CGST", header: "CGST (%)" },
-    { accessorKey: "SGST", header: "SGST (%)" },
-    { accessorKey: "IGST", header: "IGST (%)" },
+    { accessorKey: 'id', header: 'ID' },
+    { accessorKey: 'CGST', header: 'CGST (%)' },
+    { accessorKey: 'SGST', header: 'SGST (%)' },
+    { accessorKey: 'IGST', header: 'IGST (%)' },
     {
-      accessorKey: "is_active",
-      header: "Status",
+      accessorKey: 'is_active',
+      header: 'Status',
       cell: (info) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${info.getValue() ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}>
-          {info.getValue() ? "Active" : "Inactive"}
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${info.getValue() ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}
+        >
+          {info.getValue() ? 'Active' : 'Inactive'}
         </span>
       ),
     },
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="icon">
@@ -143,7 +158,9 @@ const GSTRateList = () => {
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
                       <TableHead key={header.id} className="text-left">
-                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
                       </TableHead>
                     ))}
                   </TableRow>

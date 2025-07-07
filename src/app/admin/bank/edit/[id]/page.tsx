@@ -1,17 +1,24 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { updateBank, fetchBankById, Bank } from "@/lib/api"; // Import API functions and Bank interface
+import React, { useState, useEffect, FormEvent } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import { updateBank, fetchBankById, Bank } from '@/lib/api'; // Import API functions and Bank interface
 
 const EditBankForm: React.FC = () => {
-  const [name, setName] = useState<string>("");
+  const [name, setName] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const { toast } = useToast();
@@ -27,9 +34,9 @@ const EditBankForm: React.FC = () => {
         setIsActive(bank.is_active); // Assuming 1 is active, 2 is inactive
       } catch (error) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load bank data.",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load bank data.',
         });
       }
     };
@@ -44,9 +51,9 @@ const EditBankForm: React.FC = () => {
 
     if (!name) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Bank name is required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Bank name is required.',
       });
       setIsSubmitting(false);
       return;
@@ -61,17 +68,17 @@ const EditBankForm: React.FC = () => {
     try {
       await updateBank(bankId.toString(), updatedBank); // Submit updated bank data to the API
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Bank updated successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Bank updated successfully.',
       });
 
-      router.push("/admin/bank"); // Redirect to the bank list after update
+      router.push('/admin/bank'); // Redirect to the bank list after update
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to update bank.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to update bank.',
       });
     } finally {
       setIsSubmitting(false);
@@ -114,11 +121,7 @@ const EditBankForm: React.FC = () => {
 
               {/* Active Status */}
               <div className="flex items-center space-x-2">
-                <Switch
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
-                  className="bg-primary"
-                />
+                <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
                 <span className="text-sm text-gray-700">Active</span>
               </div>
             </form>
@@ -126,7 +129,11 @@ const EditBankForm: React.FC = () => {
 
           <CardFooter className="border-t border-gray-100 mt-6">
             <div className="flex space-x-3 pt-6">
-              <Button className="w-100 flex-1 h-11 bg-primary" disabled={isSubmitting} onClick={onSubmit}>
+              <Button
+                className="w-100 flex-1 h-11 bg-primary"
+                disabled={isSubmitting}
+                onClick={onSubmit}
+              >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center space-x-2">
                     <Loader2 className="w-4 h-4 animate-spin" />

@@ -1,14 +1,14 @@
-import React, { ReactNode, useEffect, useState } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
-import usePermissions from '@/hooks/usePermissions'
+import React, { ReactNode, useEffect, useState } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import usePermissions from '@/hooks/usePermissions';
 
 interface PermissionGuardProps {
-  children: ReactNode
-  requiredPermission?: string
-  requiredPermissions?: string[]
-  requireAll?: boolean
-  fallback?: ReactNode
-  redirectTo?: string
+  children: ReactNode;
+  requiredPermission?: string;
+  requiredPermissions?: string[];
+  requireAll?: boolean;
+  fallback?: ReactNode;
+  redirectTo?: string;
 }
 
 const PermissionGuard: React.FC<PermissionGuardProps> = ({
@@ -17,46 +17,46 @@ const PermissionGuard: React.FC<PermissionGuardProps> = ({
   requiredPermissions = [],
   requireAll = false,
   fallback = null,
-  redirectTo = '/unauthorized'
+  redirectTo = '/unauthorized',
 }) => {
-  const router = useRouter()
-  const pathname = usePathname()
-  const { hasPermission, hasAnyPermission, hasAllPermissions, loading } = usePermissions()
-  const [hasAccess, setHasAccess] = useState<boolean | null>(null)
+  const router = useRouter();
+  const pathname = usePathname();
+  const { hasPermission, hasAnyPermission, hasAllPermissions, loading } = usePermissions();
+  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (loading) {
-      return
+      return;
     }
 
-    let access = false
+    let access = false;
 
     // If no specific permission required, allow access
     if (!requiredPermission && requiredPermissions.length === 0) {
-      access = true
+      access = true;
     }
     // Check single permission
     else if (requiredPermission) {
-      access = hasPermission(requiredPermission)
+      access = hasPermission(requiredPermission);
     }
     // Check multiple permissions
     else if (requiredPermissions.length > 0) {
       if (requireAll) {
-        access = hasAllPermissions(requiredPermissions)
+        access = hasAllPermissions(requiredPermissions);
       } else {
-        access = hasAnyPermission(requiredPermissions)
+        access = hasAnyPermission(requiredPermissions);
       }
     }
     // Default: check current pathname
     else {
-      access = hasPermission(pathname)
+      access = hasPermission(pathname);
     }
 
-    setHasAccess(access)
+    setHasAccess(access);
 
     // Redirect if no access
     if (!access && redirectTo) {
-      router.push(redirectTo)
+      router.push(redirectTo);
     }
   }, [
     loading,
@@ -68,8 +68,8 @@ const PermissionGuard: React.FC<PermissionGuardProps> = ({
     hasAnyPermission,
     hasAllPermissions,
     router,
-    redirectTo
-  ])
+    redirectTo,
+  ]);
 
   // Show loading state
   if (loading || hasAccess === null) {
@@ -77,7 +77,7 @@ const PermissionGuard: React.FC<PermissionGuardProps> = ({
       <div className="flex items-center justify-center min-h-screen">
         <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-gray-900"></div>
       </div>
-    )
+    );
   }
 
   // Show fallback if no access and no redirect
@@ -91,19 +91,19 @@ const PermissionGuard: React.FC<PermissionGuardProps> = ({
           </div>
         )}
       </div>
-    )
+    );
   }
 
   // Render children if access granted
   if (hasAccess) {
-    return <>{children}</>
+    return <>{children}</>;
   }
 
   // Default: don't render anything (redirect in progress)
-  return null
-}
+  return null;
+};
 
-export default PermissionGuard
+export default PermissionGuard;
 
 // Higher-order component version
 export const withPermissionGuard = (
@@ -115,9 +115,9 @@ export const withPermissionGuard = (
       <PermissionGuard {...guardProps}>
         <Component {...props} />
       </PermissionGuard>
-    )
-  }
-}
+    );
+  };
+};
 
 // Hook for conditional rendering based on permissions
 export const usePermissionGuard = (
@@ -125,29 +125,29 @@ export const usePermissionGuard = (
   requiredPermissions?: string[],
   requireAll = false
 ) => {
-  const { hasPermission, hasAnyPermission, hasAllPermissions, loading } = usePermissions()
-  const [hasAccess, setHasAccess] = useState<boolean | null>(null)
+  const { hasPermission, hasAnyPermission, hasAllPermissions, loading } = usePermissions();
+  const [hasAccess, setHasAccess] = useState<boolean | null>(null);
 
   useEffect(() => {
     if (loading) {
-      return
+      return;
     }
 
-    let access = false
+    let access = false;
 
     if (requiredPermission) {
-      access = hasPermission(requiredPermission)
+      access = hasPermission(requiredPermission);
     } else if (requiredPermissions && requiredPermissions.length > 0) {
       if (requireAll) {
-        access = hasAllPermissions(requiredPermissions)
+        access = hasAllPermissions(requiredPermissions);
       } else {
-        access = hasAnyPermission(requiredPermissions)
+        access = hasAnyPermission(requiredPermissions);
       }
     } else {
-      access = true // No specific permission required
+      access = true; // No specific permission required
     }
 
-    setHasAccess(access)
+    setHasAccess(access);
   }, [
     loading,
     requiredPermission,
@@ -155,11 +155,11 @@ export const usePermissionGuard = (
     requireAll,
     hasPermission,
     hasAnyPermission,
-    hasAllPermissions
-  ])
+    hasAllPermissions,
+  ]);
 
   return {
     hasAccess,
-    loading
-  }
-}
+    loading,
+  };
+};

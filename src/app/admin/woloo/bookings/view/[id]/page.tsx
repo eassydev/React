@@ -1,13 +1,27 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { ArrowLeft, Calendar, User, MapPin, Phone, Mail, CreditCard, Clock, Package, Shield, Users, Webhook, FileText } from "lucide-react";
-import { fetchWolooBookingById, WolooBooking } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-import Link from "next/link";
+import React, { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  ArrowLeft,
+  Calendar,
+  User,
+  MapPin,
+  Phone,
+  Mail,
+  CreditCard,
+  Clock,
+  Package,
+  Shield,
+  Users,
+  Webhook,
+  FileText,
+} from 'lucide-react';
+import { fetchWolooBookingById, WolooBooking } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import Link from 'next/link';
 
 const WolooBookingDetails = () => {
   const params = useParams();
@@ -24,13 +38,13 @@ const WolooBookingDetails = () => {
           setBooking(response.data);
         }
       } catch (error) {
-        console.error("Error fetching booking details:", error);
+        console.error('Error fetching booking details:', error);
         toast({
-          title: "Error",
-          description: "Failed to fetch booking details.",
-          variant: "destructive",
+          title: 'Error',
+          description: 'Failed to fetch booking details.',
+          variant: 'destructive',
         });
-        router.push("/admin/woloo/bookings");
+        router.push('/admin/woloo/bookings');
       } finally {
         setLoading(false);
       }
@@ -49,7 +63,9 @@ const WolooBookingDetails = () => {
     };
 
     return (
-      <span className={`badge px-3 py-1 rounded-full text-sm font-medium ${statusColors[status as keyof typeof statusColors] || 'bg-gray-200 text-gray-800'}`}>
+      <span
+        className={`badge px-3 py-1 rounded-full text-sm font-medium ${statusColors[status as keyof typeof statusColors] || 'bg-gray-200 text-gray-800'}`}
+      >
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
@@ -121,7 +137,9 @@ const WolooBookingDetails = () => {
                 <div className="text-right">
                   <span className="text-green-600 font-bold">₹{booking.rateCard.price}</span>
                   {booking.rateCard.strike_price && (
-                    <span className="text-gray-500 line-through ml-2 text-sm">₹{booking.rateCard.strike_price}</span>
+                    <span className="text-gray-500 line-through ml-2 text-sm">
+                      ₹{booking.rateCard.strike_price}
+                    </span>
                   )}
                 </div>
               </div>
@@ -201,12 +219,8 @@ const WolooBookingDetails = () => {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-gray-700 whitespace-pre-wrap">
-              {booking.customer_address}
-            </div>
-            <div className="mt-2 text-sm text-gray-500">
-              Pincode: {booking.pincode}
-            </div>
+            <div className="text-gray-700 whitespace-pre-wrap">{booking.customer_address}</div>
+            <div className="mt-2 text-sm text-gray-500">Pincode: {booking.pincode}</div>
           </CardContent>
         </Card>
 
@@ -284,7 +298,11 @@ const WolooBookingDetails = () => {
             </div>
             <div className="flex justify-between items-center">
               <span className="font-medium">Woloo Notified At:</span>
-              <span>{booking.woloo_notified_at ? new Date(booking.woloo_notified_at).toLocaleString() : 'Not Notified'}</span>
+              <span>
+                {booking.woloo_notified_at
+                  ? new Date(booking.woloo_notified_at).toLocaleString()
+                  : 'Not Notified'}
+              </span>
             </div>
           </CardContent>
         </Card>
@@ -300,11 +318,15 @@ const WolooBookingDetails = () => {
           <CardContent className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="font-medium">Payment Status:</span>
-              <span className={`px-2 py-1 rounded text-sm ${
-                booking.payment_status === 'paid' ? 'bg-green-100 text-green-800' :
-                booking.payment_status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                'bg-red-100 text-red-800'
-              }`}>
+              <span
+                className={`px-2 py-1 rounded text-sm ${
+                  booking.payment_status === 'paid'
+                    ? 'bg-green-100 text-green-800'
+                    : booking.payment_status === 'pending'
+                      ? 'bg-yellow-100 text-yellow-800'
+                      : 'bg-red-100 text-red-800'
+                }`}
+              >
                 {booking.payment_status || 'N/A'}
               </span>
             </div>
@@ -346,9 +368,7 @@ const WolooBookingDetails = () => {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-gray-700 whitespace-pre-wrap">
-                {booking.notes}
-              </div>
+              <div className="text-gray-700 whitespace-pre-wrap">{booking.notes}</div>
             </CardContent>
           </Card>
         )}
@@ -357,13 +377,9 @@ const WolooBookingDetails = () => {
       {/* Action Buttons */}
       <div className="flex justify-end space-x-2 mt-6">
         <Link href="/admin/woloo/bookings">
-          <Button variant="outline">
-            Back to Bookings
-          </Button>
+          <Button variant="outline">Back to Bookings</Button>
         </Link>
-        <Button onClick={() => window.print()}>
-          Print Details
-        </Button>
+        <Button onClick={() => window.print()}>Print Details</Button>
       </div>
     </div>
   );

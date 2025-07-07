@@ -1,21 +1,21 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import dynamic from "next/dynamic";
-import { useRouter, usePathname } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { fetchAdminById, updateAdmin, fetchRolesAll, Role } from "@/lib/api";
+import React, { useState, useEffect, FormEvent } from 'react';
+import dynamic from 'next/dynamic';
+import { useRouter, usePathname } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import { fetchAdminById, updateAdmin, fetchRolesAll, Role } from '@/lib/api';
 
 // AdminEditForm Component
 const AdminEditForm: React.FC = () => {
-  const [fullName, setFullName] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [roleId, setRoleId] = useState<string>("");
+  const [fullName, setFullName] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  const [roleId, setRoleId] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
   const [roles, setRoles] = useState<Role[]>([]);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -25,7 +25,7 @@ const AdminEditForm: React.FC = () => {
   const pathname = usePathname();
 
   // Extract the admin ID from the URL path
-  const adminId = pathname?.split("/").pop();
+  const adminId = pathname?.split('/').pop();
 
   useEffect(() => {
     if (adminId) {
@@ -44,9 +44,9 @@ const AdminEditForm: React.FC = () => {
       setIsActive(adminData.active);
     } catch (error) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: "Failed to load admin details.",
+        variant: 'error',
+        title: 'Error',
+        description: 'Failed to load admin details.',
       });
     }
   };
@@ -58,9 +58,9 @@ const AdminEditForm: React.FC = () => {
       setRoles(response);
     } catch (error) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: "Failed to load roles.",
+        variant: 'error',
+        title: 'Error',
+        description: 'Failed to load roles.',
       });
     }
   };
@@ -72,27 +72,32 @@ const AdminEditForm: React.FC = () => {
 
     if (!fullName || !email || !roleId) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "All fields are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'All fields are required.',
       });
       setIsSubmitting(false);
       return;
     }
 
     try {
-      await updateAdmin(adminId!, { full_name: fullName, email, role_id: roleId, active: isActive });
-      toast({
-        variant: "success",
-        title: "Success",
-        description: "Admin updated successfully.",
+      await updateAdmin(adminId!, {
+        full_name: fullName,
+        email,
+        role_id: roleId,
+        active: isActive,
       });
-      router.push("/admin/admin"); // Redirect to the admin list
+      toast({
+        variant: 'success',
+        title: 'Success',
+        description: 'Admin updated successfully.',
+      });
+      router.push('/admin/admin'); // Redirect to the admin list
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to update admin.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to update admin.',
       });
     } finally {
       setIsSubmitting(false);
@@ -164,11 +169,7 @@ const AdminEditForm: React.FC = () => {
 
               {/* Active Status */}
               <div className="flex items-center space-x-2">
-                <Switch
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
-                  className="bg-primary"
-                />
+                <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
                 <span className="text-sm text-gray-700">Active</span>
               </div>
 

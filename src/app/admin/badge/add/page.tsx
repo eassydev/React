@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import React, { useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
-import dynamic from "next/dynamic";
-import { Input } from "@/components/ui/input";
+import React, { useState, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
+import { Input } from '@/components/ui/input';
 import {
   Card,
   CardHeader,
@@ -11,23 +11,21 @@ import {
   CardContent,
   CardFooter,
   CardDescription,
-} from "@/components/ui/card";
-import { Save, Loader2, ImagePlus } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { useToast } from "@/hooks/use-toast";
-import { Switch } from "@/components/ui/switch";
-import { createBadge, Badge} from "@/lib/api";
+} from '@/components/ui/card';
+import { Save, Loader2, ImagePlus } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { Switch } from '@/components/ui/switch';
+import { createBadge, Badge } from '@/lib/api';
 
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-import "react-quill/dist/quill.snow.css";
-
-
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import 'react-quill/dist/quill.snow.css';
 
 const AddBadgeForm: React.FC = () => {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [name, setName] = useState("");
+  const [name, setName] = useState('');
   const [totalCourse, setTotalCourse] = useState<number | null>(null);
   const [nextBadgeTime, setNextBadgeTime] = useState<number | null>(null);
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -39,35 +37,34 @@ const AddBadgeForm: React.FC = () => {
 
     if (!name || !totalCourse || !imageFile) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Name, Image, and Number of Courses are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Name, Image, and Number of Courses are required.',
       });
       return;
     }
 
-     const badgeData: Badge = {
-          name,
-          next_badge_time:nextBadgeTime,
-          total_course: totalCourse,
-          image: imageFile,
-           is_active: isActive,
-    
-        };
+    const badgeData: Badge = {
+      name,
+      next_badge_time: nextBadgeTime,
+      total_course: totalCourse,
+      image: imageFile,
+      is_active: isActive,
+    };
 
     try {
       setIsSubmitting(true);
       await createBadge(badgeData);
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Badge created successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Badge created successfully.',
       });
-      router.push("/admin/badge");
+      router.push('/admin/badge');
     } catch (error) {
       toast({
-        variant: "error",
-        title: "Error",
+        variant: 'error',
+        title: 'Error',
         description: `${error}`,
       });
     } finally {
@@ -97,13 +94,12 @@ const AddBadgeForm: React.FC = () => {
                 />
               </div>
 
-             
               {/* Total Course */}
               <div>
                 <label className="text-sm font-medium text-gray-700">Number of Courses</label>
                 <Input
                   type="number"
-                  value={totalCourse ?? ""}
+                  value={totalCourse ?? ''}
                   onChange={(e) => setTotalCourse(parseInt(e.target.value))}
                   placeholder="Enter course count"
                   required
@@ -115,7 +111,7 @@ const AddBadgeForm: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Next Badge Time (days)</label>
                 <Input
                   type="number"
-                  value={nextBadgeTime ?? ""}
+                  value={nextBadgeTime ?? ''}
                   onChange={(e) => setNextBadgeTime(parseInt(e.target.value))}
                   placeholder="Optional"
                 />

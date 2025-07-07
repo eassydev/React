@@ -1,25 +1,32 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { fetchAllProvidersWithoutpagination, createStaff, Staff, Provider} from "@/lib/api"; // Add staff creation API
-import { useRouter, useParams } from "next/navigation";
+import React, { useState, useEffect, FormEvent } from 'react';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import { fetchAllProvidersWithoutpagination, createStaff, Staff, Provider } from '@/lib/api'; // Add staff creation API
+import { useRouter, useParams } from 'next/navigation';
 
 const AddStaffForm: React.FC = () => {
   const [providers, setProviders] = useState<Provider[]>([]); // State for providers list
-  const [providerId, setProviderId] = useState<string>(""); // State for selected provider
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const [gender, setGender] = useState<string>("male");
-  const [email, setEmail] = useState<string>("");
-  const [phone, setPhone] = useState<string>("");
-  const [adharCardNumber, setAdharCardNumber] = useState<string>("");
-  const [panNumber, setPanNumber] = useState<string>("");
+  const [providerId, setProviderId] = useState<string>(''); // State for selected provider
+  const [firstName, setFirstName] = useState<string>('');
+  const [lastName, setLastName] = useState<string>('');
+  const [gender, setGender] = useState<string>('male');
+  const [email, setEmail] = useState<string>('');
+  const [phone, setPhone] = useState<string>('');
+  const [adharCardNumber, setAdharCardNumber] = useState<string>('');
+  const [panNumber, setPanNumber] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
   const [adhaarCardFront, setAdhaarCardFront] = useState<File | null>(null);
   const [adhaarCardBack, setAdhaarCardBack] = useState<File | null>(null);
@@ -36,9 +43,9 @@ const AddStaffForm: React.FC = () => {
         setProviders(data);
       } catch (error: any) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: error.message || "Failed to load providers.",
+          variant: 'error',
+          title: 'Error',
+          description: error.message || 'Failed to load providers.',
         });
       }
     };
@@ -52,9 +59,9 @@ const AddStaffForm: React.FC = () => {
 
     if (!firstName || !phone || !providerId) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Provider, First Name, and Phone are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Provider, First Name, and Phone are required.',
       });
       setIsSubmitting(false);
       return;
@@ -64,31 +71,31 @@ const AddStaffForm: React.FC = () => {
       parent_id: providerId,
       first_name: firstName,
       last_name: lastName,
-      gender: gender as "male" | "female" | "other",
+      gender: gender as 'male' | 'female' | 'other',
       email,
       phone,
       adhaar_card_front: adhaarCardFront,
       adhaar_card_back: adhaarCardBack,
-      pan_number:panNumber,
+      pan_number: panNumber,
       pan_card: panCard,
-      adhar_card_number:adharCardNumber,
-      designation: "Staff",
+      adhar_card_number: adharCardNumber,
+      designation: 'Staff',
       active: isActive,
     };
 
     try {
-           await createStaff(staffData);
+      await createStaff(staffData);
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Staff created successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Staff created successfully.',
       });
-      router.push("/admin/staff");
+      router.push('/admin/staff');
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to create staff.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to create staff.',
       });
     } finally {
       setIsSubmitting(false);
@@ -162,7 +169,11 @@ const AddStaffForm: React.FC = () => {
               {/* Gender */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Gender</label>
-                <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full border p-2 rounded">
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="w-full border p-2 rounded"
+                >
                   <option value="male">Male</option>
                   <option value="female">Female</option>
                   <option value="other">Other</option>
@@ -213,19 +224,12 @@ const AddStaffForm: React.FC = () => {
               {/* PAN Card */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">PAN Card</label>
-                <Input
-                  type="file"
-                  onChange={(e) => setPanCard(e.target.files?.[0] || null)}
-                />
+                <Input type="file" onChange={(e) => setPanCard(e.target.files?.[0] || null)} />
               </div>
 
               {/* Active Status */}
               <div className="flex items-center space-x-2">
-                <Switch
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
-                  className="bg-primary"
-                />
+                <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
                 <span className="text-sm text-gray-700">Active</span>
               </div>
             </form>
@@ -233,7 +237,11 @@ const AddStaffForm: React.FC = () => {
 
           <CardFooter className="border-t border-gray-100 mt-6">
             <div className="flex space-x-3 pt-6">
-              <Button className="w-100 flex-1 h-11 bg-primary" disabled={isSubmitting} onClick={onSubmit}>
+              <Button
+                className="w-100 flex-1 h-11 bg-primary"
+                disabled={isSubmitting}
+                onClick={onSubmit}
+              >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center space-x-2">
                     <Loader2 className="w-4 h-4 animate-spin" />

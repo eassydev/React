@@ -1,24 +1,30 @@
-"use client";
+'use client';
 
-import React, { useState, FormEvent, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
-import { fetchAllBanks, createProviderBankDetail } from "@/lib/api";
+import React, { useState, FormEvent, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectItem,
+  SelectValue,
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
+import { fetchAllBanks, createProviderBankDetail } from '@/lib/api';
 import { Save, ImageIcon, Type, FileText, Loader2, Plus, Trash2, Globe2 } from 'lucide-react';
 
 const AddProviderBankDetailForm: React.FC = () => {
   const [banks, setBanks] = useState<{ id: string; name: string }[]>([]);
-  const [bankId, setBankId] = useState<string>("");
-  const [accountHolderName, setAccountHolderName] = useState<string>("");
-  const [accountNumber, setAccountNumber] = useState<string>("");
-  const [ifscCode, setIfscCode] = useState<string>("");
-  const [accountType, setAccountType] = useState<string>("savings");
-  const [status, setStatus] = useState<string>("pending");
+  const [bankId, setBankId] = useState<string>('');
+  const [accountHolderName, setAccountHolderName] = useState<string>('');
+  const [accountNumber, setAccountNumber] = useState<string>('');
+  const [ifscCode, setIfscCode] = useState<string>('');
+  const [accountType, setAccountType] = useState<string>('savings');
+  const [status, setStatus] = useState<string>('pending');
   const [isPrimary, setIsPrimary] = useState<boolean>(false);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const { toast } = useToast();
@@ -30,7 +36,7 @@ const AddProviderBankDetailForm: React.FC = () => {
     const loadBanks = async () => {
       try {
         const bankData = await fetchAllBanks();
-  
+
         // Ensure id is a string and filter out banks without an id
         const formattedBankData = bankData
           .filter((bank) => bank.id) // Filter out banks without id
@@ -38,20 +44,20 @@ const AddProviderBankDetailForm: React.FC = () => {
             id: bank.id!.toString(), // Ensure id is a string
             name: bank.name,
           }));
-  
+
         setBanks(formattedBankData);
       } catch (error) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load banks.",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load banks.',
         });
       }
     };
-  
+
     loadBanks();
   }, []);
-  
+
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -62,25 +68,24 @@ const AddProviderBankDetailForm: React.FC = () => {
       account_holder_name: accountHolderName,
       account_number: accountNumber,
       ifsc_code: ifscCode,
-      account_type: accountType as "savings" | "current" | "business", // Cast to specific type
-      status: status as "pending" | "verified" | "rejected", // Cast to specific type
+      account_type: accountType as 'savings' | 'current' | 'business', // Cast to specific type
+      status: status as 'pending' | 'verified' | 'rejected', // Cast to specific type
       primary: isPrimary, // Added primary field
     };
-    
 
     try {
       const response = await createProviderBankDetail(bankDetailData);
       toast({
-        variant: "success",
-        title: "Success",
+        variant: 'success',
+        title: 'Success',
         description: response.message,
       });
-   //   router.push(`/admin/provider/${providerId}`);
+      //   router.push(`/admin/provider/${providerId}`);
     } catch (error) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: "Failed to add bank account details.",
+        variant: 'error',
+        title: 'Error',
+        description: 'Failed to add bank account details.',
       });
     } finally {
       setIsSubmitting(false);
@@ -98,21 +103,17 @@ const AddProviderBankDetailForm: React.FC = () => {
           <CardContent>
             <form onSubmit={onSubmit} className="space-y-6">
               {/* Bank Name */}
-                              <div className="space-y-2">
+              <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <Globe2 className="w-4 h-4 text-blue-500" />
                   <span>Select Bank</span>
                 </label>
-                <Select
-                  value={bankId}
-                  onValueChange={(value) => setBankId(value)}
-                  required
-                >
+                <Select value={bankId} onValueChange={(value) => setBankId(value)} required>
                   <SelectTrigger className="bg-white border-gray-200">
                     <SelectValue placeholder="Select Bank" />
                   </SelectTrigger>
                   <SelectContent>
-                  {banks.map((bank) => (
+                    {banks.map((bank) => (
                       <SelectItem key={bank.id} value={bank.id} className="text-black">
                         {bank.name}
                       </SelectItem>
@@ -179,11 +180,7 @@ const AddProviderBankDetailForm: React.FC = () => {
               {/* Status */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Status</label>
-                <Select
-                  value={status}
-                  onValueChange={(value) => setStatus(value)}
-                  required
-                >
+                <Select value={status} onValueChange={(value) => setStatus(value)} required>
                   <SelectTrigger className="w-full bg-white border-gray-200">
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
@@ -203,17 +200,13 @@ const AddProviderBankDetailForm: React.FC = () => {
                   onCheckedChange={setIsPrimary}
                   className="data-[state=checked]:bg-primary"
                 />
-                <span>{isPrimary ? "Yes" : "No"}</span>
+                <span>{isPrimary ? 'Yes' : 'No'}</span>
               </div>
 
               {/* Submit Button */}
               <div className="pt-4">
-                <Button
-                  type="submit"
-                  className="w-full bg-primary"
-                  disabled={isSubmitting}
-                >
-                  {isSubmitting ? "Saving..." : "Save Bank Account"}
+                <Button type="submit" className="w-full bg-primary" disabled={isSubmitting}>
+                  {isSubmitting ? 'Saving...' : 'Save Bank Account'}
                 </Button>
               </div>
             </form>

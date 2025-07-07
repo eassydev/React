@@ -1,16 +1,23 @@
-"use client";
+'use client';
 
-import React, { useState, FormEvent } from "react";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { createBank, Bank } from "@/lib/api"; // Import the API function and Bank interface
+import React, { useState, FormEvent } from 'react';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import { createBank, Bank } from '@/lib/api'; // Import the API function and Bank interface
 
 const AddBankForm: React.FC = () => {
-  const [name, setName] = useState<string>("");
+  const [name, setName] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const { toast } = useToast();
@@ -22,9 +29,9 @@ const AddBankForm: React.FC = () => {
 
     if (!name) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Bank name is required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Bank name is required.',
       });
       setIsSubmitting(false);
       return;
@@ -39,19 +46,19 @@ const AddBankForm: React.FC = () => {
     try {
       await createBank(newBank); // Submit the Bank object to the API
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Bank added successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Bank added successfully.',
       });
 
       // Reset form fields after successful submission
-      setName("");
+      setName('');
       setIsActive(true);
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to add bank.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to add bank.',
       });
     } finally {
       setIsSubmitting(false);
@@ -94,11 +101,7 @@ const AddBankForm: React.FC = () => {
 
               {/* Active Status */}
               <div className="flex items-center space-x-2">
-                <Switch
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
-                  className="bg-primary"
-                />
+                <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
                 <span className="text-sm text-gray-700">Active</span>
               </div>
             </form>
@@ -106,7 +109,11 @@ const AddBankForm: React.FC = () => {
 
           <CardFooter className="border-t border-gray-100 mt-6">
             <div className="flex space-x-3 pt-6">
-              <Button className="w-100 flex-1 h-11 bg-primary" disabled={isSubmitting} onClick={onSubmit}>
+              <Button
+                className="w-100 flex-1 h-11 bg-primary"
+                disabled={isSubmitting}
+                onClick={onSubmit}
+              >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center space-x-2">
                     <Loader2 className="w-4 h-4 animate-spin" />

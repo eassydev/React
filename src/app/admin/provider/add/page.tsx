@@ -1,62 +1,68 @@
-"use client";
+'use client';
 
-import React, { useState, FormEvent } from "react";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2, FileImage } from "lucide-react";
-import { createProvider, Provider } from "@/lib/api";
-import { useRouter, useParams } from "next/navigation";
+import React, { useState, FormEvent } from 'react';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2, FileImage } from 'lucide-react';
+import { createProvider, Provider } from '@/lib/api';
+import { useRouter, useParams } from 'next/navigation';
 
 const AddProviderForm: React.FC = () => {
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const [gender, setGender] = useState<string>("male");
-  const [email, setEmail] = useState<string>("");
+  const [firstName, setFirstName] = useState<string>('');
+  const [lastName, setLastName] = useState<string>('');
+  const [gender, setGender] = useState<string>('male');
+  const [email, setEmail] = useState<string>('');
   const [image, setImage] = useState<File | null>(null);
-  const [phone, setPhone] = useState<string>("");
-  const [companyName, setCompanyName] = useState<string>("");
-  const [gstNumber, setGstNumber] = useState<string>("");
-  const [panNumber, setPanNumber] = useState<string>("");
-  const [linkedAccountId, setLinkedAccountId] = useState<string>("");
+  const [phone, setPhone] = useState<string>('');
+  const [companyName, setCompanyName] = useState<string>('');
+  const [gstNumber, setGstNumber] = useState<string>('');
+  const [panNumber, setPanNumber] = useState<string>('');
+  const [linkedAccountId, setLinkedAccountId] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
-  const [rating, setRating] = useState<string>("0.0");
-  const [country, setCountry] = useState<string>("");
-  const [state, setState] = useState<string>("");
-  const [city, setCity] = useState<string>("");
-  const [postalCode, setPostalCode] = useState<string>("");
+  const [rating, setRating] = useState<string>('0.0');
+  const [country, setCountry] = useState<string>('');
+  const [state, setState] = useState<string>('');
+  const [city, setCity] = useState<string>('');
+  const [postalCode, setPostalCode] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const router = useRouter();
 
   const { toast } = useToast();
 
-  const [gstError, setGstError] = useState("");
-  const [panError, setPanError] = useState("");
+  const [gstError, setGstError] = useState('');
+  const [panError, setPanError] = useState('');
 
   const validateGST = (value: string) => {
     const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[A-Z0-9]{1}[Z]{1}[A-Z0-9]{1}$/;
     setGstNumber(value); // Allow updating the input value
-    if (!gstRegex.test(value) && value !== "") {
-      setGstError("Invalid GST number format. Example: 22AAAAA0000A1Z5");
+    if (!gstRegex.test(value) && value !== '') {
+      setGstError('Invalid GST number format. Example: 22AAAAA0000A1Z5');
     } else {
-      setGstError("");
+      setGstError('');
     }
   };
 
   const validatePAN = (value: string) => {
     const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
     setPanNumber(value); // Allow updating the input value
-    if (!panRegex.test(value) && value !== "") {
-      setPanError("Invalid PAN number format. Example: ABCDE1234F");
+    if (!panRegex.test(value) && value !== '') {
+      setPanError('Invalid PAN number format. Example: ABCDE1234F');
     } else {
-      setPanError("");
+      setPanError('');
     }
   };
 
-
-const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setImage(e.target.files[0]);
     }
@@ -68,18 +74,20 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
     if (!firstName || !phone) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "First Name and Phone are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'First Name and Phone are required.',
       });
       setIsSubmitting(false);
       return;
     }
-    const validGenders: Array<"male" | "female" | "other"> = ["male", "female", "other"];
+    const validGenders: Array<'male' | 'female' | 'other'> = ['male', 'female', 'other'];
     const newProvider: Provider = {
       first_name: firstName,
       last_name: lastName,
-      gender: validGenders.includes(gender as any) ? (gender as "male" | "female" | "other") : undefined,
+      gender: validGenders.includes(gender as any)
+        ? (gender as 'male' | 'female' | 'other')
+        : undefined,
       email,
       phone,
       image,
@@ -98,18 +106,17 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     try {
       await createProvider(newProvider);
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Provider created successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Provider created successfully.',
       });
-       //router.push("/admin/provider");
-
+      //router.push("/admin/provider");
     } catch (error: any) {
-      console.log()
+      console.log();
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to create provider.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to create provider.',
       });
     } finally {
       setIsSubmitting(false);
@@ -163,7 +170,11 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
               {/* Gender */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Gender</label>
-                <select value={gender} onChange={(e) => setGender(e.target.value)} className="w-full border p-2 rounded">
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value)}
+                  className="w-full border p-2 rounded"
+                >
                   <option value="male">Male</option>
                   <option value="female">Female</option>
                   <option value="other">Other</option>
@@ -193,13 +204,13 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 />
               </div>
 
-               {/* Image Upload Field */}
-               <div className="space-y-2">
+              {/* Image Upload Field */}
+              <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <FileImage className="w-4 h-5 text-blue-500" />
                   <span>Image</span>
                 </label>
-                <Input type="file" accept="image/*" onChange={handleImageChange} required/>
+                <Input type="file" accept="image/*" onChange={handleImageChange} required />
               </div>
 
               {/* Company Name */}
@@ -212,37 +223,39 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
                 />
               </div>
 
-    {/* GST Number */}
-<div className="space-y-2">
-  <label className="text-sm font-medium text-gray-700">GST Number</label>
-  <Input
-    value={gstNumber}
-    onChange={(e) => validateGST(e.target.value)}
-    placeholder="Enter GST number"
-  />
-  {gstError && <p className="text-sm text-red-500">{gstError}</p>}
-</div>
+              {/* GST Number */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">GST Number</label>
+                <Input
+                  value={gstNumber}
+                  onChange={(e) => validateGST(e.target.value)}
+                  placeholder="Enter GST number"
+                />
+                {gstError && <p className="text-sm text-red-500">{gstError}</p>}
+              </div>
 
-{/* PAN Number */}
-<div className="space-y-2">
-  <label className="text-sm font-medium text-gray-700">PAN Number</label>
-  <Input
-    value={panNumber}
-    onChange={(e) => validatePAN(e.target.value)}
-    placeholder="Enter PAN number"
-  />
-  {panError && <p className="text-sm text-red-500">{panError}</p>}
-</div>
+              {/* PAN Number */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">PAN Number</label>
+                <Input
+                  value={panNumber}
+                  onChange={(e) => validatePAN(e.target.value)}
+                  placeholder="Enter PAN number"
+                />
+                {panError && <p className="text-sm text-red-500">{panError}</p>}
+              </div>
 
-{/* Linked Account ID */}
-<div className="space-y-2">
-  <label className="text-sm font-medium text-gray-700">Razorpay Linked Account ID</label>
-  <Input
-    value={linkedAccountId}
-    onChange={(e) => setLinkedAccountId(e.target.value)}
-    placeholder="Enter Razorpay linked account ID"
-  />
-</div>
+              {/* Linked Account ID */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Razorpay Linked Account ID
+                </label>
+                <Input
+                  value={linkedAccountId}
+                  onChange={(e) => setLinkedAccountId(e.target.value)}
+                  placeholder="Enter Razorpay linked account ID"
+                />
+              </div>
 
               {/* Country */}
               <div className="space-y-2">
@@ -297,11 +310,7 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
               {/* Active Status */}
               <div className="flex items-center space-x-2">
-                <Switch
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
-                  className="bg-primary"
-                />
+                <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
                 <span className="text-sm text-gray-700">Active</span>
               </div>
             </form>
@@ -309,7 +318,11 @@ const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 
           <CardFooter className="border-t border-gray-100 mt-6">
             <div className="flex space-x-3 pt-6">
-              <Button className="w-100 flex-1 h-11 bg-primary" disabled={isSubmitting} onClick={onSubmit}>
+              <Button
+                className="w-100 flex-1 h-11 bg-primary"
+                disabled={isSubmitting}
+                onClick={onSubmit}
+              >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center space-x-2">
                     <Loader2 className="w-4 h-4 animate-spin" />

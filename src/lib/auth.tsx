@@ -1,7 +1,7 @@
 // lib/auth.ts
 
 import axios from 'axios';
-import dotenv from "dotenv";
+import dotenv from 'dotenv';
 dotenv.config();
 
 // Access environment variables
@@ -24,21 +24,25 @@ interface LoginResponse {
 
 export const login = async (username: string, password: string): Promise<LoginResponse> => {
   try {
-    console.log("Sending login request to:", `${BASE_URL}/login`);
-    console.log("Request payload:", { username, password: "***" });
+    console.log('Sending login request to:', `${BASE_URL}/login`);
+    console.log('Request payload:', { username, password: '***' });
 
-    const response = await axios.post(`${BASE_URL}/login`, {
-      username,
-      password
-    }, {
-      headers: {
-        'Content-Type': 'application/json'
+    const response = await axios.post(
+      `${BASE_URL}/login`,
+      {
+        username,
+        password,
       },
-      timeout: 10000 // 10 second timeout
-    });
+      {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        timeout: 10000, // 10 second timeout
+      }
+    );
 
-    console.log("Login response status:", response.status);
-    console.log("Login response data:", response.data);
+    console.log('Login response status:', response.status);
+    console.log('Login response data:', response.data);
 
     if (response.data.status === false) {
       throw new Error(response.data.message || 'Login failed');
@@ -46,10 +50,10 @@ export const login = async (username: string, password: string): Promise<LoginRe
 
     return response.data;
   } catch (error: any) {
-    console.error("Login error details:", {
+    console.error('Login error details:', {
       message: error.message,
       response: error.response?.data,
-      status: error.response?.status
+      status: error.response?.status,
     });
 
     if (error.response?.data?.message) {
@@ -72,14 +76,18 @@ export const logout = async (): Promise<void> => {
 
     if (token) {
       // Call backend logout endpoint
-      await axios.post(`${BASE_URL}/logout`, {}, {
-        headers: {
-          'admin-auth-token': token
+      await axios.post(
+        `${BASE_URL}/logout`,
+        {},
+        {
+          headers: {
+            'admin-auth-token': token,
+          },
         }
-      });
+      );
     }
   } catch (error) {
-    console.error("Logout error:", error);
+    console.error('Logout error:', error);
     // Continue with local cleanup even if backend call fails
   } finally {
     // Always clear local storage and cookies

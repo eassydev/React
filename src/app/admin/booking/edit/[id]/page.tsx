@@ -1,19 +1,49 @@
-"use client";
+'use client';
 import React, { useState, useEffect, FormEvent } from 'react';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@/components/ui/select';
-import { useToast } from "@/hooks/use-toast";
-import { useRouter, usePathname } from "next/navigation";
+import {
+  Select,
+  SelectItem,
+  SelectTrigger,
+  SelectContent,
+  SelectValue,
+} from '@/components/ui/select';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter, usePathname } from 'next/navigation';
 import { Save, FileText, Loader2, Type, Globe2 } from 'lucide-react';
-import { fetchAllCategories, fetchBookingById, updateBooking, fetchSubCategoriesByCategoryId, fetchAllUsersWithouPagination, fetchUserAddresses, fetchProvidersByFilters, fetchAllProvidersWithoutpagination, Provider, Package, fetchFilterOptionsByAttributeId, fetchFilterAttributes, AttributeOption, createRateCard, Category, Subcategory, Attribute } from '@/lib/api';
-
+import {
+  fetchAllCategories,
+  fetchBookingById,
+  updateBooking,
+  fetchSubCategoriesByCategoryId,
+  fetchAllUsersWithouPagination,
+  fetchUserAddresses,
+  fetchProvidersByFilters,
+  fetchAllProvidersWithoutpagination,
+  Provider,
+  Package,
+  fetchFilterOptionsByAttributeId,
+  fetchFilterAttributes,
+  AttributeOption,
+  createRateCard,
+  Category,
+  Subcategory,
+  Attribute,
+} from '@/lib/api';
 
 const EditBookingForm: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
-  const bookingId = pathname?.split("/").pop();
+  const bookingId = pathname?.split('/').pop();
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [selectionType, setSelectionType] = useState<string>('Category');
@@ -40,7 +70,9 @@ const EditBookingForm: React.FC = () => {
   const [providerId, setProviderId] = useState<number | null>(null);
   const [providers, setProviders] = useState<{ id: number; name: string }[]>([]);
   const [users, setUsers] = useState<{ id: string; name: string }[]>([]);
-  const [addresses, setAddresses] = useState<{ id: string; sampleid: number; full_address: string }[]>([]);
+  const [addresses, setAddresses] = useState<
+    { id: string; sampleid: number; full_address: string }[]
+  >([]);
   const [deliveryAddressId, setDeliveryAddressId] = useState<number | null>(null);
   const [status, setStatus] = useState<string>('accepted');
 
@@ -70,7 +102,6 @@ const EditBookingForm: React.FC = () => {
           const subcategoryData = await fetchSubCategoriesByCategoryId(selectedCategoryId);
           setSubcategories(subcategoryData);
           try {
-
           } catch (error) {
             setFilterAttributes([]);
           }
@@ -85,14 +116,15 @@ const EditBookingForm: React.FC = () => {
     }
   }, [selectedCategoryId]);
 
-
-
   // Fetch filter attributes when a subcategory is selected
   useEffect(() => {
     if (selectedCategoryId || selectedSubcategoryId) {
       const loadFilterAttributes = async () => {
         try {
-          const filterAttributeData = await fetchFilterAttributes(selectedCategoryId, selectedSubcategoryId);
+          const filterAttributeData = await fetchFilterAttributes(
+            selectedCategoryId,
+            selectedSubcategoryId
+          );
           setFilterAttributes(filterAttributeData);
         } catch (error) {
           setFilterAttributes([]);
@@ -101,7 +133,6 @@ const EditBookingForm: React.FC = () => {
       loadFilterAttributes();
     }
   }, [selectedCategoryId, selectedSubcategoryId]);
-
 
   useEffect(() => {
     if (selectedFilterAttributesId) {
@@ -119,7 +150,6 @@ const EditBookingForm: React.FC = () => {
     }
   }, [selectedFilterAttributesId]);
 
-
   useEffect(() => {
     const loadInitialData = async () => {
       try {
@@ -131,13 +161,12 @@ const EditBookingForm: React.FC = () => {
           }))
         );
       } catch (error) {
-        toast({ variant: "error", title: "Error", description: "Failed to load initial data." });
+        toast({ variant: 'error', title: 'Error', description: 'Failed to load initial data.' });
       }
     };
 
     loadInitialData();
   }, [toast]);
-
 
   // Load booking details and initialize dropdowns
   useEffect(() => {
@@ -166,7 +195,9 @@ const EditBookingForm: React.FC = () => {
           setSelectedCategoryId(booking.category_id.toString());
 
           // Load and set subcategories
-          const subcategoryData = await fetchSubCategoriesByCategoryId(booking.category_id.toString());
+          const subcategoryData = await fetchSubCategoriesByCategoryId(
+            booking.category_id.toString()
+          );
           setSubcategories(subcategoryData);
 
           if (booking.subcategory_id) {
@@ -183,7 +214,9 @@ const EditBookingForm: React.FC = () => {
               setSelectedFilterAttributesId(booking.filter_attribute_id.toString());
 
               // Load and set filter options
-              const optionsData = await fetchFilterOptionsByAttributeId(booking.filter_attribute_id.toString());
+              const optionsData = await fetchFilterOptionsByAttributeId(
+                booking.filter_attribute_id.toString()
+              );
               setFilterOptions(optionsData);
 
               if (booking.filter_option_id) {
@@ -197,8 +230,8 @@ const EditBookingForm: React.FC = () => {
           const providerData = await fetchAllProvidersWithoutpagination();
           setProviders(
             providerData.map((provider: any) => ({
-              id: provider.id,              
-            name: `${provider.first_name} ${provider.last_name || ''} - ${provider.phone || 'No Phone'}`,
+              id: provider.id,
+              name: `${provider.first_name} ${provider.last_name || ''} - ${provider.phone || 'No Phone'}`,
             }))
           );
         }
@@ -209,13 +242,11 @@ const EditBookingForm: React.FC = () => {
           setAddresses(addressData);
         }
         setDeliveryAddressId(booking.address_id);
-
-
       } catch (error) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load booking details.",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load booking details.',
         });
       } finally {
       }
@@ -236,14 +267,12 @@ const EditBookingForm: React.FC = () => {
           }))
         );
       } catch (error) {
-        toast({ variant: "error", title: "Error", description: "Failed to load providers." });
+        toast({ variant: 'error', title: 'Error', description: 'Failed to load providers.' });
       }
     };
 
     loadInitialDataProvider();
   }, [toast]); // Remove the dependencies that were related to filters
-
-
 
   useEffect(() => {
     // Fetch addresses when a user is selected
@@ -254,9 +283,9 @@ const EditBookingForm: React.FC = () => {
           setAddresses(addressData); // addressData is already mapped in fetchUserAddresses
         } catch (error: any) {
           toast({
-            variant: "error",
-            title: "Error",
-            description: error.message || "Failed to load user addresses.",
+            variant: 'error',
+            title: 'Error',
+            description: error.message || 'Failed to load user addresses.',
           });
         }
       };
@@ -286,12 +315,16 @@ const EditBookingForm: React.FC = () => {
     };
 
     // Add category or package-specific data based on selectionType
-    if (selectionType === "Category") {
+    if (selectionType === 'Category') {
       bookingData.category_id = parseInt(selectedCategoryId) || null;
       bookingData.subcategory_id = selectedSubcategoryId ? parseInt(selectedSubcategoryId) : null;
-      bookingData.filter_attribute_id = selectedFilterAttributesId ? parseInt(selectedFilterAttributesId) : null;
-      bookingData.filter_option_id = selectedFilterOptionId ? parseInt(selectedFilterOptionId) : null;
-    } else if (selectionType === "Package") {
+      bookingData.filter_attribute_id = selectedFilterAttributesId
+        ? parseInt(selectedFilterAttributesId)
+        : null;
+      bookingData.filter_option_id = selectedFilterOptionId
+        ? parseInt(selectedFilterOptionId)
+        : null;
+    } else if (selectionType === 'Package') {
       bookingData.package_id = selectedPackageId ? parseInt(selectedPackageId) : null;
     }
 
@@ -299,29 +332,28 @@ const EditBookingForm: React.FC = () => {
       await updateBooking(bookingId!.toString(), bookingData);
 
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Booking created successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Booking created successfully.',
       });
       setIsSubmitting(false);
-      router.push("/admin/booking"); // Redirect after successful submission
+      router.push('/admin/booking'); // Redirect after successful submission
     } catch (error) {
       toast({
-        variant: "error",
-        title: "Error",
+        variant: 'error',
+        title: 'Error',
         description: `Failed to create rate card: ${error}`,
       });
       setIsSubmitting(false);
     }
   };
 
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-12xl mx-auto space-y-6">
         <div className="text-left space-y-2">
           <h1 className="text-3xl font-bold text-gray-900">Booking Card Management</h1>
-          <p className="text-gray-500">Update  Booking</p>
+          <p className="text-gray-500">Update Booking</p>
         </div>
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
@@ -351,8 +383,6 @@ const EditBookingForm: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-
-
 
               {selectionType === 'Category' && (
                 <div className="space-y-4">
@@ -438,7 +468,9 @@ const EditBookingForm: React.FC = () => {
                   {/* Filter Options Selector */}
                   {filterOptions.length > 0 && (
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">Select Filter Option</label>
+                      <label className="text-sm font-medium text-gray-700">
+                        Select Filter Option
+                      </label>
                       <Select
                         value={selectedFilterOptionId}
                         onValueChange={(value) => setSelectedFilterOptionId(value)}
@@ -488,10 +520,9 @@ const EditBookingForm: React.FC = () => {
                 </div>
               )}
 
-
               <div>
                 <label className="text-sm font-medium text-gray-700">Select User</label>
-                <Select value={userId || ""} onValueChange={(value) => setUserId(value)}>
+                <Select value={userId || ''} onValueChange={(value) => setUserId(value)}>
                   <SelectTrigger className="bg-white border-gray-200">
                     <SelectValue placeholder="Select User" />
                   </SelectTrigger>
@@ -505,10 +536,12 @@ const EditBookingForm: React.FC = () => {
                 </Select>
               </div>
 
-
               <div>
                 <label className="text-sm font-medium text-gray-700">Select Provider</label>
-                <Select value={String(providerId)} onValueChange={(value) => setProviderId(Number(value))}>
+                <Select
+                  value={String(providerId)}
+                  onValueChange={(value) => setProviderId(Number(value))}
+                >
                   <SelectTrigger className="bg-white border-gray-200">
                     <SelectValue placeholder="Select Provider" />
                   </SelectTrigger>
@@ -521,7 +554,6 @@ const EditBookingForm: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-
 
               {userId && (
                 <div>
@@ -656,9 +688,12 @@ const EditBookingForm: React.FC = () => {
                 </select>
               </div>
 
-
               <div className="flex space-x-3 pt-6">
-                <Button className="w-100 flex-1 h-11 bg-primary" disabled={isSubmitting} type="submit">
+                <Button
+                  className="w-100 flex-1 h-11 bg-primary"
+                  disabled={isSubmitting}
+                  type="submit"
+                >
                   {isSubmitting ? (
                     <div className="flex items-center justify-center space-x-2">
                       <span className="loader" />

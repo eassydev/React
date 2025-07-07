@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { fetchCityById, updateCity, fetchAllStatesWithoutPagination, City, State } from "@/lib/api";
+import React, { useState, useEffect, FormEvent } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import { fetchCityById, updateCity, fetchAllStatesWithoutPagination, City, State } from '@/lib/api';
 
 const EditCityForm: React.FC = () => {
-  const [name, setName] = useState<string>("");
-  const [state_id, setStateId] = useState<string>("");
+  const [name, setName] = useState<string>('');
+  const [state_id, setStateId] = useState<string>('');
   const [states, setStates] = useState<State[]>([]);
   const [is_active, setIsActive] = useState<boolean>(true); // Active switch state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -22,7 +22,7 @@ const EditCityForm: React.FC = () => {
   const pathname = usePathname();
 
   // Extract the city ID from the URL path
-  const cityId = pathname?.split("/").pop();
+  const cityId = pathname?.split('/').pop();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -38,9 +38,9 @@ const EditCityForm: React.FC = () => {
         }
       } catch (error: any) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: error.message || "Failed to fetch city details.",
+          variant: 'error',
+          title: 'Error',
+          description: error.message || 'Failed to fetch city details.',
         });
       }
     };
@@ -54,9 +54,9 @@ const EditCityForm: React.FC = () => {
 
     if (!name || !state_id) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "City name and state ID are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'City name and state ID are required.',
       });
       setIsSubmitting(false);
       return;
@@ -73,18 +73,18 @@ const EditCityForm: React.FC = () => {
       await updateCity(cityId as string, updatedCity);
 
       toast({
-        variant: "success",
-        title: "Success",
-        description: "City updated successfully!",
+        variant: 'success',
+        title: 'Success',
+        description: 'City updated successfully!',
       });
 
       // Redirect to city list
-      router.push("/admin/city");
+      router.push('/admin/city');
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to update city.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to update city.',
       });
     } finally {
       setIsSubmitting(false);

@@ -1,21 +1,28 @@
-"use client";
+'use client';
 
-import React, { useState, FormEvent } from "react";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2, Calendar } from "lucide-react";
-import { createWalletOffer, WalletOffer } from "@/lib/api"; // Import the API function and WalletOffer interface
+import React, { useState, FormEvent } from 'react';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2, Calendar } from 'lucide-react';
+import { createWalletOffer, WalletOffer } from '@/lib/api'; // Import the API function and WalletOffer interface
 
 const WalletOfferAddForm: React.FC = () => {
-  const [eventType, setEventType] = useState<string>("sign_up");
-  const [esCash, setEsCash] = useState<string>("");
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
+  const [eventType, setEventType] = useState<string>('sign_up');
+  const [esCash, setEsCash] = useState<string>('');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
-  const [orderAmount, setOrderAmount] = useState<string>("");
+  const [orderAmount, setOrderAmount] = useState<string>('');
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const { toast } = useToast();
@@ -27,16 +34,16 @@ const WalletOfferAddForm: React.FC = () => {
 
     if (!eventType || !esCash || !startDate || !endDate) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "All required fields must be filled.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'All required fields must be filled.',
       });
       setIsSubmitting(false);
       return;
     }
 
     const newWalletOffer: WalletOffer = {
-      event_type: eventType as WalletOffer["event_type"],
+      event_type: eventType as WalletOffer['event_type'],
       es_cash: parseFloat(esCash),
       start_date: startDate,
       end_date: endDate,
@@ -47,23 +54,23 @@ const WalletOfferAddForm: React.FC = () => {
     try {
       await createWalletOffer(newWalletOffer);
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Wallet offer created successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Wallet offer created successfully.',
       });
 
       // Reset form fields
-      setEventType("sign_up");
-      setEsCash("");
-      setStartDate("");
-      setEndDate("");
+      setEventType('sign_up');
+      setEsCash('');
+      setStartDate('');
+      setEndDate('');
       setIsActive(true);
-      setOrderAmount("");
+      setOrderAmount('');
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to create wallet offer.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to create wallet offer.',
       });
     } finally {
       setIsSubmitting(false);
@@ -153,20 +160,12 @@ const WalletOfferAddForm: React.FC = () => {
 
               {/* Active Status */}
               <div className="flex items-center space-x-2">
-                <Switch
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
-                  className="bg-primary"
-                />
+                <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
                 <span className="text-sm text-gray-700">Active</span>
               </div>
 
               {/* Submit Button */}
-              <Button
-                type="submit"
-                className="w-full h-11 bg-primary"
-                disabled={isSubmitting}
-              >
+              <Button type="submit" className="w-full h-11 bg-primary" disabled={isSubmitting}>
                 {isSubmitting ? (
                   <div className="flex items-center justify-center space-x-2">
                     <Loader2 className="w-4 h-4 animate-spin" />

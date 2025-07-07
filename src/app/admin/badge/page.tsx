@@ -1,19 +1,14 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
+} from '@tanstack/react-table';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
   Table,
   TableHead,
@@ -21,16 +16,10 @@ import {
   TableBody,
   TableRow,
   TableCell,
-} from "@/components/ui/table";
-import { Button } from "@/components/ui/button";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Edit,
-  Trash2,
-  Plus,
-} from "lucide-react";
-import Link from "next/link";
+} from '@/components/ui/table';
+import { Button } from '@/components/ui/button';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from 'lucide-react';
+import Link from 'next/link';
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -38,9 +27,9 @@ import {
   AlertDialogHeader,
   AlertDialogFooter,
   AlertDialogCancel,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
-import { fetchBadges, deleteBadge } from "@/lib/api"; // 👈 implement these
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { fetchBadges, deleteBadge } from '@/lib/api'; // 👈 implement these
 
 const BadgeList = () => {
   const [badges, setBadges] = useState<any[]>([]);
@@ -49,18 +38,18 @@ const BadgeList = () => {
     pageSize: 50,
   });
   const [totalPages, setTotalPages] = useState(0);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
   const { toast } = useToast();
 
-  const fetchBadgesData = async (page = 1, size = 50, status = "all", search = "") => {
+  const fetchBadgesData = async (page = 1, size = 50, status = 'all', search = '') => {
     try {
       const { data, meta } = await fetchBadges(page, size, status, search);
       setBadges(data);
       setTotalPages(meta.totalPages);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.error("Error fetching badges:", error);
+      console.error('Error fetching badges:', error);
     }
   };
 
@@ -72,54 +61,54 @@ const BadgeList = () => {
     try {
       await deleteBadge(badge.id);
       toast({
-        title: "Success",
+        title: 'Success',
         description: `Badge "${badge.name}" deleted successfully.`,
-        variant: "success",
+        variant: 'success',
       });
       fetchBadgesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm);
     } catch (error) {
       toast({
-        title: "Error",
+        title: 'Error',
         description: `Failed to delete badge: ${error}`,
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
 
   const badgeColumns: ColumnDef<any>[] = [
     {
-      accessorKey: "sno",
-      header: "S.No",
+      accessorKey: 'sno',
+      header: 'S.No',
       cell: (info) => info.row.index + 1,
     },
     {
-      accessorKey: "name",
-      header: "Badge Name",
+      accessorKey: 'name',
+      header: 'Badge Name',
     },
     {
-      accessorKey: "is_active",
-      header: "Status",
+      accessorKey: 'is_active',
+      header: 'Status',
       cell: ({ getValue }) => {
         const status = getValue();
-        let statusText = "";
-        let statusClass = "";
+        let statusText = '';
+        let statusClass = '';
 
         switch (status) {
           case 0:
-            statusText = "Inactive";
-            statusClass = "bg-red-100 text-red-600";
+            statusText = 'Inactive';
+            statusClass = 'bg-red-100 text-red-600';
             break;
           case 1:
-            statusText = "Active";
-            statusClass = "bg-green-100 text-green-600";
+            statusText = 'Active';
+            statusClass = 'bg-green-100 text-green-600';
             break;
           case 2:
-            statusText = "Deleted";
-            statusClass = "bg-gray-100 text-gray-600";
+            statusText = 'Deleted';
+            statusClass = 'bg-gray-100 text-gray-600';
             break;
           default:
-            statusText = "Unknown";
-            statusClass = "bg-yellow-100 text-yellow-600";
+            statusText = 'Unknown';
+            statusClass = 'bg-yellow-100 text-yellow-600';
         }
 
         return (
@@ -130,8 +119,8 @@ const BadgeList = () => {
       },
     },
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Link href={`/admin/badge/edit/${row.original.id}`}>
@@ -191,7 +180,10 @@ const BadgeList = () => {
             </select>
 
             <Link href="/admin/badge/add">
-              <Button><Plus className="w-4 h-4 mr-2" />Add Badge</Button>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Badge
+              </Button>
             </Link>
           </div>
         </div>
@@ -230,7 +222,9 @@ const BadgeList = () => {
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
                       <TableHead key={header.id} className="text-left">
-                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
                       </TableHead>
                     ))}
                   </TableRow>

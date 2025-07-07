@@ -1,19 +1,26 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { fetchGstRateById, updateGstRate, GstRate } from "@/lib/api"; // Import the API functions and GST Rate interface
+import React, { useState, useEffect, FormEvent } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import { fetchGstRateById, updateGstRate, GstRate } from '@/lib/api'; // Import the API functions and GST Rate interface
 
 const EditGSTForm: React.FC = () => {
-  const [cgst, setCgst] = useState<number | string>("");
-  const [sgst, setSgst] = useState<number | string>("");
-  const [igst, setIgst] = useState<number | string>("");
+  const [cgst, setCgst] = useState<number | string>('');
+  const [sgst, setSgst] = useState<number | string>('');
+  const [igst, setIgst] = useState<number | string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -22,7 +29,7 @@ const EditGSTForm: React.FC = () => {
   const pathname = usePathname();
 
   // Extract the GST rate ID from the URL path
-  const gstRateId = pathname?.split("/").pop();
+  const gstRateId = pathname?.split('/').pop();
 
   useEffect(() => {
     if (gstRateId) {
@@ -40,9 +47,9 @@ const EditGSTForm: React.FC = () => {
       setIsActive(gstRate.is_active);
     } catch (error) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: "Failed to load GST rate details.",
+        variant: 'error',
+        title: 'Error',
+        description: 'Failed to load GST rate details.',
       });
     }
   };
@@ -54,9 +61,9 @@ const EditGSTForm: React.FC = () => {
 
     if (!cgst || !sgst || !igst) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "All fields are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'All fields are required.',
       });
       setIsSubmitting(false);
       return;
@@ -64,9 +71,9 @@ const EditGSTForm: React.FC = () => {
 
     if (isNaN(Number(cgst)) || isNaN(Number(sgst)) || isNaN(Number(igst))) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "CGST, SGST, and IGST must be valid numbers.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'CGST, SGST, and IGST must be valid numbers.',
       });
       setIsSubmitting(false);
       return;
@@ -83,16 +90,16 @@ const EditGSTForm: React.FC = () => {
     try {
       await updateGstRate(gstRateId!, updatedGstRate); // Submit the updated GST Rate object to the API
       toast({
-        variant: "success",
-        title: "Success",
-        description: "GST Rate updated successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'GST Rate updated successfully.',
       });
-      router.push("/gst"); // Redirect to the GST rates list after success
+      router.push('/gst'); // Redirect to the GST rates list after success
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to update GST Rate.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to update GST Rate.',
       });
     } finally {
       setIsSubmitting(false);
@@ -160,11 +167,7 @@ const EditGSTForm: React.FC = () => {
 
               {/* Active Status */}
               <div className="flex items-center space-x-2">
-                <Switch
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
-                  className="bg-primary"
-                />
+                <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
                 <span className="text-sm text-gray-700">Active</span>
               </div>
 

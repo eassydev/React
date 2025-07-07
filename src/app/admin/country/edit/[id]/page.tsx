@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { fetchCountryById, updateCountry, Country } from "@/lib/api";
+import React, { useState, useEffect, FormEvent } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import { fetchCountryById, updateCountry, Country } from '@/lib/api';
 
 const EditCountryForm: React.FC = () => {
-  const [name, setName] = useState<string>("");
+  const [name, setName] = useState<string>('');
   const [is_active, setIsActive] = useState<boolean>(true); // Active switch state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -20,7 +20,7 @@ const EditCountryForm: React.FC = () => {
   const pathname = usePathname();
 
   // Extract the GST rate ID from the URL path
-  const countryId = pathname?.split("/").pop();
+  const countryId = pathname?.split('/').pop();
 
   useEffect(() => {
     if (countryId) {
@@ -32,9 +32,9 @@ const EditCountryForm: React.FC = () => {
           setIsActive(country.is_active ?? true);
         } catch (error: any) {
           toast({
-            variant: "error",
-            title: "Error",
-            description: error.message || "Failed to fetch country details.",
+            variant: 'error',
+            title: 'Error',
+            description: error.message || 'Failed to fetch country details.',
           });
         }
       };
@@ -49,9 +49,9 @@ const EditCountryForm: React.FC = () => {
 
     if (!name) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Country name is required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Country name is required.',
       });
       setIsSubmitting(false);
       return;
@@ -67,18 +67,18 @@ const EditCountryForm: React.FC = () => {
       await updateCountry(countryId as string, updatedCountry);
 
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Country updated successfully!",
+        variant: 'success',
+        title: 'Success',
+        description: 'Country updated successfully!',
       });
 
       // Redirect to country list
-      router.push("/admin/country");
+      router.push('/admin/country');
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to update country.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to update country.',
       });
     } finally {
       setIsSubmitting(false);

@@ -1,7 +1,13 @@
-"use client";
+'use client';
 
 import React, { useState } from 'react';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,21 +39,21 @@ export const AddressModal: React.FC<AddressModalProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     // Validate required fields
     if (!formData.street_address || !formData.city || !formData.state || !formData.postal_code) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Please fill in all required fields.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Please fill in all required fields.',
       });
       return;
     }
@@ -66,11 +72,11 @@ export const AddressModal: React.FC<AddressModalProps> = ({
       };
 
       const newAddress = await createUserAddress(addressData);
-      
+
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Address created successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Address created successfully.',
       });
 
       // Reset form
@@ -87,9 +93,9 @@ export const AddressModal: React.FC<AddressModalProps> = ({
       onClose();
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to create address.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to create address.',
       });
     } finally {
       setIsSubmitting(false);
@@ -115,7 +121,7 @@ export const AddressModal: React.FC<AddressModalProps> = ({
         <DialogHeader>
           <DialogTitle>Add New Address</DialogTitle>
         </DialogHeader>
-        
+
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="street_address">Street Address *</Label>
@@ -141,7 +147,7 @@ export const AddressModal: React.FC<AddressModalProps> = ({
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="state">State *</Label>
               <Input
@@ -167,7 +173,7 @@ export const AddressModal: React.FC<AddressModalProps> = ({
                 required
               />
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="country">Country</Label>
               <Input
@@ -181,19 +187,11 @@ export const AddressModal: React.FC<AddressModalProps> = ({
           </div>
 
           <DialogFooter className="gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={handleClose}
-              disabled={isSubmitting}
-            >
+            <Button type="button" variant="outline" onClick={handleClose} disabled={isSubmitting}>
               Cancel
             </Button>
-            <Button
-              type="submit"
-              disabled={isSubmitting}
-            >
-              {isSubmitting ? "Creating..." : "Create Address"}
+            <Button type="submit" disabled={isSubmitting}>
+              {isSubmitting ? 'Creating...' : 'Create Address'}
             </Button>
           </DialogFooter>
         </form>

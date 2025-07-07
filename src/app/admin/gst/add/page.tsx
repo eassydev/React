@@ -1,18 +1,25 @@
-"use client";
+'use client';
 
-import React, { useState, FormEvent } from "react";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { createGstRate, GstRate } from "@/lib/api"; // Import the API function and GST Rate interface
+import React, { useState, FormEvent } from 'react';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import { createGstRate, GstRate } from '@/lib/api'; // Import the API function and GST Rate interface
 
 const AddGSTForm: React.FC = () => {
-  const [cgst, setCgst] = useState<number | string>("");
-  const [sgst, setSgst] = useState<number | string>("");
-  const [igst, setIgst] = useState<number | string>("");
+  const [cgst, setCgst] = useState<number | string>('');
+  const [sgst, setSgst] = useState<number | string>('');
+  const [igst, setIgst] = useState<number | string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -25,9 +32,9 @@ const AddGSTForm: React.FC = () => {
 
     if (!cgst || !sgst || !igst) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "All fields are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'All fields are required.',
       });
       setIsSubmitting(false);
       return;
@@ -35,9 +42,9 @@ const AddGSTForm: React.FC = () => {
 
     if (isNaN(Number(cgst)) || isNaN(Number(sgst)) || isNaN(Number(igst))) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "CGST, SGST, and IGST must be valid numbers.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'CGST, SGST, and IGST must be valid numbers.',
       });
       setIsSubmitting(false);
       return;
@@ -54,21 +61,21 @@ const AddGSTForm: React.FC = () => {
     try {
       await createGstRate(newGstRate); // Submit the GST Rate object to the API
       toast({
-        variant: "success",
-        title: "Success",
-        description: "GST Rate created successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'GST Rate created successfully.',
       });
 
       // Reset form fields after successful submission
-      setCgst("");
-      setSgst("");
-      setIgst("");
+      setCgst('');
+      setSgst('');
+      setIgst('');
       setIsActive(true);
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to create GST Rate.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to create GST Rate.',
       });
     } finally {
       setIsSubmitting(false);
@@ -136,11 +143,7 @@ const AddGSTForm: React.FC = () => {
 
               {/* Active Status */}
               <div className="flex items-center space-x-2">
-                <Switch
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
-                  className="bg-primary"
-                />
+                <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
                 <span className="text-sm text-gray-700">Active</span>
               </div>
             </form>

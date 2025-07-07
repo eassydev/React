@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -10,19 +10,32 @@ import {
 } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/components/ui/table';
+import {
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
 import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from 'lucide-react';
 import { fetchPackages, deletePackage } from '@/lib/api'; // Fetch and delete package functions
 import Link from 'next/link';
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from '@/components/ui/alert-dialog';
-import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const PackageList = () => {
   const [packages, setPackages] = useState<any[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
-    const [isDialogOpen, setIsDialogOpen] = useState(false); // Manage Alert visibility
+  const [isDialogOpen, setIsDialogOpen] = useState(false); // Manage Alert visibility
 
   const { toast } = useToast();
 
@@ -52,7 +65,6 @@ const PackageList = () => {
       });
       fetchPackagesData(pagination.pageIndex + 1, pagination.pageSize);
       setIsDialogOpen(false); // Close the dialog
-
     } catch (error) {
       toast({
         title: 'Error',
@@ -64,8 +76,8 @@ const PackageList = () => {
 
   const packageColumns: ColumnDef<any>[] = [
     {
-      accessorKey: "sno", // Placeholder key for S.No
-      header: "S.No",
+      accessorKey: 'sno', // Placeholder key for S.No
+      header: 'S.No',
       cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
     },
     { accessorKey: 'name', header: 'Name' },
@@ -77,7 +89,9 @@ const PackageList = () => {
       accessorKey: 'is_active',
       header: 'Status',
       cell: (info) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${info.getValue() ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${info.getValue() ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}
+        >
           {info.getValue() ? 'Active' : 'Inactive'}
         </span>
       ),
@@ -92,7 +106,7 @@ const PackageList = () => {
               <Edit className="w-4 h-4 text-blue-600" />
             </Link>
           </Button>
-          <AlertDialog  open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+          <AlertDialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
             <AlertDialogTrigger asChild>
               <Button variant="ghost" size="icon">
                 <Trash2 className="w-4 h-4 text-red-600" />
@@ -107,7 +121,9 @@ const PackageList = () => {
                 <Button variant="secondary" onClick={() => handlePackageDelete(row.original)}>
                   Yes, Delete
                 </Button>
-                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
+                <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+                  Cancel
+                </Button>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
@@ -151,7 +167,9 @@ const PackageList = () => {
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
                       <TableHead key={header.id} className="text-left">
-                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
                       </TableHead>
                     ))}
                   </TableRow>

@@ -1,36 +1,43 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import dynamic from "next/dynamic";
-import { useRouter, usePathname } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2, FileText } from "lucide-react";
-import { fetchPageById, updatePage, Page } from "@/lib/api"; // Import the API functions and Page interface
+import React, { useState, useEffect, FormEvent } from 'react';
+import dynamic from 'next/dynamic';
+import { useRouter, usePathname } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2, FileText } from 'lucide-react';
+import { fetchPageById, updatePage, Page } from '@/lib/api'; // Import the API functions and Page interface
 
 // Import React-Quill dynamically for client-side rendering
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-import "react-quill/dist/quill.snow.css";
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import 'react-quill/dist/quill.snow.css';
 
 // Quill modules configuration
 const quillModules = {
   toolbar: [
-    [{ 'header': '1' }, { 'header': '2' }, { 'font': [] }],
-    [{ 'size': [] }],
+    [{ header: '1' }, { header: '2' }, { font: [] }],
+    [{ size: [] }],
     ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-    [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+    [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
     ['link', 'image', 'video'],
     ['clean'],
   ],
 };
 
 const EditPageForm: React.FC = () => {
-  const [title, setTitle] = useState<string>("");
-  const [slug, setSlug] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
+  const [title, setTitle] = useState<string>('');
+  const [slug, setSlug] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -53,13 +60,13 @@ const EditPageForm: React.FC = () => {
       const pageData: Page = await fetchPageById(id);
       setTitle(pageData.title);
       setSlug(pageData.slug);
-      setDescription(pageData.description || "");
+      setDescription(pageData.description || '');
       setIsActive(pageData.is_active);
     } catch (error) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: "Failed to load page details.",
+        variant: 'error',
+        title: 'Error',
+        description: 'Failed to load page details.',
       });
     }
   };
@@ -68,8 +75,8 @@ const EditPageForm: React.FC = () => {
   const generateSlug = (title: string) => {
     return title
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
   };
 
   // Handle form submission
@@ -79,9 +86,9 @@ const EditPageForm: React.FC = () => {
 
     if (!title || !slug || !description) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "All fields are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'All fields are required.',
       });
       setIsSubmitting(false);
       return;
@@ -98,16 +105,16 @@ const EditPageForm: React.FC = () => {
     try {
       await updatePage(pageId!, updatedPage); // Submit the updated Page object to the API
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Page updated successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Page updated successfully.',
       });
-      router.push("/admin/pages"); // Redirect to the pages list after success
+      router.push('/admin/pages'); // Redirect to the pages list after success
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to update page.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to update page.',
       });
     } finally {
       setIsSubmitting(false);
@@ -116,26 +123,26 @@ const EditPageForm: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
-    <div className="max-w-12xl mx-auto space-y-6">
-      <div className="text-left space-y-2">
-        <h1 className="text-3xl font-bold text-gray-900">Edit Category</h1>
-        <p className="text-gray-500">Update category details</p>
-      </div>
+      <div className="max-w-12xl mx-auto space-y-6">
+        <div className="text-left space-y-2">
+          <h1 className="text-3xl font-bold text-gray-900">Edit Category</h1>
+          <p className="text-gray-500">Update category details</p>
+        </div>
 
-      <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
-        <CardHeader className="border-b border-gray-100 pb-6">
-          <div className="flex items-center space-x-2">
-            <div className="h-8 w-1 bg-blue-600 rounded-full" />
-            <div>
-              <CardTitle className="text-xl text-gray-800">Edit Category</CardTitle>
-              <CardDescription className="text-gray-500">
-                Update the details below to modify the category
-              </CardDescription>
+        <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
+          <CardHeader className="border-b border-gray-100 pb-6">
+            <div className="flex items-center space-x-2">
+              <div className="h-8 w-1 bg-blue-600 rounded-full" />
+              <div>
+                <CardTitle className="text-xl text-gray-800">Edit Category</CardTitle>
+                <CardDescription className="text-gray-500">
+                  Update the details below to modify the category
+                </CardDescription>
+              </div>
             </div>
-          </div>
-        </CardHeader>
+          </CardHeader>
 
-        <CardContent className="pt-6">
+          <CardContent className="pt-6">
             <form onSubmit={onSubmit} className="space-y-6">
               {/* Title Field */}
               <div className="space-y-2">
@@ -163,7 +170,7 @@ const EditPageForm: React.FC = () => {
               </div>
 
               {/* Description Field with React-Quill */}
-              <div className="space-y-2" style={{ height: "270px" }}>
+              <div className="space-y-2" style={{ height: '270px' }}>
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <FileText className="w-4 h-5 text-blue-500" />
                   <span>Description</span>
@@ -173,17 +180,13 @@ const EditPageForm: React.FC = () => {
                   onChange={setDescription}
                   theme="snow"
                   modules={quillModules}
-                  style={{ height: "200px" }}
+                  style={{ height: '200px' }}
                 />
               </div>
 
               {/* Active Status */}
               <div className="flex items-center space-x-2">
-                <Switch
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
-                  className="bg-primary"
-                />
+                <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
                 <span className="text-sm text-gray-700">Active</span>
               </div>
 
@@ -202,7 +205,7 @@ const EditPageForm: React.FC = () => {
                 )}
               </Button>
             </form>
-            </CardContent>
+          </CardContent>
         </Card>
       </div>
     </div>

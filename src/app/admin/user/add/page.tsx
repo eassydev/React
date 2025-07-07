@@ -1,21 +1,27 @@
-"use client";
+'use client';
 
-import React, { useState, FormEvent } from "react";
-import dynamic from "next/dynamic";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2, FileText } from "lucide-react";
-import { createUser, User } from "@/lib/api"; // Import the API function and User interface
-
+import React, { useState, FormEvent } from 'react';
+import dynamic from 'next/dynamic';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2, FileText } from 'lucide-react';
+import { createUser, User } from '@/lib/api'; // Import the API function and User interface
 
 const AddUserForm: React.FC = () => {
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [mobile, setMobile] = useState<string>("");
+  const [firstName, setFirstName] = useState<string>('');
+  const [lastName, setLastName] = useState<string>('');
+  const [email, setEmail] = useState<string>('');
+  const [mobile, setMobile] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -28,9 +34,9 @@ const AddUserForm: React.FC = () => {
 
     if (!firstName || !lastName || !email || !mobile) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "All fields are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'All fields are required.',
       });
       setIsSubmitting(false);
       return;
@@ -48,22 +54,22 @@ const AddUserForm: React.FC = () => {
     try {
       await createUser(newUser); // Submit the User object to the API
       toast({
-        variant: "success",
-        title: "Success",
-        description: "User created successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'User created successfully.',
       });
 
       // Reset form fields after successful submission
-      setFirstName("");
-      setLastName("");
-      setEmail("");
-      setMobile("");
+      setFirstName('');
+      setLastName('');
+      setEmail('');
+      setMobile('');
       setIsActive(true);
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to create user.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to create user.',
       });
     } finally {
       setIsSubmitting(false);
@@ -139,16 +145,9 @@ const AddUserForm: React.FC = () => {
                 />
               </div>
 
-             
-              
-
               {/* Active Status */}
               <div className="flex items-center space-x-2">
-                <Switch
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
-                  className="bg-primary"
-                />
+                <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
                 <span className="text-sm text-gray-700">Active</span>
               </div>
             </form>
@@ -156,7 +155,11 @@ const AddUserForm: React.FC = () => {
 
           <CardFooter className="border-t border-gray-100 mt-6">
             <div className="flex space-x-3 pt-6">
-              <Button className="w-100 flex-1 h-11 bg-primary" disabled={isSubmitting} onClick={onSubmit}>
+              <Button
+                className="w-100 flex-1 h-11 bg-primary"
+                disabled={isSubmitting}
+                onClick={onSubmit}
+              >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center space-x-2">
                     <Loader2 className="w-4 h-4 animate-spin" />

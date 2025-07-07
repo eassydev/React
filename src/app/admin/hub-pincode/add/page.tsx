@@ -1,18 +1,18 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { createHubPincode, fetchAllHubsWithoutPagination, HubPincode, Hub } from "@/lib/api";
+import React, { useState, useEffect, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import { createHubPincode, fetchAllHubsWithoutPagination, HubPincode, Hub } from '@/lib/api';
 
 const AddHubPincodeForm: React.FC = () => {
-  const [hub_id, setHubId] = useState<string>("");
-  const [pincode, setPincode] = useState<string>("");
+  const [hub_id, setHubId] = useState<string>('');
+  const [pincode, setPincode] = useState<string>('');
   const [is_active, setIsActive] = useState<boolean>(true); // Active switch state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [hubs, setHubs] = useState<Hub[]>([]);
@@ -27,9 +27,9 @@ const AddHubPincodeForm: React.FC = () => {
         setHubs(data);
       } catch (error: any) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: error.message || "Failed to fetch hubs.",
+          variant: 'error',
+          title: 'Error',
+          description: error.message || 'Failed to fetch hubs.',
         });
       }
     };
@@ -43,9 +43,9 @@ const AddHubPincodeForm: React.FC = () => {
 
     if (!hub_id || !pincode) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Hub and Pincode are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Hub and Pincode are required.',
       });
       setIsSubmitting(false);
       return;
@@ -62,18 +62,18 @@ const AddHubPincodeForm: React.FC = () => {
       await createHubPincode(newHubPincode);
 
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Hub Pincode created successfully!",
+        variant: 'success',
+        title: 'Success',
+        description: 'Hub Pincode created successfully!',
       });
 
       // Redirect to hub pincode list
-      router.push("/admin/hub-pincode");
+      router.push('/admin/hub-pincode');
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to create hub pincode.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to create hub pincode.',
       });
     } finally {
       setIsSubmitting(false);
@@ -89,7 +89,9 @@ const AddHubPincodeForm: React.FC = () => {
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
           <CardHeader>
             <CardTitle>New Hub Pincode</CardTitle>
-            <CardDescription>Fill in the details below to create a new hub pincode entry.</CardDescription>
+            <CardDescription>
+              Fill in the details below to create a new hub pincode entry.
+            </CardDescription>
           </CardHeader>
 
           <CardContent>

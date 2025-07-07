@@ -1,28 +1,28 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import dynamic from "next/dynamic";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2, FileText, Image as ImageIcon } from "lucide-react";
-import { getBlogById, updateBlog, Blog } from "@/lib/api";
-import { useRouter, useParams } from "next/navigation";
+import React, { useState, useEffect, FormEvent } from 'react';
+import dynamic from 'next/dynamic';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2, FileText, Image as ImageIcon } from 'lucide-react';
+import { getBlogById, updateBlog, Blog } from '@/lib/api';
+import { useRouter, useParams } from 'next/navigation';
 
 // Import React-Quill dynamically for client-side rendering
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-import "react-quill/dist/quill.snow.css";
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import 'react-quill/dist/quill.snow.css';
 
 const quillModules = {
   toolbar: [
-    [{ header: "1" }, { header: "2" }, { font: [] }],
+    [{ header: '1' }, { header: '2' }, { font: [] }],
     [{ size: [] }],
-    ["bold", "italic", "underline", "strike", "blockquote"],
-    [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
-    ["link", "image", "video"],
-    ["clean"],
+    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+    [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+    ['link', 'image', 'video'],
+    ['clean'],
   ],
 };
 
@@ -31,9 +31,9 @@ const EditBlogForm: React.FC = () => {
   const router = useRouter();
   const { id } = useParams(); // Get the blog ID from route parameters
 
-  const [title, setTitle] = useState<string>("");
-  const [slug, setSlug] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
+  const [title, setTitle] = useState<string>('');
+  const [slug, setSlug] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
   const [image, setImage] = useState<File | null>(null);
   const [is_active, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -50,9 +50,9 @@ const EditBlogForm: React.FC = () => {
         setImage(blog.image); // Existing image path
       } catch (error) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to fetch blog data.",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to fetch blog data.',
         });
       }
     };
@@ -76,17 +76,17 @@ const EditBlogForm: React.FC = () => {
       await updateBlog(Number(id), updatedBlog);
 
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Blog updated successfully!",
+        variant: 'success',
+        title: 'Success',
+        description: 'Blog updated successfully!',
       });
 
-      router.push("/admin/blog"); // Redirect to blog list page
+      router.push('/admin/blog'); // Redirect to blog list page
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to update blog.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to update blog.',
       });
     } finally {
       setIsSubmitting(false);
@@ -112,7 +112,12 @@ const EditBlogForm: React.FC = () => {
                   value={title}
                   onChange={(e) => {
                     setTitle(e.target.value);
-                    setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, ""));
+                    setSlug(
+                      e.target.value
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]+/g, '-')
+                        .replace(/^-|-$/g, '')
+                    );
                   }}
                   placeholder="Enter blog title"
                   required
@@ -131,7 +136,12 @@ const EditBlogForm: React.FC = () => {
 
               <div>
                 <label className="text-sm font-medium text-gray-700">Content</label>
-                <ReactQuill value={description} onChange={setDescription} theme="snow" modules={quillModules} />
+                <ReactQuill
+                  value={description}
+                  onChange={setDescription}
+                  theme="snow"
+                  modules={quillModules}
+                />
               </div>
 
               <div>
@@ -141,9 +151,13 @@ const EditBlogForm: React.FC = () => {
                   accept="image/*"
                   onChange={(e) => setImage(e.target.files?.[0] || null)}
                 />
-                {typeof image === "string" && (
+                {typeof image === 'string' && (
                   <div className="mt-2">
-                    <img src={image} alt="Current Image" className="w-32 h-32 object-cover rounded-md" />
+                    <img
+                      src={image}
+                      alt="Current Image"
+                      className="w-32 h-32 object-cover rounded-md"
+                    />
                   </div>
                 )}
               </div>

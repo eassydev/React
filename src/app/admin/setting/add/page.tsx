@@ -1,16 +1,23 @@
-"use client";
+'use client';
 
-import React, { useState, FormEvent } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { createSetting, Setting } from "@/lib/api"; // API function and Setting interface
+import React, { useState, FormEvent } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import { createSetting, Setting } from '@/lib/api'; // API function and Setting interface
 
 const AddSettingForm: React.FC = () => {
-  const [attributeName, setAttributeName] = useState<string>(""); // Attribute Name
-  const [attributeValue, setAttributeValue] = useState<string>(""); // Attribute Value
+  const [attributeName, setAttributeName] = useState<string>(''); // Attribute Name
+  const [attributeValue, setAttributeValue] = useState<string>(''); // Attribute Value
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const { toast } = useToast();
@@ -21,9 +28,9 @@ const AddSettingForm: React.FC = () => {
 
     if (!attributeName || !attributeValue) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Both Attribute Name and Attribute Value are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Both Attribute Name and Attribute Value are required.',
       });
       setIsSubmitting(false);
       return;
@@ -37,18 +44,18 @@ const AddSettingForm: React.FC = () => {
     try {
       await createSetting(newSetting); // Submit the new setting
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Attribute created successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Attribute created successfully.',
       });
 
-      setAttributeName("");
-      setAttributeValue("");
+      setAttributeName('');
+      setAttributeValue('');
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to create attribute.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to create attribute.',
       });
     } finally {
       setIsSubmitting(false);
@@ -98,11 +105,7 @@ const AddSettingForm: React.FC = () => {
           </CardContent>
 
           <CardFooter>
-            <Button
-              className="w-full h-11 bg-primary"
-              disabled={isSubmitting}
-              onClick={onSubmit}
-            >
+            <Button className="w-full h-11 bg-primary" disabled={isSubmitting} onClick={onSubmit}>
               {isSubmitting ? (
                 <div className="flex items-center justify-center space-x-2">
                   <Loader2 className="w-4 h-4 animate-spin" />

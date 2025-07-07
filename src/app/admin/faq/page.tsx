@@ -1,27 +1,34 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from "lucide-react";
-import { fetchFAQs, deleteFAQ } from "@/lib/api"; // Update with correct FAQ API functions
-import Link from "next/link";
+} from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from 'lucide-react';
+import { fetchFAQs, deleteFAQ } from '@/lib/api'; // Update with correct FAQ API functions
+import Link from 'next/link';
 import {
   AlertDialog,
   AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogFooter,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const FAQList = () => {
   const [faqs, setFAQs] = useState<any[]>([]);
@@ -40,7 +47,7 @@ const FAQList = () => {
       setTotalItems(meta.totalItems);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.error("Error fetching FAQs:", error);
+      console.error('Error fetching FAQs:', error);
     }
   };
 
@@ -52,41 +59,39 @@ const FAQList = () => {
     try {
       await deleteFAQ(faq.id);
       toast({
-        title: "Success",
+        title: 'Success',
         description: `FAQ "${faq.question}" deleted successfully.`,
-        variant: "success",
+        variant: 'success',
       });
       fetchFAQsData(pagination.pageIndex + 1, pagination.pageSize); // Refresh the list
     } catch (error) {
       toast({
-        title: "Error",
+        title: 'Error',
         description: `Failed to delete FAQ: ${error}`,
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
 
   const faqColumns: ColumnDef<any>[] = [
-    { accessorKey: "id", header: "ID" },
-    { accessorKey: "question", header: "Question" },
+    { accessorKey: 'id', header: 'ID' },
+    { accessorKey: 'question', header: 'Question' },
     {
-      accessorKey: "status",
-      header: "Status",
+      accessorKey: 'status',
+      header: 'Status',
       cell: (info) => (
         <span
           className={`px-2 py-1 rounded-full text-xs font-medium ${
-            info.getValue() === "active"
-              ? "bg-green-100 text-green-600"
-              : "bg-red-100 text-red-600"
+            info.getValue() === 'active' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
           }`}
         >
-          {info.getValue() === "active" ? "Active" : "Inactive"}
+          {info.getValue() === 'active' ? 'Active' : 'Inactive'}
         </span>
       ),
     },
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="icon">

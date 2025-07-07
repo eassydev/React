@@ -1,27 +1,34 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from "lucide-react";
-import { fetchPermissions, deletePermission, Permission } from "@/lib/api";
-import Link from "next/link";
+} from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from 'lucide-react';
+import { fetchPermissions, deletePermission, Permission } from '@/lib/api';
+import Link from 'next/link';
 import {
   AlertDialog,
   AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogFooter,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const PermissionList = () => {
   const [permissions, setPermissions] = useState<Permission[]>([]);
@@ -38,11 +45,11 @@ const PermissionList = () => {
       setTotalPages(meta.totalPages);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.log(error)
+      console.log(error);
       toast({
-        title: "Error",
-        description: "Failed to load permissions.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to load permissions.',
+        variant: 'destructive',
       });
     }
   };
@@ -55,28 +62,28 @@ const PermissionList = () => {
     try {
       await deletePermission((permission.id ?? '').toString());
       toast({
-        title: "Success",
+        title: 'Success',
         description: `Permission "${permission.permission_name}" deleted.`,
-        variant: "success",
+        variant: 'success',
       });
       loadPermissions(pagination.pageIndex + 1, pagination.pageSize);
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to delete permission.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to delete permission.',
+        variant: 'destructive',
       });
     }
   };
 
   const permissionColumns: ColumnDef<Permission>[] = [
-    { accessorKey: "id", header: "ID" },
-    { accessorKey: "permission_name", header: "Permission Name" },
-    { accessorKey: "route", header: "Route" },
+    { accessorKey: 'id', header: 'ID' },
+    { accessorKey: 'permission_name', header: 'Permission Name' },
+    { accessorKey: 'route', header: 'Route' },
 
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => (
         <div className="flex space-x-2">
           <Link href={`/admin/permission/edit/${row.original.id}`}>

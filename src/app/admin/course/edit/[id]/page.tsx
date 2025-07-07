@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import dynamic from "next/dynamic";
-import { useRouter, useParams } from "next/navigation";
-import { Input } from "@/components/ui/input";
+import React, { useState, useEffect, FormEvent } from 'react';
+import dynamic from 'next/dynamic';
+import { useRouter, useParams } from 'next/navigation';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectTrigger,
   SelectContent,
   SelectValue,
   SelectItem,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardHeader,
@@ -19,39 +19,39 @@ import {
   CardContent,
   CardFooter,
   CardDescription,
-} from "@/components/ui/card";
-import { Save, Loader2, FileText, Globe2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { getCourseById, updateCourse, fetchAllCategories, Course, Category } from "@/lib/api";
-import { Switch } from "@/components/ui/switch";
+} from '@/components/ui/card';
+import { Save, Loader2, FileText, Globe2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { getCourseById, updateCourse, fetchAllCategories, Course, Category } from '@/lib/api';
+import { Switch } from '@/components/ui/switch';
 
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-import "react-quill/dist/quill.snow.css";
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import 'react-quill/dist/quill.snow.css';
 
 const quillModules = {
   toolbar: [
-    [{ header: "1" }, { header: "2" }, { font: [] }],
+    [{ header: '1' }, { header: '2' }, { font: [] }],
     [{ size: [] }],
-    ["bold", "italic", "underline", "strike", "blockquote"],
-    [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
-    ["link", "image", "video"],
-    ["clean"],
+    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+    [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+    ['link', 'image', 'video'],
+    ['clean'],
   ],
 };
 
 const EditCourseForm: React.FC = () => {
   const router = useRouter();
- const { id } = useParams();
+  const { id } = useParams();
   const { toast } = useToast();
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
   const [duration, setDuration] = useState<number | null>(null);
   const [mediaFile, setMediaFile] = useState<File | null>(null);
-  const [moduleType, setModuleType] = useState<"beginner" | "advanced">("beginner");
+  const [moduleType, setModuleType] = useState<'beginner' | 'advanced'>('beginner');
   const [isActive, setIsActive] = useState(true);
   const [categories, setCategories] = useState<Category[]>([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [initialLoading, setInitialLoading] = useState(true);
@@ -68,15 +68,14 @@ const EditCourseForm: React.FC = () => {
         setDescription(course.description || '');
         setDuration(course.length_in_minutes);
         setSelectedCategoryId(course.category_id);
-        setModuleType(course.module_type || "beginner");
+        setModuleType(course.module_type || 'beginner');
         setIsActive(course.is_active || true);
         setCategories(categoryData);
-        
       } catch (error) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load course details.",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load course details.',
         });
       } finally {
         setInitialLoading(false);
@@ -91,9 +90,9 @@ const EditCourseForm: React.FC = () => {
 
     if (!title || !description || !duration) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "All fields are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'All fields are required.',
       });
       return;
     }
@@ -112,16 +111,16 @@ const EditCourseForm: React.FC = () => {
       setIsSubmitting(true);
       await updateCourse(id.toString(), updatedCourse);
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Course updated successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Course updated successfully.',
       });
-      router.push("/admin/course");
+      router.push('/admin/course');
     } catch (error) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: "Failed to update course.",
+        variant: 'error',
+        title: 'Error',
+        description: 'Failed to update course.',
       });
     } finally {
       setIsSubmitting(false);
@@ -158,7 +157,7 @@ const EditCourseForm: React.FC = () => {
                 />
               </div>
 
-              <div className="space-y-2" style={{ height: "270px" }}>
+              <div className="space-y-2" style={{ height: '270px' }}>
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <FileText className="w-4 h-5 text-blue-500" />
                   <span>Description</span>
@@ -168,7 +167,7 @@ const EditCourseForm: React.FC = () => {
                   onChange={setDescription}
                   theme="snow"
                   modules={quillModules}
-                  style={{ height: "200px" }}
+                  style={{ height: '200px' }}
                 />
               </div>
 
@@ -200,7 +199,7 @@ const EditCourseForm: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Duration (minutes)</label>
                 <Input
                   type="number"
-                  value={duration ?? ""}
+                  value={duration ?? ''}
                   onChange={(e) => setDuration(parseInt(e.target.value))}
                   placeholder="Enter duration"
                   required
@@ -208,10 +207,12 @@ const EditCourseForm: React.FC = () => {
               </div>
 
               <div>
-                <label className="text-sm font-medium text-gray-700">Replace Media File (optional)</label>
+                <label className="text-sm font-medium text-gray-700">
+                  Replace Media File (optional)
+                </label>
                 <Input
                   type="file"
-                  accept={"video/*"}
+                  accept={'video/*'}
                   onChange={(e) => {
                     if (e.target.files && e.target.files.length > 0) {
                       setMediaFile(e.target.files[0]);
@@ -229,7 +230,7 @@ const EditCourseForm: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Module Type</label>
                 <Select
                   value={moduleType}
-                  onValueChange={(value: "beginner" | "advanced") => setModuleType(value)}
+                  onValueChange={(value: 'beginner' | 'advanced') => setModuleType(value)}
                 >
                   <SelectTrigger className="bg-white border-gray-200">
                     <SelectValue placeholder="Select Module Type" />

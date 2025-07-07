@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState } from 'react';
 import { Button } from '@/components/ui/button';
@@ -19,17 +19,25 @@ const ImportRateCardForm = () => {
 
   const handleImport = async () => {
     if (!file) {
-      toast({ title: "Error", description: "No file selected.", variant: "destructive" });
+      toast({ title: 'Error', description: 'No file selected.', variant: 'destructive' });
       return;
     }
 
     try {
       setIsImporting(true);
       await updateRateCardsCsv(file);
-       toast({ title: "Success", description: "Rate cards update successfully.", variant: "success" });
-    //   setFile(null);
+      toast({
+        title: 'Success',
+        description: 'Rate cards update successfully.',
+        variant: 'success',
+      });
+      //   setFile(null);
     } catch (error) {
-      toast({ title: "Error", description: "Failed to update rate cards.", variant: "destructive" });
+      toast({
+        title: 'Error',
+        description: 'Failed to update rate cards.',
+        variant: 'destructive',
+      });
     } finally {
       setIsImporting(false);
     }
@@ -53,7 +61,10 @@ const ImportRateCardForm = () => {
                   className="hidden"
                   id="upload-ratecard"
                 />
-                <label htmlFor="upload-ratecard" className="cursor-pointer inline-flex items-center space-x-2">
+                <label
+                  htmlFor="upload-ratecard"
+                  className="cursor-pointer inline-flex items-center space-x-2"
+                >
                   <Upload className="w-4 h-4" />
                   <span>Choose File</span>
                 </label>
@@ -61,7 +72,7 @@ const ImportRateCardForm = () => {
               </div>
 
               <Button onClick={handleImport} disabled={isImporting || !file} className="mt-4">
-                {isImporting ? "Updating..." : "Update"}
+                {isImporting ? 'Updating...' : 'Update'}
               </Button>
             </div>
           </CardContent>

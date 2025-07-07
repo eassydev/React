@@ -1,25 +1,19 @@
-"use client";
-import React, { useState, useEffect, FormEvent } from "react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+'use client';
+import React, { useState, useEffect, FormEvent } from 'react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectItem,
   SelectTrigger,
   SelectContent,
   SelectValue,
-} from "@/components/ui/select";
-import dynamic from "next/dynamic";
+} from '@/components/ui/select';
+import dynamic from 'next/dynamic';
 
-import { Switch } from "@/components/ui/switch";
-import { Save, Loader2, Type, Globe2 } from "lucide-react";
+import { Switch } from '@/components/ui/switch';
+import { Save, Loader2, Type, Globe2 } from 'lucide-react';
 import {
   fetchAllCategories,
   fetchSubCategoriesByCategoryId,
@@ -35,20 +29,20 @@ import {
   Provider,
   fetchServiceSegments,
   ServiceSegment,
-} from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-import { useRouter, usePathname } from "next/navigation";
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-import "react-quill/dist/quill.snow.css";
+} from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter, usePathname } from 'next/navigation';
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import 'react-quill/dist/quill.snow.css';
 
 const quillModules = {
   toolbar: [
-    [{ header: "1" }, { header: "2" }, { font: [] }],
+    [{ header: '1' }, { header: '2' }, { font: [] }],
     [{ size: [] }],
-    ["bold", "italic", "underline", "strike", "blockquote"],
-    [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
-    ["link", "image", "video"],
-    ["clean"],
+    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+    [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+    ['link', 'image', 'video'],
+    ['clean'],
   ],
 };
 
@@ -63,7 +57,7 @@ const EditServiceDescriptionForm: React.FC = () => {
   const { toast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
-  const seriviceid = pathname?.split("/").pop();
+  const seriviceid = pathname?.split('/').pop();
 
   // ------------------------------
   // Form State
@@ -74,20 +68,19 @@ const EditServiceDescriptionForm: React.FC = () => {
   const [filterAttributes, setFilterAttributes] = useState<Attribute[]>([]);
   const [filterAttributeOptions, setFilterAttributeOptions] = useState<FilterAttributeOption[]>([]);
   const [isActive, setIsActive] = useState(true);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
-  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>('');
   const [segments, setSegments] = useState<ServiceSegment[]>([]);
-  const [segmentsId, setsegmentsId] = useState<string>("");
+  const [segmentsId, setsegmentsId] = useState<string>('');
   const [serviceDescriptions, setServiceDescriptions] = useState<
-      { name: string; description: string }[]
-    >([]);
+    { name: string; description: string }[]
+  >([]);
   // Provider-related state
-  const [selectedProviderId, setSelectedProviderId] = useState<string>("");
- 
+  const [selectedProviderId, setSelectedProviderId] = useState<string>('');
+
   // ------------------------------
   // 1. Fetch Categories & RateCard for Edit
   // ------------------------------
-
 
   // ------------------------------
   // 1. Fetch Categories & RateCard for Edit
@@ -102,8 +95,8 @@ const EditServiceDescriptionForm: React.FC = () => {
         // If editing, fetch rate card data
         if (seriviceid) {
           const serviceDetail = await fetchServiceDetailById(seriviceid.toString());
-          setSelectedCategoryId(serviceDetail.category_id?.toString() || "");
-          setSelectedSubcategoryId(serviceDetail.subcategory_id?.toString() || "");
+          setSelectedCategoryId(serviceDetail.category_id?.toString() || '');
+          setSelectedSubcategoryId(serviceDetail.subcategory_id?.toString() || '');
           setIsActive(serviceDetail.active);
           setServiceDescriptions(serviceDetail.serviceDescriptions || []);
 
@@ -118,28 +111,28 @@ const EditServiceDescriptionForm: React.FC = () => {
                       serviceDetail.subcategory_id || null,
                       attr.filter_attribute_id
                     );
-                    console.log("erviceDetail.subcategory_id",segmentData)
+                    console.log('erviceDetail.subcategory_id', segmentData);
 
                     setSegments(segmentData);
-                    setsegmentsId(serviceDetail.segment_id?.toString() || "");
-
+                    setsegmentsId(serviceDetail.segment_id?.toString() || '');
                   }
                   const options = await fetchFilterOptionsByAttributeId(attr.filter_attribute_id);
                   return {
                     attributeId: attr.filter_attribute_id.toString(),
-                    optionId: attr.filter_option_id?.toString() || "",
+                    optionId: attr.filter_option_id?.toString() || '',
                     options: options.map((o: any) => ({
                       id: o.id.toString(),
                       value: o.value,
                     })),
                   };
-
-                
                 } catch (error) {
-                  console.error(`Error fetching options for attribute ${attr.filter_attribute_id}:`, error);
+                  console.error(
+                    `Error fetching options for attribute ${attr.filter_attribute_id}:`,
+                    error
+                  );
                   return {
                     attributeId: attr.filter_attribute_id.toString(),
-                    optionId: attr.filter_option_id?.toString() || "",
+                    optionId: attr.filter_option_id?.toString() || '',
                     options: [],
                   };
                 }
@@ -154,17 +147,17 @@ const EditServiceDescriptionForm: React.FC = () => {
           }
 
           // Fetch filter attributes
-          const subcategoryId = serviceDetail.subcategory_id !== null ? serviceDetail.subcategory_id : undefined;
+          const subcategoryId =
+            serviceDetail.subcategory_id !== null ? serviceDetail.subcategory_id : undefined;
           await fetchFilters(serviceDetail.category_id, subcategoryId);
 
           // Fetch segments if any
-          
         }
       } catch (error) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load data.",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load data.',
         });
       }
     };
@@ -172,11 +165,10 @@ const EditServiceDescriptionForm: React.FC = () => {
     fetchData();
   }, [seriviceid, toast]);
 
-  
   // ------------------------------
   // 3. Load the Selected Provider (for Edit Preselect)
   // ------------------------------
- 
+
   // ------------------------------
   // Helpers for Subcategory & Filter Attributes
   // ------------------------------
@@ -207,17 +199,17 @@ const EditServiceDescriptionForm: React.FC = () => {
           setSubcategories(subcategoryData);
           // Only reset selectedSubcategoryId if it doesn't match any subcategory in the new list
           if (!subcategoryData.some((sub) => sub.id?.toString() === selectedSubcategoryId)) {
-            setSelectedSubcategoryId("");
+            setSelectedSubcategoryId('');
           }
         } catch (error) {
           setSubcategories([]);
           // Only reset selectedSubcategoryId if there's an error and no subcategories are fetched
-          setSelectedSubcategoryId("");
+          setSelectedSubcategoryId('');
         }
       })();
     } else {
       setSubcategories([]);
-      setSelectedSubcategoryId("");
+      setSelectedSubcategoryId('');
     }
   }, [selectedCategoryId]);
 
@@ -254,10 +246,7 @@ const EditServiceDescriptionForm: React.FC = () => {
   // Handlers for Dynamic Filters
   // ------------------------------
   const handleAddFilterAttributeOption = () => {
-    setFilterAttributeOptions((prev) => [
-      ...prev,
-      { attributeId: "", optionId: "" },
-    ]);
+    setFilterAttributeOptions((prev) => [...prev, { attributeId: '', optionId: '' }]);
   };
 
   const handleRemoveFilterAttributeOption = (index: number) => {
@@ -266,13 +255,13 @@ const EditServiceDescriptionForm: React.FC = () => {
 
   const handleUpdateFilterAttributeOption = async (
     index: number,
-    key: "attributeId" | "optionId",
+    key: 'attributeId' | 'optionId',
     value: string
   ) => {
     const updated = [...filterAttributeOptions];
     updated[index][key] = value;
 
-    if (key === "attributeId") {
+    if (key === 'attributeId') {
       try {
         const options = await fetchFilterOptionsByAttributeId(value);
         updated[index].options = options.map((option) => ({
@@ -280,17 +269,20 @@ const EditServiceDescriptionForm: React.FC = () => {
           value: option.value,
         }));
         const loadServiceDetails = async () => {
-                  try {
-                    const segmentData = await fetchServiceSegments(selectedCategoryId,
-                      selectedSubcategoryId ? selectedSubcategoryId : null,value);
-                    setSegments(segmentData);
-                  } catch (error) {
-                    setSegments([]);
-                  }
-                };
-                loadServiceDetails();
+          try {
+            const segmentData = await fetchServiceSegments(
+              selectedCategoryId,
+              selectedSubcategoryId ? selectedSubcategoryId : null,
+              value
+            );
+            setSegments(segmentData);
+          } catch (error) {
+            setSegments([]);
+          }
+        };
+        loadServiceDetails();
       } catch (error) {
-        console.error("Error fetching filter options:", error);
+        console.error('Error fetching filter options:', error);
         updated[index].options = [];
       }
     }
@@ -298,15 +290,13 @@ const EditServiceDescriptionForm: React.FC = () => {
     setFilterAttributeOptions(updated);
   };
 
-
-
   const handleAddServiceDescription = () => {
-    setServiceDescriptions((prev) => [...prev, { name: "", description: "" }]);
+    setServiceDescriptions((prev) => [...prev, { name: '', description: '' }]);
   };
 
   const handleUpdateServiceDescription = (
     index: number,
-    key: "name" | "description",
+    key: 'name' | 'description',
     value: string
   ) => {
     const updated = [...serviceDescriptions];
@@ -340,20 +330,19 @@ const EditServiceDescriptionForm: React.FC = () => {
     };
 
     try {
-      
       const response = await updateServiceDetail(seriviceid!.toString(), serviceDetailsData);
       toast({
-        variant: "success",
-        title: "Success",
+        variant: 'success',
+        title: 'Success',
         description: response.message,
       });
 
       // router.push("/admin/rate-card");
     } catch (error) {
-      console.log("rateCardData", error);
+      console.log('rateCardData', error);
       toast({
-        variant: "error",
-        title: "Error",
+        variant: 'error',
+        title: 'Error',
         description: `${error}`,
       });
     } finally {
@@ -378,10 +367,11 @@ const EditServiceDescriptionForm: React.FC = () => {
               <div className="h-8 w-1 bg-blue-600 rounded-full" />
               <div>
                 <CardTitle className="text-xl text-gray-800">
-                  {seriviceid ? "Edit Rate Card" : "New Rate Card"}
+                  {seriviceid ? 'Edit Rate Card' : 'New Rate Card'}
                 </CardTitle>
                 <CardDescription className="text-gray-500">
-                  Fill in the details below {seriviceid ? "to update" : "to create"} a Service detail
+                  Fill in the details below {seriviceid ? 'to update' : 'to create'} a Service
+                  detail
                 </CardDescription>
               </div>
             </div>
@@ -390,7 +380,6 @@ const EditServiceDescriptionForm: React.FC = () => {
           <CardContent className="pt-6">
             <form onSubmit={onSubmit} className="space-y-6">
               {/* Rate Card Name */}
-             
 
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
@@ -407,7 +396,8 @@ const EditServiceDescriptionForm: React.FC = () => {
                   <SelectContent>
                     {categories.map(
                       (category) =>
-                        category?.id && category?.name && (
+                        category?.id &&
+                        category?.name && (
                           <SelectItem key={category.id} value={category.id.toString()}>
                             {category.name}
                           </SelectItem>
@@ -416,36 +406,37 @@ const EditServiceDescriptionForm: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
-{/* Subcategory Selector */}
-{subcategories.length > 0 && (
-  <div className="space-y-2">
-    <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
-      <Globe2 className="w-4 h-4 text-blue-500" />
-      <span>Select Subcategory</span>
-    </label>
-    <Select
-      value={selectedSubcategoryId} // Ensure this is a string
-      onValueChange={(value) => setSelectedSubcategoryId(value)} // value is already a string
-    >
-      <SelectTrigger className="bg-white border-gray-200">
-        <SelectValue placeholder="Select a subcategory" />
-      </SelectTrigger>
-      <SelectContent>
-        {subcategories.map(
-          (subcategory) =>
-            subcategory?.id && subcategory?.name && (
-              <SelectItem
-                key={subcategory.id.toString()} // Ensure key is a string
-                value={subcategory.id.toString()} // Ensure value is a string
-              >
-                {subcategory.name}
-              </SelectItem>
-            )
-        )}
-      </SelectContent>
-    </Select>
-  </div>
-)}
+              {/* Subcategory Selector */}
+              {subcategories.length > 0 && (
+                <div className="space-y-2">
+                  <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                    <Globe2 className="w-4 h-4 text-blue-500" />
+                    <span>Select Subcategory</span>
+                  </label>
+                  <Select
+                    value={selectedSubcategoryId} // Ensure this is a string
+                    onValueChange={(value) => setSelectedSubcategoryId(value)} // value is already a string
+                  >
+                    <SelectTrigger className="bg-white border-gray-200">
+                      <SelectValue placeholder="Select a subcategory" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subcategories.map(
+                        (subcategory) =>
+                          subcategory?.id &&
+                          subcategory?.name && (
+                            <SelectItem
+                              key={subcategory.id.toString()} // Ensure key is a string
+                              value={subcategory.id.toString()} // Ensure value is a string
+                            >
+                              {subcategory.name}
+                            </SelectItem>
+                          )
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
+              )}
               {/* Dynamic Filter Attribute Options */}
               {filterAttributes.length > 0 && (
                 <div className="space-y-2">
@@ -454,7 +445,9 @@ const EditServiceDescriptionForm: React.FC = () => {
                       {/* Attribute Selector */}
                       <Select
                         value={pair.attributeId}
-                        onValueChange={(value) => handleUpdateFilterAttributeOption(index, "attributeId", value)}
+                        onValueChange={(value) =>
+                          handleUpdateFilterAttributeOption(index, 'attributeId', value)
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select Attribute" />
@@ -472,7 +465,9 @@ const EditServiceDescriptionForm: React.FC = () => {
                       {/* Option Selector */}
                       <Select
                         value={pair.optionId}
-                        onValueChange={(value) => handleUpdateFilterAttributeOption(index, "optionId", value)}
+                        onValueChange={(value) =>
+                          handleUpdateFilterAttributeOption(index, 'optionId', value)
+                        }
                       >
                         <SelectTrigger>
                           <SelectValue placeholder="Select Option" />
@@ -502,8 +497,6 @@ const EditServiceDescriptionForm: React.FC = () => {
                 </div>
               )}
 
-              
-
               {/* Segment Selector */}
               {segments.length > 0 && (
                 <div className="space-y-2">
@@ -525,8 +518,6 @@ const EditServiceDescriptionForm: React.FC = () => {
                 </div>
               )}
 
-
-
               <div>
                 <Button type="button" onClick={handleAddServiceDescription}>
                   Add Service Description
@@ -537,13 +528,13 @@ const EditServiceDescriptionForm: React.FC = () => {
                       value={desc.name}
                       placeholder="Title"
                       onChange={(e) =>
-                        handleUpdateServiceDescription(index, "name", e.target.value)
+                        handleUpdateServiceDescription(index, 'name', e.target.value)
                       }
                     />
                     <ReactQuill
                       value={desc.description}
-                      onChange={(value:any) =>
-                        handleUpdateServiceDescription(index, "description", value)
+                      onChange={(value: any) =>
+                        handleUpdateServiceDescription(index, 'description', value)
                       }
                       modules={quillModules}
                     />
@@ -576,7 +567,11 @@ const EditServiceDescriptionForm: React.FC = () => {
 
               {/* Submit Button */}
               <div className="flex space-x-3 pt-6">
-                <Button className="w-100 flex-1 h-11 bg-primary" disabled={isSubmitting} type="submit">
+                <Button
+                  className="w-100 flex-1 h-11 bg-primary"
+                  disabled={isSubmitting}
+                  type="submit"
+                >
                   {isSubmitting ? (
                     <div className="flex items-center justify-center space-x-2">
                       <Loader2 className="w-4 h-4 animate-spin" />

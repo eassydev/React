@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import React, { useState, FormEvent } from "react";
-import { useRouter } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { createCountry, Country } from "@/lib/api";
+import React, { useState, FormEvent } from 'react';
+import { useRouter } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import { createCountry, Country } from '@/lib/api';
 
 const AddCountryForm: React.FC = () => {
-  const [name, setName] = useState<string>("");
+  const [name, setName] = useState<string>('');
   const [is_active, setIsActive] = useState<boolean>(true); // Active switch state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -24,9 +24,9 @@ const AddCountryForm: React.FC = () => {
 
     if (!name) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Country name is required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Country name is required.',
       });
       setIsSubmitting(false);
       return;
@@ -42,18 +42,18 @@ const AddCountryForm: React.FC = () => {
       await createCountry(newCountry);
 
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Country created successfully!",
+        variant: 'success',
+        title: 'Success',
+        description: 'Country created successfully!',
       });
 
       // Redirect to country list
-      router.push("/admin/country");
+      router.push('/admin/country');
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to create country.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to create country.',
       });
     } finally {
       setIsSubmitting(false);
@@ -69,7 +69,9 @@ const AddCountryForm: React.FC = () => {
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
           <CardHeader>
             <CardTitle>New Country</CardTitle>
-            <CardDescription>Fill in the details below to create a new country entry.</CardDescription>
+            <CardDescription>
+              Fill in the details below to create a new country entry.
+            </CardDescription>
           </CardHeader>
 
           <CardContent>

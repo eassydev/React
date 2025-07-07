@@ -1,22 +1,22 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { fetchWalletOfferById, updateWalletOffer, WalletOffer } from "@/lib/api"; // Import API
+import React, { useState, useEffect, FormEvent } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import { fetchWalletOfferById, updateWalletOffer, WalletOffer } from '@/lib/api'; // Import API
 
 const WalletOfferEditForm: React.FC = () => {
-  const [eventType, setEventType] = useState<string>("sign_up");
-  const [esCash, setEsCash] = useState<string>("");
-  const [startDate, setStartDate] = useState<string>("");
-  const [endDate, setEndDate] = useState<string>("");
+  const [eventType, setEventType] = useState<string>('sign_up');
+  const [esCash, setEsCash] = useState<string>('');
+  const [startDate, setStartDate] = useState<string>('');
+  const [endDate, setEndDate] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
-  const [orderAmount, setOrderAmount] = useState<string>("");
+  const [orderAmount, setOrderAmount] = useState<string>('');
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [isLoading, setIsLoading] = useState<boolean>(true);
@@ -26,7 +26,7 @@ const WalletOfferEditForm: React.FC = () => {
   const pathname = usePathname();
 
   // Extract WalletOffer ID from URL
-  const walletOfferId = pathname?.split("/").pop();
+  const walletOfferId = pathname?.split('/').pop();
 
   // Load Wallet Offer Data
   useEffect(() => {
@@ -39,12 +39,12 @@ const WalletOfferEditForm: React.FC = () => {
           setStartDate(offer.start_date);
           setEndDate(offer.end_date);
           setIsActive(offer.is_active);
-          setOrderAmount(offer.order_amount?.toString() || "");
+          setOrderAmount(offer.order_amount?.toString() || '');
         } catch (error: any) {
           toast({
-            variant: "error",
-            title: "Error",
-            description: "Failed to load wallet offer details.",
+            variant: 'error',
+            title: 'Error',
+            description: 'Failed to load wallet offer details.',
           });
         } finally {
           setIsLoading(false);
@@ -61,16 +61,16 @@ const WalletOfferEditForm: React.FC = () => {
 
     if (!esCash || !startDate || !endDate) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "All required fields must be filled.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'All required fields must be filled.',
       });
       setIsSubmitting(false);
       return;
     }
 
     const updatedOffer: WalletOffer = {
-      event_type: eventType as WalletOffer["event_type"],
+      event_type: eventType as WalletOffer['event_type'],
       es_cash: parseFloat(esCash),
       start_date: startDate,
       end_date: endDate,
@@ -81,16 +81,16 @@ const WalletOfferEditForm: React.FC = () => {
     try {
       await updateWalletOffer(parseInt(walletOfferId!), updatedOffer);
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Wallet offer updated successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Wallet offer updated successfully.',
       });
-      router.push("/admin/wallet-offer"); // Redirect on success
+      router.push('/admin/wallet-offer'); // Redirect on success
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to update wallet offer.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to update wallet offer.',
       });
     } finally {
       setIsSubmitting(false);
@@ -185,11 +185,7 @@ const WalletOfferEditForm: React.FC = () => {
 
               {/* Active Status */}
               <div className="flex items-center space-x-2">
-                <Switch
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
-                  className="bg-primary"
-                />
+                <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
                 <span className="text-sm text-gray-700">Active</span>
               </div>
 

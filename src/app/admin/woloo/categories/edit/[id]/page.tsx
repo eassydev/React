@@ -1,17 +1,17 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { updateWolooCategory, fetchWolooCategories, WolooCategory } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save } from "lucide-react";
-import Link from "next/link";
+import React, { useState, useEffect } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import { updateWolooCategory, fetchWolooCategories, WolooCategory } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import { ArrowLeft, Save } from 'lucide-react';
+import Link from 'next/link';
 
 const EditWolooCategory = () => {
   const router = useRouter();
@@ -20,9 +20,9 @@ const EditWolooCategory = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [formData, setFormData] = useState<WolooCategory>({
-    name: "",
-    service_time: "",
-    description: "",
+    name: '',
+    service_time: '',
+    description: '',
     active: true,
     image: null,
   });
@@ -36,30 +36,30 @@ const EditWolooCategory = () => {
         // Since we don't have a single category fetch API, we'll fetch all and find the one we need
         const { data } = await fetchWolooCategories(1, 1000, 'all', '');
         const category = data.find((cat: WolooCategory) => cat.id === categoryId);
-        
+
         if (category) {
           setFormData({
-            name: category.name || "",
-            service_time: category.service_time || "",
-            description: category.description || "",
+            name: category.name || '',
+            service_time: category.service_time || '',
+            description: category.description || '',
             active: category.active || false,
             image: null, // Don't set existing image as File object
           });
         } else {
           toast({
-            title: "Error",
-            description: "Category not found.",
-            variant: "destructive",
+            title: 'Error',
+            description: 'Category not found.',
+            variant: 'destructive',
           });
-          router.push("/admin/woloo/categories");
+          router.push('/admin/woloo/categories');
         }
       } catch (error) {
         toast({
-          title: "Error",
-          description: "Failed to fetch category data.",
-          variant: "destructive",
+          title: 'Error',
+          description: 'Failed to fetch category data.',
+          variant: 'destructive',
         });
-        router.push("/admin/woloo/categories");
+        router.push('/admin/woloo/categories');
       } finally {
         setIsLoading(false);
       }
@@ -72,35 +72,35 @@ const EditWolooCategory = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSwitchChange = (checked: boolean) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      active: checked
+      active: checked,
     }));
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      image: file
+      image: file,
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       toast({
-        title: "Validation Error",
-        description: "Category name is required.",
-        variant: "destructive",
+        title: 'Validation Error',
+        description: 'Category name is required.',
+        variant: 'destructive',
       });
       return;
     }
@@ -109,15 +109,15 @@ const EditWolooCategory = () => {
       setIsSubmitting(true);
       await updateWolooCategory(categoryId, formData);
       toast({
-        title: "Success",
-        description: "Woloo category updated successfully.",
+        title: 'Success',
+        description: 'Woloo category updated successfully.',
       });
-      router.push("/admin/woloo/categories");
+      router.push('/admin/woloo/categories');
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to update category.",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to update category.',
+        variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
@@ -203,11 +203,7 @@ const EditWolooCategory = () => {
             </div>
 
             <div className="flex items-center space-x-2">
-              <Switch
-                id="active"
-                checked={formData.active}
-                onCheckedChange={handleSwitchChange}
-              />
+              <Switch id="active" checked={formData.active} onCheckedChange={handleSwitchChange} />
               <Label htmlFor="active">Active</Label>
             </div>
 
@@ -219,7 +215,7 @@ const EditWolooCategory = () => {
               </Link>
               <Button type="submit" disabled={isSubmitting}>
                 <Save className="w-4 h-4 mr-2" />
-                {isSubmitting ? "Updating..." : "Update Category"}
+                {isSubmitting ? 'Updating...' : 'Update Category'}
               </Button>
             </div>
           </form>

@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+} from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableHead,
@@ -17,26 +17,26 @@ import {
   TableBody,
   TableRow,
   TableCell,
-} from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, Edit, Trash2 } from "lucide-react";
-import { fetchCarts, deleteCart, exportLiveCart } from "@/lib/api";
-import Link from "next/link";
+} from '@/components/ui/table';
+import { ChevronLeft, ChevronRight, Edit, Trash2 } from 'lucide-react';
+import { fetchCarts, deleteCart, exportLiveCart } from '@/lib/api';
+import Link from 'next/link';
 import {
   AlertDialog,
   AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogFooter,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
-import { DateRange } from "react-date-range";
-import "react-date-range/dist/styles.css"; // Main style file
-import "react-date-range/dist/theme/default.css"; // Theme css
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { DateRange } from 'react-date-range';
+import 'react-date-range/dist/styles.css'; // Main style file
+import 'react-date-range/dist/theme/default.css'; // Theme css
 
 const CartList = () => {
   const [carts, setCarts] = useState<any[]>([]);
-    const [isExporting, setIsExporting] = useState(false);
-  
+  const [isExporting, setIsExporting] = useState(false);
+
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 50,
@@ -48,7 +48,7 @@ const CartList = () => {
     {
       startDate: new Date(),
       endDate: new Date(),
-      key: "selection",
+      key: 'selection',
     },
   ]);
   const [isCalendarOpen, setIsCalendarOpen] = useState(false);
@@ -63,7 +63,7 @@ const CartList = () => {
       setTotalItems(meta.totalItems);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.error("Error fetching carts:", error);
+      console.error('Error fetching carts:', error);
     }
   };
 
@@ -75,80 +75,74 @@ const CartList = () => {
     try {
       await deleteCart(cart.id);
       toast({
-        title: "Success",
+        title: 'Success',
         description: `Cart ID "${cart.id}" deleted successfully.`,
-        variant: "success",
+        variant: 'success',
       });
       fetchCartData(pagination.pageIndex + 1, pagination.pageSize);
     } catch (error) {
       toast({
-        title: "Error",
+        title: 'Error',
         description: `Failed to delete cart: ${error}`,
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
 
-
   const handleExport = async () => {
-      try {
-        setIsExporting(true);
-        const startDate = dateRange[0].startDate.toISOString().split("T")[0];
-        const endDate = dateRange[0].endDate.toISOString().split("T")[0];
-        await exportLiveCart(startDate,endDate);
-        setIsExporting(true);
-      } catch (error:any) {
-        console.error("Error exporting categories:", error);
-       } finally {
-        setIsExporting(false);
-      }
+    try {
+      setIsExporting(true);
+      const startDate = dateRange[0].startDate.toISOString().split('T')[0];
+      const endDate = dateRange[0].endDate.toISOString().split('T')[0];
+      await exportLiveCart(startDate, endDate);
+      setIsExporting(true);
+    } catch (error: any) {
+      console.error('Error exporting categories:', error);
+    } finally {
+      setIsExporting(false);
     }
-
+  };
 
   const cartColumns: ColumnDef<any>[] = [
     {
-      accessorKey: "sno", // Placeholder key for S.No
-      header: "S.No",
+      accessorKey: 'sno', // Placeholder key for S.No
+      header: 'S.No',
       cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
     },
     {
-      accessorKey: "user.first_name",
-      header: "User Name",
+      accessorKey: 'user.first_name',
+      header: 'User Name',
       cell: ({ row }) => {
         const user = row.original.user;
-        return user
-          ? `${user.first_name || ""} ${user.last_name || ""}`.trim()
-          : "N/A";
+        return user ? `${user.first_name || ''} ${user.last_name || ''}`.trim() : 'N/A';
       },
     },
     {
-      accessorKey: "provider.first_name",
-      header: "Provider Name",
+      accessorKey: 'provider.first_name',
+      header: 'Provider Name',
       cell: ({ row }) => {
         const provider = row.original.provider;
-        return provider
-          ? `${provider.first_name || ""} ${provider.last_name || ""}`.trim()
-          : "N/A";
+        return provider ? `${provider.first_name || ''} ${provider.last_name || ''}`.trim() : 'N/A';
       },
     },
-    { accessorKey: "service_type", header: "Service Type" },
+    { accessorKey: 'service_type', header: 'Service Type' },
     {
-      accessorKey: "service",
-      header: "Service",
+      accessorKey: 'service',
+      header: 'Service',
       cell: ({ row }) => {
         const rateCard = row.original.rateCard;
-        if (!rateCard) return "N/A";
-    
-        const categoryName = rateCard.category?.name || "Unknown Category";
-        const subcategoryName = rateCard.subcategory?.name || "Unknown Subcategory";
-    
+        if (!rateCard) return 'N/A';
+
+        const categoryName = rateCard.category?.name || 'Unknown Category';
+        const subcategoryName = rateCard.subcategory?.name || 'Unknown Subcategory';
+
         // Extract filter attributes
         const attributes =
           rateCard.attributes?.map(
-            (attr:any) =>
-              `${attr.filterAttribute?.name || "Unknown"}: ${attr.filterOption?.value || "N/A"}`
+            (attr: any) =>
+              `${attr.filterAttribute?.name || 'Unknown'}: ${attr.filterOption?.value || 'N/A'}`
           ) || [];
-    
+
         return (
           <div className="space-y-1">
             <p>
@@ -161,7 +155,7 @@ const CartList = () => {
               <div>
                 <span className="font-bold">Attributes:</span>
                 <ul className="list-disc list-inside">
-                  {attributes.map((attr:any, index:any) => (
+                  {attributes.map((attr: any, index: any) => (
                     <li key={index} className="text-sm text-gray-600">
                       {attr}
                     </li>
@@ -173,23 +167,21 @@ const CartList = () => {
         );
       },
     },
-    
+
     {
-      accessorKey: "quantity",
-      header: "Quantity",
-      cell: ({ row }) => row.original.quantity || "N/A",
+      accessorKey: 'quantity',
+      header: 'Quantity',
+      cell: ({ row }) => row.original.quantity || 'N/A',
     },
     {
-      accessorKey: "total_price",
-      header: "Total Price",
+      accessorKey: 'total_price',
+      header: 'Total Price',
       cell: ({ row }) =>
-        row.original.total_price !== undefined
-          ? `₹${row.original.total_price}`
-          : "N/A",
+        row.original.total_price !== undefined ? `₹${row.original.total_price}` : 'N/A',
     },
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="icon">
@@ -209,10 +201,7 @@ const CartList = () => {
                 <p>Are you sure you want to delete cart ID: {row.original.id}?</p>
               </AlertDialogHeader>
               <AlertDialogFooter>
-                <Button
-                  variant="secondary"
-                  onClick={() => handleCartDelete(row.original)}
-                >
+                <Button variant="secondary" onClick={() => handleCartDelete(row.original)}>
                   Yes, Delete
                 </Button>
                 <Button variant="outline">Cancel</Button>
@@ -240,31 +229,31 @@ const CartList = () => {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">Cart List</h1>
           {isCalendarOpen && (
-              <div
-                className="absolute z-50 bg-white shadow-lg mt-2"
-                style={{
-                  top: "20%",
-                  left: "40%",
-                  right: "0",
-                  maxWidth: "500px",
-                  margin: "auto",
+            <div
+              className="absolute z-50 bg-white shadow-lg mt-2"
+              style={{
+                top: '20%',
+                left: '40%',
+                right: '0',
+                maxWidth: '500px',
+                margin: 'auto',
+              }}
+            >
+              <DateRange
+                ranges={dateRange}
+                months={2} // Allow 2 months to be visible
+                direction="horizontal" // Arrange months horizontally
+                onChange={(ranges: any) => {
+                  const selectedRange = ranges.selection;
+                  setDateRange([selectedRange]);
+                  if (selectedRange.startDate && selectedRange.endDate) {
+                    setIsCalendarOpen(false); // Close calendar when end date is selected
+                  }
                 }}
-              >
-                <DateRange
-                  ranges={dateRange}
-                  months={2} // Allow 2 months to be visible
-                  direction="horizontal" // Arrange months horizontally
-                  onChange={(ranges: any) => {
-                    const selectedRange = ranges.selection;
-                    setDateRange([selectedRange]);
-                    if (selectedRange.startDate && selectedRange.endDate) {
-                      setIsCalendarOpen(false); // Close calendar when end date is selected
-                    }
-                  }}
-                  rangeColors={["#4A90E2"]}
-                />
-              </div>
-            )}
+                rangeColors={['#4A90E2']}
+              />
+            </div>
+          )}
           <div className="relative space-x-6">
             <input
               type="text"
@@ -273,14 +262,14 @@ const CartList = () => {
               onClick={() => setIsCalendarOpen((prev) => !prev)}
               readOnly
             />
-            
+
             <Button variant="default" onClick={handleExport} disabled={isExporting}>
               {isExporting ? (
                 <div className="flex items-center">
                   <span className="loader mr-2"></span> Exporting...
                 </div>
               ) : (
-                "Export to XLS"
+                'Export to XLS'
               )}
             </Button>
           </div>
@@ -300,10 +289,7 @@ const CartList = () => {
                       <TableHead key={header.id} className="text-left">
                         {header.isPlaceholder
                           ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
-                            )}
+                          : flexRender(header.column.columnDef.header, header.getContext())}
                       </TableHead>
                     ))}
                   </TableRow>
@@ -316,20 +302,14 @@ const CartList = () => {
                     <TableRow key={row.id}>
                       {row.getVisibleCells().map((cell) => (
                         <TableCell key={cell.id}>
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext()
-                          )}
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
                         </TableCell>
                       ))}
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell
-                      colSpan={cartColumns.length}
-                      className="h-24 text-center"
-                    >
+                    <TableCell colSpan={cartColumns.length} className="h-24 text-center">
                       No carts found.
                     </TableCell>
                   </TableRow>

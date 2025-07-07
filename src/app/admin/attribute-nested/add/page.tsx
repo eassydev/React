@@ -1,21 +1,15 @@
-"use client";
-import React, { useState, useEffect, FormEvent } from "react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+'use client';
+import React, { useState, useEffect, FormEvent } from 'react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectItem,
   SelectTrigger,
   SelectContent,
   SelectValue,
-} from "@/components/ui/select";
-import { Loader2 } from "lucide-react";
+} from '@/components/ui/select';
+import { Loader2 } from 'lucide-react';
 import {
   fetchAllCategories,
   fetchSubCategoriesByCategoryId,
@@ -27,8 +21,8 @@ import {
   Attribute,
   createServiceDetail,
   AttributeOption,
-} from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
+} from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 const AttributeNestedForm: React.FC = () => {
   const { toast } = useToast();
@@ -37,16 +31,16 @@ const AttributeNestedForm: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [attributes, setAttributes] = useState<Attribute[]>([]);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
-  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>("");
-  
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>('');
+
   // For first level attribute (Brand)
-  const [firstLevelAttributeId, setFirstLevelAttributeId] = useState<string>("");
+  const [firstLevelAttributeId, setFirstLevelAttributeId] = useState<string>('');
   const [firstLevelOptions, setFirstLevelOptions] = useState<AttributeOption[]>([]);
-  const [selectedFirstLevelOption, setSelectedFirstLevelOption] = useState<string>("");
-  
+  const [selectedFirstLevelOption, setSelectedFirstLevelOption] = useState<string>('');
+
   // For second level attribute (Model)
-  const [secondLevelAttributeId, setSecondLevelAttributeId] = useState<string>("");
+  const [secondLevelAttributeId, setSecondLevelAttributeId] = useState<string>('');
   const [secondLevelOptions, setSecondLevelOptions] = useState<AttributeOption[]>([]);
   const [selectedSecondLevelOptions, setSelectedSecondLevelOptions] = useState<string[]>([]);
 
@@ -57,9 +51,9 @@ const AttributeNestedForm: React.FC = () => {
         setCategories(categoryData);
       } catch {
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load categories.",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load categories.',
         });
       }
     };
@@ -105,20 +99,18 @@ const AttributeNestedForm: React.FC = () => {
         try {
           const options = await fetchFilterOptionsByAttributeId(firstLevelAttributeId);
           setFirstLevelOptions(options);
-          setSelectedFirstLevelOption(""); // Reset selection when attribute changes
+          setSelectedFirstLevelOption(''); // Reset selection when attribute changes
         } catch {
           toast({
-            variant: "error",
-            title: "Error",
-            description: "Failed to load options.",
+            variant: 'error',
+            title: 'Error',
+            description: 'Failed to load options.',
           });
         }
       }
     };
     loadFirstLevelOptions();
   }, [firstLevelAttributeId, toast]);
-
- 
 
   useEffect(() => {
     const loadSecondLevelOptions = async () => {
@@ -129,9 +121,9 @@ const AttributeNestedForm: React.FC = () => {
           setSelectedSecondLevelOptions([]); // Reset selection when attribute changes
         } catch {
           toast({
-            variant: "error",
-            title: "Error",
-            description: "Failed to load options.",
+            variant: 'error',
+            title: 'Error',
+            description: 'Failed to load options.',
           });
         }
       }
@@ -140,10 +132,8 @@ const AttributeNestedForm: React.FC = () => {
   }, [secondLevelAttributeId, toast]);
 
   const handleSecondLevelOptionChange = (optionId: string) => {
-    setSelectedSecondLevelOptions(prev => 
-      prev.includes(optionId) 
-        ? prev.filter(id => id !== optionId) 
-        : [...prev, optionId]
+    setSelectedSecondLevelOptions((prev) =>
+      prev.includes(optionId) ? prev.filter((id) => id !== optionId) : [...prev, optionId]
     );
   };
 
@@ -153,27 +143,27 @@ const AttributeNestedForm: React.FC = () => {
 
     const serviceDetailsData = {
       category_id: selectedCategoryId,
-      subcategory_id: selectedSubcategoryId || "",
+      subcategory_id: selectedSubcategoryId || '',
       first_level_attribute_id: firstLevelAttributeId,
       first_level_option_id: selectedFirstLevelOption,
       second_level_attribute_id: secondLevelAttributeId,
       second_level_option_ids: selectedSecondLevelOptions,
     };
 
-    console.log("serviceDetailsData",serviceDetailsData)
+    console.log('serviceDetailsData', serviceDetailsData);
 
     try {
       const response = await createNestedFilter(serviceDetailsData);
       toast({
-        variant: "success",
-        title: "Success",
+        variant: 'success',
+        title: 'Success',
         description: response.message,
       });
     } catch {
       toast({
-        variant: "error",
-        title: "Error",
-        description: "Failed to save service details.",
+        variant: 'error',
+        title: 'Error',
+        description: 'Failed to save service details.',
       });
     } finally {
       setIsSubmitting(false);
@@ -234,8 +224,8 @@ const AttributeNestedForm: React.FC = () => {
               )}
 
               {firstLevelOptions.length > 0 && (
-                <Select 
-                  value={selectedFirstLevelOption} 
+                <Select
+                  value={selectedFirstLevelOption}
                   onValueChange={setSelectedFirstLevelOption}
                 >
                   <SelectTrigger>
@@ -251,8 +241,7 @@ const AttributeNestedForm: React.FC = () => {
                 </Select>
               )}
 
-
-{attributes.length > 0 && (
+              {attributes.length > 0 && (
                 <Select value={secondLevelAttributeId} onValueChange={setSecondLevelAttributeId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select Second Level Attribute (e.g., Model)" />
@@ -266,7 +255,7 @@ const AttributeNestedForm: React.FC = () => {
                   </SelectContent>
                 </Select>
               )}
-              
+
               {secondLevelAttributeId && (
                 <div className="space-y-2">
                   <label className="block text-sm font-medium">Select Models (Multiple)</label>
@@ -277,7 +266,9 @@ const AttributeNestedForm: React.FC = () => {
                           type="checkbox"
                           id={`option-${option.id}`}
                           checked={selectedSecondLevelOptions.includes(option.id?.toString() || '')}
-                          onChange={() => handleSecondLevelOptionChange(option.id?.toString() || '')}
+                          onChange={() =>
+                            handleSecondLevelOptionChange(option.id?.toString() || '')
+                          }
                           className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
                         />
                         <label htmlFor={`option-${option.id}`} className="text-sm">
@@ -296,7 +287,7 @@ const AttributeNestedForm: React.FC = () => {
                     Saving...
                   </div>
                 ) : (
-                  "Save Relationship"
+                  'Save Relationship'
                 )}
               </Button>
             </div>

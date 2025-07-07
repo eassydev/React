@@ -1,14 +1,21 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent, ChangeEvent } from "react";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { ChevronDown, Save, Loader2 } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
-import { fetchAllCategories, createQuickService, fetchFirstQuickService } from "@/lib/api";
+import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { ChevronDown, Save, Loader2 } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
+import { fetchAllCategories, createQuickService, fetchFirstQuickService } from '@/lib/api';
 
 const QuickSelectionPage: React.FC = () => {
   const [image, setImage] = useState<File | null>(null);
@@ -33,26 +40,22 @@ const QuickSelectionPage: React.FC = () => {
         const quickService = await fetchFirstQuickService();
         if (quickService) {
           // Parse category_ids and populate state
-          const parsedCategories = 
-          typeof quickService.category_ids === "string" 
-            ? JSON.parse(quickService.category_ids) 
-            : Array.isArray(quickService.category_ids)
-            ? quickService.category_ids 
-            : [];
-        
+          const parsedCategories =
+            typeof quickService.category_ids === 'string'
+              ? JSON.parse(quickService.category_ids)
+              : Array.isArray(quickService.category_ids)
+                ? quickService.category_ids
+                : [];
+
           setSelectedCategories(parsedCategories);
 
           setIsActive(quickService.active || true);
 
           if (quickService.image) {
-            setImagePreview(
-              `${quickService.image}`
-            );
+            setImagePreview(`${quickService.image}`);
           }
         }
-      } catch (error) {
-      
-      }
+      } catch (error) {}
     };
 
     fetchInitialData();
@@ -83,9 +86,9 @@ const QuickSelectionPage: React.FC = () => {
 
     if (!image && !imagePreview) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "An image is required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'An image is required.',
       });
       setIsSubmitting(false);
       return;
@@ -93,9 +96,9 @@ const QuickSelectionPage: React.FC = () => {
 
     if (selectedCategories.length === 0) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "At least one category must be selected.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'At least one category must be selected.',
       });
       setIsSubmitting(false);
       return;
@@ -110,15 +113,15 @@ const QuickSelectionPage: React.FC = () => {
     try {
       await createQuickService(payload);
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Quick service saved successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Quick service saved successfully.',
       });
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to save quick service.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to save quick service.',
       });
     } finally {
       setIsSubmitting(false);
@@ -148,7 +151,11 @@ const QuickSelectionPage: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Image</label>
                 <Input type="file" accept="image/*" onChange={handleImageUpload} />
                 {imagePreview && (
-                  <img src={imagePreview} alt="Preview" className="mt-2 h-32 w-32 object-cover rounded-md" />
+                  <img
+                    src={imagePreview}
+                    alt="Preview"
+                    className="mt-2 h-32 w-32 object-cover rounded-md"
+                  />
                 )}
               </div>
 
@@ -163,7 +170,7 @@ const QuickSelectionPage: React.FC = () => {
                   >
                     {selectedCategories.length > 0
                       ? `Selected (${selectedCategories.length})`
-                      : "Select categories"}
+                      : 'Select categories'}
                     <ChevronDown className="w-4 h-4" />
                   </button>
                   {isCategoryDropdownOpen && (
@@ -197,7 +204,7 @@ const QuickSelectionPage: React.FC = () => {
                     <span>Saving...</span>
                   </div>
                 ) : (
-                  "Save Quick Service"
+                  'Save Quick Service'
                 )}
               </Button>
             </form>

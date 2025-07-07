@@ -1,22 +1,16 @@
-"use client";
-import React, { useState, useEffect, FormEvent ,useMemo} from "react";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+'use client';
+import React, { useState, useEffect, FormEvent, useMemo } from 'react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectItem,
   SelectTrigger,
   SelectContent,
   SelectValue,
-} from "@/components/ui/select";
-import { Save, Loader2,ChevronDown } from "lucide-react";
+} from '@/components/ui/select';
+import { Save, Loader2, ChevronDown } from 'lucide-react';
 import {
   fetchAllCategories,
   fetchSubCategoriesByCategoryId,
@@ -33,11 +27,11 @@ import {
   AttributeOption,
   fetchRateCardsByProvider,
   ServiceSegment,
-} from "@/lib/api";
-import { Virtuoso } from "react-virtuoso";
-import { Switch } from "@/components/ui/switch"; // Import Switch component
-import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
+} from '@/lib/api';
+import { Virtuoso } from 'react-virtuoso';
+import { Switch } from '@/components/ui/switch'; // Import Switch component
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 
 const CampaignForm: React.FC = () => {
   const router = useRouter();
@@ -49,32 +43,32 @@ const CampaignForm: React.FC = () => {
   const [filterAttributes, setFilterAttributes] = useState<Attribute[]>([]);
   const [filterAttributeOptions, setFilterAttributeOptions] = useState<AttributeOption[]>([]);
   const [segments, setSegments] = useState<ServiceSegment[]>([]);
-const [providers, setProviders] = useState<Provider[]>([]);
+  const [providers, setProviders] = useState<Provider[]>([]);
   const [rateCards, setRateCards] = useState<any[]>([]);
-    const [selectedProviderId, setSelectedProviderId] = useState<string>("");
-    const [utmSource, setUtmSource] = useState<string>("whatsapp"); // Default to "whatsapp"
-    const [utmMedium, setUtmMedium] = useState<string>(""); // UTM Medium Field
-    
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
-  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>("");
-  const [selectedAttributeId, setSelectedAttributeId] = useState<string>("");
-  const [selectedOptionId, setSelectedOptionId] = useState<string>("");
-  const [selectedSegmentId, setSelectedSegmentId] = useState<string>("");
-  const [campaignName, setCampaignName] = useState<string>("");
-  const [utmUrl, setUtmUrl] = useState<string>("");
-  const [pincode, setPincode] = useState<string>("");
-  const [latitude, setLatitude] = useState<string>("");
-  const [longitude, setLongitude] = useState<string>("");
-  const [screenRedirect, setScreenRedirect] = useState<string>("");
+  const [selectedProviderId, setSelectedProviderId] = useState<string>('');
+  const [utmSource, setUtmSource] = useState<string>('whatsapp'); // Default to "whatsapp"
+  const [utmMedium, setUtmMedium] = useState<string>(''); // UTM Medium Field
+
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>('');
+  const [selectedAttributeId, setSelectedAttributeId] = useState<string>('');
+  const [selectedOptionId, setSelectedOptionId] = useState<string>('');
+  const [selectedSegmentId, setSelectedSegmentId] = useState<string>('');
+  const [campaignName, setCampaignName] = useState<string>('');
+  const [utmUrl, setUtmUrl] = useState<string>('');
+  const [pincode, setPincode] = useState<string>('');
+  const [latitude, setLatitude] = useState<string>('');
+  const [longitude, setLongitude] = useState<string>('');
+  const [screenRedirect, setScreenRedirect] = useState<string>('');
   const [addToCart, setAddToCart] = useState<boolean>(false);
   const [isActive, setIsActive] = useState<boolean>(true);
-  const [selectedProviderName, setSelectedProviderName] = useState<string>("Select an option");
-  const [selectedRatecardName, setSelectedRatecardName] = useState<string>("Select an option");
-  const [selectedRatecardId, setSelectedRatecardId] = useState<string>("");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedProviderName, setSelectedProviderName] = useState<string>('Select an option');
+  const [selectedRatecardName, setSelectedRatecardName] = useState<string>('Select an option');
+  const [selectedRatecardId, setSelectedRatecardId] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
-    const [isRateCardDropdownOpen, setIsRateCardDropdownOpen] = useState<boolean>(false);
-  
+  const [isRateCardDropdownOpen, setIsRateCardDropdownOpen] = useState<boolean>(false);
+
   // Optional: Filtered list based on search
   const filteredRateCards = useMemo(() => {
     return rateCards.filter((rc: any) =>
@@ -91,24 +85,23 @@ const [providers, setProviders] = useState<Provider[]>([]);
         // const [rateCardResponse] = await Promise.all([
         //   fetchAllRatecard(),
         // ]);
-      //  setRateCards(rateCardResponse || []);
-         const fetchedProviders = await fetchProviders();
-                  setProviders(fetchedProviders);
+        //  setRateCards(rateCardResponse || []);
+        const fetchedProviders = await fetchProviders();
+        setProviders(fetchedProviders);
       } catch {
-        toast({ variant: "error", title: "Error", description: "Failed to load categories." });
+        toast({ variant: 'error', title: 'Error', description: 'Failed to load categories.' });
       }
     };
     loadCategories();
   }, [toast]);
 
-
   const utmSources = [
-    { id: "web", name: "Web" },
-    { id: "playstore", name: "Play Store" },
-    { id: "GoogleAds", name: "Google Ads" },
-    { id: "whatsapp", name: "Whatsapp" },
-    { id: "LinkedIN", name: "LinkedIN" },
-    { id: "Meta", name: "Meta" },
+    { id: 'web', name: 'Web' },
+    { id: 'playstore', name: 'Play Store' },
+    { id: 'GoogleAds', name: 'Google Ads' },
+    { id: 'whatsapp', name: 'Whatsapp' },
+    { id: 'LinkedIN', name: 'LinkedIN' },
+    { id: 'Meta', name: 'Meta' },
   ];
 
   useEffect(() => {
@@ -131,7 +124,10 @@ const [providers, setProviders] = useState<Provider[]>([]);
     if (selectedCategoryId || selectedSubcategoryId) {
       const loadAttributes = async () => {
         try {
-          const attributeData = await fetchFilterAttributes(selectedCategoryId, selectedSubcategoryId || null);
+          const attributeData = await fetchFilterAttributes(
+            selectedCategoryId,
+            selectedSubcategoryId || null
+          );
           setFilterAttributes(attributeData);
         } catch {
           setFilterAttributes([]);
@@ -159,8 +155,11 @@ const [providers, setProviders] = useState<Provider[]>([]);
     if (selectedCategoryId || selectedSubcategoryId) {
       const loadSegments = async () => {
         try {
-           const segmentData = await fetchServiceSegments(selectedCategoryId,
-                        selectedSubcategoryId ? selectedSubcategoryId : null,selectedAttributeId?selectedAttributeId:null);
+          const segmentData = await fetchServiceSegments(
+            selectedCategoryId,
+            selectedSubcategoryId ? selectedSubcategoryId : null,
+            selectedAttributeId ? selectedAttributeId : null
+          );
           // const segmentData = await fetchServiceSegments(selectedCategoryId, selectedSubcategoryId || null);
           setSegments(segmentData);
         } catch {
@@ -169,7 +168,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
       };
       loadSegments();
     }
-  }, [selectedCategoryId, selectedSubcategoryId,selectedAttributeId]);
+  }, [selectedCategoryId, selectedSubcategoryId, selectedAttributeId]);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -177,14 +176,14 @@ const [providers, setProviders] = useState<Provider[]>([]);
 
     const campaignData = {
       campaign_name: campaignName,
-      category_id: selectedCategoryId || "",
-      subcategory_id: selectedSubcategoryId || "",
-      filter_attribute_id: selectedAttributeId || "",
-      filter_option_id: selectedOptionId || "",
-      rate_card_id: selectedRatecardId || "",
-      segment_id: selectedSegmentId || "",
-      provider_id:selectedProviderId,
-      utm_url: utmUrl || "",
+      category_id: selectedCategoryId || '',
+      subcategory_id: selectedSubcategoryId || '',
+      filter_attribute_id: selectedAttributeId || '',
+      filter_option_id: selectedOptionId || '',
+      rate_card_id: selectedRatecardId || '',
+      segment_id: selectedSegmentId || '',
+      provider_id: selectedProviderId,
+      utm_url: utmUrl || '',
       pincode,
       latitude,
       longitude,
@@ -197,25 +196,25 @@ const [providers, setProviders] = useState<Provider[]>([]);
 
     try {
       const response = await createCampaign(campaignData);
-      toast({ variant: "success", title: "Success", description: response.message });
+      toast({ variant: 'success', title: 'Success', description: response.message });
       //router.push("/admin/campaigns");
-    } catch(e:any) {
-      toast({ variant: "error", title: "Error", description: `${e.message}` });
+    } catch (e: any) {
+      toast({ variant: 'error', title: 'Error', description: `${e.message}` });
     } finally {
       setIsSubmitting(false);
     }
   };
   const handleProviderChange = (value: string) => {
     const selectedProvider = providers.find((provider) => provider.id?.toString() === value);
-    console.log(selectedProvider,"selectedProvider");
+    console.log(selectedProvider, 'selectedProvider');
     if (selectedProvider) {
       setSelectedProviderId(value);
       setSelectedProviderName(`${selectedProvider.first_name} ${selectedProvider.last_name}`);
-     setPincode(selectedProvider.postal_code || '');
-  setLatitude(selectedProvider.latitude?.toString()|| '');
-  setLongitude(selectedProvider.longitude?.toString() || '');
+      setPincode(selectedProvider.postal_code || '');
+      setLatitude(selectedProvider.latitude?.toString() || '');
+      setLongitude(selectedProvider.longitude?.toString() || '');
     } else {
-      setSelectedProviderName("Select a provider");
+      setSelectedProviderName('Select a provider');
     }
   };
 
@@ -225,22 +224,21 @@ const [providers, setProviders] = useState<Provider[]>([]);
       setSelectedRatecardId(value);
       setSelectedRatecardName(selectedRatecard.name);
     } else {
-      setSelectedRatecardName("Select a ratecard");
+      setSelectedRatecardName('Select a ratecard');
     }
   };
 
-
   const handleValueChange = async (value: string) => {
-      const selectedProvider = providers.find((provider) => provider.id?.toString() === value);
-      if (selectedProvider) {
-        setSelectedProviderId(value);
-        setSelectedProviderName(`${selectedProvider.first_name} ${selectedProvider.last_name}`);
-        const rateCardResponse = await fetchRateCardsByProvider(value); // Pass provider ID
-                setRateCards(rateCardResponse || []);
-      } else {
-        setSelectedProviderName("Select an option");
-      }
-    };
+    const selectedProvider = providers.find((provider) => provider.id?.toString() === value);
+    if (selectedProvider) {
+      setSelectedProviderId(value);
+      setSelectedProviderName(`${selectedProvider.first_name} ${selectedProvider.last_name}`);
+      const rateCardResponse = await fetchRateCardsByProvider(value); // Pass provider ID
+      setRateCards(rateCardResponse || []);
+    } else {
+      setSelectedProviderName('Select an option');
+    }
+  };
 
   return (
     <div className="min-h-screen p-4">
@@ -252,190 +250,252 @@ const [providers, setProviders] = useState<Provider[]>([]);
         <CardContent>
           <form onSubmit={onSubmit}>
             <div className="space-y-4">
-            <Select value={utmSource} onValueChange={setUtmSource}>
-  <SelectTrigger className="w-full">
-    <SelectValue placeholder="Select UTM Source" />
-  </SelectTrigger>
-  <SelectContent>
-    {utmSources.map((source) => (
-      <SelectItem key={source.id} value={source.id}>
-        {source.name}
-      </SelectItem>
-    ))}
-  </SelectContent>
-</Select>
+              <Select value={utmSource} onValueChange={setUtmSource}>
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select UTM Source" />
+                </SelectTrigger>
+                <SelectContent>
+                  {utmSources.map((source) => (
+                    <SelectItem key={source.id} value={source.id}>
+                      {source.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-
-              <Input value={campaignName} placeholder="Campaign Name" onChange={(e) => setCampaignName(e.target.value)} required />
+              <Input
+                value={campaignName}
+                placeholder="Campaign Name"
+                onChange={(e) => setCampaignName(e.target.value)}
+                required
+              />
               {/* <Input value={utmUrl} placeholder="UTM URL (Optional)" onChange={(e) => setUtmUrl(e.target.value)} /> */}
 
               <Input
-  value={utmMedium}
-  placeholder="Enter UTM Medium"
-  onChange={(e) => setUtmMedium(e.target.value)}
-/>
+                value={utmMedium}
+                placeholder="Enter UTM Medium"
+                onChange={(e) => setUtmMedium(e.target.value)}
+              />
               <Select value={selectedCategoryId} onValueChange={setSelectedCategoryId}>
-                <SelectTrigger><SelectValue placeholder="Select Category" /></SelectTrigger>
-                <SelectContent>{categories.map((c) => <SelectItem key={c.id} value={c.id!.toString()}>{c.name}</SelectItem>)}</SelectContent>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select Category" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((c) => (
+                    <SelectItem key={c.id} value={c.id!.toString()}>
+                      {c.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
               </Select>
 
               {subcategories.length > 0 && (
                 <Select value={selectedSubcategoryId} onValueChange={setSelectedSubcategoryId}>
-                  <SelectTrigger><SelectValue placeholder="Select Subcategory" /></SelectTrigger>
-                  <SelectContent>{subcategories.map((s) => <SelectItem key={s.id} value={s.id!.toString()}>{s.name}</SelectItem>)}</SelectContent>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Subcategory" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subcategories.map((s) => (
+                      <SelectItem key={s.id} value={s.id!.toString()}>
+                        {s.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               )}
 
               {filterAttributes.length > 0 && (
                 <Select value={selectedAttributeId} onValueChange={setSelectedAttributeId}>
-                  <SelectTrigger><SelectValue placeholder="Select Filter Attribute" /></SelectTrigger>
-                  <SelectContent>{filterAttributes.map((a) => <SelectItem key={a.id} value={a.id!.toString()}>{a.name}</SelectItem>)}</SelectContent>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Filter Attribute" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filterAttributes.map((a) => (
+                      <SelectItem key={a.id} value={a.id!.toString()}>
+                        {a.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               )}
 
               {filterAttributeOptions.length > 0 && (
                 <Select value={selectedOptionId} onValueChange={setSelectedOptionId}>
-                  <SelectTrigger><SelectValue placeholder="Select Filter Option" /></SelectTrigger>
-                  <SelectContent>{filterAttributeOptions.map((o) => <SelectItem key={o.id} value={o.id!.toString()}>{o.value}</SelectItem>)}</SelectContent>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Filter Option" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {filterAttributeOptions.map((o) => (
+                      <SelectItem key={o.id} value={o.id!.toString()}>
+                        {o.value}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               )}
 
               {segments.length > 0 && (
                 <Select value={selectedSegmentId} onValueChange={setSelectedSegmentId}>
-                  <SelectTrigger><SelectValue placeholder="Select Segment" /></SelectTrigger>
-                  <SelectContent>{segments.map((s) => <SelectItem key={s.id} value={s.id!.toString()}>{s.segment_name}</SelectItem>)}</SelectContent>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Segment" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {segments.map((s) => (
+                      <SelectItem key={s.id} value={s.id!.toString()}>
+                        {s.segment_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
                 </Select>
               )}
-</div>
+            </div>
 
-
-
-<div className="space-y-4">
+            <div className="space-y-4">
               {/* Provider Selection */}
-             <div className="space-y-2 w-full">
-               <label className="text-sm font-medium text-gray-700">Select Provider</label>
-               <Select value={selectedProviderId || ""} onValueChange={handleValueChange}>
-                 <SelectTrigger className="w-full">
-                   {selectedProviderName || "Select an option"}
-                 </SelectTrigger>
-                 <SelectContent className="w-full p-0">
-                   {/* Search input */}
-                   <div className="sticky top-0 z-10 bg-background p-2 border-b">
-                     <Input
-                       placeholder="Search providers..."
-                       value={searchTerm}
-                       onChange={(e) => setSearchTerm(e.target.value)}
-                       className="w-full"
-                       autoFocus
-                     />
-                   </div>
-                   
-                   {/* Filtered provider list */}
-                   {providers.filter(provider => 
-                     `${provider.first_name} ${provider.last_name || ''}`
-                       .toLowerCase()
-                       .includes(searchTerm.toLowerCase())
-                   ).length > 0 ? (
-                     <Virtuoso
-                       style={{ height: "200px", width: "100%" }}
-                       totalCount={providers.filter(provider => 
-                         `${provider.first_name} ${provider.last_name || ''}`
-                           .toLowerCase()
-                           .includes(searchTerm.toLowerCase())
-                       ).length}
-                       itemContent={(index) => {
-                         const filteredProviders = providers.filter(provider => 
-                           `${provider.first_name} ${provider.last_name || ''}`
-                             .toLowerCase()
-                             .includes(searchTerm.toLowerCase())
-                         );
-                         const provider = filteredProviders[index];
-                         return (
-                           <SelectItem 
-                             key={provider.id} 
-                             value={provider.id?.toString() ?? ''}
-                           >
-                             {provider.first_name} {provider.last_name || ""}
-                           </SelectItem>
-                         );
-                       }}
-                     />
-                   ) : (
-                     <div className="py-6 text-center text-sm text-muted-foreground">
-                       No providers found
-                     </div>
-                   )}
-                 </SelectContent>
-               </Select>
-             </div>
+              <div className="space-y-2 w-full">
+                <label className="text-sm font-medium text-gray-700">Select Provider</label>
+                <Select value={selectedProviderId || ''} onValueChange={handleValueChange}>
+                  <SelectTrigger className="w-full">
+                    {selectedProviderName || 'Select an option'}
+                  </SelectTrigger>
+                  <SelectContent className="w-full p-0">
+                    {/* Search input */}
+                    <div className="sticky top-0 z-10 bg-background p-2 border-b">
+                      <Input
+                        placeholder="Search providers..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full"
+                        autoFocus
+                      />
+                    </div>
+
+                    {/* Filtered provider list */}
+                    {providers.filter((provider) =>
+                      `${provider.first_name} ${provider.last_name || ''}`
+                        .toLowerCase()
+                        .includes(searchTerm.toLowerCase())
+                    ).length > 0 ? (
+                      <Virtuoso
+                        style={{ height: '200px', width: '100%' }}
+                        totalCount={
+                          providers.filter((provider) =>
+                            `${provider.first_name} ${provider.last_name || ''}`
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase())
+                          ).length
+                        }
+                        itemContent={(index) => {
+                          const filteredProviders = providers.filter((provider) =>
+                            `${provider.first_name} ${provider.last_name || ''}`
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase())
+                          );
+                          const provider = filteredProviders[index];
+                          return (
+                            <SelectItem key={provider.id} value={provider.id?.toString() ?? ''}>
+                              {provider.first_name} {provider.last_name || ''}
+                            </SelectItem>
+                          );
+                        }}
+                      />
+                    ) : (
+                      <div className="py-6 text-center text-sm text-muted-foreground">
+                        No providers found
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
 
               {/* Ratecard Selection */}
               <div className="space-y-2 w-full">
-  <label className="text-sm font-medium text-gray-700">Select Ratecard</label>
+                <label className="text-sm font-medium text-gray-700">Select Ratecard</label>
 
-  {/* Custom Dropdown Trigger */}
-  <div className="relative">
-    <button
-      type="button"
-      onClick={() => setIsRateCardDropdownOpen(!isRateCardDropdownOpen)}
-      className="flex items-center justify-between w-full p-2 bg-white border border-gray-300 rounded"
-    >
-      {selectedRatecardName || "Select Ratecard"}
-      <ChevronDown className="w-4 h-4" />
-    </button>
+                {/* Custom Dropdown Trigger */}
+                <div className="relative">
+                  <button
+                    type="button"
+                    onClick={() => setIsRateCardDropdownOpen(!isRateCardDropdownOpen)}
+                    className="flex items-center justify-between w-full p-2 bg-white border border-gray-300 rounded"
+                  >
+                    {selectedRatecardName || 'Select Ratecard'}
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
 
-    {isRateCardDropdownOpen && (
-      <div className="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-hidden">
-        
-        {/* Search Input */}
-        <input
-          type="text"
-          placeholder="Search..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full p-2 border-b border-gray-300 focus:outline-none"
-        />
+                  {isRateCardDropdownOpen && (
+                    <div className="absolute z-50 mt-2 w-full bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-hidden">
+                      {/* Search Input */}
+                      <input
+                        type="text"
+                        placeholder="Search..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full p-2 border-b border-gray-300 focus:outline-none"
+                      />
 
-        {/* Virtualized Rate Cards List */}
-        <Virtuoso
-          style={{ height: "240px", width: "100%" }}
-          totalCount={filteredRateCards.length}
-          itemContent={(index) => {
-            const rateCard = filteredRateCards[index];
-            return (
-              <div
-                key={rateCard.id}
-                className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
-                onClick={() => {
-                  setSelectedRatecardId(rateCard.id.toString());
-                  setSelectedRatecardName(
-                    `${rateCard.category?.name || ''} | ${rateCard.subcategory?.name || ''} | ${rateCard.price}`
-                  );
-                  setIsRateCardDropdownOpen(false);
-                }}
-              >
-                <div className="text-sm font-medium">
-                  {rateCard.category?.name} | {rateCard.subcategory?.name} | {rateCard.price}
+                      {/* Virtualized Rate Cards List */}
+                      <Virtuoso
+                        style={{ height: '240px', width: '100%' }}
+                        totalCount={filteredRateCards.length}
+                        itemContent={(index) => {
+                          const rateCard = filteredRateCards[index];
+                          return (
+                            <div
+                              key={rateCard.id}
+                              className="px-3 py-2 hover:bg-gray-100 cursor-pointer"
+                              onClick={() => {
+                                setSelectedRatecardId(rateCard.id.toString());
+                                setSelectedRatecardName(
+                                  `${rateCard.category?.name || ''} | ${rateCard.subcategory?.name || ''} | ${rateCard.price}`
+                                );
+                                setIsRateCardDropdownOpen(false);
+                              }}
+                            >
+                              <div className="text-sm font-medium">
+                                {rateCard.category?.name} | {rateCard.subcategory?.name} |{' '}
+                                {rateCard.price}
+                              </div>
+                              <div className="text-xs text-gray-500">
+                                {rateCard.attributes
+                                  ?.map(
+                                    (attr: any) =>
+                                      `${attr.filterAttribute?.name}: ${attr.filterOption?.value || ''}`
+                                  )
+                                  .join(', ') || 'N/A'}
+                              </div>
+                              <div className="text-xs text-gray-400 italic">
+                                {rateCard.provider?.first_name}
+                              </div>
+                            </div>
+                          );
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
-                <div className="text-xs text-gray-500">
-                  {rateCard.attributes
-                    ?.map((attr: any) => `${attr.filterAttribute?.name}: ${attr.filterOption?.value || ''}`)
-                    .join(", ") || "N/A"}
-                </div>
-                <div className="text-xs text-gray-400 italic">{rateCard.provider?.first_name}</div>
               </div>
-            );
-          }}
-        />
-      </div>
-    )}
-  </div>
-</div>
 
-<Input value={pincode} placeholder="Pincode" onChange={(e) => setPincode(e.target.value)} />
-              <Input value={latitude} placeholder="Latitude" onChange={(e) => setLatitude(e.target.value)} />
-              <Input value={longitude} placeholder="Longitude" onChange={(e) => setLongitude(e.target.value)} />
-              <Input value={screenRedirect} placeholder="Screen Redirect" onChange={(e) => setScreenRedirect(e.target.value)}  />
+              <Input
+                value={pincode}
+                placeholder="Pincode"
+                onChange={(e) => setPincode(e.target.value)}
+              />
+              <Input
+                value={latitude}
+                placeholder="Latitude"
+                onChange={(e) => setLatitude(e.target.value)}
+              />
+              <Input
+                value={longitude}
+                placeholder="Longitude"
+                onChange={(e) => setLongitude(e.target.value)}
+              />
+              <Input
+                value={screenRedirect}
+                placeholder="Screen Redirect"
+                onChange={(e) => setScreenRedirect(e.target.value)}
+              />
 
               <div className="flex items-center justify-between">
                 <label className="text-sm">Add to Cart</label>
@@ -448,7 +508,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
                 <Switch checked={isActive} onCheckedChange={setIsActive} />
               </div>
               <Button type="submit" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : "Save Campaign"}
+                {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : 'Save Campaign'}
               </Button>
             </div>
           </form>

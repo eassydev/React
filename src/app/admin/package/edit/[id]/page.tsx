@@ -1,17 +1,39 @@
-"use client";
+'use client';
 import React, { useState, useEffect, FormEvent, ChangeEvent, useMemo } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Select, SelectTrigger, SelectContent, SelectValue, SelectItem } from '@/components/ui/select';
+import {
+  Select,
+  SelectTrigger,
+  SelectContent,
+  SelectValue,
+  SelectItem,
+} from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import { Save, Loader2, ImageIcon, FileText, ChevronDown,Globe2 } from 'lucide-react';
-import { fetchRateCardsByProvider, fetchAllCategories, fetchPackageById, updatePackage, Package,Provider,fetchProviders,fetchProviderById } from '@/lib/api';
-import { useToast } from "@/hooks/use-toast";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Virtuoso } from "react-virtuoso";
+import { Save, Loader2, ImageIcon, FileText, ChevronDown, Globe2 } from 'lucide-react';
+import {
+  fetchRateCardsByProvider,
+  fetchAllCategories,
+  fetchPackageById,
+  updatePackage,
+  Package,
+  Provider,
+  fetchProviders,
+  fetchProviderById,
+} from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Virtuoso } from 'react-virtuoso';
 
 // Import React-Quill dynamically
 const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
@@ -20,10 +42,10 @@ import 'react-quill/dist/quill.snow.css';
 // Quill modules
 const quillModules = {
   toolbar: [
-    [{ 'header': '1' }, { 'header': '2' }, { 'font': [] }],
-    [{ 'size': [] }],
+    [{ header: '1' }, { header: '2' }, { font: [] }],
+    [{ size: [] }],
     ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-    [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+    [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
     ['link', 'image', 'video'],
     ['clean'],
   ],
@@ -37,10 +59,10 @@ const PackageEditForm: React.FC = () => {
   const [packageName, setPackageName] = useState<string>('');
   const [packageType, setPackageType] = useState<string>('regular');
   const [createdBy, setCreatedBy] = useState<string>('admin');
-const [providers, setProviders] = useState<Provider[]>([]);
-  const [providerId, setProviderId] = useState<string>("");
-    const [discountType, setDiscountType] = useState<string>('flat');
-  const [discountValue, setDiscountValue] = useState<number| null>(0);
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [providerId, setProviderId] = useState<string>('');
+  const [discountType, setDiscountType] = useState<string>('flat');
+  const [discountValue, setDiscountValue] = useState<number | null>(0);
   const [validityPeriod, setValidityPeriod] = useState<number | null>(null);
   const [renewalOptions, setRenewalOptions] = useState<boolean>(false);
   const [isActive, setIsActive] = useState<boolean>(true);
@@ -50,17 +72,17 @@ const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]); // **Selected Addon Categories**
   const [categories, setCategories] = useState<any[]>([]); // **Addon Categories**
   const [discountError, setDiscountError] = useState<string | null>(null); // State for error message
-// Provider-related state
+  // Provider-related state
   const [selectedProvider, setSelectedProvider] = useState<Provider | null>(null);
-  const [selectedProviderId, setSelectedProviderId] = useState<string>("");
-   const [selectedProviderName, setSelectedProviderName] = useState<string>("Select an option");
- 
+  const [selectedProviderId, setSelectedProviderId] = useState<string>('');
+  const [selectedProviderName, setSelectedProviderName] = useState<string>('Select an option');
+
   const [noService, setNoService] = useState<number | null>(null);
   const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); // **Addon Dropdown Toggle**
-  const [searchQuery, setSearchQuery] = useState("");
-  const [providerSearchTerm, setProviderSearchTerm] = useState("");
-  const [rateCardSearchTerm, setRateCardSearchTerm] = useState("");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchQuery, setSearchQuery] = useState('');
+  const [providerSearchTerm, setProviderSearchTerm] = useState('');
+  const [rateCardSearchTerm, setRateCardSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
 
   const { toast } = useToast();
   const router = useRouter();
@@ -73,9 +95,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
   useEffect(() => {
     const fetchInitialData = async () => {
       try {
-        const [categoryResponse] = await Promise.all([
-          fetchAllCategories(),
-        ]);
+        const [categoryResponse] = await Promise.all([fetchAllCategories()]);
         setCategories(categoryResponse || []);
       } catch (error) {
         toast({
@@ -88,9 +108,8 @@ const [providers, setProviders] = useState<Provider[]>([]);
     fetchInitialData();
   }, []);
 
-
   const filteredProviders = useMemo(() => {
-    return providers.filter(provider => 
+    return providers.filter((provider) =>
       `${provider.first_name} ${provider.last_name || ''}`
         .toLowerCase()
         .includes(providerSearchTerm.toLowerCase())
@@ -99,37 +118,40 @@ const [providers, setProviders] = useState<Provider[]>([]);
 
   // Filter rate cards based on search term and provider
   const filteredRateCards = useMemo(() => {
-    return rateCards.filter(rateCard => {
-      const text = `${rateCard.category?.name || ''} | ${rateCard.subcategory?.name || ''} | ${rateCard.attributes
-        ?.map((attr: any) => `${attr.filterAttribute?.name || ''}: ${attr.filterOption?.value || ''}`)
-        .join(", ") || "N/A"}`
-        .toLowerCase();
-      
+    return rateCards.filter((rateCard) => {
+      const text = `${rateCard.category?.name || ''} | ${rateCard.subcategory?.name || ''} | ${
+        rateCard.attributes
+          ?.map(
+            (attr: any) => `${attr.filterAttribute?.name || ''}: ${attr.filterOption?.value || ''}`
+          )
+          .join(', ') || 'N/A'
+      }`.toLowerCase();
+
       return text.includes(rateCardSearchTerm.toLowerCase());
     });
   }, [rateCards, rateCardSearchTerm]);
 
   // Update provider selection and fetch their rate cards
   const handleProviderChange = async (providerId: string) => {
-    const selectedProvider = providers.find(p => p.id?.toString() === providerId);
+    const selectedProvider = providers.find((p) => p.id?.toString() === providerId);
     if (selectedProvider) {
       setSelectedProviderId(providerId);
       setSelectedProviderName(`${selectedProvider.first_name} ${selectedProvider.last_name || ''}`);
-      
+
       try {
         const providerRateCards = await fetchRateCardsByProvider(providerId);
         setRateCards(providerRateCards || []);
       } catch (error) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load rate cards for this provider",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load rate cards for this provider',
         });
         setRateCards([]);
       }
     } else {
-      setSelectedProviderId("");
-      setSelectedProviderName("Select an option");
+      setSelectedProviderId('');
+      setSelectedProviderName('Select an option');
       setRateCards([]);
     }
   };
@@ -138,20 +160,19 @@ const [providers, setProviders] = useState<Provider[]>([]);
     const loadPackageData = async () => {
       if (!id) return;
       try {
-         const fetchedProviders = await fetchProviders();
-            setProviders(fetchedProviders);
+        const fetchedProviders = await fetchProviders();
+        setProviders(fetchedProviders);
         const packageData = await fetchPackageById(id.toString());
 
         // Set package details
         setPackageName(packageData.name);
         setDescription(packageData.description || '');
         setPackageType(packageData.package_type);
-       // setCreatedBy(packageData.created_by);
-       
+        // setCreatedBy(packageData.created_by);
+
         setSelectedProviderId(packageData.provider_id ? packageData.provider_id.toString() : '');
         if (packageData.provider_id) {
           await loadProviders(packageData.provider_id);
-         
         }
         setDiscountType(packageData.discount_type);
         setDiscountValue(Number(packageData.discount_value));
@@ -162,7 +183,9 @@ const [providers, setProviders] = useState<Provider[]>([]);
         // Pre-select rate cards based on the response
         const preSelectedRateCards = packageData.rateCards?.map((rc: any) => rc.rate_card_id);
         setSelectedRateCards(preSelectedRateCards ?? []);
-        const preSelectedAddons = packageData.addons?.map((addon: any) => addon.category_id.toString());
+        const preSelectedAddons = packageData.addons?.map((addon: any) =>
+          addon.category_id.toString()
+        );
         setSelectedCategories(preSelectedAddons ?? []);
 
         if (packageData.image) setImagePreview(`${packageData.image}`);
@@ -187,30 +210,30 @@ const [providers, setProviders] = useState<Provider[]>([]);
     }
   };
 
+  const loadProviders = async (providerid: string) => {
+    try {
+      const fetchedProviders = await fetchProviders();
+      setProviders(fetchedProviders);
+      const selectedProvider = fetchedProviders.find(
+        (provider) => provider.id?.toString() === providerid
+      );
 
- const loadProviders = async (providerid:string) => {
-     try {
-       const fetchedProviders = await fetchProviders();
-       setProviders(fetchedProviders);
-       const selectedProvider = fetchedProviders.find((provider) => provider.id?.toString() === providerid);
- 
-         setSelectedProviderName(`${selectedProvider?.first_name} ${selectedProvider?.last_name}`);
-         console.log("tSelectedProviderName",selectedProviderId)
-         const rateCardResponse = await fetchRateCardsByProvider(providerid); // Pass provider ID
-                 setRateCards(rateCardResponse || []);
-     } catch (error) {
+      setSelectedProviderName(`${selectedProvider?.first_name} ${selectedProvider?.last_name}`);
+      console.log('tSelectedProviderName', selectedProviderId);
+      const rateCardResponse = await fetchRateCardsByProvider(providerid); // Pass provider ID
+      setRateCards(rateCardResponse || []);
+    } catch (error) {
       setProviders([]);
-     }
-   };
+    }
+  };
 
-
-   const handleValueChange = (value: string) => {
+  const handleValueChange = (value: string) => {
     const selectedProvider = providers.find((provider) => provider.id?.toString() === value);
     if (selectedProvider) {
       setSelectedProviderId(value);
       setSelectedProviderName(`${selectedProvider.first_name} ${selectedProvider.last_name}`);
     } else {
-      setSelectedProviderName("Select an option");
+      setSelectedProviderName('Select an option');
     }
   };
   // Handle form submission
@@ -259,7 +282,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
 
       router.push('/admin/package'); // Redirect to the packages list after success
     } catch (error: any) {
-      console.log("error.messag",error.messag)
+      console.log('error.messag', error.messag);
       toast({
         variant: 'error',
         title: 'Error',
@@ -270,22 +293,21 @@ const [providers, setProviders] = useState<Provider[]>([]);
     }
   };
 
-
   useEffect(() => {
-        const loadProvider = async () => {
-          try {
-             const fetchedProviders = await fetchProviders();
-                  setProviders(fetchedProviders);
-          } catch {
-            toast({
-              variant: "error",
-              title: "Error",
-              description: "Failed to load provider.",
-            });
-          }
-        };
-        loadProvider();
-      }, []);
+    const loadProvider = async () => {
+      try {
+        const fetchedProviders = await fetchProviders();
+        setProviders(fetchedProviders);
+      } catch {
+        toast({
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load provider.',
+        });
+      }
+    };
+    loadProvider();
+  }, []);
   // Handle rate card selection
   const handleRateCardSelection = (rateCardId: string, isChecked: boolean) => {
     if (isChecked) {
@@ -298,7 +320,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
   const sortedRateCards = [...filteredRateCards].sort((a, b) => {
     const aSelected = selectedRateCards.includes(a.id.toString());
     const bSelected = selectedRateCards.includes(b.id.toString());
-  
+
     // Put selected cards first
     if (aSelected && !bSelected) return -1;
     if (!aSelected && bSelected) return 1;
@@ -347,7 +369,7 @@ const [providers, setProviders] = useState<Provider[]>([]);
                   onChange={setDescription}
                   theme="snow"
                   modules={quillModules}
-                  style={{ height: "200px" }}
+                  style={{ height: '200px' }}
                 />
               </div>
 
@@ -357,7 +379,11 @@ const [providers, setProviders] = useState<Provider[]>([]);
                 <Input type="file" accept="image/*" onChange={handleImageUpload} className="h-11" />
                 {imagePreview && (
                   <div className="mt-2">
-                    <img src={imagePreview} alt="Package Preview" className="h-32 w-32 object-cover rounded-md" />
+                    <img
+                      src={imagePreview}
+                      alt="Package Preview"
+                      className="h-32 w-32 object-cover rounded-md"
+                    />
                   </div>
                 )}
               </div>
@@ -376,124 +402,123 @@ const [providers, setProviders] = useState<Provider[]>([]);
                 </Select>
               </div>
 
-             
+              <div className="space-y-2 w-full">
+                <label className="text-sm font-medium text-gray-700">Select Provider</label>
+                <Select value={selectedProviderId || ''} onValueChange={handleValueChange}>
+                  <SelectTrigger className="w-full">
+                    {selectedProviderName || 'Select an option'}
+                  </SelectTrigger>
+                  <SelectContent className="w-full p-0">
+                    {/* Search input */}
+                    <div className="sticky top-0 z-10 bg-background p-2 border-b">
+                      <Input
+                        placeholder="Search providers..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full"
+                        autoFocus
+                      />
+                    </div>
 
-             <div className="space-y-2 w-full">
-               <label className="text-sm font-medium text-gray-700">Select Provider</label>
-               <Select value={selectedProviderId || ""} onValueChange={handleValueChange}>
-                 <SelectTrigger className="w-full">
-                   {selectedProviderName || "Select an option"}
-                 </SelectTrigger>
-                 <SelectContent className="w-full p-0">
-                   {/* Search input */}
-                   <div className="sticky top-0 z-10 bg-background p-2 border-b">
-                     <Input
-                       placeholder="Search providers..."
-                       value={searchTerm}
-                       onChange={(e) => setSearchTerm(e.target.value)}
-                       className="w-full"
-                       autoFocus
-                     />
-                   </div>
-                   
-                   {/* Filtered provider list */}
-                   {providers.filter(provider => 
-                     `${provider.first_name} ${provider.last_name || ''}`
-                       .toLowerCase()
-                       .includes(searchTerm.toLowerCase())
-                   ).length > 0 ? (
-                     <Virtuoso
-                       style={{ height: "200px", width: "100%" }}
-                       totalCount={providers.filter(provider => 
-                         `${provider.first_name} ${provider.last_name || ''}`
-                           .toLowerCase()
-                           .includes(searchTerm.toLowerCase())
-                       ).length}
-                       itemContent={(index) => {
-                         const filteredProviders = providers.filter(provider => 
-                           `${provider.first_name} ${provider.last_name || ''}`
-                             .toLowerCase()
-                             .includes(searchTerm.toLowerCase())
-                         );
-                         const provider = filteredProviders[index];
-                         return (
-                           <SelectItem 
-                             key={provider.id} 
-                             value={provider.id?.toString() ?? ''}
-                           >
-                             {provider.first_name} {provider.last_name || ""}
-                           </SelectItem>
-                         );
-                       }}
-                     />
-                   ) : (
-                     <div className="py-6 text-center text-sm text-muted-foreground">
-                       No providers found
-                     </div>
-                   )}
-                 </SelectContent>
-               </Select>
-             </div>
+                    {/* Filtered provider list */}
+                    {providers.filter((provider) =>
+                      `${provider.first_name} ${provider.last_name || ''}`
+                        .toLowerCase()
+                        .includes(searchTerm.toLowerCase())
+                    ).length > 0 ? (
+                      <Virtuoso
+                        style={{ height: '200px', width: '100%' }}
+                        totalCount={
+                          providers.filter((provider) =>
+                            `${provider.first_name} ${provider.last_name || ''}`
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase())
+                          ).length
+                        }
+                        itemContent={(index) => {
+                          const filteredProviders = providers.filter((provider) =>
+                            `${provider.first_name} ${provider.last_name || ''}`
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase())
+                          );
+                          const provider = filteredProviders[index];
+                          return (
+                            <SelectItem key={provider.id} value={provider.id?.toString() ?? ''}>
+                              {provider.first_name} {provider.last_name || ''}
+                            </SelectItem>
+                          );
+                        }}
+                      />
+                    ) : (
+                      <div className="py-6 text-center text-sm text-muted-foreground">
+                        No providers found
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
 
+              {/* Rate Card Dropdown with Virtualized List */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Select Rate Cards</label>
+                <div className="relative">
+                  <button
+                    type="button"
+                    className="flex items-center justify-between w-full p-2 bg-white border border-gray-200 rounded"
+                    onClick={() => setIsRateCardDropdownOpen(!isRateCardDropdownOpen)}
+                  >
+                    {selectedRateCards.length > 0
+                      ? `Selected (${selectedRateCards.length})`
+                      : 'Select rate cards'}
+                    <ChevronDown className="w-4 h-4" />
+                  </button>
 
-             
-             {/* Rate Card Dropdown with Virtualized List */}
-             <div className="space-y-2">
-               <label className="text-sm font-medium text-gray-700">Select Rate Cards</label>
-               <div className="relative">
-                 <button
-                   type="button"
-                   className="flex items-center justify-between w-full p-2 bg-white border border-gray-200 rounded"
-                   onClick={() => setIsRateCardDropdownOpen(!isRateCardDropdownOpen)}
-                 >
-                   {selectedRateCards.length > 0 ? `Selected (${selectedRateCards.length})` : 'Select rate cards'}
-                   <ChevronDown className="w-4 h-4" />
-                 </button>
-                 
-                 {isRateCardDropdownOpen && (
-               <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-hidden">
-                 {/* Search Input */}
-                 <input
-                   type="text"
-                   placeholder="Search..."
-                   value={searchQuery}
-                   onChange={(e) => setSearchQuery(e.target.value)}
-                   className="w-full p-2 border-b border-gray-300 focus:outline-none"
-                 />
-             
-                 <Virtuoso
-                   style={{ height: "240px", width: "100%" }}
-                   totalCount={sortedRateCards.length}
-itemContent={(index) => {
-  const rateCard = sortedRateCards[index];
-                     return (
-                       <div key={rateCard.id} className="flex items-center p-2">
-                         <Checkbox
-                           checked={selectedRateCards.includes(rateCard.id.toString())}
-                           onCheckedChange={(checked: any) =>
-                             handleRateCardSelection(rateCard.id.toString(), checked)
-                           }
-                           id={`rateCard-${rateCard.id}`}
-                         />
-                         <label htmlFor={`rateCard-${rateCard.id}`} className="ml-2">
-                         {rateCard.category?.name} | {rateCard.subcategory?.name} |{rateCard.price} |{" "}
-              <p>
-                {rateCard.attributes
-                  ?.map((attr:any) => `${attr.filterAttribute?.name}: ${attr.filterOption?.value || ''}`)
-                  .join(", ") || "N/A"}
-              </p>
-              {rateCard.provider?.first_name}
-                         </label>
-                       </div>
-                     );
-                   }}
-                 />
-               </div>
-             )}
-               </div>
-             </div>
-             
+                  {isRateCardDropdownOpen && (
+                    <div className="absolute z-10 mt-2 w-full bg-white border border-gray-200 rounded shadow-lg max-h-60 overflow-hidden">
+                      {/* Search Input */}
+                      <input
+                        type="text"
+                        placeholder="Search..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full p-2 border-b border-gray-300 focus:outline-none"
+                      />
 
+                      <Virtuoso
+                        style={{ height: '240px', width: '100%' }}
+                        totalCount={sortedRateCards.length}
+                        itemContent={(index) => {
+                          const rateCard = sortedRateCards[index];
+                          return (
+                            <div key={rateCard.id} className="flex items-center p-2">
+                              <Checkbox
+                                checked={selectedRateCards.includes(rateCard.id.toString())}
+                                onCheckedChange={(checked: any) =>
+                                  handleRateCardSelection(rateCard.id.toString(), checked)
+                                }
+                                id={`rateCard-${rateCard.id}`}
+                              />
+                              <label htmlFor={`rateCard-${rateCard.id}`} className="ml-2">
+                                {rateCard.category?.name} | {rateCard.subcategory?.name} |
+                                {rateCard.price} |{' '}
+                                <p>
+                                  {rateCard.attributes
+                                    ?.map(
+                                      (attr: any) =>
+                                        `${attr.filterAttribute?.name}: ${attr.filterOption?.value || ''}`
+                                    )
+                                    .join(', ') || 'N/A'}
+                                </p>
+                                {rateCard.provider?.first_name}
+                              </label>
+                            </div>
+                          );
+                        }}
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
 
               {/* Addon Categories Dropdown with Checkbox Selection */}
               {/* <div className="space-y-2">
@@ -543,34 +568,34 @@ itemContent={(index) => {
                   </Select>
                 </div>
 
-               <div className="flex-1 space-y-2">
-                       <label className="text-sm font-medium text-gray-700">Discount Value</label>
-                       <Input
-                         type="number"
-                         value={discountValue ?? ""}
-                         onChange={(e) => {
-                           const value = Number(e.target.value);
-                           if (value < 0) {
-                             setDiscountError("Discount value cannot be negative.");
-                             setDiscountValue(value || null); // Set value
-                           } else {
-                             setDiscountError(null); // Clear error
-                             setDiscountValue(value || null); // Set value
-                           }
-                         }}
-                         placeholder="Enter discount value"
-                         required
-                       />
-                       {discountError && (
-                         <span className="text-red-500 text-sm">{discountError}</span>
-                       )}
-                     </div>
+                <div className="flex-1 space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Discount Value</label>
+                  <Input
+                    type="number"
+                    value={discountValue ?? ''}
+                    onChange={(e) => {
+                      const value = Number(e.target.value);
+                      if (value < 0) {
+                        setDiscountError('Discount value cannot be negative.');
+                        setDiscountValue(value || null); // Set value
+                      } else {
+                        setDiscountError(null); // Clear error
+                        setDiscountValue(value || null); // Set value
+                      }
+                    }}
+                    placeholder="Enter discount value"
+                    required
+                  />
+                  {discountError && <span className="text-red-500 text-sm">{discountError}</span>}
+                </div>
               </div>
 
               {/* Validity Period (for AMC only) */}
-              {packageType === "amc" && (
+              {packageType === 'amc' && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Validity Period (months)</label>
+                  <label className="text-sm font-medium text-gray-700">
+                    Validity Period (months)
+                  </label>
                   <Input
                     type="number"
                     value={validityPeriod?.toString() || ''}
@@ -580,7 +605,7 @@ itemContent={(index) => {
                 </div>
               )}
 
-              {packageType === "amc" && (
+              {packageType === 'amc' && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">No of Service</label>
                   <Input
@@ -591,7 +616,6 @@ itemContent={(index) => {
                   />
                 </div>
               )}
-
 
               {/* Renewal Options */}
               <div className="flex items-center space-x-2">

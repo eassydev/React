@@ -1,47 +1,54 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import dynamic from "next/dynamic";
-import { useRouter, usePathname } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2, FileImage, FileText } from "lucide-react";
-import { fetchOnboardingById, updateOnboarding, Onboarding } from "@/lib/api"; // Import the API functions and Onboarding interface
+import React, { useState, useEffect, FormEvent } from 'react';
+import dynamic from 'next/dynamic';
+import { useRouter, usePathname } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2, FileImage, FileText } from 'lucide-react';
+import { fetchOnboardingById, updateOnboarding, Onboarding } from '@/lib/api'; // Import the API functions and Onboarding interface
 
 // Import React-Quill dynamically for client-side rendering
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-import "react-quill/dist/quill.snow.css";
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import 'react-quill/dist/quill.snow.css';
 
 // Quill modules configuration
 const quillModules = {
   toolbar: [
-    [{ header: "1" }, { header: "2" }, { font: [] }],
+    [{ header: '1' }, { header: '2' }, { font: [] }],
     [{ size: [] }],
-    ["bold", "italic", "underline", "strike", "blockquote"],
-    [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
-    ["link", "image", "video"],
-    ["clean"],
+    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+    [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+    ['link', 'image', 'video'],
+    ['clean'],
   ],
 };
 
 const EditOnboardingForm: React.FC = () => {
-  const [title, setTitle] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
+  const [title, setTitle] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
   const [image, setImage] = useState<File | null>(null);
-  const [existingImage, setExistingImage] = useState<string>("");
+  const [existingImage, setExistingImage] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [type, setType] = useState<"splash" | "onboarding">("onboarding"); // Restrict to valid values
+  const [type, setType] = useState<'splash' | 'onboarding'>('onboarding'); // Restrict to valid values
 
   const { toast } = useToast();
   const router = useRouter();
   const pathname = usePathname();
 
   // Extract the onboarding ID from the URL path
-  const onboardingId = pathname?.split("/").pop();
+  const onboardingId = pathname?.split('/').pop();
 
   useEffect(() => {
     if (onboardingId) {
@@ -54,19 +61,19 @@ const EditOnboardingForm: React.FC = () => {
     try {
       const onboarding: Onboarding = await fetchOnboardingById(id);
       setTitle(onboarding.title);
-      setDescription(onboarding.description || "");
+      setDescription(onboarding.description || '');
       setIsActive(onboarding.is_active);
       setType(onboarding.type);
-      if (typeof onboarding.image === "string") {
+      if (typeof onboarding.image === 'string') {
         setExistingImage(onboarding.image); // Set existing image URL
       } else {
-        setExistingImage(""); // Handle unexpected values gracefully
+        setExistingImage(''); // Handle unexpected values gracefully
       }
     } catch (error) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: "Failed to load onboarding details.",
+        variant: 'error',
+        title: 'Error',
+        description: 'Failed to load onboarding details.',
       });
     }
   };
@@ -85,9 +92,9 @@ const EditOnboardingForm: React.FC = () => {
 
     if (!title || !description) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Title and description are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Title and description are required.',
       });
       setIsSubmitting(false);
       return;
@@ -104,16 +111,16 @@ const EditOnboardingForm: React.FC = () => {
     try {
       await updateOnboarding(onboardingId!, updatedOnboarding); // Submit the updated onboarding object to the API
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Onboarding updated successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Onboarding updated successfully.',
       });
-      router.push("/admin/onboarding"); // Redirect to the onboarding list after success
+      router.push('/admin/onboarding'); // Redirect to the onboarding list after success
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to update onboarding.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to update onboarding.',
       });
     } finally {
       setIsSubmitting(false);
@@ -154,12 +161,12 @@ const EditOnboardingForm: React.FC = () => {
                   onChange={setTitle}
                   theme="snow"
                   modules={quillModules}
-                  style={{ height: "100px" }}
+                  style={{ height: '100px' }}
                 />
               </div>
 
               {/* Description Field with React-Quill */}
-              <div className="space-y-2" style={{ height: "270px" }}>
+              <div className="space-y-2" style={{ height: '270px' }}>
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <FileText className="w-4 h-5 text-blue-500" />
                   <span>Description</span>
@@ -169,7 +176,7 @@ const EditOnboardingForm: React.FC = () => {
                   onChange={setDescription}
                   theme="snow"
                   modules={quillModules}
-                  style={{ height: "200px" }}
+                  style={{ height: '200px' }}
                 />
               </div>
 
@@ -178,7 +185,7 @@ const EditOnboardingForm: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Type</label>
                 <select
                   value={type}
-                  onChange={(e) => setType(e.target.value as "splash" | "onboarding")} // Type assertion added here
+                  onChange={(e) => setType(e.target.value as 'splash' | 'onboarding')} // Type assertion added here
                   className="w-full p-2 border border-gray-300 rounded-md"
                   required
                 >
@@ -208,11 +215,7 @@ const EditOnboardingForm: React.FC = () => {
 
               {/* Active Status */}
               <div className="flex items-center space-x-2">
-                <Switch
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
-                  className="bg-primary"
-                />
+                <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
                 <span className="text-sm text-gray-700">Active</span>
               </div>
 

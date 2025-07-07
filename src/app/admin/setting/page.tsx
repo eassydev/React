@@ -1,21 +1,34 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from "lucide-react";
-import { fetchSettings, deleteSetting } from "@/lib/api"; // API functions
-import Link from "next/link";
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
+} from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from 'lucide-react';
+import { fetchSettings, deleteSetting } from '@/lib/api'; // API functions
+import Link from 'next/link';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const SettingList = () => {
   const [settings, setSettings] = useState<any[]>([]);
@@ -34,7 +47,7 @@ const SettingList = () => {
       setTotalItems(meta.totalItems);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.error("Error fetching settings:", error);
+      console.error('Error fetching settings:', error);
     }
   };
 
@@ -46,27 +59,27 @@ const SettingList = () => {
     try {
       await deleteSetting(setting.id);
       toast({
-        title: "Success",
+        title: 'Success',
         description: `Setting "${setting.attribute_name}" deleted successfully.`,
-        variant: "success",
+        variant: 'success',
       });
       fetchSettingsData(pagination.pageIndex + 1, pagination.pageSize);
     } catch (error) {
       toast({
-        title: "Error",
+        title: 'Error',
         description: `Failed to delete setting: ${error}`,
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
 
   const settingColumns: ColumnDef<any>[] = [
-    { accessorKey: "id", header: "ID" },
-    { accessorKey: "attribute_name", header: "Attribute Name" },
-    { accessorKey: "attribute_value", header: "Attribute Value" },
+    { accessorKey: 'id', header: 'ID' },
+    { accessorKey: 'attribute_name', header: 'Attribute Name' },
+    { accessorKey: 'attribute_value', header: 'Attribute Value' },
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="icon">
@@ -133,7 +146,9 @@ const SettingList = () => {
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
                       <TableHead key={header.id} className="text-left">
-                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
                       </TableHead>
                     ))}
                   </TableRow>

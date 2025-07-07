@@ -1,35 +1,35 @@
-"use client";
+'use client';
 
-import React, { useState, FormEvent } from "react";
-import dynamic from "next/dynamic";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2, FileText, Image as ImageIcon } from "lucide-react";
-import { createBlog, Blog } from "@/lib/api";
+import React, { useState, FormEvent } from 'react';
+import dynamic from 'next/dynamic';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2, FileText, Image as ImageIcon } from 'lucide-react';
+import { createBlog, Blog } from '@/lib/api';
 
 // Import React-Quill dynamically for client-side rendering
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-import "react-quill/dist/quill.snow.css";
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import 'react-quill/dist/quill.snow.css';
 
 // Quill modules configuration
 const quillModules = {
   toolbar: [
-    [{ header: "1" }, { header: "2" }, { font: [] }],
+    [{ header: '1' }, { header: '2' }, { font: [] }],
     [{ size: [] }],
-    ["bold", "italic", "underline", "strike", "blockquote"],
-    [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
-    ["link", "image", "video"],
-    ["clean"],
+    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+    [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+    ['link', 'image', 'video'],
+    ['clean'],
   ],
 };
 
 const AddBlogForm: React.FC = () => {
-  const [title, setTitle] = useState<string>("");
-  const [slug, setSlug] = useState<string>("");
-  const [description, setDescription] = useState<string>("");
+  const [title, setTitle] = useState<string>('');
+  const [slug, setSlug] = useState<string>('');
+  const [description, setDescription] = useState<string>('');
   const [image, setImage] = useState<File | null>(null);
   const [is_active, setIsActive] = useState<boolean>(true); // is_active switch state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -40,12 +40,11 @@ const AddBlogForm: React.FC = () => {
   const generateSlug = (title: string) => {
     return title
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
   };
 
   // Convert file to Base64
-
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -53,9 +52,9 @@ const AddBlogForm: React.FC = () => {
 
     if (!title || !slug || !description || !image) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "All fields, including an image, are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'All fields, including an image, are required.',
       });
       setIsSubmitting(false);
       return;
@@ -76,22 +75,22 @@ const AddBlogForm: React.FC = () => {
       await createBlog(newBlog);
 
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Blog created successfully!",
+        variant: 'success',
+        title: 'Success',
+        description: 'Blog created successfully!',
       });
 
       // Reset form fields
-      setTitle("");
-      setSlug("");
-      setDescription("");
+      setTitle('');
+      setSlug('');
+      setDescription('');
       setImage(null);
       setIsActive(true);
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to create blog.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to create blog.',
       });
     } finally {
       setIsSubmitting(false);
@@ -143,7 +142,12 @@ const AddBlogForm: React.FC = () => {
                   <FileText className="w-4 h-4 text-blue-500" />
                   <span>Content</span>
                 </label>
-                <ReactQuill value={description} onChange={setDescription} theme="snow" modules={quillModules} />
+                <ReactQuill
+                  value={description}
+                  onChange={setDescription}
+                  theme="snow"
+                  modules={quillModules}
+                />
               </div>
 
               {/* Image Upload */}

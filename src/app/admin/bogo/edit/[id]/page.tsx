@@ -1,26 +1,33 @@
-"use client";
-import React, { useState, useEffect, FormEvent } from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Loader2, Save } from "lucide-react";
-import { fetchAllRatecard, getRatecardBogoById, updateRatecardBogo } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-import { Virtuoso } from "react-virtuoso";
-import { useParams, useRouter } from "next/navigation";
+'use client';
+import React, { useState, useEffect, FormEvent } from 'react';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from '@/components/ui/card';
+import { Select, SelectTrigger, SelectContent, SelectItem } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Loader2, Save } from 'lucide-react';
+import { fetchAllRatecard, getRatecardBogoById, updateRatecardBogo } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import { Virtuoso } from 'react-virtuoso';
+import { useParams, useRouter } from 'next/navigation';
 
 const EditBogoForm: React.FC = () => {
   const { id } = useParams(); // Get the BogoRateCard ID from the route
   const router = useRouter();
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [rateCards, setRateCards] = useState<any[]>([]);
-  const [rateCardId, setRateCardId] = useState<string>("");
-  const [bogoRateCardId, setBogoRateCardId] = useState<string>("");
+  const [rateCardId, setRateCardId] = useState<string>('');
+  const [bogoRateCardId, setBogoRateCardId] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
   const { toast } = useToast();
-  const [selectedRateCardName, setSelectedRateCardName] = useState<string>("Select an option");
-  const [selectedBogoName, setSelectedBogoName] = useState<string>("Select an option");
+  const [selectedRateCardName, setSelectedRateCardName] = useState<string>('Select an option');
+  const [selectedBogoName, setSelectedBogoName] = useState<string>('Select an option');
 
   // Fetch rate cards and existing BogoRateCard data
   useEffect(() => {
@@ -33,20 +40,24 @@ const EditBogoForm: React.FC = () => {
         // Fetch the existing BogoRateCard data
         const bogoRateCard = await getRatecardBogoById(id as string);
         if (bogoRateCard) {
-            setRateCardId(bogoRateCard.rate_card_id);
-            setBogoRateCardId(bogoRateCard.bogo_rate_card_id);
-            setIsActive(bogoRateCard.is_active);
-            const selectedOption = rateCards.find((option) => option.id?.toString() === bogoRateCard.rate_card_id);
-            const bogoOption = rateCards.find((option) => option.id?.toString() === bogoRateCard.bogo_rate_card_id);
+          setRateCardId(bogoRateCard.rate_card_id);
+          setBogoRateCardId(bogoRateCard.bogo_rate_card_id);
+          setIsActive(bogoRateCard.is_active);
+          const selectedOption = rateCards.find(
+            (option) => option.id?.toString() === bogoRateCard.rate_card_id
+          );
+          const bogoOption = rateCards.find(
+            (option) => option.id?.toString() === bogoRateCard.bogo_rate_card_id
+          );
 
-             setSelectedRateCardName(selectedOption.name || "No Name");
-             setSelectedBogoName(bogoOption.name || "No Name");
+          setSelectedRateCardName(selectedOption.name || 'No Name');
+          setSelectedBogoName(bogoOption.name || 'No Name');
         }
       } catch (error) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load data.",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load data.',
         });
       }
     };
@@ -66,18 +77,18 @@ const EditBogoForm: React.FC = () => {
       });
 
       toast({
-        variant: "success",
-        title: "Success",
-        description: response.message || "Bogo updated successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: response.message || 'Bogo updated successfully.',
       });
 
       // Redirect to the list page after successful update
-      router.push("/admin/bogo");
+      router.push('/admin/bogo');
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to update Bogo.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to update Bogo.',
       });
     } finally {
       setIsSubmitting(false);
@@ -88,9 +99,9 @@ const EditBogoForm: React.FC = () => {
     const selectedOption = rateCards.find((option) => option.id?.toString() === value);
     if (selectedOption) {
       setRateCardId(value.toString());
-      setSelectedRateCardName(selectedOption.name || "No Name"); // Handle null/undefined name
+      setSelectedRateCardName(selectedOption.name || 'No Name'); // Handle null/undefined name
     } else {
-      setSelectedRateCardName("Select an option");
+      setSelectedRateCardName('Select an option');
     }
   };
 
@@ -98,9 +109,9 @@ const EditBogoForm: React.FC = () => {
     const selectedOption = rateCards.find((option) => option.id?.toString() === value);
     if (selectedOption) {
       setBogoRateCardId(value.toString());
-      setSelectedBogoName(selectedOption.name || "No Name"); // Handle null/undefined name
+      setSelectedBogoName(selectedOption.name || 'No Name'); // Handle null/undefined name
     } else {
-      setSelectedBogoName("Select an option");
+      setSelectedBogoName('Select an option');
     }
   };
 
@@ -122,11 +133,11 @@ const EditBogoForm: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <Virtuoso
-                    style={{ height: "200px" }}
+                    style={{ height: '200px' }}
                     totalCount={rateCards.length}
                     itemContent={(index: number) => (
                       <SelectItem key={rateCards[index].id} value={rateCards[index].id.toString()}>
-                        {rateCards[index].name || "No Name"} {/* Handle null/undefined name */}
+                        {rateCards[index].name || 'No Name'} {/* Handle null/undefined name */}
                       </SelectItem>
                     )}
                   />
@@ -143,11 +154,11 @@ const EditBogoForm: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <Virtuoso
-                    style={{ height: "200px" }}
+                    style={{ height: '200px' }}
                     totalCount={rateCards.length}
                     itemContent={(index: number) => (
                       <SelectItem key={rateCards[index].id} value={rateCards[index].id.toString()}>
-                        {rateCards[index].name || "No Name"} {/* Handle null/undefined name */}
+                        {rateCards[index].name || 'No Name'} {/* Handle null/undefined name */}
                       </SelectItem>
                     )}
                   />

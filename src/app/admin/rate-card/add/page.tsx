@@ -1,28 +1,23 @@
-"use client";
-import React, { useState, useEffect, FormEvent } from "react";
-import dynamic from "next/dynamic";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+'use client';
+import React, { useState, useEffect, FormEvent } from 'react';
+import dynamic from 'next/dynamic';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Select,
   SelectItem,
   SelectTrigger,
   SelectContent,
   SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Save, FileText, Loader2, Type, Globe2 } from "lucide-react";
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Save, FileText, Loader2, Type, Globe2 } from 'lucide-react';
 import {
   fetchAllCategories,
   fetchSubCategoriesByCategoryId,
-  fetchProviders, fetchProviderById,
+  fetchProviders,
+  fetchProviderById,
   fetchFilterOptionsByAttributeId,
   fetchFilterAttributes,
   createRateCard,
@@ -32,12 +27,11 @@ import {
   ServiceSegment,
   Provider,
   ServiceDetail,
-  fetchServiceSegments
-} from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
-import { Virtuoso } from "react-virtuoso";
-
+  fetchServiceSegments,
+} from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+import { Virtuoso } from 'react-virtuoso';
 
 interface FilterAttributeOption {
   attributeId: string;
@@ -53,23 +47,21 @@ const RateCardForm: React.FC = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [filterAttributes, setFilterAttributes] = useState<Attribute[]>([]);
-  const [filterAttributeOptions, setFilterAttributeOptions] = useState<
-    FilterAttributeOption[]
-  >([]);
-  const [rateCardName, setRateCardName] = useState("");
-  const [price, setPrice] = useState("");
+  const [filterAttributeOptions, setFilterAttributeOptions] = useState<FilterAttributeOption[]>([]);
+  const [rateCardName, setRateCardName] = useState('');
+  const [price, setPrice] = useState('');
   const [isActive, setIsActive] = useState(true);
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
-  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>("");
-  const [selectedProviderId, setSelectedProviderId] = useState<string>("");
-  const [strikePrice, setStrikePrice] = useState("");
-  const [strikePriceError, setStrikePriceError] = useState("");
-  const [priceError, setPriceError] = useState("");
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>('');
+  const [selectedProviderId, setSelectedProviderId] = useState<string>('');
+  const [strikePrice, setStrikePrice] = useState('');
+  const [strikePriceError, setStrikePriceError] = useState('');
+  const [priceError, setPriceError] = useState('');
   const [segments, setSegments] = useState<ServiceSegment[]>([]);
-  const [segmentsId, setsegmentsId] = useState<string>("");
-  const [selectedProviderName, setSelectedProviderName] = useState<string>("Select an option");
+  const [segmentsId, setsegmentsId] = useState<string>('');
+  const [selectedProviderName, setSelectedProviderName] = useState<string>('Select an option');
   const [providers, setProviders] = useState<Provider[]>([]);
-  const [searchTerm, setSearchTerm] = useState<string>("");
+  const [searchTerm, setSearchTerm] = useState<string>('');
 
   const [weight, setWeight] = useState<number>(0);
 
@@ -79,30 +71,25 @@ const RateCardForm: React.FC = () => {
         const categoryData = await fetchAllCategories();
         setCategories(categoryData);
         await loadProviders();
-        
       } catch {
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load categories.",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load categories.',
         });
       }
     };
     loadCategories();
   }, []);
 
- 
-  
-  
-   const loadProviders = async () => {
-      try {
-        const fetchedProviders = await fetchProviders();
-        setProviders(fetchedProviders);
-  
-      } catch (error) {
-        setProviders([]);
-      }
-    };
+  const loadProviders = async () => {
+    try {
+      const fetchedProviders = await fetchProviders();
+      setProviders(fetchedProviders);
+    } catch (error) {
+      setProviders([]);
+    }
+  };
 
   // Fetch subcategories when a category is selected
   useEffect(() => {
@@ -111,16 +98,16 @@ const RateCardForm: React.FC = () => {
         try {
           const subcategoryData = await fetchSubCategoriesByCategoryId(selectedCategoryId);
           setSubcategories(subcategoryData);
-          setSelectedSubcategoryId("");
+          setSelectedSubcategoryId('');
         } catch (error) {
           setSubcategories([]);
-          setSelectedSubcategoryId("");
+          setSelectedSubcategoryId('');
         }
       };
       loadSubcategories();
     } else {
       setSubcategories([]);
-      setSelectedSubcategoryId("");
+      setSelectedSubcategoryId('');
     }
   }, [selectedCategoryId]);
 
@@ -134,8 +121,6 @@ const RateCardForm: React.FC = () => {
             selectedSubcategoryId ? selectedSubcategoryId : null
           );
           setFilterAttributes(attributeData);
-
-
         } catch (error) {
           setFilterAttributes([]);
         }
@@ -143,8 +128,10 @@ const RateCardForm: React.FC = () => {
       loadFilterAttributes();
       const loadServiceDetails = async () => {
         try {
-          const segmentData = await fetchServiceSegments(selectedCategoryId,
-            selectedSubcategoryId ? selectedSubcategoryId : null);
+          const segmentData = await fetchServiceSegments(
+            selectedCategoryId,
+            selectedSubcategoryId ? selectedSubcategoryId : null
+          );
           setSegments(segmentData);
         } catch (error) {
           setSegments([]);
@@ -154,30 +141,24 @@ const RateCardForm: React.FC = () => {
     }
   }, [selectedCategoryId, selectedSubcategoryId]);
 
-
   const handleAddFilterAttributeOption = () => {
-    setFilterAttributeOptions([
-      ...filterAttributeOptions,
-      { attributeId: "", optionId: "" },
-    ]);
+    setFilterAttributeOptions([...filterAttributeOptions, { attributeId: '', optionId: '' }]);
   };
 
   const handleRemoveFilterAttributeOption = (index: number) => {
-    setFilterAttributeOptions((prev) =>
-      prev.filter((_, i) => i !== index)
-    );
+    setFilterAttributeOptions((prev) => prev.filter((_, i) => i !== index));
   };
   const handleUpdateFilterAttributeOption = async (
     index: number,
-    key: "attributeId" | "optionId",
+    key: 'attributeId' | 'optionId',
     value: string
   ) => {
-    console.log("Updating attribute option");
+    console.log('Updating attribute option');
 
     const updated = [...filterAttributeOptions];
     updated[index][key] = value;
 
-    if (key === "attributeId") {
+    if (key === 'attributeId') {
       try {
         const options = await fetchFilterOptionsByAttributeId(value);
         updated[index].options = options.map((option) => ({
@@ -185,7 +166,7 @@ const RateCardForm: React.FC = () => {
           value: option.value,
         }));
       } catch (error) {
-        console.error("Error fetching filter options:", error);
+        console.error('Error fetching filter options:', error);
         updated[index].options = [];
       }
     }
@@ -193,18 +174,16 @@ const RateCardForm: React.FC = () => {
     setFilterAttributeOptions(updated);
   };
 
-  
   const handleValueChange = (value: string) => {
     const selectedProvider = providers.find((provider) => provider.id?.toString() === value);
     if (selectedProvider) {
       setSelectedProviderId(value);
       setSelectedProviderName(`${selectedProvider.first_name} ${selectedProvider.last_name}`);
     } else {
-      setSelectedProviderName("Select an option");
+      setSelectedProviderName('Select an option');
     }
   };
 
-  
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
@@ -218,37 +197,33 @@ const RateCardForm: React.FC = () => {
         option_id: pair.optionId,
       })),
       segment_id: segmentsId,
-      weight:weight,
+      weight: weight,
       price: parseFloat(price),
-      strike_price:parseFloat(strikePrice),
+      strike_price: parseFloat(strikePrice),
       active: isActive,
       provider_id: selectedProviderId,
-      
     };
-
 
     try {
       const response = await createRateCard(rateCardData);
       toast({
-        variant: "success",
-        title: "Success",
+        variant: 'success',
+        title: 'Success',
         description: response.message,
       });
-    //  router.push("/admin/rate-card");
+      //  router.push("/admin/rate-card");
     } catch (error) {
-      console.log("rateCardData",error)
+      console.log('rateCardData', error);
 
       toast({
-        variant: "error",
-        title: "Error",
+        variant: 'error',
+        title: 'Error',
         description: `${error}`,
       });
     } finally {
       setIsSubmitting(false);
     }
   };
-
-
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
@@ -341,15 +316,15 @@ const RateCardForm: React.FC = () => {
               )}
 
               <div className="space-y-4">
-                      <label className="block text-sm font-medium">Ratecard Weightage</label>
-                      <Input
-                        placeholder="Ratecard Weight"
-                        type="number"
-                        value={weight}
-                        onChange={(e) => setWeight(Number(e.target.value))}
-                        className="h-10"
-                      />
-                    </div>
+                <label className="block text-sm font-medium">Ratecard Weightage</label>
+                <Input
+                  placeholder="Ratecard Weight"
+                  type="number"
+                  value={weight}
+                  onChange={(e) => setWeight(Number(e.target.value))}
+                  className="h-10"
+                />
+              </div>
               {/* Dynamic Filter Attribute Options */}
               {filterAttributes.length > 0 && (
                 <div>
@@ -358,7 +333,7 @@ const RateCardForm: React.FC = () => {
                       <Select
                         value={pair.attributeId}
                         onValueChange={(value) =>
-                          handleUpdateFilterAttributeOption(index, "attributeId", value)
+                          handleUpdateFilterAttributeOption(index, 'attributeId', value)
                         }
                       >
                         <SelectTrigger>
@@ -375,7 +350,7 @@ const RateCardForm: React.FC = () => {
                       <Select
                         value={pair.optionId}
                         onValueChange={(value) =>
-                          handleUpdateFilterAttributeOption(index, "optionId", value)
+                          handleUpdateFilterAttributeOption(index, 'optionId', value)
                         }
                       >
                         <SelectTrigger>
@@ -404,7 +379,6 @@ const RateCardForm: React.FC = () => {
                   </Button>
                 </div>
               )}
-
 
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
@@ -454,98 +428,91 @@ const RateCardForm: React.FC = () => {
                 {priceError && <p className="text-red-500 text-sm">{priceError}</p>}
               </div>
 
-
               {segments.length > 0 && (
-              <div className="space-y-2">
-              <Select
-                      value={segmentsId}
-                      onValueChange={(value) =>
-                        setsegmentsId(value)
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select Segment" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {segments.map((attr) => (
-                          <SelectItem key={attr.id} value={attr.id!.toString()}>
-                            {attr.segment_name}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    </div>
-                      )}
-
-<div className="space-y-2 w-full">
-  <label className="text-sm font-medium text-gray-700">Select Provider</label>
-  <Select value={selectedProviderId || ""} onValueChange={handleValueChange}>
-    <SelectTrigger className="w-full">
-      {selectedProviderName || "Select an option"}
-    </SelectTrigger>
-    <SelectContent className="w-full p-0">
-      {/* Search input */}
-      <div className="sticky top-0 z-10 bg-background p-2 border-b">
-        <Input
-          placeholder="Search by name, company, phone, or ID..."
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
-          className="w-full"
-          autoFocus
-        />
-      </div>
-
-      {/* Filtered provider list */}
-      {providers.filter(provider =>
-        `${provider.first_name} ${provider.last_name || ''} ${provider.company_name || ''} ${provider.phone || ''}`
-          .toLowerCase()
-          .includes(searchTerm.toLowerCase())
-      ).length > 0 ? (
-        <Virtuoso
-          style={{ height: "200px", width: "100%" }}
-          totalCount={providers.filter(provider =>
-            `${provider.first_name} ${provider.last_name || ''} ${provider.company_name || ''} ${provider.phone || ''}`
-              .toLowerCase()
-              .includes(searchTerm.toLowerCase())
-          ).length}
-          itemContent={(index) => {
-            const filteredProviders = providers.filter(provider =>
-              `${provider.first_name} ${provider.last_name || ''} ${provider.company_name || ''} ${provider.phone || ''}`
-                .toLowerCase()
-                .includes(searchTerm.toLowerCase())
-            );
-            const provider = filteredProviders[index];
-            return (
-              <SelectItem
-                key={provider.id}
-                value={provider.id?.toString() ?? ''}
-              >
-                <div className="flex flex-col">
-                  <span className="font-medium">
-                    {provider.first_name} {provider.last_name || ""}
-                  </span>
-                  {provider.company_name && (
-                    <span className="text-sm text-gray-600">
-                      {provider.company_name}
-                    </span>
-                  )}
-                  <span className="text-xs text-gray-500">
-                    📞 {provider.phone || 'No Phone'} • ID: {(provider as any).sampleid || provider.id}
-                  </span>
+                <div className="space-y-2">
+                  <Select value={segmentsId} onValueChange={(value) => setsegmentsId(value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select Segment" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {segments.map((attr) => (
+                        <SelectItem key={attr.id} value={attr.id!.toString()}>
+                          {attr.segment_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-              </SelectItem>
-            );
-          }}
-        />
-      ) : (
-        <div className="py-6 text-center text-sm text-muted-foreground">
-          No providers found
-        </div>
-      )}
-    </SelectContent>
-  </Select>
-</div>
-             
+              )}
+
+              <div className="space-y-2 w-full">
+                <label className="text-sm font-medium text-gray-700">Select Provider</label>
+                <Select value={selectedProviderId || ''} onValueChange={handleValueChange}>
+                  <SelectTrigger className="w-full">
+                    {selectedProviderName || 'Select an option'}
+                  </SelectTrigger>
+                  <SelectContent className="w-full p-0">
+                    {/* Search input */}
+                    <div className="sticky top-0 z-10 bg-background p-2 border-b">
+                      <Input
+                        placeholder="Search by name, company, phone, or ID..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="w-full"
+                        autoFocus
+                      />
+                    </div>
+
+                    {/* Filtered provider list */}
+                    {providers.filter((provider) =>
+                      `${provider.first_name} ${provider.last_name || ''} ${provider.company_name || ''} ${provider.phone || ''}`
+                        .toLowerCase()
+                        .includes(searchTerm.toLowerCase())
+                    ).length > 0 ? (
+                      <Virtuoso
+                        style={{ height: '200px', width: '100%' }}
+                        totalCount={
+                          providers.filter((provider) =>
+                            `${provider.first_name} ${provider.last_name || ''} ${provider.company_name || ''} ${provider.phone || ''}`
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase())
+                          ).length
+                        }
+                        itemContent={(index) => {
+                          const filteredProviders = providers.filter((provider) =>
+                            `${provider.first_name} ${provider.last_name || ''} ${provider.company_name || ''} ${provider.phone || ''}`
+                              .toLowerCase()
+                              .includes(searchTerm.toLowerCase())
+                          );
+                          const provider = filteredProviders[index];
+                          return (
+                            <SelectItem key={provider.id} value={provider.id?.toString() ?? ''}>
+                              <div className="flex flex-col">
+                                <span className="font-medium">
+                                  {provider.first_name} {provider.last_name || ''}
+                                </span>
+                                {provider.company_name && (
+                                  <span className="text-sm text-gray-600">
+                                    {provider.company_name}
+                                  </span>
+                                )}
+                                <span className="text-xs text-gray-500">
+                                  📞 {provider.phone || 'No Phone'} • ID:{' '}
+                                  {(provider as any).sampleid || provider.id}
+                                </span>
+                              </div>
+                            </SelectItem>
+                          );
+                        }}
+                      />
+                    ) : (
+                      <div className="py-6 text-center text-sm text-muted-foreground">
+                        No providers found
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
 
               {/* Active/Inactive Switch */}
               <div className="space-y-2">
@@ -564,7 +531,11 @@ const RateCardForm: React.FC = () => {
               </div>
 
               <div className="flex space-x-3 pt-6">
-                <Button className="w-100 flex-1 h-11 bg-primary" disabled={isSubmitting} type="submit">
+                <Button
+                  className="w-100 flex-1 h-11 bg-primary"
+                  disabled={isSubmitting}
+                  type="submit"
+                >
                   {isSubmitting ? (
                     <div className="flex items-center justify-center space-x-2">
                       <Loader2 className="w-4 h-4 animate-spin" />

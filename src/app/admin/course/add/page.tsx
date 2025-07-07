@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import dynamic from "next/dynamic";
-import { Input } from "@/components/ui/input";
+import React, { useState, useEffect, FormEvent } from 'react';
+import dynamic from 'next/dynamic';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectTrigger,
   SelectContent,
   SelectValue,
   SelectItem,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardHeader,
@@ -18,25 +18,24 @@ import {
   CardContent,
   CardFooter,
   CardDescription,
-} from "@/components/ui/card";
-import { Save, Loader2, FileText, Globe2 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
-import { createCourse, Course ,fetchAllCategories,Category} from "@/lib/api";
-import { Switch } from "@/components/ui/switch";
+} from '@/components/ui/card';
+import { Save, Loader2, FileText, Globe2 } from 'lucide-react';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
+import { createCourse, Course, fetchAllCategories, Category } from '@/lib/api';
+import { Switch } from '@/components/ui/switch';
 
-
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-import "react-quill/dist/quill.snow.css";
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import 'react-quill/dist/quill.snow.css';
 
 const quillModules = {
   toolbar: [
-    [{ header: "1" }, { header: "2" }, { font: [] }],
+    [{ header: '1' }, { header: '2' }, { font: [] }],
     [{ size: [] }],
-    ["bold", "italic", "underline", "strike", "blockquote"],
-    [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
-    ["link", "image", "video"],
-    ["clean"],
+    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+    [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+    ['link', 'image', 'video'],
+    ['clean'],
   ],
 };
 
@@ -44,18 +43,18 @@ const AddCourseForm: React.FC = () => {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [mediaType, setMediaType] = useState<"image" | "video">("image");
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [mediaType, setMediaType] = useState<'image' | 'video'>('image');
   const [mediaFile, setMediaFile] = useState<File | null>(null);
   const [duration, setDuration] = useState<number | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-   const [categories, setCategories] = useState<Category[]>([]);
-    const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
-    const [moduleType, setModuleType] = useState<"beginner" | "advanced">("beginner");
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  const [moduleType, setModuleType] = useState<'beginner' | 'advanced'>('beginner');
   const [isActive, setIsActive] = useState(true);
 
- useEffect(() => {
+  useEffect(() => {
     const loadCategories = async () => {
       try {
         const categoryData = await fetchAllCategories();
@@ -74,11 +73,11 @@ const AddCourseForm: React.FC = () => {
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
 
-    if (!title || !description  || !duration || !mediaFile) {
+    if (!title || !description || !duration || !mediaFile) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "All fields are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'All fields are required.',
       });
       return;
     }
@@ -88,25 +87,24 @@ const AddCourseForm: React.FC = () => {
       description,
       category_id: selectedCategoryId,
       video_url: mediaFile,
-      length_in_minutes:duration,
-      module_type:moduleType,
-              is_active: isActive,
-
+      length_in_minutes: duration,
+      module_type: moduleType,
+      is_active: isActive,
     };
 
     try {
       setIsSubmitting(true);
       await createCourse(courseData);
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Course created successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Course created successfully.',
       });
-      router.push("/admin/course");
+      router.push('/admin/course');
     } catch (error) {
       toast({
-        variant: "error",
-        title: "Error",
+        variant: 'error',
+        title: 'Error',
         description: `${error}`,
       });
     } finally {
@@ -135,7 +133,7 @@ const AddCourseForm: React.FC = () => {
                 />
               </div>
 
-              <div className="space-y-2" style={{ height: "270px" }}>
+              <div className="space-y-2" style={{ height: '270px' }}>
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <FileText className="w-4 h-5 text-blue-500" />
                   <span>Description</span>
@@ -145,7 +143,7 @@ const AddCourseForm: React.FC = () => {
                   onChange={setDescription}
                   theme="snow"
                   modules={quillModules}
-                  style={{ height: "200px" }}
+                  style={{ height: '200px' }}
                 />
               </div>
 
@@ -178,7 +176,7 @@ const AddCourseForm: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Duration (minutes)</label>
                 <Input
                   type="number"
-                  value={duration ?? ""}
+                  value={duration ?? ''}
                   onChange={(e) => setDuration(parseInt(e.target.value))}
                   placeholder="Enter duration"
                   required
@@ -205,7 +203,7 @@ const AddCourseForm: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Media File</label>
                 <Input
                   type="file"
-                  accept={"video/*" }
+                  accept={'video/*'}
                   onChange={(e) => {
                     if (e.target.files && e.target.files.length > 0) {
                       setMediaFile(e.target.files[0]);
@@ -215,28 +213,26 @@ const AddCourseForm: React.FC = () => {
                 />
               </div>
 
-               <div className="flex items-center space-x-2">
-                              <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
-                              <span>Active</span>
-                            </div>
-              
+              <div className="flex items-center space-x-2">
+                <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
+                <span>Active</span>
+              </div>
 
-            <div>
-  <label className="text-sm font-medium text-gray-700">Module Type</label>
-  <Select
-    value={moduleType}
-    onValueChange={(value: "beginner" | "advanced") => setModuleType(value)}
-  >
-    <SelectTrigger className="bg-white border-gray-200">
-      <SelectValue placeholder="Select Module Type" />
-    </SelectTrigger>
-    <SelectContent>
-      <SelectItem value="beginner">Beginner</SelectItem>
-      <SelectItem value="advanced">Advanced</SelectItem>
-    </SelectContent>
-  </Select>
-</div>
-
+              <div>
+                <label className="text-sm font-medium text-gray-700">Module Type</label>
+                <Select
+                  value={moduleType}
+                  onValueChange={(value: 'beginner' | 'advanced') => setModuleType(value)}
+                >
+                  <SelectTrigger className="bg-white border-gray-200">
+                    <SelectValue placeholder="Select Module Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="beginner">Beginner</SelectItem>
+                    <SelectItem value="advanced">Advanced</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
             </CardContent>
 
             <CardFooter>

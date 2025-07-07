@@ -1,9 +1,9 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState, FormEvent } from "react";
-import { useRouter, useParams } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
+import React, { useEffect, useState, FormEvent } from 'react';
+import { useRouter, useParams } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardHeader,
@@ -11,18 +11,18 @@ import {
   CardContent,
   CardFooter,
   CardDescription,
-} from "@/components/ui/card";
-import { Loader2, Save } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
-import { getBadge, updateBadge,Badge } from "@/lib/api"; // You should define these
+} from '@/components/ui/card';
+import { Loader2, Save } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
+import { getBadge, updateBadge, Badge } from '@/lib/api'; // You should define these
 
 const EditBadgeForm: React.FC = () => {
   const router = useRouter();
   const { id } = useParams();
   const { toast } = useToast();
 
-  const [name, setName] = useState("");
+  const [name, setName] = useState('');
   const [image, setImage] = useState<File | null>(null);
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   const [totalCourse, setTotalCourse] = useState<number>(0);
@@ -40,13 +40,13 @@ const EditBadgeForm: React.FC = () => {
         setNextBadgeTime(badgeData.next_badge_time ?? null);
         setIsActive(badgeData.is_active ?? true);
 
-        if (badgeData.image && typeof badgeData.image === "string") {
+        if (badgeData.image && typeof badgeData.image === 'string') {
           setExistingImageUrl(badgeData.image);
         }
       } catch (err) {
         toast({
-          variant: "error",
-          title: "Error loading badge",
+          variant: 'error',
+          title: 'Error loading badge',
         });
       } finally {
         setLoading(false);
@@ -61,35 +61,34 @@ const EditBadgeForm: React.FC = () => {
 
     if (!name || !totalCourse) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Name and total course are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Name and total course are required.',
       });
       return;
     }
 
-     const badgeData: Badge = {
-              name,
-              next_badge_time:nextBadgeTime,
-              total_course: totalCourse,
-              image: image,
-               is_active: isActive,
-        
-            };
-    
+    const badgeData: Badge = {
+      name,
+      next_badge_time: nextBadgeTime,
+      total_course: totalCourse,
+      image: image,
+      is_active: isActive,
+    };
+
     try {
       setIsSubmitting(true);
       await updateBadge(id.toString(), badgeData); // Must be FormData-compatible endpoint
       toast({
-        variant: "success",
-        title: "Badge updated successfully",
+        variant: 'success',
+        title: 'Badge updated successfully',
       });
-      router.push("/admin/badge");
+      router.push('/admin/badge');
     } catch (err) {
       toast({
-        variant: "error",
-        title: "Update failed",
-        description: "Please try again.",
+        variant: 'error',
+        title: 'Update failed',
+        description: 'Please try again.',
       });
     } finally {
       setIsSubmitting(false);
@@ -136,7 +135,7 @@ const EditBadgeForm: React.FC = () => {
                     }
                   }}
                 />
-                {existingImageUrl && typeof existingImageUrl === "string" && (
+                {existingImageUrl && typeof existingImageUrl === 'string' && (
                   <div className="mt-2">
                     <p className="text-xs text-gray-500">Uploaded Image:</p>
                     <img
@@ -163,7 +162,7 @@ const EditBadgeForm: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Next Badge Time (days)</label>
                 <Input
                   type="number"
-                  value={nextBadgeTime ?? ""}
+                  value={nextBadgeTime ?? ''}
                   onChange={(e) => setNextBadgeTime(parseInt(e.target.value))}
                   placeholder="Optional"
                 />

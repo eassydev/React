@@ -1,15 +1,15 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import { Input } from "@/components/ui/input";
+import React, { useState, useEffect, FormEvent } from 'react';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectTrigger,
   SelectContent,
   SelectValue,
   SelectItem,
-} from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardHeader,
@@ -17,26 +17,26 @@ import {
   CardContent,
   CardFooter,
   CardDescription,
-} from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { useRouter } from "next/navigation";
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter } from 'next/navigation';
 import {
   fetchAllCategories,
   fetchCoursesByCategory,
   createCourseQuiz,
   CourseQuiz,
   CourseQuizQuestion,
-} from "@/lib/api";
-import { Plus, Trash, Save, Loader2 } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+} from '@/lib/api';
+import { Plus, Trash, Save, Loader2 } from 'lucide-react';
+import { Switch } from '@/components/ui/switch';
 
 const CourseQuizAddForm: React.FC = () => {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [categoryId, setCategoryId] = useState("");
-  const [courseId, setCourseId] = useState("");
-  const [title, setTitle] = useState("");
+  const [categoryId, setCategoryId] = useState('');
+  const [courseId, setCourseId] = useState('');
+  const [title, setTitle] = useState('');
   const [questions, setQuestions] = useState<CourseQuizQuestion[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [courses, setCourses] = useState<any[]>([]);
@@ -44,40 +44,40 @@ const CourseQuizAddForm: React.FC = () => {
   const [isActive, setIsActive] = useState(true);
 
   useEffect(() => {
-     const loadCategories = async () => {
-       try {
-         const categoryData = await fetchAllCategories();
-         setCategories(categoryData);
-       } catch (error) {
-         toast({
-           variant: 'error',
-           title: 'Error',
-           description: 'Failed to load categories.',
-         });
-       }
-     };
-     loadCategories();
-   }, []);
+    const loadCategories = async () => {
+      try {
+        const categoryData = await fetchAllCategories();
+        setCategories(categoryData);
+      } catch (error) {
+        toast({
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load categories.',
+        });
+      }
+    };
+    loadCategories();
+  }, []);
 
-    useEffect(() => {
-       if (categoryId) {
-       const loadCategoriesCourse = async () => {
-         try {
-           const courseData = await fetchCoursesByCategory(categoryId);
-           setCourses(courseData);
-         } catch (error) {
-           toast({
-             variant: 'error',
-             title: 'Error',
-             description: 'Failed to load categories.',
-           });
-         }
-       };
-       loadCategoriesCourse();
-       } else {
+  useEffect(() => {
+    if (categoryId) {
+      const loadCategoriesCourse = async () => {
+        try {
+          const courseData = await fetchCoursesByCategory(categoryId);
+          setCourses(courseData);
+        } catch (error) {
+          toast({
+            variant: 'error',
+            title: 'Error',
+            description: 'Failed to load categories.',
+          });
+        }
+      };
+      loadCategoriesCourse();
+    } else {
       setCourses([]);
     }
-     }, [categoryId]);
+  }, [categoryId]);
 
   useEffect(() => {
     if (categoryId) {
@@ -93,12 +93,12 @@ const CourseQuizAddForm: React.FC = () => {
     setQuestions([
       ...questions,
       {
-        question_text: "",
-        option_1: "",
-        option_2: "",
-        option_3: "",
-        option_4: "",
-        correct_answer: "option_1",
+        question_text: '',
+        option_1: '',
+        option_2: '',
+        option_3: '',
+        option_4: '',
+        correct_answer: 'option_1',
       },
     ]);
   };
@@ -119,9 +119,10 @@ const CourseQuizAddForm: React.FC = () => {
 
     if (!categoryId || !courseId || !title || questions.length === 0) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "All fields including category, course, title, and at least one question are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description:
+          'All fields including category, course, title, and at least one question are required.',
       });
       return;
     }
@@ -139,15 +140,15 @@ const CourseQuizAddForm: React.FC = () => {
       await createCourseQuiz(payload);
 
       toast({
-        variant: "success",
-        title: "Quiz Created",
-        description: "Your course quiz has been added successfully.",
+        variant: 'success',
+        title: 'Quiz Created',
+        description: 'Your course quiz has been added successfully.',
       });
-      router.push("/admin/course-quiz");
+      router.push('/admin/course-quiz');
     } catch (err) {
       toast({
-        variant: "error",
-        title: "Error",
+        variant: 'error',
+        title: 'Error',
         description: `${err}`,
       });
     } finally {
@@ -211,18 +212,17 @@ const CourseQuizAddForm: React.FC = () => {
                 />
               </div>
 
-  <div className="flex items-center space-x-2">
-                              <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
-                              <span>Active</span>
-                            </div>
+              <div className="flex items-center space-x-2">
+                <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
+                <span>Active</span>
+              </div>
               {/* Questions */}
               {questions.map((q, index) => (
-                <div
-                  key={index}
-                  className="p-4 border rounded-md bg-gray-50 space-y-4 relative"
-                >
+                <div key={index} className="p-4 border rounded-md bg-gray-50 space-y-4 relative">
                   <div className="flex justify-between items-center">
-                    <label className="text-sm font-medium text-gray-700">Question {index + 1}</label>
+                    <label className="text-sm font-medium text-gray-700">
+                      Question {index + 1}
+                    </label>
                     <Trash
                       className="w-4 h-4 text-red-500 cursor-pointer"
                       onClick={() => removeQuestion(index)}
@@ -232,11 +232,11 @@ const CourseQuizAddForm: React.FC = () => {
                   <Input
                     placeholder="Enter question text"
                     value={q.question_text}
-                    onChange={(e) => updateQuestion(index, "question_text", e.target.value)}
+                    onChange={(e) => updateQuestion(index, 'question_text', e.target.value)}
                     required
                   />
 
-                  {["option_1", "option_2", "option_3", "option_4"].map((optKey) => (
+                  {['option_1', 'option_2', 'option_3', 'option_4'].map((optKey) => (
                     <div key={optKey} className="flex items-center space-x-2">
                       <input
                         type="radio"
@@ -244,13 +244,19 @@ const CourseQuizAddForm: React.FC = () => {
                         value={optKey}
                         checked={q.correct_answer === optKey}
                         onChange={() =>
-                          updateQuestion(index, "correct_answer", optKey as CourseQuizQuestion["correct_answer"])
+                          updateQuestion(
+                            index,
+                            'correct_answer',
+                            optKey as CourseQuizQuestion['correct_answer']
+                          )
                         }
                       />
                       <Input
-                        placeholder={`Enter ${optKey.replace("_", " ")}`}
+                        placeholder={`Enter ${optKey.replace('_', ' ')}`}
                         value={q[optKey as keyof CourseQuizQuestion] as string}
-                        onChange={(e) => updateQuestion(index, optKey as keyof CourseQuizQuestion, e.target.value)}
+                        onChange={(e) =>
+                          updateQuestion(index, optKey as keyof CourseQuizQuestion, e.target.value)
+                        }
                         required
                       />
                     </div>
@@ -266,7 +272,11 @@ const CourseQuizAddForm: React.FC = () => {
 
             <CardFooter>
               <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                {isSubmitting ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
                 Save Quiz
               </Button>
             </CardFooter>

@@ -1,20 +1,15 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from 'react';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardContent,
-} from "@/components/ui/card";
+} from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
   Table,
   TableHead,
@@ -22,15 +17,9 @@ import {
   TableBody,
   TableRow,
   TableCell,
-} from "@/components/ui/table";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Edit,
-  Trash2,
-  Plus,
-} from "lucide-react";
-import Link from "next/link";
+} from '@/components/ui/table';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from 'lucide-react';
+import Link from 'next/link';
 import {
   AlertDialog,
   AlertDialogTrigger,
@@ -38,10 +27,10 @@ import {
   AlertDialogHeader,
   AlertDialogFooter,
   AlertDialogCancel,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
-import { fetchCourses, deleteCourse } from "@/lib/api";
-import { Switch } from "@/components/ui/switch";
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { fetchCourses, deleteCourse } from '@/lib/api';
+import { Switch } from '@/components/ui/switch';
 
 const CourseList = () => {
   const [courses, setCourses] = useState<any[]>([]);
@@ -50,65 +39,62 @@ const CourseList = () => {
     pageSize: 50,
   });
   const [totalPages, setTotalPages] = useState(0);
-  const [searchTerm, setSearchTerm] = useState("");
-  const [filterStatus, setFilterStatus] = useState("all");
+  const [searchTerm, setSearchTerm] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
   const [totalItems, setTotalItems] = useState(0);
 
   const { toast } = useToast();
 
- 
+  const fetchCoursesData = async (page = 1, size = 50, status = 'all', search = '') => {
+    try {
+      const { data, meta } = await fetchCourses(page, size, status, search);
+      setCourses(data);
+      setTotalPages(meta.totalPages);
+      setTotalItems(meta.totalItems);
+      setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
+    } catch (error) {
+      console.error('Error fetching banners:', error);
+    }
+  };
 
-   const fetchCoursesData = async (page = 1, size = 50, status = "all",search = "") => {
-      try {
-        const { data, meta } = await fetchCourses(page, size, status,search);
-        setCourses(data);
-        setTotalPages(meta.totalPages);
-        setTotalItems(meta.totalItems);
-        setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
-      } catch (error) {
-        console.error('Error fetching banners:', error);
-      }
-    };
-  
-    useEffect(() => {
-      fetchCoursesData(pagination.pageIndex + 1, pagination.pageSize,filterStatus,searchTerm);
-    }, [pagination.pageIndex, pagination.pageSize,filterStatus,searchTerm]);
-  
+  useEffect(() => {
+    fetchCoursesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm);
+  }, [pagination.pageIndex, pagination.pageSize, filterStatus, searchTerm]);
 
   const handleDelete = async (course: any) => {
     try {
       await deleteCourse(course.id);
       toast({
-        title: "Success",
+        title: 'Success',
         description: `Course "${course.title}" deleted successfully.`,
-        variant: "success",
+        variant: 'success',
       });
       fetchCoursesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm);
     } catch (error) {
       toast({
-        title: "Error",
+        title: 'Error',
         description: `Failed to delete course: ${error}`,
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
 
   const courseColumns: ColumnDef<any>[] = [
     {
-      accessorKey: "sno",
-      header: "S.No",
+      accessorKey: 'sno',
+      header: 'S.No',
       cell: (info) => info.row.index + 1,
     },
     {
-      accessorKey: "title",
-      header: "Title",
+      accessorKey: 'title',
+      header: 'Title',
     },
     {
-      accessorKey: "module_type",
-      header: "Type",
-      cell: ({ getValue }) => <span>{getValue() === "quiz" ? "Quiz" : "Video"}</span>,
+      accessorKey: 'module_type',
+      header: 'Type',
+      cell: ({ getValue }) => <span>{getValue() === 'quiz' ? 'Quiz' : 'Video'}</span>,
     },
-   {
+    {
       accessorKey: 'category.name',
       header: 'Category Name',
       cell: ({ getValue }) => <span>{String(getValue())}</span>, // Convert to string
@@ -120,7 +106,7 @@ const CourseList = () => {
         const status = info.getValue();
         let statusText = '';
         let statusClass = '';
-    
+
         switch (status) {
           case 0:
             statusText = 'Inactive';
@@ -138,7 +124,7 @@ const CourseList = () => {
             statusText = 'Unknown';
             statusClass = 'bg-yellow-100 text-yellow-600';
         }
-    
+
         return (
           <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusClass}`}>
             {statusText}
@@ -147,8 +133,8 @@ const CourseList = () => {
       },
     },
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="icon">
@@ -208,7 +194,10 @@ const CourseList = () => {
             </select>
 
             <Link href="/admin/course/add">
-              <Button><Plus className="w-4 h-4 mr-2" />Add Course</Button>
+              <Button>
+                <Plus className="w-4 h-4 mr-2" />
+                Add Course
+              </Button>
             </Link>
           </div>
         </div>
@@ -247,7 +236,9 @@ const CourseList = () => {
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
                       <TableHead key={header.id} className="text-left">
-                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
                       </TableHead>
                     ))}
                   </TableRow>

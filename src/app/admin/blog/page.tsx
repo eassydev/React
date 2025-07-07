@@ -1,21 +1,34 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from "lucide-react";
-import { fetchBlogs, deleteBlog } from "@/lib/api";
-import Link from "next/link";
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
+} from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from 'lucide-react';
+import { fetchBlogs, deleteBlog } from '@/lib/api';
+import Link from 'next/link';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const BlogList = () => {
   const [blogs, setBlogs] = useState<any[]>([]);
@@ -32,7 +45,7 @@ const BlogList = () => {
       setTotalPages(meta.totalPages);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.error("Error fetching blogs:", error);
+      console.error('Error fetching blogs:', error);
     }
   };
 
@@ -44,40 +57,40 @@ const BlogList = () => {
     try {
       await deleteBlog(blog.id);
       toast({
-        title: "Success",
+        title: 'Success',
         description: `Blog "${blog.title}" deleted successfully`,
-        variant: "success",
+        variant: 'success',
       });
       fetchBlogsData(pagination.pageIndex + 1, pagination.pageSize);
     } catch (error) {
       toast({
-        title: "Error",
+        title: 'Error',
         description: `Failed to delete blog: ${error}`,
-        variant: "destructive",
+        variant: 'destructive',
       });
     }
   };
 
   const blogColumns: ColumnDef<any>[] = [
-    { accessorKey: "id", header: "ID" },
-    { accessorKey: "title", header: "Title" },
-    { accessorKey: "slug", header: "Slug" },
+    { accessorKey: 'id', header: 'ID' },
+    { accessorKey: 'title', header: 'Title' },
+    { accessorKey: 'slug', header: 'Slug' },
     {
-      accessorKey: "is_active",
-      header: "Status",
+      accessorKey: 'is_active',
+      header: 'Status',
       cell: (info) => (
         <span
           className={`px-2 py-1 rounded-full text-xs font-medium ${
-            info.getValue() ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"
+            info.getValue() ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
           }`}
         >
-          {info.getValue() ? "Active" : "Inactive"}
+          {info.getValue() ? 'Active' : 'Inactive'}
         </span>
       ),
     },
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Button variant="ghost" size="icon">

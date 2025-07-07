@@ -1,38 +1,51 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2, FileImage, Eye, Upload } from "lucide-react";
-import { fetchProviderById, updateProvider, Provider } from "@/lib/api";
-import { useRouter, useParams } from "next/navigation";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import React, { useState, useEffect, FormEvent } from 'react';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2, FileImage, Eye, Upload } from 'lucide-react';
+import { fetchProviderById, updateProvider, Provider } from '@/lib/api';
+import { useRouter, useParams } from 'next/navigation';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 
 const EditProviderForm: React.FC = () => {
-  const [firstName, setFirstName] = useState<string>("");
-  const [lastName, setLastName] = useState<string>("");
-  const [gender, setGender] = useState<"male" | "female" | "other">("male");
-  const [email, setEmail] = useState<string>("");
-  const [phone, setPhone] = useState<string>("");
-  const [companyName, setCompanyName] = useState<string>("");
-  const [gstNumber, setGstNumber] = useState<string>("");
+  const [firstName, setFirstName] = useState<string>('');
+  const [lastName, setLastName] = useState<string>('');
+  const [gender, setGender] = useState<'male' | 'female' | 'other'>('male');
+  const [email, setEmail] = useState<string>('');
+  const [phone, setPhone] = useState<string>('');
+  const [companyName, setCompanyName] = useState<string>('');
+  const [gstNumber, setGstNumber] = useState<string>('');
   const [image, setImage] = useState<File | null>(null);
-  const [panNumber, setPanNumber] = useState<string>("");
-  const [linkedAccountId, setLinkedAccountId] = useState<string>("");
+  const [panNumber, setPanNumber] = useState<string>('');
+  const [linkedAccountId, setLinkedAccountId] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
-  const [rating, setRating] = useState<string>("0.0");
-  const [country, setCountry] = useState<string>("");
-  const [state, setState] = useState<string>("");
-  const [city, setCity] = useState<string>("");
-  const [existingImage, setExistingImage] = useState<string>("");
+  const [rating, setRating] = useState<string>('0.0');
+  const [country, setCountry] = useState<string>('');
+  const [state, setState] = useState<string>('');
+  const [city, setCity] = useState<string>('');
+  const [existingImage, setExistingImage] = useState<string>('');
 
-  const [postalCode, setPostalCode] = useState<string>("");
+  const [postalCode, setPostalCode] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [gstError, setGstError] = useState("");
-  const [panError, setPanError] = useState("");
+  const [gstError, setGstError] = useState('');
+  const [panError, setPanError] = useState('');
   const [documents, setDocuments] = useState<any[]>([]);
   const [newAadharFront, setNewAadharFront] = useState<File | null>(null);
   const [newAadharBack, setNewAadharBack] = useState<File | null>(null);
@@ -48,7 +61,7 @@ const EditProviderForm: React.FC = () => {
     try {
       const response = await fetch(`/admin-api/provider/${providerId}/documents`, {
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
       if (response.ok) {
@@ -73,15 +86,15 @@ const EditProviderForm: React.FC = () => {
       const response = await fetch(`/admin-api/provider/${id}/documents`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
         body: formData,
       });
 
       if (response.ok) {
         toast({
-          title: "Success",
-          description: "Documents uploaded successfully.",
+          title: 'Success',
+          description: 'Documents uploaded successfully.',
         });
 
         // Reset file inputs
@@ -97,9 +110,9 @@ const EditProviderForm: React.FC = () => {
       }
     } catch (error) {
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to upload documents.",
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to upload documents.',
       });
     }
   };
@@ -110,32 +123,32 @@ const EditProviderForm: React.FC = () => {
         const providerData = await fetchProviderById(id as string);
         setFirstName(providerData.first_name);
         setLastName(providerData.last_name);
-        setGender(providerData.gender || "male");
+        setGender(providerData.gender || 'male');
         setEmail(providerData.email);
         setPhone(providerData.phone);
-        setCompanyName(providerData.company_name || "");
-        setGstNumber(providerData.gst_number || "");
-        setPanNumber(providerData.pan_number || "");
-        setLinkedAccountId(providerData.linked_account_id || "");
-        if (typeof providerData.image === "string") {
+        setCompanyName(providerData.company_name || '');
+        setGstNumber(providerData.gst_number || '');
+        setPanNumber(providerData.pan_number || '');
+        setLinkedAccountId(providerData.linked_account_id || '');
+        if (typeof providerData.image === 'string') {
           setExistingImage(providerData.image); // Set existing image URL
         } else {
-          setExistingImage(""); // Handle unexpected values gracefully
+          setExistingImage(''); // Handle unexpected values gracefully
         }
         setIsActive(providerData.active === 1);
-        setRating(providerData.rating?.toString() || "0.0");
-        setCountry(providerData.country || "");
-        setState(providerData.state || "");
-        setCity(providerData.city || "");
-        setPostalCode(providerData.postal_code || "");
+        setRating(providerData.rating?.toString() || '0.0');
+        setCountry(providerData.country || '');
+        setState(providerData.state || '');
+        setCity(providerData.city || '');
+        setPostalCode(providerData.postal_code || '');
 
         // Fetch provider documents
         await fetchProviderDocuments(id as string);
       } catch (error) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load provider data.",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load provider data.',
         });
       }
     };
@@ -143,12 +156,11 @@ const EditProviderForm: React.FC = () => {
     fetchProviderData();
   }, [id, toast]);
 
-
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-      if (e.target.files && e.target.files[0]) {
-        setImage(e.target.files[0]);
-      }
-    };
+    if (e.target.files && e.target.files[0]) {
+      setImage(e.target.files[0]);
+    }
+  };
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -156,9 +168,9 @@ const EditProviderForm: React.FC = () => {
 
     if (!firstName || !phone) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "First Name and Phone are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'First Name and Phone are required.',
       });
       setIsSubmitting(false);
       return;
@@ -186,16 +198,16 @@ const EditProviderForm: React.FC = () => {
     try {
       await updateProvider(id as string, updatedProvider);
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Provider updated successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Provider updated successfully.',
       });
-     // router.push("/admin/provider");
+      // router.push("/admin/provider");
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to update provider.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to update provider.',
       });
     } finally {
       setIsSubmitting(false);
@@ -205,20 +217,20 @@ const EditProviderForm: React.FC = () => {
   const validateGST = (value: string) => {
     const gstRegex = /^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z]{1}[A-Z0-9]{1}[Z]{1}[A-Z0-9]{1}$/;
     setGstNumber(value); // Allow updating the input value
-    if (!gstRegex.test(value) && value !== "") {
-      setGstError("Invalid GST number format. Example: 22AAAAA0000A1Z5");
+    if (!gstRegex.test(value) && value !== '') {
+      setGstError('Invalid GST number format. Example: 22AAAAA0000A1Z5');
     } else {
-      setGstError("");
+      setGstError('');
     }
   };
 
   const validatePAN = (value: string) => {
     const panRegex = /^[A-Z]{5}[0-9]{4}[A-Z]{1}$/;
     setPanNumber(value); // Allow updating the input value
-    if (!panRegex.test(value) && value !== "") {
-      setPanError("Invalid PAN number format. Example: ABCDE1234F");
+    if (!panRegex.test(value) && value !== '') {
+      setPanError('Invalid PAN number format. Example: ABCDE1234F');
     } else {
-      setPanError("");
+      setPanError('');
     }
   };
 
@@ -266,7 +278,11 @@ const EditProviderForm: React.FC = () => {
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Gender</label>
-                <select value={gender} onChange={(e) => setGender(e.target.value as "male" | "female" | "other")} className="w-full border p-2 rounded">
+                <select
+                  value={gender}
+                  onChange={(e) => setGender(e.target.value as 'male' | 'female' | 'other')}
+                  className="w-full border p-2 rounded"
+                >
                   <option value="male">Male</option>
                   <option value="female">Female</option>
                   <option value="other">Other</option>
@@ -303,37 +319,39 @@ const EditProviderForm: React.FC = () => {
                 />
               </div>
 
-               {/* GST Number */}
-             <div className="space-y-2">
-               <label className="text-sm font-medium text-gray-700">GST Number</label>
-               <Input
-                 value={gstNumber}
-                 onChange={(e) => validateGST(e.target.value)}
-                 placeholder="Enter GST number"
-               />
-               {gstError && <p className="text-sm text-red-500">{gstError}</p>}
-             </div>
+              {/* GST Number */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">GST Number</label>
+                <Input
+                  value={gstNumber}
+                  onChange={(e) => validateGST(e.target.value)}
+                  placeholder="Enter GST number"
+                />
+                {gstError && <p className="text-sm text-red-500">{gstError}</p>}
+              </div>
 
-             {/* PAN Number */}
-             <div className="space-y-2">
-               <label className="text-sm font-medium text-gray-700">PAN Number</label>
-               <Input
-                 value={panNumber}
-                 onChange={(e) => validatePAN(e.target.value)}
-                 placeholder="Enter PAN number"
-               />
-               {panError && <p className="text-sm text-red-500">{panError}</p>}
-             </div>
+              {/* PAN Number */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">PAN Number</label>
+                <Input
+                  value={panNumber}
+                  onChange={(e) => validatePAN(e.target.value)}
+                  placeholder="Enter PAN number"
+                />
+                {panError && <p className="text-sm text-red-500">{panError}</p>}
+              </div>
 
-             {/* Linked Account ID */}
-             <div className="space-y-2">
-               <label className="text-sm font-medium text-gray-700">Razorpay Linked Account ID</label>
-               <Input
-                 value={linkedAccountId}
-                 onChange={(e) => setLinkedAccountId(e.target.value)}
-                 placeholder="Enter Razorpay linked account ID"
-               />
-             </div>
+              {/* Linked Account ID */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Razorpay Linked Account ID
+                </label>
+                <Input
+                  value={linkedAccountId}
+                  onChange={(e) => setLinkedAccountId(e.target.value)}
+                  placeholder="Enter Razorpay linked account ID"
+                />
+              </div>
 
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Country</label>
@@ -399,11 +417,7 @@ const EditProviderForm: React.FC = () => {
               </div>
 
               <div className="flex items-center space-x-2">
-                <Switch
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
-                  className="bg-primary"
-                />
+                <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
                 <span className="text-sm text-gray-700">Active</span>
               </div>
             </form>
@@ -411,7 +425,11 @@ const EditProviderForm: React.FC = () => {
 
           <CardFooter className="border-t border-gray-100 mt-6">
             <div className="flex space-x-3 pt-6">
-              <Button className="w-100 flex-1 h-11 bg-primary" disabled={isSubmitting} onClick={onSubmit}>
+              <Button
+                className="w-100 flex-1 h-11 bg-primary"
+                disabled={isSubmitting}
+                onClick={onSubmit}
+              >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center space-x-2">
                     <Loader2 className="w-4 h-4 animate-spin" />
@@ -444,7 +462,7 @@ const EditProviderForm: React.FC = () => {
               {/* Aadhar Card Front */}
               <div className="space-y-3">
                 <label className="text-sm font-medium text-gray-700">Aadhar Card Front</label>
-                {documents.find(doc => doc.document_type === 'adhaarCardFront') ? (
+                {documents.find((doc) => doc.document_type === 'adhaarCardFront') ? (
                   <div className="space-y-2">
                     <Dialog>
                       <DialogTrigger asChild>
@@ -458,7 +476,10 @@ const EditProviderForm: React.FC = () => {
                           <DialogTitle>Aadhar Card Front</DialogTitle>
                         </DialogHeader>
                         <img
-                          src={documents.find(doc => doc.document_type === 'adhaarCardFront')?.document_url}
+                          src={
+                            documents.find((doc) => doc.document_type === 'adhaarCardFront')
+                              ?.document_url
+                          }
                           alt="Aadhar Front"
                           className="w-full h-auto rounded-lg"
                           onError={(e) => {
@@ -475,7 +496,9 @@ const EditProviderForm: React.FC = () => {
                       placeholder="Upload new Aadhar front"
                     />
                     {newAadharFront && (
-                      <p className="text-xs text-green-600">New file selected: {newAadharFront.name}</p>
+                      <p className="text-xs text-green-600">
+                        New file selected: {newAadharFront.name}
+                      </p>
                     )}
                   </div>
                 ) : (
@@ -498,7 +521,7 @@ const EditProviderForm: React.FC = () => {
               {/* Aadhar Card Back */}
               <div className="space-y-3">
                 <label className="text-sm font-medium text-gray-700">Aadhar Card Back</label>
-                {documents.find(doc => doc.document_type === 'adhaarCardBack') ? (
+                {documents.find((doc) => doc.document_type === 'adhaarCardBack') ? (
                   <div className="space-y-2">
                     <Dialog>
                       <DialogTrigger asChild>
@@ -512,7 +535,10 @@ const EditProviderForm: React.FC = () => {
                           <DialogTitle>Aadhar Card Back</DialogTitle>
                         </DialogHeader>
                         <img
-                          src={documents.find(doc => doc.document_type === 'adhaarCardBack')?.document_url}
+                          src={
+                            documents.find((doc) => doc.document_type === 'adhaarCardBack')
+                              ?.document_url
+                          }
                           alt="Aadhar Back"
                           className="w-full h-auto rounded-lg"
                         />
@@ -541,7 +567,7 @@ const EditProviderForm: React.FC = () => {
               {/* PAN Card */}
               <div className="space-y-3">
                 <label className="text-sm font-medium text-gray-700">PAN Card</label>
-                {documents.find(doc => doc.document_type === 'panCard') ? (
+                {documents.find((doc) => doc.document_type === 'panCard') ? (
                   <div className="space-y-2">
                     <Dialog>
                       <DialogTrigger asChild>
@@ -555,7 +581,9 @@ const EditProviderForm: React.FC = () => {
                           <DialogTitle>PAN Card</DialogTitle>
                         </DialogHeader>
                         <img
-                          src={documents.find(doc => doc.document_type === 'panCard')?.document_url}
+                          src={
+                            documents.find((doc) => doc.document_type === 'panCard')?.document_url
+                          }
                           alt="PAN Card"
                           className="w-full h-auto rounded-lg"
                         />

@@ -1,23 +1,30 @@
-"use client";
-import React, { useState, useEffect, FormEvent } from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
-import { Select, SelectTrigger, SelectContent, SelectItem } from "@/components/ui/select";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Loader2, Save } from "lucide-react";
-import { fetchAllRatecard, createRatecardBogo } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-import { Virtuoso } from "react-virtuoso";
+'use client';
+import React, { useState, useEffect, FormEvent } from 'react';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+  CardFooter,
+} from '@/components/ui/card';
+import { Select, SelectTrigger, SelectContent, SelectItem } from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Loader2, Save } from 'lucide-react';
+import { fetchAllRatecard, createRatecardBogo } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import { Virtuoso } from 'react-virtuoso';
 
 const BogoAddForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [rateCards, setRateCards] = useState<any[]>([]);
-  const [rateCardId, setRateCardId] = useState<string>("");
-  const [bogoRateCardId, setBogoRateCardId] = useState<string>("");
+  const [rateCardId, setRateCardId] = useState<string>('');
+  const [bogoRateCardId, setBogoRateCardId] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
   const { toast } = useToast();
-  const [selectedRateCardName, setSelectedRateCardName] = useState<string>("Select an option");
-  const [selectedBogoName, setSelectedBogoName] = useState<string>("Select an option");
+  const [selectedRateCardName, setSelectedRateCardName] = useState<string>('Select an option');
+  const [selectedBogoName, setSelectedBogoName] = useState<string>('Select an option');
 
   useEffect(() => {
     const fetchRateCards = async () => {
@@ -26,9 +33,9 @@ const BogoAddForm: React.FC = () => {
         setRateCards(rateCardResponse || []);
       } catch (error) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load rate cards.",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load rate cards.',
         });
       }
     };
@@ -48,22 +55,22 @@ const BogoAddForm: React.FC = () => {
       });
 
       toast({
-        variant: "success",
-        title: "Success",
-        description: response.message || "Bogo created successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: response.message || 'Bogo created successfully.',
       });
 
       // Reset form fields after successful submission
-      setRateCardId("");
-      setBogoRateCardId("");
+      setRateCardId('');
+      setBogoRateCardId('');
       setIsActive(true);
-      setSelectedRateCardName("Select an option");
-      setSelectedBogoName("Select an option");
+      setSelectedRateCardName('Select an option');
+      setSelectedBogoName('Select an option');
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to create Bogo.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to create Bogo.',
       });
     } finally {
       setIsSubmitting(false);
@@ -74,9 +81,9 @@ const BogoAddForm: React.FC = () => {
     const selectedOption = rateCards.find((option) => option.id?.toString() === value);
     if (selectedOption) {
       setRateCardId(value.toString());
-      setSelectedRateCardName(selectedOption.name || "No Name"); // Handle null/undefined name
+      setSelectedRateCardName(selectedOption.name || 'No Name'); // Handle null/undefined name
     } else {
-      setSelectedRateCardName("Select an option");
+      setSelectedRateCardName('Select an option');
     }
   };
 
@@ -84,9 +91,9 @@ const BogoAddForm: React.FC = () => {
     const selectedOption = rateCards.find((option) => option.id?.toString() === value);
     if (selectedOption) {
       setBogoRateCardId(value.toString());
-      setSelectedBogoName(selectedOption.name || "No Name"); // Handle null/undefined name
+      setSelectedBogoName(selectedOption.name || 'No Name'); // Handle null/undefined name
     } else {
-      setSelectedBogoName("Select an option");
+      setSelectedBogoName('Select an option');
     }
   };
 
@@ -108,11 +115,11 @@ const BogoAddForm: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <Virtuoso
-                    style={{ height: "200px" }}
+                    style={{ height: '200px' }}
                     totalCount={rateCards.length}
                     itemContent={(index: number) => (
                       <SelectItem key={rateCards[index].id} value={rateCards[index].id.toString()}>
-                        {rateCards[index].name || "No Name"} {/* Handle null/undefined name */}
+                        {rateCards[index].name || 'No Name'} {/* Handle null/undefined name */}
                       </SelectItem>
                     )}
                   />
@@ -129,11 +136,11 @@ const BogoAddForm: React.FC = () => {
                 </SelectTrigger>
                 <SelectContent>
                   <Virtuoso
-                    style={{ height: "200px" }}
+                    style={{ height: '200px' }}
                     totalCount={rateCards.length}
                     itemContent={(index: number) => (
                       <SelectItem key={rateCards[index].id} value={rateCards[index].id.toString()}>
-                        {rateCards[index].name || "No Name"} {/* Handle null/undefined name */}
+                        {rateCards[index].name || 'No Name'} {/* Handle null/undefined name */}
                       </SelectItem>
                     )}
                   />

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import React, { useState, useEffect, Suspense } from 'react';
 import {
@@ -10,13 +10,32 @@ import {
 } from '@tanstack/react-table';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from '@/components/ui/table';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Filter } from 'lucide-react';
 import { fetchPages, deletePage } from '@/lib/api';
 import Link from 'next/link';
-import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from '@/components/ui/alert-dialog';
-import { useToast } from "@/hooks/use-toast";
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 import { useSearchParams } from 'next/navigation';
 
 const PageListContent = () => {
@@ -46,7 +65,12 @@ const PageListContent = () => {
   // Fetch pages from the backend with pagination
   const fetchPagesData = async (page = 1, size = 50) => {
     try {
-      const { data, meta } = await fetchPages(page, size, pageTypeFilter || undefined, audienceFilter || undefined);
+      const { data, meta } = await fetchPages(
+        page,
+        size,
+        pageTypeFilter || undefined,
+        audienceFilter || undefined
+      );
       setPages(data);
       setTotalPages(meta.totalPages);
       setTotalItems(meta.totalItems);
@@ -80,8 +104,8 @@ const PageListContent = () => {
 
   const pageColumns: ColumnDef<any>[] = [
     {
-      accessorKey: "sno", // Placeholder key for S.No
-      header: "S.No",
+      accessorKey: 'sno', // Placeholder key for S.No
+      header: 'S.No',
       cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
     },
     { accessorKey: 'title', header: 'Title' },
@@ -101,9 +125,9 @@ const PageListContent = () => {
         const typeLabels: { [key: string]: string } = {
           'privacy-policy': 'Privacy Policy',
           'terms-conditions': 'Terms & Conditions',
-          'faq': 'FAQ',
+          faq: 'FAQ',
           'about-us': 'About Us',
-          'custom': 'Custom'
+          custom: 'Custom',
         };
         return (
           <span className="px-2 py-1 rounded-full text-xs font-medium bg-orange-100 text-orange-600">
@@ -118,12 +142,14 @@ const PageListContent = () => {
       cell: ({ getValue }) => {
         const audience = getValue() as string;
         const audienceColors: { [key: string]: string } = {
-          'customer': 'bg-green-100 text-green-600',
-          'provider': 'bg-purple-100 text-purple-600',
-          'both': 'bg-orange-100 text-orange-600'
+          customer: 'bg-green-100 text-green-600',
+          provider: 'bg-purple-100 text-purple-600',
+          both: 'bg-orange-100 text-orange-600',
         };
         return (
-          <span className={`px-2 py-1 rounded-full text-xs font-medium ${audienceColors[audience] || 'bg-gray-100 text-gray-600'}`}>
+          <span
+            className={`px-2 py-1 rounded-full text-xs font-medium ${audienceColors[audience] || 'bg-gray-100 text-gray-600'}`}
+          >
             {audience?.charAt(0).toUpperCase() + audience?.slice(1)}
           </span>
         );
@@ -133,7 +159,9 @@ const PageListContent = () => {
       accessorKey: 'is_active',
       header: 'Status',
       cell: (info) => (
-        <span className={`px-2 py-1 rounded-full text-xs font-medium ${info.getValue() ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+        <span
+          className={`px-2 py-1 rounded-full text-xs font-medium ${info.getValue() ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}
+        >
           {info.getValue() ? 'Active' : 'Inactive'}
         </span>
       ),
@@ -202,7 +230,10 @@ const PageListContent = () => {
             <span className="text-sm font-medium text-gray-700">Filters:</span>
           </div>
 
-          <Select value={pageTypeFilter || "all"} onValueChange={(value) => setPageTypeFilter(value === "all" ? "" : value)}>
+          <Select
+            value={pageTypeFilter || 'all'}
+            onValueChange={(value) => setPageTypeFilter(value === 'all' ? '' : value)}
+          >
             <SelectTrigger className="w-48">
               <SelectValue placeholder="All Page Types" />
             </SelectTrigger>
@@ -216,7 +247,10 @@ const PageListContent = () => {
             </SelectContent>
           </Select>
 
-          <Select value={audienceFilter || "all"} onValueChange={(value) => setAudienceFilter(value === "all" ? "" : value)}>
+          <Select
+            value={audienceFilter || 'all'}
+            onValueChange={(value) => setAudienceFilter(value === 'all' ? '' : value)}
+          >
             <SelectTrigger className="w-48">
               <SelectValue placeholder="All Audiences" />
             </SelectTrigger>
@@ -254,7 +288,9 @@ const PageListContent = () => {
                   <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
                       <TableHead key={header.id} className="text-left">
-                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(header.column.columnDef.header, header.getContext())}
                       </TableHead>
                     ))}
                   </TableRow>
@@ -316,7 +352,9 @@ const PageListContent = () => {
 
 const PageList = () => {
   return (
-    <Suspense fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}>
+    <Suspense
+      fallback={<div className="flex items-center justify-center min-h-screen">Loading...</div>}
+    >
       <PageListContent />
     </Suspense>
   );

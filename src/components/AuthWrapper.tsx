@@ -9,7 +9,7 @@ interface AuthWrapperProps {
 
 export default function AuthWrapper({ children }: AuthWrapperProps) {
   const router = useRouter();
-  
+
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {

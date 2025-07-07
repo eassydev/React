@@ -1,16 +1,23 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
+} from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
 import {
   Plus,
   Edit,
@@ -22,65 +29,85 @@ import {
   Download,
   FileText,
   ChevronDown,
-} from "lucide-react";
+} from 'lucide-react';
 import {
   fetchWolooAttributes,
   deleteWolooAttribute,
   downloadWolooAttributeSampleCSV,
   bulkUploadWolooAttributes,
   exportWolooAttributes,
-  WolooAttribute
-} from "@/lib/api";
-import Link from "next/link";
-import { AlertDialog, AlertDialogTrigger, AlertDialogTitle, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from "@/components/ui/alert-dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { useToast } from "@/hooks/use-toast";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+  WolooAttribute,
+} from '@/lib/api';
+import Link from 'next/link';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogTitle,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+} from '@/components/ui/alert-dialog';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
+import { useToast } from '@/hooks/use-toast';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 const WolooAttributeList = () => {
   const [attributes, setAttributes] = useState<WolooAttribute[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
-  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
   // Fetch attributes with pagination and status filter
-  const fetchAttributesData = async (page = 1, size = 50, status = "all", search = "") => {
+  const fetchAttributesData = async (page = 1, size = 50, status = 'all', search = '') => {
     try {
       const { data, meta } = await fetchWolooAttributes(page, size, status, search);
       setAttributes(data);
       setTotalPages(meta.totalPages);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.error("Error fetching Woloo attributes:", error);
-      toast({ title: "Error", description: "Failed to fetch attributes.", variant: "destructive" });
+      console.error('Error fetching Woloo attributes:', error);
+      toast({ title: 'Error', description: 'Failed to fetch attributes.', variant: 'destructive' });
     }
   };
 
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchAttributesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm);
-      setPagination(prev => ({ ...prev, pageIndex: 0 }));
+      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
     }, 500);
 
     return () => clearTimeout(timer);
   }, [pagination.pageIndex, pagination.pageSize, filterStatus, searchTerm]);
 
   const handleCopy = () => {
-    const formattedData = attributes.map((item) => `${item.sampleid}, ${item.name}, ${item.type}, ${item.active ? 'Active' : 'Inactive'}`).join("\n");
+    const formattedData = attributes
+      .map(
+        (item) =>
+          `${item.sampleid}, ${item.name}, ${item.type}, ${item.active ? 'Active' : 'Inactive'}`
+      )
+      .join('\n');
     navigator.clipboard.writeText(formattedData);
-    toast({ title: "Copied to Clipboard", description: "Attribute data copied." });
+    toast({ title: 'Copied to Clipboard', description: 'Attribute data copied.' });
   };
 
   const handlePrint = () => {
     const printableContent = attributes
-      .map((item) => `<tr><td>${item.sampleid}</td><td>${item.name}</td><td>${item.type}</td><td>${item.active ? 'Active' : 'Inactive'}</td></tr>`)
-      .join("");
-    const newWindow = window.open("", "_blank");
+      .map(
+        (item) =>
+          `<tr><td>${item.sampleid}</td><td>${item.name}</td><td>${item.type}</td><td>${item.active ? 'Active' : 'Inactive'}</td></tr>`
+      )
+      .join('');
+    const newWindow = window.open('', '_blank');
     newWindow?.document.write(`
       <html>
         <head>
@@ -114,21 +141,30 @@ const WolooAttributeList = () => {
     try {
       if (deleteTargetId !== null) {
         await deleteWolooAttribute(deleteTargetId);
-        toast({ title: "Deleted", description: "Attribute deleted successfully." });
-        fetchAttributesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm);
+        toast({ title: 'Deleted', description: 'Attribute deleted successfully.' });
+        fetchAttributesData(
+          pagination.pageIndex + 1,
+          pagination.pageSize,
+          filterStatus,
+          searchTerm
+        );
         setIsDialogOpen(false);
       }
     } catch (error) {
-      toast({ title: "Error", description: "Failed to delete attribute.", variant: "destructive" });
+      toast({ title: 'Error', description: 'Failed to delete attribute.', variant: 'destructive' });
     }
   };
 
   const handleDownloadSample = async () => {
     try {
       await downloadWolooAttributeSampleCSV();
-      toast({ title: "Success", description: "Sample CSV downloaded successfully." });
+      toast({ title: 'Success', description: 'Sample CSV downloaded successfully.' });
     } catch (error) {
-      toast({ title: "Error", description: "Failed to download sample CSV.", variant: "destructive" });
+      toast({
+        title: 'Error',
+        description: 'Failed to download sample CSV.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -137,7 +173,7 @@ const WolooAttributeList = () => {
     if (!file) return;
 
     if (!file.name.endsWith('.csv')) {
-      toast({ title: "Error", description: "Please select a CSV file.", variant: "destructive" });
+      toast({ title: 'Error', description: 'Please select a CSV file.', variant: 'destructive' });
       return;
     }
 
@@ -145,12 +181,16 @@ const WolooAttributeList = () => {
     try {
       const result = await bulkUploadWolooAttributes(file);
       toast({
-        title: "Upload Complete",
-        description: result.message || "Attributes uploaded successfully."
+        title: 'Upload Complete',
+        description: result.message || 'Attributes uploaded successfully.',
       });
       fetchAttributesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm);
     } catch (error) {
-      toast({ title: "Upload Failed", description: "Failed to upload CSV file.", variant: "destructive" });
+      toast({
+        title: 'Upload Failed',
+        description: 'Failed to upload CSV file.',
+        variant: 'destructive',
+      });
     } finally {
       setIsUploading(false);
       // Reset file input
@@ -161,47 +201,56 @@ const WolooAttributeList = () => {
   const handleExport = async (format: 'excel' | 'csv' = 'excel') => {
     try {
       await exportWolooAttributes(format);
-      toast({ title: "Success", description: `Attributes exported as ${format.toUpperCase()} successfully.` });
+      toast({
+        title: 'Success',
+        description: `Attributes exported as ${format.toUpperCase()} successfully.`,
+      });
     } catch (error) {
-      toast({ title: "Error", description: "Failed to export attributes.", variant: "destructive" });
+      toast({
+        title: 'Error',
+        description: 'Failed to export attributes.',
+        variant: 'destructive',
+      });
     }
   };
 
   const attributeColumns: ColumnDef<WolooAttribute>[] = [
-    { accessorKey: "sampleid", header: "ID" },
-    { accessorKey: "name", header: "Name", size: 200 },
-    { accessorKey: "type", header: "Type" },
+    { accessorKey: 'sampleid', header: 'ID' },
+    { accessorKey: 'name', header: 'Name', size: 200 },
+    { accessorKey: 'type', header: 'Type' },
     {
-      accessorKey: "active",
-      header: "Status",
+      accessorKey: 'active',
+      header: 'Status',
       cell: ({ row }) => {
         const isActive = row.original.active;
         return (
-          <span className={`badge px-2 py-1 rounded ${isActive ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
+          <span
+            className={`badge px-2 py-1 rounded ${isActive ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}
+          >
             {isActive ? 'Active' : 'Inactive'}
           </span>
         );
       },
     },
     {
-      accessorKey: "options",
-      header: "Options Count",
+      accessorKey: 'options',
+      header: 'Options Count',
       cell: ({ row }) => {
         const optionsCount = row.original.options?.length || 0;
         return <span>{optionsCount} options</span>;
       },
     },
     {
-      accessorKey: "created_at",
-      header: "Created At",
+      accessorKey: 'created_at',
+      header: 'Created At',
       cell: ({ row }) => {
         const date = row.original.created_at;
         return date ? new Date(date).toLocaleDateString() : '-';
       },
     },
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Link href={`/admin/woloo/attributes/${row.original.id}/options`}>
@@ -229,7 +278,9 @@ const WolooAttributeList = () => {
                 <AlertDialogTitle>
                   <VisuallyHidden>Confirm Delete</VisuallyHidden>
                 </AlertDialogTitle>
-                <p className="text-xl font-bold">Are you sure you want to delete attribute: {row.original.name}?</p>
+                <p className="text-xl font-bold">
+                  Are you sure you want to delete attribute: {row.original.name}?
+                </p>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <Button variant="secondary" onClick={handleDelete}>
@@ -266,19 +317,26 @@ const WolooAttributeList = () => {
             <option value="1">Active</option>
             <option value="0">Inactive</option>
           </select>
-          <select value={pagination.pageSize} onChange={handlePageSizeChange} className="border p-2 rounded">
+          <select
+            value={pagination.pageSize}
+            onChange={handlePageSizeChange}
+            className="border p-2 rounded"
+          >
             <option value={50}>50</option>
             <option value={100}>100</option>
             <option value={150}>150</option>
           </select>
           <Button onClick={handleCopy}>
-            <Copy className="w-4 h-4 mr-2" />Copy
+            <Copy className="w-4 h-4 mr-2" />
+            Copy
           </Button>
           <Button onClick={handlePrint}>
-            <Printer className="w-4 h-4 mr-2" />Print
+            <Printer className="w-4 h-4 mr-2" />
+            Print
           </Button>
           <Button onClick={handleDownloadSample} variant="outline">
-            <FileText className="w-4 h-4 mr-2" />Sample CSV
+            <FileText className="w-4 h-4 mr-2" />
+            Sample CSV
           </Button>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
@@ -312,7 +370,8 @@ const WolooAttributeList = () => {
           </div>
           <Link href="/admin/woloo/attributes/add">
             <Button>
-              <Plus className="w-4 h-4 mr-2" />Add Attribute
+              <Plus className="w-4 h-4 mr-2" />
+              Add Attribute
             </Button>
           </Link>
         </div>

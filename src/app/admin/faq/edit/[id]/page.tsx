@@ -1,35 +1,42 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import dynamic from "next/dynamic";
-import { useRouter, useParams } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2, FileText } from "lucide-react";
-import { fetchFAQById, updateFAQ, FAQ } from "@/lib/api"; // Import the API functions and FAQ interface
+import React, { useState, useEffect, FormEvent } from 'react';
+import dynamic from 'next/dynamic';
+import { useRouter, useParams } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2, FileText } from 'lucide-react';
+import { fetchFAQById, updateFAQ, FAQ } from '@/lib/api'; // Import the API functions and FAQ interface
 
 // Import React-Quill dynamically for client-side rendering
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-import "react-quill/dist/quill.snow.css";
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import 'react-quill/dist/quill.snow.css';
 
 // Quill modules configuration
 const quillModules = {
   toolbar: [
-    [{ header: "1" }, { header: "2" }, { font: [] }],
+    [{ header: '1' }, { header: '2' }, { font: [] }],
     [{ size: [] }],
-    ["bold", "italic", "underline", "strike", "blockquote"],
-    [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
-    ["link", "image", "video"],
-    ["clean"],
+    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+    [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+    ['link', 'image', 'video'],
+    ['clean'],
   ],
 };
 
 const EditFAQForm: React.FC = () => {
-  const [question, setQuestion] = useState<string>("");
-  const [answer, setAnswer] = useState<string>("");
+  const [question, setQuestion] = useState<string>('');
+  const [answer, setAnswer] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
@@ -44,12 +51,12 @@ const EditFAQForm: React.FC = () => {
         const existingFAQ = await fetchFAQById(id as string);
         setQuestion(existingFAQ.question);
         setAnswer(existingFAQ.answer);
-        setIsActive(existingFAQ.status === "active");
+        setIsActive(existingFAQ.status === 'active');
       } catch (error) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load FAQ data.",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load FAQ data.',
         });
       }
     };
@@ -63,9 +70,9 @@ const EditFAQForm: React.FC = () => {
 
     if (!question || !answer) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "All fields are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'All fields are required.',
       });
       setIsSubmitting(false);
       return;
@@ -75,23 +82,23 @@ const EditFAQForm: React.FC = () => {
     const updatedFAQ: FAQ = {
       question,
       answer,
-      status: isActive ? "active" : "inactive",
+      status: isActive ? 'active' : 'inactive',
     };
 
     try {
       await updateFAQ(id as string, updatedFAQ); // Submit the updated FAQ object to the API
       toast({
-        variant: "success",
-        title: "Success",
-        description: "FAQ updated successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'FAQ updated successfully.',
       });
 
-      router.push("/admin/faq"); // Redirect to the FAQ list page
+      router.push('/admin/faq'); // Redirect to the FAQ list page
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to update FAQ.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to update FAQ.',
       });
     } finally {
       setIsSubmitting(false);
@@ -133,7 +140,7 @@ const EditFAQForm: React.FC = () => {
               </div>
 
               {/* Answer Field with React-Quill */}
-              <div className="space-y-2" style={{ height: "270px" }}>
+              <div className="space-y-2" style={{ height: '270px' }}>
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <FileText className="w-4 h-5 text-blue-500" />
                   <span>Answer</span>
@@ -143,7 +150,7 @@ const EditFAQForm: React.FC = () => {
                   onChange={setAnswer}
                   theme="snow"
                   modules={quillModules}
-                  style={{ height: "200px" }}
+                  style={{ height: '200px' }}
                 />
               </div>
 
@@ -157,7 +164,11 @@ const EditFAQForm: React.FC = () => {
 
           <CardFooter className="border-t border-gray-100 mt-6">
             <div className="flex space-x-3 pt-6">
-              <Button className="w-100 flex-1 h-11 bg-primary" disabled={isSubmitting} onClick={onSubmit}>
+              <Button
+                className="w-100 flex-1 h-11 bg-primary"
+                disabled={isSubmitting}
+                onClick={onSubmit}
+              >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center space-x-2">
                     <Loader2 className="w-4 h-4 animate-spin" />

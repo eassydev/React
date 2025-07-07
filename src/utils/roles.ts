@@ -1,26 +1,26 @@
 interface AccessEntry {
-  route?: string
-  accessSubRoutes?: boolean
+  route?: string;
+  accessSubRoutes?: boolean;
 }
 
 interface RoleInfo {
-  canAccess: (string | AccessEntry)[]
+  canAccess: (string | AccessEntry)[];
 }
 
 interface Roles {
-  [role: string]: RoleInfo
+  [role: string]: RoleInfo;
 }
 
 export const roles: Roles = {
   Admin: {
-    canAccess: ["/*"],
+    canAccess: ['/*'],
   },
   Employee: {
     canAccess: [
       {
-        route: "/orders",
+        route: '/orders',
         accessSubRoutes: true,
       },
     ],
   },
-}
+};

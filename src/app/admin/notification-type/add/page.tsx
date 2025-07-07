@@ -1,10 +1,10 @@
-"use client";
+'use client';
 
-import React, { useState, FormEvent } from "react";
-import dynamic from "next/dynamic";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
+import React, { useState, FormEvent } from 'react';
+import dynamic from 'next/dynamic';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardHeader,
@@ -12,37 +12,39 @@ import {
   CardContent,
   CardFooter,
   CardDescription,
-} from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { createNotificationType, NotificationType } from "@/lib/api"; // Import API and NotificationType
-import { useRouter, usePathname } from "next/navigation";
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import { createNotificationType, NotificationType } from '@/lib/api'; // Import API and NotificationType
+import { useRouter, usePathname } from 'next/navigation';
 
 // Import React-Quill dynamically for client-side rendering
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-import "react-quill/dist/quill.snow.css";
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import 'react-quill/dist/quill.snow.css';
 
 // Quill modules configuration
 const quillModules = {
   toolbar: [
-    [{ header: "1" }, { header: "2" }, { font: [] }],
+    [{ header: '1' }, { header: '2' }, { font: [] }],
     [{ size: [] }],
-    ["bold", "italic", "underline", "strike", "blockquote"],
-    [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
-    ["link", "image", "video"],
-    ["clean"],
+    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+    [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+    ['link', 'image', 'video'],
+    ['clean'],
   ],
 };
 
 const AddNotificationTypeForm: React.FC = () => {
-  const [title, setTitle] = useState<string>("");
-  const [message, setMessage] = useState<string>("");
-  const [type, setType] = useState<"timer" | "image" | "carousel" | "normal" | "sound">("normal");
+  const [title, setTitle] = useState<string>('');
+  const [message, setMessage] = useState<string>('');
+  const [type, setType] = useState<'timer' | 'image' | 'carousel' | 'normal' | 'sound'>('normal');
   const [image_url, setImageUrl] = useState<File | string | null>(null);
   const [sound_url, setSoundUrl] = useState<File | string | null>(null);
   const [carousel_images, setCarouselImages] = useState<(File | { image_url: string })[]>([]);
   const [timer_duration, setTimerDuration] = useState<number | null>(null);
-  const [action_type, setActionType] = useState<"internal_link" | "external_link" | "order_related" | "promo">("internal_link");
+  const [action_type, setActionType] = useState<
+    'internal_link' | 'external_link' | 'order_related' | 'promo'
+  >('internal_link');
   const [action_data, setActionData] = useState<string | null>(null);
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -76,9 +78,9 @@ const AddNotificationTypeForm: React.FC = () => {
 
     if (!title || !message || !type) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Title, message, and type are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Title, message, and type are required.',
       });
       setIsSubmitting(false);
       return;
@@ -90,7 +92,7 @@ const AddNotificationTypeForm: React.FC = () => {
       type,
       image_url,
       sound_url,
-      carousel_data:carousel_images,
+      carousel_data: carousel_images,
       timer_duration: timer_duration || null,
       action_type,
       action_data,
@@ -100,18 +102,17 @@ const AddNotificationTypeForm: React.FC = () => {
     try {
       await createNotificationType(newNotification); // Submit the NotificationType object to the API
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Notification created successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Notification created successfully.',
       });
 
-      router.push("/admin/notification-type");
-
+      router.push('/admin/notification-type');
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to create notification.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to create notification.',
       });
     } finally {
       setIsSubmitting(false);
@@ -160,7 +161,7 @@ const AddNotificationTypeForm: React.FC = () => {
                   onChange={setMessage}
                   theme="snow"
                   modules={quillModules}
-                  style={{ height: "200px" }}
+                  style={{ height: '200px' }}
                 />
               </div>
 
@@ -169,7 +170,7 @@ const AddNotificationTypeForm: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Type</label>
                 <select
                   value={type}
-                  onChange={(e) => setType(e.target.value as NotificationType["type"])}
+                  onChange={(e) => setType(e.target.value as NotificationType['type'])}
                   className="w-full p-2 border border-gray-300 rounded-md"
                   required
                 >
@@ -182,12 +183,14 @@ const AddNotificationTypeForm: React.FC = () => {
               </div>
 
               {/* Timer Duration */}
-              {type === "timer" && (
+              {type === 'timer' && (
                 <div className="space-y-2">
-                  <label className="text-sm font-medium text-gray-700">Timer Duration (in seconds)</label>
+                  <label className="text-sm font-medium text-gray-700">
+                    Timer Duration (in seconds)
+                  </label>
                   <Input
                     type="number"
-                    value={timer_duration || ""}
+                    value={timer_duration || ''}
                     onChange={(e) => setTimerDuration(Number(e.target.value))}
                     placeholder="Enter timer duration"
                   />
@@ -195,7 +198,7 @@ const AddNotificationTypeForm: React.FC = () => {
               )}
 
               {/* Image Upload */}
-              {type === "image" && (
+              {type === 'image' && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Image</label>
                   <Input type="file" accept="image/*" onChange={handleImageChange} />
@@ -203,7 +206,7 @@ const AddNotificationTypeForm: React.FC = () => {
               )}
 
               {/* Sound Upload */}
-              {type === "sound" && (
+              {type === 'sound' && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Sound</label>
                   <Input type="file" accept="audio/*" onChange={handleSoundChange} />
@@ -211,10 +214,15 @@ const AddNotificationTypeForm: React.FC = () => {
               )}
 
               {/* Carousel Images */}
-              {type === "carousel" && (
+              {type === 'carousel' && (
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-gray-700">Carousel Images</label>
-                  <Input type="file" accept="image/*" multiple onChange={handleCarouselImagesChange} />
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleCarouselImagesChange}
+                  />
                 </div>
               )}
 
@@ -223,7 +231,7 @@ const AddNotificationTypeForm: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Action Type</label>
                 <select
                   value={action_type}
-                  onChange={(e) => setActionType(e.target.value as NotificationType["action_type"])}
+                  onChange={(e) => setActionType(e.target.value as NotificationType['action_type'])}
                   className="w-full p-2 border border-gray-300 rounded-md"
                 >
                   <option value="internal_link">Internal Link</option>
@@ -237,7 +245,7 @@ const AddNotificationTypeForm: React.FC = () => {
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Action Data</label>
                 <Input
-                  value={action_data || ""}
+                  value={action_data || ''}
                   onChange={(e) => setActionData(e.target.value || null)}
                   placeholder="Enter URL or action"
                 />
@@ -245,11 +253,7 @@ const AddNotificationTypeForm: React.FC = () => {
 
               {/* Active Status */}
               <div className="flex items-center space-x-2">
-                <Switch
-                  checked={isActive}
-                  onCheckedChange={setIsActive}
-                  className="bg-primary"
-                />
+                <Switch checked={isActive} onCheckedChange={setIsActive} className="bg-primary" />
                 <span className="text-sm text-gray-700">Active</span>
               </div>
             </form>

@@ -1,17 +1,24 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { fetchSettingById, updateSetting, Setting } from "@/lib/api"; // API functions and Setting interface
+import React, { useState, useEffect, FormEvent } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import { fetchSettingById, updateSetting, Setting } from '@/lib/api'; // API functions and Setting interface
 
 const SettingEditForm: React.FC = () => {
-  const [attributeName, setAttributeName] = useState<string>("");
-  const [attributeValue, setAttributeValue] = useState<string>("");
+  const [attributeName, setAttributeName] = useState<string>('');
+  const [attributeValue, setAttributeValue] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const { toast } = useToast();
@@ -35,9 +42,9 @@ const SettingEditForm: React.FC = () => {
       setAttributeValue(settingData.attribute_value);
     } catch (error) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: "Failed to load setting details.",
+        variant: 'error',
+        title: 'Error',
+        description: 'Failed to load setting details.',
       });
     }
   };
@@ -49,9 +56,9 @@ const SettingEditForm: React.FC = () => {
 
     if (!attributeName || !attributeValue) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Both fields are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Both fields are required.',
       });
       setIsSubmitting(false);
       return;
@@ -65,16 +72,16 @@ const SettingEditForm: React.FC = () => {
     try {
       await updateSetting(settingId!, updatedSetting); // Submit the updated setting to the API
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Setting updated successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Setting updated successfully.',
       });
-      router.push("/admin/setting"); // Redirect to settings list after success
+      router.push('/admin/setting'); // Redirect to settings list after success
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to update setting.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to update setting.',
       });
     } finally {
       setIsSubmitting(false);

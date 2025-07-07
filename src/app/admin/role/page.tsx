@@ -1,27 +1,34 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from "lucide-react";
-import { fetchRoles, deleteRole, Role } from "@/lib/api";
-import Link from "next/link";
+} from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from 'lucide-react';
+import { fetchRoles, deleteRole, Role } from '@/lib/api';
+import Link from 'next/link';
 import {
   AlertDialog,
   AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogFooter,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const RoleList = () => {
   const [roles, setRoles] = useState<Role[]>([]);
@@ -39,9 +46,9 @@ const RoleList = () => {
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to load roles.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to load roles.',
+        variant: 'destructive',
       });
     }
   };
@@ -54,31 +61,31 @@ const RoleList = () => {
     try {
       await deleteRole(role.id!.toString());
       toast({
-        title: "Success",
+        title: 'Success',
         description: `Role "${role.role_name}" deleted.`,
-        variant: "success",
+        variant: 'success',
       });
       loadRoles(pagination.pageIndex + 1, pagination.pageSize);
     } catch (error) {
-      console.log(error)
+      console.log(error);
       toast({
-        title: "Error",
-        description: "Failed to delete role.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to delete role.',
+        variant: 'destructive',
       });
     }
   };
 
   const roleColumns: ColumnDef<Role>[] = [
     {
-      accessorKey: "sno", // Placeholder key for S.No
-      header: "S.No",
+      accessorKey: 'sno', // Placeholder key for S.No
+      header: 'S.No',
       cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
     },
-    { accessorKey: "role_name", header: "Role Name" },
+    { accessorKey: 'role_name', header: 'Role Name' },
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => (
         <div className="flex space-x-2">
           <Link href={`/admin/role/edit/${row.original.id}`}>

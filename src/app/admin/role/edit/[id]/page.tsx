@@ -1,15 +1,14 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { fetchAllPermission, fetchRoleById, updateRole, Role, Permission } from "@/lib/api";
-import { useRouter, usePathname } from "next/navigation";
-
+import React, { useState, useEffect, FormEvent } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import { fetchAllPermission, fetchRoleById, updateRole, Role, Permission } from '@/lib/api';
+import { useRouter, usePathname } from 'next/navigation';
 
 // Grouped Permissions Interface
 interface GroupedPermissions {
@@ -17,7 +16,7 @@ interface GroupedPermissions {
 }
 
 const RoleEditForm: React.FC = () => {
-  const [roleName, setRoleName] = useState<string>("");
+  const [roleName, setRoleName] = useState<string>('');
   const [permissions, setPermissions] = useState<GroupedPermissions>({});
   const [selectedPermissions, setSelectedPermissions] = useState<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -26,7 +25,7 @@ const RoleEditForm: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
 
-  const roleId = pathname?.split("/").pop(); // Extract Role ID from URL
+  const roleId = pathname?.split('/').pop(); // Extract Role ID from URL
 
   useEffect(() => {
     if (roleId) {
@@ -42,40 +41,38 @@ const RoleEditForm: React.FC = () => {
       setRoleName(roleData.role_name);
       setSelectedPermissions(new Set(roleData.permissions?.map((p: any) => p.id)));
     } catch (error) {
-      console.error("Error fetching role data:", error);
+      console.error('Error fetching role data:', error);
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load role data.",
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to load role data.',
       });
     }
   };
 
   const loadPermissions = async () => {
-      try {
-        const response = await fetchAllPermission(); // Fetch API data
-  
-        const groupedPermissions = Object.keys(response).reduce((acc, key) => {
-          const permissionsArray = response[key];
-          console.log(key)
-          if (Array.isArray(permissionsArray)) {
-            acc[key] = permissionsArray; // Use dynamic key as group name
-          }
-          return acc;
-        }, {} as GroupedPermissions);
-  
-        setPermissions(groupedPermissions); // Set grouped permissions
-      } catch (error) {
-        console.error("Error fetching permissions:", error);
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to load permissions.",
-        });
-      }
-    };
-  
-  
+    try {
+      const response = await fetchAllPermission(); // Fetch API data
+
+      const groupedPermissions = Object.keys(response).reduce((acc, key) => {
+        const permissionsArray = response[key];
+        console.log(key);
+        if (Array.isArray(permissionsArray)) {
+          acc[key] = permissionsArray; // Use dynamic key as group name
+        }
+        return acc;
+      }, {} as GroupedPermissions);
+
+      setPermissions(groupedPermissions); // Set grouped permissions
+    } catch (error) {
+      console.error('Error fetching permissions:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to load permissions.',
+      });
+    }
+  };
 
   // Toggle Permission Selection
   const togglePermission = (permissionId: string) => {
@@ -96,9 +93,9 @@ const RoleEditForm: React.FC = () => {
 
     if (!roleName || selectedPermissions.size === 0) {
       toast({
-        variant: "destructive",
-        title: "Validation Error",
-        description: "Role name and at least one permission are required.",
+        variant: 'destructive',
+        title: 'Validation Error',
+        description: 'Role name and at least one permission are required.',
       });
       return;
     }
@@ -115,17 +112,17 @@ const RoleEditForm: React.FC = () => {
       await updateRole(roleId!, updatedRole);
 
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Role updated successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Role updated successfully.',
       });
 
-  router.push("/admin/role");
-    } catch (error:any) {
-      console.error("Error updating role:", error);
+      router.push('/admin/role');
+    } catch (error: any) {
+      console.error('Error updating role:', error);
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: error?.message,
       });
     } finally {
@@ -166,8 +163,8 @@ const RoleEditForm: React.FC = () => {
                         <div key={permission.id} className="flex items-center space-x-2">
                           <Checkbox
                             id={permission.id}
-                            checked={selectedPermissions.has(permission.id??'')}
-                            onCheckedChange={() => togglePermission(permission.id??'')}
+                            checked={selectedPermissions.has(permission.id ?? '')}
+                            onCheckedChange={() => togglePermission(permission.id ?? '')}
                           />
                           <label htmlFor={permission.id} className="text-sm text-gray-700">
                             {permission.route}

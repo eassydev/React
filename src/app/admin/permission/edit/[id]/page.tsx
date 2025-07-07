@@ -1,34 +1,41 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import dynamic from "next/dynamic";
-import { useRouter, usePathname } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardFooter, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2, KeySquare } from "lucide-react";
-import { fetchPermissionById, updatePermission, Permission } from "@/lib/api"; // Import API functions and Permission interface
+import React, { useState, useEffect, FormEvent } from 'react';
+import dynamic from 'next/dynamic';
+import { useRouter, usePathname } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardContent,
+  CardFooter,
+  CardDescription,
+} from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2, KeySquare } from 'lucide-react';
+import { fetchPermissionById, updatePermission, Permission } from '@/lib/api'; // Import API functions and Permission interface
 
 // Import React-Quill dynamically for client-side rendering
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-import "react-quill/dist/quill.snow.css";
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import 'react-quill/dist/quill.snow.css';
 
 // Quill modules configuration
 const quillModules = {
   toolbar: [
-    [{ 'header': '1' }, { 'header': '2' }, { 'font': [] }],
-    [{ 'size': [] }],
+    [{ header: '1' }, { header: '2' }, { font: [] }],
+    [{ size: [] }],
     ['bold', 'italic', 'underline', 'strike', 'blockquote'],
-    [{ 'list': 'ordered' }, { 'list': 'bullet' }, { 'indent': '-1' }, { 'indent': '+1' }],
+    [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
     ['link', 'clean'],
   ],
 };
 
 const EditPermissionForm: React.FC = () => {
-  const [permission_name, setPermissionanme] = useState<string>("");
-  const [route, setRoute] = useState<string>("");
+  const [permission_name, setPermissionanme] = useState<string>('');
+  const [route, setRoute] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 
   const { toast } = useToast();
@@ -49,12 +56,12 @@ const EditPermissionForm: React.FC = () => {
     try {
       const permissionData: Permission = await fetchPermissionById(id);
       setPermissionanme(permissionData.permission_name);
-      setRoute(permissionData.route || "");
+      setRoute(permissionData.route || '');
     } catch (error) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: "Failed to load permission details.",
+        variant: 'error',
+        title: 'Error',
+        description: 'Failed to load permission details.',
       });
     }
   };
@@ -63,8 +70,8 @@ const EditPermissionForm: React.FC = () => {
   const generateSlug = (name: string) => {
     return name
       .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/^-|-$/g, "");
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-|-$/g, '');
   };
 
   // Handle form submission
@@ -74,9 +81,9 @@ const EditPermissionForm: React.FC = () => {
 
     if (!permission_name || !route) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "All fields are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'All fields are required.',
       });
       setIsSubmitting(false);
       return;
@@ -91,16 +98,16 @@ const EditPermissionForm: React.FC = () => {
     try {
       await updatePermission(permissionId!, updatedPermission); // Submit updated data
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Permission updated successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Permission updated successfully.',
       });
-       router.push("/admin/permission"); // Redirect to permissions list
+      router.push('/admin/permission'); // Redirect to permissions list
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to update permission.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to update permission.',
       });
     } finally {
       setIsSubmitting(false);
@@ -129,7 +136,7 @@ const EditPermissionForm: React.FC = () => {
           </CardHeader>
 
           <CardContent className="pt-6">
-          <form onSubmit={onSubmit} className="space-y-6">
+            <form onSubmit={onSubmit} className="space-y-6">
               {/* Name Field */}
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">Name</label>
@@ -151,13 +158,15 @@ const EditPermissionForm: React.FC = () => {
                   required
                 />
               </div>
-
-              
             </form>
           </CardContent>
           <CardFooter className="border-t border-gray-100 mt-6">
             <div className="flex space-x-3 pt-6">
-              <Button className="w-100 flex-1 h-11 bg-primary" disabled={isSubmitting} onClick={onSubmit}>
+              <Button
+                className="w-100 flex-1 h-11 bg-primary"
+                disabled={isSubmitting}
+                onClick={onSubmit}
+              >
                 {isSubmitting ? (
                   <div className="flex items-center justify-center space-x-2">
                     <Loader2 className="w-4 h-4 animate-spin" />

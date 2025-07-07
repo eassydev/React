@@ -1,16 +1,16 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, Suspense } from "react";
-import { useSearchParams } from "next/navigation";
+import React, { useState, useEffect, Suspense } from 'react';
+import { useSearchParams } from 'next/navigation';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+} from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
   Table,
   TableHead,
@@ -18,30 +18,18 @@ import {
   TableBody,
   TableRow,
   TableCell,
-} from "@/components/ui/table";
-import {
-  ChevronLeft,
-  ChevronRight,
-  Edit,
-  Trash2,
-  Plus,
-  Download,
-  Copy,
-} from "lucide-react";
-import {
-  fetchAllStaff,
-  deleteStaff,
-  exportStaff,
-} from "@/lib/api"; // Update the API imports
-import Link from "next/link";
+} from '@/components/ui/table';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Download, Copy } from 'lucide-react';
+import { fetchAllStaff, deleteStaff, exportStaff } from '@/lib/api'; // Update the API imports
+import Link from 'next/link';
 import {
   AlertDialog,
   AlertDialogTrigger,
   AlertDialogContent,
   AlertDialogHeader,
   AlertDialogFooter,
-} from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
 
 const StaffListContent = () => {
   const [staff, setStaff] = useState<any[]>([]);
@@ -51,16 +39,16 @@ const StaffListContent = () => {
   });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
-  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const providerIdFilter = searchParams.get('provider_id');
 
-  const fetchStaffData = async (page = 1, size = 5, status = "all") => {
+  const fetchStaffData = async (page = 1, size = 5, status = 'all') => {
     try {
       // Add provider filter to search if provider_id is in URL
-      const searchQuery = providerIdFilter ? `provider_id:${providerIdFilter}` : "";
+      const searchQuery = providerIdFilter ? `provider_id:${providerIdFilter}` : '';
       const { data, meta } = await fetchAllStaff(searchQuery, page, size, filterStatus);
       setStaff(data);
       setTotalPages(meta.totalPages);
@@ -68,9 +56,9 @@ const StaffListContent = () => {
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to fetch staff.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to fetch staff.',
+        variant: 'destructive',
       });
     }
   };
@@ -83,16 +71,16 @@ const StaffListContent = () => {
     try {
       await deleteStaff(staffMember.id);
       toast({
-        title: "Success",
+        title: 'Success',
         description: `Staff "${staffMember.first_name} ${staffMember.last_name}" deleted successfully`,
-        variant: "success",
+        variant: 'success',
       });
       fetchStaffData(pagination.pageIndex + 1, pagination.pageSize, filterStatus);
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to delete staff.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to delete staff.',
+        variant: 'destructive',
       });
     }
   };
@@ -102,15 +90,15 @@ const StaffListContent = () => {
       setIsExporting(true);
       await exportStaff();
       toast({
-        title: "Success",
-        description: "Staff data exported successfully.",
-        variant: "success",
+        title: 'Success',
+        description: 'Staff data exported successfully.',
+        variant: 'success',
       });
     } catch (error) {
       toast({
-        title: "Error",
-        description: "Failed to export staff data.",
-        variant: "destructive",
+        title: 'Error',
+        description: 'Failed to export staff data.',
+        variant: 'destructive',
       });
     } finally {
       setIsExporting(false);
@@ -120,11 +108,11 @@ const StaffListContent = () => {
   const handleCopy = () => {
     const formattedData = staff
       .map((item) => `${item.id}, ${item.first_name}, ${item.active}`)
-      .join("\n");
+      .join('\n');
     navigator.clipboard.writeText(formattedData);
     toast({
-      title: "Copied to Clipboard",
-      description: "Staff data copied.",
+      title: 'Copied to Clipboard',
+      description: 'Staff data copied.',
     });
   };
 
@@ -137,36 +125,36 @@ const StaffListContent = () => {
   };
 
   const staffColumns: ColumnDef<any>[] = [
-    { accessorKey: "id", header: "ID" },
-    { accessorKey: "first_name", header: "First Name" },
-    { accessorKey: "last_name", header: "Last Name" },
-    { accessorKey: "email", header: "Email" },
-    { accessorKey: "phone", header: "Phone" },
+    { accessorKey: 'id', header: 'ID' },
+    { accessorKey: 'first_name', header: 'First Name' },
+    { accessorKey: 'last_name', header: 'Last Name' },
+    { accessorKey: 'email', header: 'Email' },
+    { accessorKey: 'phone', header: 'Phone' },
     {
-      accessorKey: "active",
-      header: "Status",
+      accessorKey: 'active',
+      header: 'Status',
       cell: ({ row }) => {
         const statusValue = row.original.active;
 
-        let statusLabel = "";
-        let statusClass = "";
+        let statusLabel = '';
+        let statusClass = '';
 
         switch (statusValue) {
           case 0:
-            statusLabel = "Active";
-            statusClass = "bg-green-200 text-green-800";
+            statusLabel = 'Active';
+            statusClass = 'bg-green-200 text-green-800';
             break;
           case 1:
-            statusLabel = "Inactive";
-            statusClass = "bg-yellow-200 text-yellow-800";
+            statusLabel = 'Inactive';
+            statusClass = 'bg-yellow-200 text-yellow-800';
             break;
           case 2:
-            statusLabel = "Deleted";
-            statusClass = "bg-red-200 text-red-800";
+            statusLabel = 'Deleted';
+            statusClass = 'bg-red-200 text-red-800';
             break;
           default:
-            statusLabel = "Unknown";
-            statusClass = "bg-gray-200 text-gray-800";
+            statusLabel = 'Unknown';
+            statusClass = 'bg-gray-200 text-gray-800';
             break;
         }
 
@@ -174,68 +162,64 @@ const StaffListContent = () => {
       },
     },
 
-  {
-    id: "actions",
-    header: "Actions",
-    cell: ({ row }) => (
-      <div className="flex items-center space-x-2">
-        {/* Edit Button */}
-        <Button variant="ghost" size="icon">
-          <Link href={`/admin/staff/edit/${row.original.id}`} passHref>
-            <Edit className="w-4 h-4 text-blue-600" />
-          </Link>
-        </Button>
-  
-        {/* Bank Icon for Redirect */}
-        <Button variant="ghost" size="icon">
-          <Link href={`/admin/provider/${row.original.id}/account`} passHref>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth={1.5}
-              stroke="currentColor"
-              className="w-5 h-5 text-green-600"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="M3 10.5V12a2.25 2.25 0 002.25 2.25h13.5A2.25 2.25 0 0021 12v-1.5m-18 0h18m-18 0a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 10.5m-18 0a2.25 2.25 0 00-2.25-2.25h13.5A2.25 2.25 0 0021 10.5M9.75 15v6m-3-6v6m9-6v6m-3-6v6"
-              />
-            </svg>
-          </Link>
-        </Button>
-  
-        {/* Delete Button */}
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Trash2 className="w-4 h-4 text-red-600" />
-            </Button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <h2 className="text-xl font-bold">Confirm Delete</h2>
-              <p>
-                Are you sure you want to delete staff: {row.original.first_name}{" "}
-                {row.original.last_name}?
-              </p>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <Button
-                variant="secondary"
-                onClick={() => handleStaffDelete(row.original)}
+    {
+      id: 'actions',
+      header: 'Actions',
+      cell: ({ row }) => (
+        <div className="flex items-center space-x-2">
+          {/* Edit Button */}
+          <Button variant="ghost" size="icon">
+            <Link href={`/admin/staff/edit/${row.original.id}`} passHref>
+              <Edit className="w-4 h-4 text-blue-600" />
+            </Link>
+          </Button>
+
+          {/* Bank Icon for Redirect */}
+          <Button variant="ghost" size="icon">
+            <Link href={`/admin/provider/${row.original.id}/account`} passHref>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+                className="w-5 h-5 text-green-600"
               >
-                Yes, Delete
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M3 10.5V12a2.25 2.25 0 002.25 2.25h13.5A2.25 2.25 0 0021 12v-1.5m-18 0h18m-18 0a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 10.5m-18 0a2.25 2.25 0 00-2.25-2.25h13.5A2.25 2.25 0 0021 10.5M9.75 15v6m-3-6v6m9-6v6m-3-6v6"
+                />
+              </svg>
+            </Link>
+          </Button>
+
+          {/* Delete Button */}
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="ghost" size="icon">
+                <Trash2 className="w-4 h-4 text-red-600" />
               </Button>
-              <Button variant="outline">Cancel</Button>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
-      </div>
-    ),
-  }
-  
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <h2 className="text-xl font-bold">Confirm Delete</h2>
+                <p>
+                  Are you sure you want to delete staff: {row.original.first_name}{' '}
+                  {row.original.last_name}?
+                </p>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <Button variant="secondary" onClick={() => handleStaffDelete(row.original)}>
+                  Yes, Delete
+                </Button>
+                <Button variant="outline">Cancel</Button>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
+      ),
+    },
   ];
 
   const staffTable = useReactTable({

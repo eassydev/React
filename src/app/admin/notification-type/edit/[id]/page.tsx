@@ -1,42 +1,44 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import dynamic from "next/dynamic";
-import { useRouter, usePathname } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { getNotificationById, updateNotificationType, NotificationType } from "@/lib/api";
+import React, { useState, useEffect, FormEvent } from 'react';
+import dynamic from 'next/dynamic';
+import { useRouter, usePathname } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import { getNotificationById, updateNotificationType, NotificationType } from '@/lib/api';
 
 // Dynamically import React-Quill for client-side rendering
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-import "react-quill/dist/quill.snow.css";
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import 'react-quill/dist/quill.snow.css';
 
 const quillModules = {
   toolbar: [
-    [{ header: "1" }, { header: "2" }, { font: [] }],
+    [{ header: '1' }, { header: '2' }, { font: [] }],
     [{ size: [] }],
-    ["bold", "italic", "underline", "strike", "blockquote"],
-    [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
-    ["link", "image", "video"],
-    ["clean"],
+    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+    [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+    ['link', 'image', 'video'],
+    ['clean'],
   ],
 };
 
 const EditNotificationTypeForm: React.FC = () => {
-  const [title, setTitle] = useState<string>("");
-  const [message, setMessage] = useState<string>("");
-  const [type, setType] = useState<"timer" | "image" | "carousel" | "normal" | "sound">("normal");
+  const [title, setTitle] = useState<string>('');
+  const [message, setMessage] = useState<string>('');
+  const [type, setType] = useState<'timer' | 'image' | 'carousel' | 'normal' | 'sound'>('normal');
   const [image_url, setImageUrl] = useState<File | string | null>(null);
   const [sound_url, setSoundUrl] = useState<File | string | null>(null);
   const [carousel_images, setCarouselImages] = useState<(File | { image_url: string })[]>([]);
   const [carouselPreviews, setCarouselPreviews] = useState<string[]>([]);
   const [timer_duration, setTimerDuration] = useState<number | null>(null);
-   const [action_type, setActionType] = useState<"internal_link" | "external_link" | "order_related" | "promo">("internal_link");
- 
+  const [action_type, setActionType] = useState<
+    'internal_link' | 'external_link' | 'order_related' | 'promo'
+  >('internal_link');
+
   const [action_data, setActionData] = useState<string | null>(null);
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -46,7 +48,7 @@ const EditNotificationTypeForm: React.FC = () => {
   const pathname = usePathname();
 
   // Extract NotificationType ID from URL
-  const notificationTypeId = pathname?.split("/").pop();
+  const notificationTypeId = pathname?.split('/').pop();
 
   useEffect(() => {
     const fetchData = async () => {
@@ -62,10 +64,10 @@ const EditNotificationTypeForm: React.FC = () => {
           setCarouselImages(notificationType.carousel_data || []);
           setCarouselPreviews(
             notificationType.carousel_data?.map((item) =>
-              typeof item === "object" && "image_url" in item ? item.image_url : ""
+              typeof item === 'object' && 'image_url' in item ? item.image_url : ''
             ) || []
           );
-          console.log(notificationType.carousel_data,"carouselPreviews")
+          console.log(notificationType.carousel_data, 'carouselPreviews');
           setTimerDuration(notificationType.timer_duration || null);
           setActionType(notificationType.action_type || null);
           setActionData(notificationType.action_data || null);
@@ -73,9 +75,9 @@ const EditNotificationTypeForm: React.FC = () => {
         }
       } catch (error: any) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: error.message || "Failed to fetch notification type details.",
+          variant: 'error',
+          title: 'Error',
+          description: error.message || 'Failed to fetch notification type details.',
         });
       }
     };
@@ -110,9 +112,9 @@ const EditNotificationTypeForm: React.FC = () => {
 
     if (!title || !message) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Title and message are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Title and message are required.',
       });
       setIsSubmitting(false);
       return;
@@ -125,7 +127,7 @@ const EditNotificationTypeForm: React.FC = () => {
       type,
       image_url,
       sound_url,
-      carousel_data:carousel_images,
+      carousel_data: carousel_images,
       timer_duration: timer_duration || null,
       action_type,
       action_data,
@@ -136,17 +138,17 @@ const EditNotificationTypeForm: React.FC = () => {
       await updateNotificationType(notificationTypeId as string, updatedNotification);
 
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Notification updated successfully!",
+        variant: 'success',
+        title: 'Success',
+        description: 'Notification updated successfully!',
       });
 
-      router.push("/admin/notification-type");
+      router.push('/admin/notification-type');
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to update notification.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to update notification.',
       });
     } finally {
       setIsSubmitting(false);
@@ -162,7 +164,9 @@ const EditNotificationTypeForm: React.FC = () => {
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">
           <CardHeader>
             <CardTitle>Edit Notification Type</CardTitle>
-            <CardDescription>Update the details below to edit the notification type entry.</CardDescription>
+            <CardDescription>
+              Update the details below to edit the notification type entry.
+            </CardDescription>
           </CardHeader>
 
           <CardContent>
@@ -195,7 +199,7 @@ const EditNotificationTypeForm: React.FC = () => {
                 <label className="text-sm font-medium text-gray-700">Type</label>
                 <select
                   value={type}
-                  onChange={(e) => setType(e.target.value as NotificationType["type"])}
+                  onChange={(e) => setType(e.target.value as NotificationType['type'])}
                   className="w-full p-2 border rounded-md"
                   required
                 >
@@ -208,12 +212,14 @@ const EditNotificationTypeForm: React.FC = () => {
               </div>
 
               {/* Timer Duration */}
-              {type === "timer" && (
+              {type === 'timer' && (
                 <div>
-                  <label className="text-sm font-medium text-gray-700">Timer Duration (in seconds)</label>
+                  <label className="text-sm font-medium text-gray-700">
+                    Timer Duration (in seconds)
+                  </label>
                   <Input
                     type="number"
-                    value={timer_duration || ""}
+                    value={timer_duration || ''}
                     onChange={(e) => setTimerDuration(Number(e.target.value))}
                     placeholder="Enter timer duration"
                   />
@@ -221,31 +227,45 @@ const EditNotificationTypeForm: React.FC = () => {
               )}
 
               {/* Image Upload */}
-              {type === "image" && (
+              {type === 'image' && (
                 <div>
                   <label className="text-sm font-medium text-gray-700">Image</label>
                   <Input type="file" accept="image/*" onChange={handleImageChange} />
-                  {typeof image_url === "string" && <img src={image_url} alt="Preview" className="mt-2 max-h-32 rounded-md" />}
+                  {typeof image_url === 'string' && (
+                    <img src={image_url} alt="Preview" className="mt-2 max-h-32 rounded-md" />
+                  )}
                 </div>
               )}
 
               {/* Sound Upload */}
-              {type === "sound" && (
+              {type === 'sound' && (
                 <div>
                   <label className="text-sm font-medium text-gray-700">Sound</label>
                   <Input type="file" accept="audio/*" onChange={handleSoundChange} />
-                  {typeof sound_url === "string" && <audio controls src={sound_url} className="mt-2 w-full" />}
+                  {typeof sound_url === 'string' && (
+                    <audio controls src={sound_url} className="mt-2 w-full" />
+                  )}
                 </div>
               )}
 
               {/* Carousel Images */}
-              {type === "carousel" && (
+              {type === 'carousel' && (
                 <div>
                   <label className="text-sm font-medium text-gray-700">Carousel Images</label>
-                  <Input type="file" accept="image/*" multiple onChange={handleCarouselImagesChange} />
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    multiple
+                    onChange={handleCarouselImagesChange}
+                  />
                   <div className="mt-2 flex gap-2">
                     {carouselPreviews.map((preview, index) => (
-                      <img key={index} src={preview} alt={`Carousel ${index}`} className="max-h-32 rounded-md" />
+                      <img
+                        key={index}
+                        src={preview}
+                        alt={`Carousel ${index}`}
+                        className="max-h-32 rounded-md"
+                      />
                     ))}
                   </div>
                 </div>
@@ -255,8 +275,8 @@ const EditNotificationTypeForm: React.FC = () => {
               <div>
                 <label className="text-sm font-medium text-gray-700">Action Type</label>
                 <select
-                  value={action_type || ""}
-                  onChange={(e) => setActionType(e.target.value as NotificationType["action_type"])}
+                  value={action_type || ''}
+                  onChange={(e) => setActionType(e.target.value as NotificationType['action_type'])}
                   className="w-full p-2 border rounded-md"
                 >
                   <option value="">None</option>
@@ -272,7 +292,7 @@ const EditNotificationTypeForm: React.FC = () => {
                 <div>
                   <label className="text-sm font-medium text-gray-700">Action Data</label>
                   <Input
-                    value={action_data || ""}
+                    value={action_data || ''}
                     onChange={(e) => setActionData(e.target.value)}
                     placeholder="Enter action URL or data"
                   />

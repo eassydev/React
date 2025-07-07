@@ -1,6 +1,6 @@
-"use client";
-import React, { useState, useEffect, FormEvent, ChangeEvent } from "react";
-import dynamic from "next/dynamic";
+'use client';
+import React, { useState, useEffect, FormEvent, ChangeEvent } from 'react';
+import dynamic from 'next/dynamic';
 import {
   Card,
   CardHeader,
@@ -8,28 +8,28 @@ import {
   CardDescription,
   CardContent,
   CardFooter,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Save, FileText, Loader2, Tag, DollarSign, Calendar, Settings, List } from "lucide-react";
-import { fetchVIPPlanById, updateVIPPlan } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-import { useRouter, useParams } from "next/navigation";
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Switch } from '@/components/ui/switch';
+import { Save, FileText, Loader2, Tag, DollarSign, Calendar, Settings, List } from 'lucide-react';
+import { fetchVIPPlanById, updateVIPPlan } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter, useParams } from 'next/navigation';
 
 // Importing React-Quill dynamically
-const ReactQuill = dynamic(() => import("react-quill"), { ssr: false });
-import "react-quill/dist/quill.snow.css";
+const ReactQuill = dynamic(() => import('react-quill'), { ssr: false });
+import 'react-quill/dist/quill.snow.css';
 
 // Custom toolbar configuration for React-Quill
 const quillModules = {
   toolbar: [
-    [{ header: "1" }, { header: "2" }, { font: [] }],
+    [{ header: '1' }, { header: '2' }, { font: [] }],
     [{ size: [] }],
-    ["bold", "italic", "underline", "strike", "blockquote"],
-    [{ list: "ordered" }, { list: "bullet" }, { indent: "-1" }, { indent: "+1" }],
-    ["link", "image", "video"],
-    ["clean"],
+    ['bold', 'italic', 'underline', 'strike', 'blockquote'],
+    [{ list: 'ordered' }, { list: 'bullet' }, { indent: '-1' }, { indent: '+1' }],
+    ['link', 'image', 'video'],
+    ['clean'],
   ],
 };
 
@@ -38,20 +38,20 @@ const EditVIPPlanForm: React.FC = () => {
   const router = useRouter();
   const { toast } = useToast();
 
-  const [planName, setPlanName] = useState<string>("");
-  const [price, setPrice] = useState<string>("");
-  const [discountPrice, setDiscountPrice] = useState<string>("");
+  const [planName, setPlanName] = useState<string>('');
+  const [price, setPrice] = useState<string>('');
+  const [discountPrice, setDiscountPrice] = useState<string>('');
   const [platformFees, setPlatformFees] = useState<boolean>(true);
-  const [noOfBookings, setNoOfBookings] = useState<string>("0");
-  const [description, setDescription] = useState<string>("");
-  const [validityPeriod, setValidityPeriod] = useState<string>("30");
+  const [noOfBookings, setNoOfBookings] = useState<string>('0');
+  const [description, setDescription] = useState<string>('');
+  const [validityPeriod, setValidityPeriod] = useState<string>('30');
   const [image, setImage] = useState<File | null>(null);
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [priceError, setPriceError] = useState("");
-  const [discountPriceError, setDiscountPriceError] = useState("");
-  const [noOfBookingsError, setNoOfBookingsError] = useState("");
-  const [validityPeriodError, setValidityPeriodError] = useState("");
+  const [priceError, setPriceError] = useState('');
+  const [discountPriceError, setDiscountPriceError] = useState('');
+  const [noOfBookingsError, setNoOfBookingsError] = useState('');
+  const [validityPeriodError, setValidityPeriodError] = useState('');
   // Fetch existing VIP plan data by ID
   useEffect(() => {
     const fetchVIPPlan = async () => {
@@ -59,7 +59,7 @@ const EditVIPPlanForm: React.FC = () => {
         const vipPlan = await fetchVIPPlanById(id.toString());
         setPlanName(vipPlan.plan_name);
         setPrice(vipPlan.price.toString());
-        setDiscountPrice(vipPlan.discount_price ? vipPlan.discount_price.toString() : "");
+        setDiscountPrice(vipPlan.discount_price ? vipPlan.discount_price.toString() : '');
         setPlatformFees(vipPlan.platform_fees);
         setNoOfBookings(vipPlan.no_of_bookings.toString());
         setDescription(vipPlan.description);
@@ -67,9 +67,9 @@ const EditVIPPlanForm: React.FC = () => {
         setIsActive(vipPlan.status);
       } catch (error) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load VIP plan data.",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load VIP plan data.',
         });
       }
     };
@@ -102,15 +102,15 @@ const EditVIPPlanForm: React.FC = () => {
     try {
       const response = await updateVIPPlan(id.toString(), vipPlanData);
       toast({
-        variant: "success",
-        title: "Success",
+        variant: 'success',
+        title: 'Success',
         description: response.message,
       });
-     router.push("/admin/vip-plan");
+      router.push('/admin/vip-plan');
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
+        variant: 'error',
+        title: 'Error',
         description: `Failed to update VIP plan: ${error.message || error}`,
       });
     } finally {
@@ -155,8 +155,8 @@ const EditVIPPlanForm: React.FC = () => {
                   required
                 />
               </div>
- {/* Price Field */}
- <div className="space-y-2">
+              {/* Price Field */}
+              <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <DollarSign className="w-4 h-4 text-blue-500" />
                   <span>Price</span>
@@ -168,7 +168,7 @@ const EditVIPPlanForm: React.FC = () => {
                   onChange={(e) => {
                     const value = Number(e.target.value);
                     setPrice(value.toString());
-                    setPriceError(value < 0 ? "Price cannot be negative" : "");
+                    setPriceError(value < 0 ? 'Price cannot be negative' : '');
                   }}
                   className="h-11"
                   required
@@ -188,7 +188,7 @@ const EditVIPPlanForm: React.FC = () => {
                   onChange={(e) => {
                     const value = Number(e.target.value);
                     setDiscountPrice(value.toString());
-                    setDiscountPriceError(value < 0 ? "Discount price cannot be negative" : "");
+                    setDiscountPriceError(value < 0 ? 'Discount price cannot be negative' : '');
                   }}
                   className="h-11"
                 />
@@ -208,8 +208,6 @@ const EditVIPPlanForm: React.FC = () => {
                 />
               </div>
 
-              
-
               {/* Number of Bookings */}
               <div className="space-y-2">
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
@@ -223,7 +221,7 @@ const EditVIPPlanForm: React.FC = () => {
                   onChange={(e) => {
                     const value = Number(e.target.value);
                     setNoOfBookings(value.toString());
-                    setNoOfBookingsError(value < 0 ? "Number of bookings cannot be negative" : "");
+                    setNoOfBookingsError(value < 0 ? 'Number of bookings cannot be negative' : '');
                   }}
                   className="h-11"
                   required
@@ -243,16 +241,18 @@ const EditVIPPlanForm: React.FC = () => {
                   onChange={(e) => {
                     const value = Number(e.target.value);
                     setValidityPeriod(value.toString());
-                    setValidityPeriodError(value < 0 ? "Validity period cannot be negative" : "");
+                    setValidityPeriodError(value < 0 ? 'Validity period cannot be negative' : '');
                   }}
                   className="h-11"
                   required
                 />
-                {validityPeriodError && <p className="text-red-500 text-sm">{validityPeriodError}</p>}
+                {validityPeriodError && (
+                  <p className="text-red-500 text-sm">{validityPeriodError}</p>
+                )}
               </div>
 
               {/* Description Field with React-Quill */}
-              <div className="space-y-2" style={{ height: "270px" }}>
+              <div className="space-y-2" style={{ height: '270px' }}>
                 <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                   <FileText className="w-4 h-5 text-blue-500" />
                   <span>Description</span>
@@ -262,7 +262,7 @@ const EditVIPPlanForm: React.FC = () => {
                   onChange={setDescription}
                   theme="snow"
                   modules={quillModules}
-                  style={{ height: "200px" }}
+                  style={{ height: '200px' }}
                 />
               </div>
 

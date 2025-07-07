@@ -1,22 +1,28 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import { useRouter, usePathname } from "next/navigation";
-import { Input } from "@/components/ui/input";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent, CardDescription } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { fetchHubById, updateHub, Hub,City,fetchAllCitiesWithoutPagination } from "@/lib/api";
-import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from "@/components/ui/select";
+import React, { useState, useEffect, FormEvent } from 'react';
+import { useRouter, usePathname } from 'next/navigation';
+import { Input } from '@/components/ui/input';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import { fetchHubById, updateHub, Hub, City, fetchAllCitiesWithoutPagination } from '@/lib/api';
+import {
+  Select,
+  SelectItem,
+  SelectTrigger,
+  SelectContent,
+  SelectValue,
+} from '@/components/ui/select';
 
 const EditHubForm: React.FC = () => {
-  const [hub_name, setHubName] = useState<string>("");
-  const [hub_priority, setHubPriority] = useState<string>("");
+  const [hub_name, setHubName] = useState<string>('');
+  const [hub_priority, setHubPriority] = useState<string>('');
   const [is_active, setIsActive] = useState<boolean>(true); // Active switch state
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [selectedCityId, setSelectedCityId] = useState<string>("");
+  const [selectedCityId, setSelectedCityId] = useState<string>('');
   const [cities, setCities] = useState<City[]>([]);
 
   const { toast } = useToast();
@@ -24,12 +30,10 @@ const EditHubForm: React.FC = () => {
   const pathname = usePathname();
 
   // Extract the Hub ID from the URL path
-  const hubId = pathname?.split("/").pop();
+  const hubId = pathname?.split('/').pop();
 
   useEffect(() => {
-    
     if (hubId) {
-
       // Fetch hub details by ID
       const fetchHub = async () => {
         try {
@@ -41,9 +45,9 @@ const EditHubForm: React.FC = () => {
           setIsActive(hub.is_active ?? true);
         } catch (error: any) {
           toast({
-            variant: "error",
-            title: "Error",
-            description: error.message || "Failed to fetch hub details.",
+            variant: 'error',
+            title: 'Error',
+            description: error.message || 'Failed to fetch hub details.',
           });
         }
       };
@@ -55,9 +59,9 @@ const EditHubForm: React.FC = () => {
           setCities(cityData);
         } catch (error) {
           toast({
-            variant: "error",
-            title: "Error",
-            description: "Failed to load initial data.",
+            variant: 'error',
+            title: 'Error',
+            description: 'Failed to load initial data.',
           });
         }
       };
@@ -71,9 +75,9 @@ const EditHubForm: React.FC = () => {
 
     if (!hub_name || !hub_priority) {
       toast({
-        variant: "error",
-        title: "Validation Error",
-        description: "Hub name and priority are required.",
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Hub name and priority are required.',
       });
       setIsSubmitting(false);
       return;
@@ -91,18 +95,18 @@ const EditHubForm: React.FC = () => {
       await updateHub(hubId as string, updatedHub);
 
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Hub updated successfully!",
+        variant: 'success',
+        title: 'Success',
+        description: 'Hub updated successfully!',
       });
 
       // Redirect to hub list
-      router.push("/admin/hub");
+      router.push('/admin/hub');
     } catch (error: any) {
       toast({
-        variant: "error",
-        title: "Error",
-        description: error.message || "Failed to update hub.",
+        variant: 'error',
+        title: 'Error',
+        description: error.message || 'Failed to update hub.',
       });
     } finally {
       setIsSubmitting(false);
@@ -133,24 +137,21 @@ const EditHubForm: React.FC = () => {
                   required
                 />
               </div>
-          <div>
-                       <label className="text-sm font-medium text-gray-700">City</label>
-                       <Select
-                         value={selectedCityId}
-                         onValueChange={(value) => setSelectedCityId(value)}
-                       >
-                         <SelectTrigger className="bg-white border-gray-200">
-                           <SelectValue placeholder="Select a city" />
-                         </SelectTrigger>
-                         <SelectContent>
-                         {cities.map((city) => (
-                             <SelectItem key={city.id} value={city.id!.toString()}>
-                               {city.name}
-                             </SelectItem>
-                           ))}
-                         </SelectContent>
-                       </Select>
-                     </div>
+              <div>
+                <label className="text-sm font-medium text-gray-700">City</label>
+                <Select value={selectedCityId} onValueChange={(value) => setSelectedCityId(value)}>
+                  <SelectTrigger className="bg-white border-gray-200">
+                    <SelectValue placeholder="Select a city" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {cities.map((city) => (
+                      <SelectItem key={city.id} value={city.id!.toString()}>
+                        {city.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
               {/* Hub Priority Field */}
               <div>

@@ -1,68 +1,74 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect } from 'react';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
+} from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Download,
-  Plus,
-  Edit,
-  Trash2,
-  Printer,
-  Copy,
-  Upload,
-} from "lucide-react";
-import { 
-  fetchWolooCategories, 
-  deleteWolooCategory, 
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import { Download, Plus, Edit, Trash2, Printer, Copy, Upload } from 'lucide-react';
+import {
+  fetchWolooCategories,
+  deleteWolooCategory,
   downloadWolooCategorySampleCSV,
   bulkUploadWolooCategories,
-  WolooCategory 
-} from "@/lib/api";
-import Link from "next/link";
-import { AlertDialog, AlertDialogTrigger, AlertDialogTitle, AlertDialogContent, AlertDialogHeader, AlertDialogFooter } from "@/components/ui/alert-dialog";
-import { useToast } from "@/hooks/use-toast";
-import { VisuallyHidden } from "@radix-ui/react-visually-hidden";
+  WolooCategory,
+} from '@/lib/api';
+import Link from 'next/link';
+import {
+  AlertDialog,
+  AlertDialogTrigger,
+  AlertDialogTitle,
+  AlertDialogContent,
+  AlertDialogHeader,
+  AlertDialogFooter,
+} from '@/components/ui/alert-dialog';
+import { useToast } from '@/hooks/use-toast';
+import { VisuallyHidden } from '@radix-ui/react-visually-hidden';
 
 const WolooCategoryList = () => {
   const [categories, setCategories] = useState<WolooCategory[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
-  const [filterStatus, setFilterStatus] = useState<string>("all");
+  const [filterStatus, setFilterStatus] = useState<string>('all');
   const [isExporting, setIsExporting] = useState(false);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const { toast } = useToast();
 
   // Fetch categories with pagination and status filter
-  const fetchCategoriesData = async (page = 1, size = 50, status = "all", search = "") => {
+  const fetchCategoriesData = async (page = 1, size = 50, status = 'all', search = '') => {
     try {
-      console.log("🔍 Fetching Woloo categories...", { page, size, status, search });
+      console.log('🔍 Fetching Woloo categories...', { page, size, status, search });
       const { data, meta } = await fetchWolooCategories(page, size, status, search);
-      console.log("✅ Woloo categories fetched successfully:", { data, meta });
+      console.log('✅ Woloo categories fetched successfully:', { data, meta });
       setCategories(data);
       setTotalPages(meta.totalPages);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.error("❌ Error fetching Woloo categories:", error);
-      toast({ title: "Error", description: "Failed to fetch categories.", variant: "destructive" });
+      console.error('❌ Error fetching Woloo categories:', error);
+      toast({ title: 'Error', description: 'Failed to fetch categories.', variant: 'destructive' });
     }
   };
 
   useEffect(() => {
     const timer = setTimeout(() => {
       fetchCategoriesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm);
-      setPagination(prev => ({ ...prev, pageIndex: 0 }));
+      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
     }, 500);
 
     return () => clearTimeout(timer);
@@ -72,26 +78,35 @@ const WolooCategoryList = () => {
     try {
       setIsExporting(true);
       // Add export functionality here
-      toast({ title: "Success", description: "Categories exported successfully." });
+      toast({ title: 'Success', description: 'Categories exported successfully.' });
     } catch (error) {
-      console.error("Error exporting categories:", error);
-      toast({ title: "Error", description: "Failed to export categories.", variant: "destructive" });
+      console.error('Error exporting categories:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to export categories.',
+        variant: 'destructive',
+      });
     } finally {
       setIsExporting(false);
     }
   };
 
   const handleCopy = () => {
-    const formattedData = categories.map((item) => `${item.sampleid}, ${item.name}, ${item.active ? 'Active' : 'Inactive'}`).join("\n");
+    const formattedData = categories
+      .map((item) => `${item.sampleid}, ${item.name}, ${item.active ? 'Active' : 'Inactive'}`)
+      .join('\n');
     navigator.clipboard.writeText(formattedData);
-    toast({ title: "Copied to Clipboard", description: "Category data copied." });
+    toast({ title: 'Copied to Clipboard', description: 'Category data copied.' });
   };
 
   const handlePrint = () => {
     const printableContent = categories
-      .map((item) => `<tr><td>${item.sampleid}</td><td>${item.name}</td><td>${item.active ? 'Active' : 'Inactive'}</td></tr>`)
-      .join("");
-    const newWindow = window.open("", "_blank");
+      .map(
+        (item) =>
+          `<tr><td>${item.sampleid}</td><td>${item.name}</td><td>${item.active ? 'Active' : 'Inactive'}</td></tr>`
+      )
+      .join('');
+    const newWindow = window.open('', '_blank');
     newWindow?.document.write(`
       <html>
         <head>
@@ -124,9 +139,13 @@ const WolooCategoryList = () => {
   const handleSampleExport = async () => {
     try {
       await downloadWolooCategorySampleCSV();
-      toast({ title: "Success", description: "Sample CSV downloaded successfully." });
+      toast({ title: 'Success', description: 'Sample CSV downloaded successfully.' });
     } catch (error) {
-      toast({ title: "Error", description: "Failed to download sample CSV.", variant: "destructive" });
+      toast({
+        title: 'Error',
+        description: 'Failed to download sample CSV.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -137,10 +156,14 @@ const WolooCategoryList = () => {
     try {
       setIsUploading(true);
       await bulkUploadWolooCategories(file);
-      toast({ title: "Success", description: "Categories uploaded successfully." });
+      toast({ title: 'Success', description: 'Categories uploaded successfully.' });
       fetchCategoriesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm);
     } catch (error) {
-      toast({ title: "Error", description: "Failed to upload categories.", variant: "destructive" });
+      toast({
+        title: 'Error',
+        description: 'Failed to upload categories.',
+        variant: 'destructive',
+      });
     } finally {
       setIsUploading(false);
       // Reset file input
@@ -152,42 +175,44 @@ const WolooCategoryList = () => {
     try {
       if (deleteTargetId !== null) {
         await deleteWolooCategory(deleteTargetId);
-        toast({ title: "Deleted", description: "Category deleted successfully." });
+        toast({ title: 'Deleted', description: 'Category deleted successfully.' });
         fetchCategoriesData(pagination.pageIndex + 1, pagination.pageSize, filterStatus);
         setIsDialogOpen(false);
       }
     } catch (error) {
-      toast({ title: "Error", description: "Failed to delete category.", variant: "destructive" });
+      toast({ title: 'Error', description: 'Failed to delete category.', variant: 'destructive' });
     }
   };
 
   const categoryColumns: ColumnDef<WolooCategory>[] = [
-    { accessorKey: "sampleid", header: "ID" },
-    { accessorKey: "name", header: "Name", size: 200 },
-    { accessorKey: "service_time", header: "Service Time" },
+    { accessorKey: 'sampleid', header: 'ID' },
+    { accessorKey: 'name', header: 'Name', size: 200 },
+    { accessorKey: 'service_time', header: 'Service Time' },
     {
-      accessorKey: "active",
-      header: "Status",
+      accessorKey: 'active',
+      header: 'Status',
       cell: ({ row }) => {
         const isActive = row.original.active;
         return (
-          <span className={`badge px-2 py-1 rounded ${isActive ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}>
+          <span
+            className={`badge px-2 py-1 rounded ${isActive ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}
+          >
             {isActive ? 'Active' : 'Inactive'}
           </span>
         );
       },
     },
     {
-      accessorKey: "created_at",
-      header: "Created At",
+      accessorKey: 'created_at',
+      header: 'Created At',
       cell: ({ row }) => {
         const date = row.original.created_at;
         return date ? new Date(date).toLocaleDateString() : '-';
       },
     },
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center space-x-2">
           <Link href={`/admin/woloo/categories/edit/${row.original.id}`}>
@@ -210,7 +235,9 @@ const WolooCategoryList = () => {
                 <AlertDialogTitle>
                   <VisuallyHidden>Confirm Delete</VisuallyHidden>
                 </AlertDialogTitle>
-                <p className="text-xl font-bold">Are you sure you want to delete category: {row.original.name}?</p>
+                <p className="text-xl font-bold">
+                  Are you sure you want to delete category: {row.original.name}?
+                </p>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <Button variant="secondary" onClick={handleDelete}>
@@ -247,13 +274,18 @@ const WolooCategoryList = () => {
             <option value="1">Active</option>
             <option value="0">Inactive</option>
           </select>
-          <select value={pagination.pageSize} onChange={handlePageSizeChange} className="border p-2 rounded">
+          <select
+            value={pagination.pageSize}
+            onChange={handlePageSizeChange}
+            className="border p-2 rounded"
+          >
             <option value={50}>50</option>
             <option value={100}>100</option>
             <option value={150}>150</option>
           </select>
           <Button onClick={handleSampleExport}>
-            <Download className="w-4 h-4 mr-2" />Sample CSV
+            <Download className="w-4 h-4 mr-2" />
+            Sample CSV
           </Button>
           <label className="cursor-pointer">
             <Button disabled={isUploading}>
@@ -273,14 +305,17 @@ const WolooCategoryList = () => {
             {isExporting ? 'Exporting...' : 'Export'}
           </Button>
           <Button onClick={handleCopy}>
-            <Copy className="w-4 h-4 mr-2" />Copy
+            <Copy className="w-4 h-4 mr-2" />
+            Copy
           </Button>
           <Button onClick={handlePrint}>
-            <Printer className="w-4 h-4 mr-2" />Print
+            <Printer className="w-4 h-4 mr-2" />
+            Print
           </Button>
           <Link href="/admin/woloo/categories/add">
             <Button>
-              <Plus className="w-4 h-4 mr-2" />Add Category
+              <Plus className="w-4 h-4 mr-2" />
+              Add Category
             </Button>
           </Link>
         </div>

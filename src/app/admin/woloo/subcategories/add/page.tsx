@@ -1,18 +1,29 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createWolooSubcategory, fetchWolooCategories, WolooSubcategory, WolooCategory } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save } from "lucide-react";
-import Link from "next/link";
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Switch } from '@/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  createWolooSubcategory,
+  fetchWolooCategories,
+  WolooSubcategory,
+  WolooCategory,
+} from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import { ArrowLeft, Save } from 'lucide-react';
+import Link from 'next/link';
 
 const AddWolooSubcategory = () => {
   const router = useRouter();
@@ -20,10 +31,10 @@ const AddWolooSubcategory = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [categories, setCategories] = useState<WolooCategory[]>([]);
   const [formData, setFormData] = useState<WolooSubcategory>({
-    name: "",
-    category_id: "",
-    service_time: "",
-    description: "",
+    name: '',
+    category_id: '',
+    service_time: '',
+    description: '',
     active: true,
     image: null,
   });
@@ -34,11 +45,11 @@ const AddWolooSubcategory = () => {
         const { data } = await fetchWolooCategories(1, 1000, 'all', '');
         setCategories(data);
       } catch (error) {
-        console.error("Error fetching categories:", error);
+        console.error('Error fetching categories:', error);
         toast({
-          title: "Error",
-          description: "Failed to fetch categories.",
-          variant: "destructive",
+          title: 'Error',
+          description: 'Failed to fetch categories.',
+          variant: 'destructive',
         });
       }
     };
@@ -47,51 +58,51 @@ const AddWolooSubcategory = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const handleSelectChange = (value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      category_id: value
+      category_id: value,
     }));
   };
 
   const handleSwitchChange = (checked: boolean) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      active: checked
+      active: checked,
     }));
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0] || null;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      image: file
+      image: file,
     }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       toast({
-        title: "Validation Error",
-        description: "Subcategory name is required.",
-        variant: "destructive",
+        title: 'Validation Error',
+        description: 'Subcategory name is required.',
+        variant: 'destructive',
       });
       return;
     }
 
     if (!formData.category_id) {
       toast({
-        title: "Validation Error",
-        description: "Please select a category.",
-        variant: "destructive",
+        title: 'Validation Error',
+        description: 'Please select a category.',
+        variant: 'destructive',
       });
       return;
     }
@@ -100,15 +111,15 @@ const AddWolooSubcategory = () => {
       setIsSubmitting(true);
       await createWolooSubcategory(formData);
       toast({
-        title: "Success",
-        description: "Woloo subcategory created successfully.",
+        title: 'Success',
+        description: 'Woloo subcategory created successfully.',
       });
-      router.push("/admin/woloo/subcategories");
+      router.push('/admin/woloo/subcategories');
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to create subcategory.",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to create subcategory.',
+        variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
@@ -153,7 +164,7 @@ const AddWolooSubcategory = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id || ""}>
+                      <SelectItem key={category.id} value={category.id || ''}>
                         {category.name}
                       </SelectItem>
                     ))}
@@ -200,11 +211,7 @@ const AddWolooSubcategory = () => {
             </div>
 
             <div className="flex items-center space-x-2">
-              <Switch
-                id="active"
-                checked={formData.active}
-                onCheckedChange={handleSwitchChange}
-              />
+              <Switch id="active" checked={formData.active} onCheckedChange={handleSwitchChange} />
               <Label htmlFor="active">Active</Label>
             </div>
 
@@ -216,7 +223,7 @@ const AddWolooSubcategory = () => {
               </Link>
               <Button type="submit" disabled={isSubmitting}>
                 <Save className="w-4 h-4 mr-2" />
-                {isSubmitting ? "Creating..." : "Create Subcategory"}
+                {isSubmitting ? 'Creating...' : 'Create Subcategory'}
               </Button>
             </div>
           </form>

@@ -1,15 +1,13 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect, FormEvent } from "react";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
-import { useToast } from "@/hooks/use-toast";
-import { Save, Loader2 } from "lucide-react";
-import { fetchAllPermission, createRole, Role,Permission } from "@/lib/api";
-
-
+import React, { useState, useEffect, FormEvent } from 'react';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { Checkbox } from '@/components/ui/checkbox';
+import { useToast } from '@/hooks/use-toast';
+import { Save, Loader2 } from 'lucide-react';
+import { fetchAllPermission, createRole, Role, Permission } from '@/lib/api';
 
 // Grouped Permissions Interface
 interface GroupedPermissions {
@@ -17,7 +15,7 @@ interface GroupedPermissions {
 }
 
 const RoleAddForm: React.FC = () => {
-  const [roleName, setRoleName] = useState<string>("");
+  const [roleName, setRoleName] = useState<string>('');
   const [permissions, setPermissions] = useState<GroupedPermissions>({});
   const [selectedPermissions, setSelectedPermissions] = useState<Set<string>>(new Set());
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
@@ -35,7 +33,7 @@ const RoleAddForm: React.FC = () => {
 
       const groupedPermissions = Object.keys(response).reduce((acc, key) => {
         const permissionsArray = response[key];
-        console.log(key)
+        console.log(key);
         if (Array.isArray(permissionsArray)) {
           acc[key] = permissionsArray; // Use dynamic key as group name
         }
@@ -44,11 +42,11 @@ const RoleAddForm: React.FC = () => {
 
       setPermissions(groupedPermissions); // Set grouped permissions
     } catch (error) {
-      console.error("Error fetching permissions:", error);
+      console.error('Error fetching permissions:', error);
       toast({
-        variant: "destructive",
-        title: "Error",
-        description: "Failed to load permissions.",
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to load permissions.',
       });
     }
   };
@@ -71,9 +69,9 @@ const RoleAddForm: React.FC = () => {
 
     if (!roleName || selectedPermissions.size === 0) {
       toast({
-        variant: "destructive",
-        title: "Validation Error",
-        description: "Role name and at least one permission are required.",
+        variant: 'destructive',
+        title: 'Validation Error',
+        description: 'Role name and at least one permission are required.',
       });
       return;
     }
@@ -90,18 +88,18 @@ const RoleAddForm: React.FC = () => {
       await createRole(roleData);
 
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Role created successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'Role created successfully.',
       });
 
-      setRoleName("");
+      setRoleName('');
       setSelectedPermissions(new Set());
-    } catch (error:any) {
-      console.error("Error creating role:", error);
+    } catch (error: any) {
+      console.error('Error creating role:', error);
       toast({
-        variant: "destructive",
-        title: "Error",
+        variant: 'destructive',
+        title: 'Error',
         description: error?.message,
       });
     } finally {

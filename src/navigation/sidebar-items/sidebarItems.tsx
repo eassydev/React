@@ -20,33 +20,33 @@ import {
   Settings,
   Tags,
   FileText,
-  HelpCircle
-} from "lucide-react"
+  HelpCircle,
+} from 'lucide-react';
 
 export interface NavItem {
-  title: string
-  label?: string
-  icon: LucideIcon
-  route?: string
-  children?: ChildNavItem[]
+  title: string;
+  label?: string;
+  icon: LucideIcon;
+  route?: string;
+  children?: ChildNavItem[];
 }
 
 export interface ChildNavItem {
-  title: string
-  label?: string
-  route: string
+  title: string;
+  label?: string;
+  route: string;
 }
 
 export interface NavHeader {
-  heading: string
+  heading: string;
 }
 
-export type SidebarItem = NavItem | NavHeader
+export type SidebarItem = NavItem | NavHeader;
 
-const basePath = "/admin"
+const basePath = '/admin';
 
 export const sidebarItems: SidebarItem[] = [
-  { heading: "Admin" },
+  { heading: 'Admin' },
   // {
   //   title: "Dashboard",
   //   icon: PanelsTopLeft,
@@ -54,203 +54,207 @@ export const sidebarItems: SidebarItem[] = [
   // },
   // { heading: "Apps & Pages" },
   {
-    title: "Banner",
+    title: 'Banner',
     icon: ListCheckIcon,
     route: `${basePath}/banner`,
   },
   {
-    title: "Bogo",
+    title: 'Bogo',
     icon: ListCheckIcon,
     route: `${basePath}/banner`,
   },
   {
-    title: "UTM",
+    title: 'UTM',
     icon: ListCheckIcon,
     route: `${basePath}/campaign`,
   },
   {
-    title: "System Admin",
+    title: 'System Admin',
     icon: ListCheckIcon,
     route: `${basePath}/admin`,
   },
   {
-    title: "Notification",
+    title: 'Notification',
     icon: ListCheckIcon,
     route: `${basePath}/notification`,
   },
   {
-    title: "Live cart",
+    title: 'Live cart',
     icon: ListCheckIcon,
     route: `${basePath}/live-cart`,
   },
   {
-    title: "SP Payout",
+    title: 'SP Payout',
     icon: CreditCard,
     children: [
-      { title: "Payout Details", route: `${basePath}/sp-payout` },
-      { title: "Transactions", route: `${basePath}/transactions` },
+      { title: 'Payout Details', route: `${basePath}/sp-payout` },
+      { title: 'Transactions', route: `${basePath}/transactions` },
     ],
   },
   {
-    title: "Service",
+    title: 'Service',
     icon: Receipt,
     children: [
-      { title: "Category", route: `${basePath}/category` },
-       { title: "Sub category", route: `${basePath}/sub-category` },
-       { title: "Segment", route: `${basePath}/segment` },
-       { title: "Service Video", route: `${basePath}/video` },
-       { title: "Description", route: `${basePath}/description` },
-       { title: "Nested Attributes ", route: `${basePath}/attribute-nested/add` }
-      ],
+      { title: 'Category', route: `${basePath}/category` },
+      { title: 'Sub category', route: `${basePath}/sub-category` },
+      { title: 'Segment', route: `${basePath}/segment` },
+      { title: 'Service Video', route: `${basePath}/video` },
+      { title: 'Description', route: `${basePath}/description` },
+      { title: 'Nested Attributes ', route: `${basePath}/attribute-nested/add` },
+    ],
   },
   {
-    title: "Rate Card",
+    title: 'Rate Card',
     icon: ListCheckIcon,
     route: `${basePath}/rate-card`,
   },
   {
-    title: "Package",
+    title: 'Package',
     icon: ListCheckIcon,
     route: `${basePath}/package`,
   },
   {
-    title: "Country",
+    title: 'Country',
     icon: ListCheckIcon,
     route: `${basePath}/country`,
   },
   {
-    title: "State",
+    title: 'State',
     icon: ListCheckIcon,
     route: `${basePath}/state`,
   },
   {
-    title: "City",
+    title: 'City',
     icon: ListCheckIcon,
     route: `${basePath}/city`,
   },
   {
-    title: "Hub",
+    title: 'Hub',
     icon: ListCheckIcon,
     route: `${basePath}/hub`,
   },
   {
-    title: "Hub Pincode",
+    title: 'Hub Pincode',
     icon: ListCheckIcon,
     route: `${basePath}/hub-pincode`,
-  }, {
-    title: "Sp Hub",
+  },
+  {
+    title: 'Sp Hub',
     icon: ListCheckIcon,
     route: `${basePath}/sp-hubs`,
   },
   {
-    title: "CMS Pages",
+    title: 'CMS Pages',
     icon: FileText,
     children: [
-      { title: "All Pages", route: `${basePath}/pages` },
-      { title: "Privacy Policy", route: `${basePath}/pages?type=privacy-policy` },
-      { title: "Terms & Conditions", route: `${basePath}/pages?type=terms-conditions` },
-      { title: "About Us", route: `${basePath}/pages?type=about-us` },
-      { title: "Custom Pages", route: `${basePath}/pages?type=custom` },
+      { title: 'All Pages', route: `${basePath}/pages` },
+      { title: 'Privacy Policy', route: `${basePath}/pages?type=privacy-policy` },
+      { title: 'Terms & Conditions', route: `${basePath}/pages?type=terms-conditions` },
+      { title: 'About Us', route: `${basePath}/pages?type=about-us` },
+      { title: 'Custom Pages', route: `${basePath}/pages?type=custom` },
     ],
   },
   {
-    title: "Booking",
+    title: 'Booking',
     icon: ListCheckIcon,
     route: `${basePath}/booking`,
   },
   {
-    title: "Booking Feedback",
+    title: 'Booking Feedback',
     icon: Star,
     route: `${basePath}/booking-experience`,
   },
   {
-    title: "Customer",
+    title: 'Customer',
     icon: ListCheckIcon,
     route: `${basePath}/user`,
   },
   {
-    title: "Wallet Offer",
+    title: 'Wallet Offer',
     icon: ListCheckIcon,
     route: `${basePath}/wallet-offer`,
   },
   {
-    title: "Provider",
+    title: 'Provider',
     icon: ListCheckIcon,
     route: `${basePath}/provider`,
   },
   {
-    title: "Staff",
+    title: 'Staff',
     icon: ListCheckIcon,
     route: `${basePath}/staff`,
   },
   {
-    title: "Bank",
+    title: 'Bank',
     icon: ListCheckIcon,
     route: `${basePath}/bank`,
   },
   {
-    title: "Gst",
+    title: 'Gst',
     icon: ListCheckIcon,
     route: `${basePath}/gst`,
   },
   {
-    title: "Vip plan",
+    title: 'Vip plan',
     icon: ListCheckIcon,
     route: `${basePath}/vip-plan`,
   },
   {
-    title: "Blog",
+    title: 'Blog',
     icon: ListCheckIcon,
     route: `${basePath}/blog`,
   },
   {
-    title: "role",
+    title: 'role',
     icon: ListCheckIcon,
     route: `${basePath}/role`,
   },
   {
-    title: "Permission",
+    title: 'Permission',
     icon: ListCheckIcon,
     route: `${basePath}/permission`,
   },
   {
-    title: "Promocode",
+    title: 'Promocode',
     icon: ListCheckIcon,
     route: `${basePath}/promocode`,
   },
   {
-    title: "FAQ",
+    title: 'FAQ',
     icon: HelpCircle,
     route: `${basePath}/faq`,
   },
   {
-    title: "Setting",
+    title: 'Setting',
     icon: ListCheckIcon,
     route: `${basePath}/setting`,
   },
   {
-    title: "App",
-    icon: Receipt,
-    children: [{ title: "Quick service", route: `${basePath}/quick-service/add` }, { title: "Onboarding", route: `${basePath}/onboarding` }],
-  },
-   {
-    title: "Traning",
+    title: 'App',
     icon: Receipt,
     children: [
-      { title: "Course", route: `${basePath}/course` },
-       { title: "Course-quiz", route: `${basePath}/course-quiz` },
-       { title: "Badge", route: `${basePath}/badge` },
-      ],
+      { title: 'Quick service', route: `${basePath}/quick-service/add` },
+      { title: 'Onboarding', route: `${basePath}/onboarding` },
+    ],
   },
   {
-    title: "Woloo",
+    title: 'Traning',
+    icon: Receipt,
+    children: [
+      { title: 'Course', route: `${basePath}/course` },
+      { title: 'Course-quiz', route: `${basePath}/course-quiz` },
+      { title: 'Badge', route: `${basePath}/badge` },
+    ],
+  },
+  {
+    title: 'Woloo',
     icon: Building2,
     children: [
-      { title: "Categories", route: `${basePath}/woloo/categories` },
-      { title: "Subcategories", route: `${basePath}/woloo/subcategories` },
-      { title: "Attributes", route: `${basePath}/woloo/attributes` },
-      { title: "Rate Cards", route: `${basePath}/woloo/rate-cards` },
-      { title: "Bookings", route: `${basePath}/woloo/bookings` },
+      { title: 'Categories', route: `${basePath}/woloo/categories` },
+      { title: 'Subcategories', route: `${basePath}/woloo/subcategories` },
+      { title: 'Attributes', route: `${basePath}/woloo/attributes` },
+      { title: 'Rate Cards', route: `${basePath}/woloo/rate-cards` },
+      { title: 'Bookings', route: `${basePath}/woloo/bookings` },
     ],
   },
   // {
@@ -309,4 +313,4 @@ export const sidebarItems: SidebarItem[] = [
   //   route: "promotions",
   // },
   // { heading: "Billing" },
-]
+];

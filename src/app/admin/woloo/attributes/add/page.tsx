@@ -1,17 +1,30 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { createWolooAttribute, WolooAttribute, fetchWolooCategories, fetchWolooSubcategories, WolooCategory, WolooSubcategory } from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft, Save, Plus, Trash2 } from "lucide-react";
-import Link from "next/link";
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import {
+  createWolooAttribute,
+  WolooAttribute,
+  fetchWolooCategories,
+  fetchWolooSubcategories,
+  WolooCategory,
+  WolooSubcategory,
+} from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import { ArrowLeft, Save, Plus, Trash2 } from 'lucide-react';
+import Link from 'next/link';
 
 interface AttributeOption {
   name: string;
@@ -29,14 +42,14 @@ const AddWolooAttribute = () => {
   const [subcategories, setSubcategories] = useState<WolooSubcategory[]>([]);
   const [filteredSubcategories, setFilteredSubcategories] = useState<WolooSubcategory[]>([]);
   const [formData, setFormData] = useState<WolooAttribute>({
-    name: "",
-    category_id: "",
-    subcategory_id: "none",
-    type: "single",
+    name: '',
+    category_id: '',
+    subcategory_id: 'none',
+    type: 'single',
     required: false,
     weight: 0,
     active: true,
-    provider_id: "5032", // Default provider
+    provider_id: '5032', // Default provider
   });
   const [options, setOptions] = useState<AttributeOption[]>([]);
 
@@ -48,17 +61,17 @@ const AddWolooAttribute = () => {
         // Fetch categories and subcategories
         const [categoriesResponse, subcategoriesResponse] = await Promise.all([
           fetchWolooCategories(1, 1000, 'all', ''),
-          fetchWolooSubcategories(1, 1000, 'all', '')
+          fetchWolooSubcategories(1, 1000, 'all', ''),
         ]);
 
         setCategories(categoriesResponse.data);
         setSubcategories(subcategoriesResponse.data);
       } catch (error) {
-        console.error("Error fetching data:", error);
+        console.error('Error fetching data:', error);
         toast({
-          title: "Error",
-          description: "Failed to fetch categories and subcategories.",
-          variant: "destructive",
+          title: 'Error',
+          description: 'Failed to fetch categories and subcategories.',
+          variant: 'destructive',
         });
       } finally {
         setIsLoading(false);
@@ -79,7 +92,9 @@ const AddWolooAttribute = () => {
         }
 
         // Also check if subcategory's category_id matches the selected category's decrypted ID
-        const selectedCategory = categories.find((cat: WolooCategory) => cat.id === formData.category_id);
+        const selectedCategory = categories.find(
+          (cat: WolooCategory) => cat.id === formData.category_id
+        );
         if (selectedCategory && sub.category_id == selectedCategory.sampleid) {
           return true;
         }
@@ -89,8 +104,16 @@ const AddWolooAttribute = () => {
 
       console.log('Filtering subcategories:', {
         selectedCategoryId: formData.category_id,
-        allSubcategories: subcategories.map(s => ({ id: s.id, name: s.name, category_id: s.category_id })),
-        filteredSubcategories: filtered.map(s => ({ id: s.id, name: s.name, category_id: s.category_id }))
+        allSubcategories: subcategories.map((s) => ({
+          id: s.id,
+          name: s.name,
+          category_id: s.category_id,
+        })),
+        filteredSubcategories: filtered.map((s) => ({
+          id: s.id,
+          name: s.name,
+          category_id: s.category_id,
+        })),
       });
 
       setFilteredSubcategories(filtered);
@@ -101,108 +124,108 @@ const AddWolooAttribute = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: name === 'weight' ? parseInt(value) || 0 : value
+      [name]: name === 'weight' ? parseInt(value) || 0 : value,
     }));
   };
 
   const handleTypeChange = (value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      type: value
+      type: value,
     }));
 
     // Don't clear options when changing type - both types can have options
   };
 
   const handleCategoryChange = (value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
       category_id: value,
-      subcategory_id: "none", // Reset subcategory when category changes
+      subcategory_id: 'none', // Reset subcategory when category changes
     }));
   };
 
   const handleSubcategoryChange = (value: string) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      subcategory_id: value === "none" ? "" : value
+      subcategory_id: value === 'none' ? '' : value,
     }));
   };
 
   const handleSwitchChange = (field: string) => (checked: boolean) => {
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [field]: checked
+      [field]: checked,
     }));
   };
 
   const addOption = () => {
-    setOptions(prev => [...prev, { name: "", price_modifier: 0, weight: 0, active: true }]);
+    setOptions((prev) => [...prev, { name: '', price_modifier: 0, weight: 0, active: true }]);
   };
 
   const removeOption = (index: number) => {
-    setOptions(prev => prev.filter((_, i) => i !== index));
+    setOptions((prev) => prev.filter((_, i) => i !== index));
   };
 
   const updateOption = (index: number, field: string, value: string | boolean | number) => {
-    setOptions(prev => prev.map((option, i) =>
-      i === index ? { ...option, [field]: value } : option
-    ));
+    setOptions((prev) =>
+      prev.map((option, i) => (i === index ? { ...option, [field]: value } : option))
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!formData.name.trim()) {
       toast({
-        title: "Validation Error",
-        description: "Attribute name is required.",
-        variant: "destructive",
+        title: 'Validation Error',
+        description: 'Attribute name is required.',
+        variant: 'destructive',
       });
       return;
     }
 
     if (!formData.category_id) {
       toast({
-        title: "Validation Error",
-        description: "Please select a category.",
-        variant: "destructive",
+        title: 'Validation Error',
+        description: 'Please select a category.',
+        variant: 'destructive',
       });
       return;
     }
 
     // Validate option names if options are provided
-    if (options.length > 0 && options.some(option => !option.name.trim())) {
+    if (options.length > 0 && options.some((option) => !option.name.trim())) {
       toast({
-        title: "Validation Error",
-        description: "All option names are required.",
-        variant: "destructive",
+        title: 'Validation Error',
+        description: 'All option names are required.',
+        variant: 'destructive',
       });
       return;
     }
 
     try {
       setIsSubmitting(true);
-      
+
       // Prepare data with options (both single and multiple types can have options)
       const attributeData = {
         ...formData,
-        options: options.length > 0 ? options : undefined
+        options: options.length > 0 ? options : undefined,
       };
-      
+
       await createWolooAttribute(attributeData);
       toast({
-        title: "Success",
-        description: "Woloo attribute created successfully.",
+        title: 'Success',
+        description: 'Woloo attribute created successfully.',
       });
-      router.push("/admin/woloo/attributes");
+      router.push('/admin/woloo/attributes');
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to create attribute.",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to create attribute.',
+        variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
@@ -269,7 +292,7 @@ const AddWolooAttribute = () => {
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((category) => (
-                      <SelectItem key={category.id} value={category.id || ""}>
+                      <SelectItem key={category.id} value={category.id || ''}>
                         {category.name}
                       </SelectItem>
                     ))}
@@ -288,7 +311,7 @@ const AddWolooAttribute = () => {
                   <SelectContent>
                     <SelectItem value="none">No Subcategory</SelectItem>
                     {filteredSubcategories.map((subcategory) => (
-                      <SelectItem key={subcategory.id} value={subcategory.id || "none"}>
+                      <SelectItem key={subcategory.id} value={subcategory.id || 'none'}>
                         {subcategory.name}
                       </SelectItem>
                     ))}
@@ -304,7 +327,9 @@ const AddWolooAttribute = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="single">Single Selection (Choose One Option)</SelectItem>
-                    <SelectItem value="multiple">Multiple Selection (Choose Multiple Options)</SelectItem>
+                    <SelectItem value="multiple">
+                      Multiple Selection (Choose Multiple Options)
+                    </SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -358,13 +383,15 @@ const AddWolooAttribute = () => {
                   </div>
                   <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
                     <p className="text-sm text-blue-800">
-                      <strong>Type: {formData.type === 'single' ? 'Single Selection' : 'Multiple Selection'}</strong>
+                      <strong>
+                        Type:{' '}
+                        {formData.type === 'single' ? 'Single Selection' : 'Multiple Selection'}
+                      </strong>
                     </p>
                     <p className="text-xs text-blue-600 mt-1">
                       {formData.type === 'single'
                         ? 'Users can select only ONE option from the list (like radio buttons or dropdown)'
-                        : 'Users can select MULTIPLE options from the list (like checkboxes)'
-                      }
+                        : 'Users can select MULTIPLE options from the list (like checkboxes)'}
                     </p>
                   </div>
                 </div>
@@ -392,7 +419,9 @@ const AddWolooAttribute = () => {
                           type="number"
                           step="0.01"
                           value={option.price_modifier}
-                          onChange={(e) => updateOption(index, 'price_modifier', parseFloat(e.target.value) || 0)}
+                          onChange={(e) =>
+                            updateOption(index, 'price_modifier', parseFloat(e.target.value) || 0)
+                          }
                           placeholder="0.00"
                         />
                       </div>
@@ -403,7 +432,9 @@ const AddWolooAttribute = () => {
                         <Input
                           type="number"
                           value={option.weight}
-                          onChange={(e) => updateOption(index, 'weight', parseInt(e.target.value) || 0)}
+                          onChange={(e) =>
+                            updateOption(index, 'weight', parseInt(e.target.value) || 0)
+                          }
                           placeholder="0"
                         />
                       </div>
@@ -438,7 +469,7 @@ const AddWolooAttribute = () => {
               </Link>
               <Button type="submit" disabled={isSubmitting}>
                 <Save className="w-4 h-4 mr-2" />
-                {isSubmitting ? "Creating..." : "Create Attribute"}
+                {isSubmitting ? 'Creating...' : 'Create Attribute'}
               </Button>
             </div>
           </form>

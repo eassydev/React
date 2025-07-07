@@ -1,12 +1,18 @@
-"use client";
-import React, { useState, useEffect, FormEvent } from "react";
-import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
-import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { useToast } from "@/hooks/use-toast";
-import { useRouter, usePathname } from "next/navigation";
+'use client';
+import React, { useState, useEffect, FormEvent } from 'react';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Button } from '@/components/ui/button';
+import {
+  Select,
+  SelectItem,
+  SelectTrigger,
+  SelectContent,
+  SelectValue,
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { useToast } from '@/hooks/use-toast';
+import { useRouter, usePathname } from 'next/navigation';
 import {
   fetchAllHubs,
   fetchAllCities,
@@ -25,16 +31,16 @@ import {
   City,
   Attribute,
   AttributeOption,
-} from "@/lib/api";
+} from '@/lib/api';
 import { Save, FileText, Loader2, Type, Globe2 } from 'lucide-react';
-import { Virtuoso } from "react-virtuoso";
+import { Virtuoso } from 'react-virtuoso';
 
 const EditSpHubForm: React.FC = () => {
   const router = useRouter();
   const pathname = usePathname();
   const { toast } = useToast();
 
-  const spHubId = pathname?.split("/").pop();
+  const spHubId = pathname?.split('/').pop();
 
   const [hubs, setHubs] = useState<Hub[]>([]);
   const [cities, setCities] = useState<City[]>([]);
@@ -43,20 +49,20 @@ const EditSpHubForm: React.FC = () => {
   const [filterAttributes, setFilterAttributes] = useState<Attribute[]>([]);
   const [filterOptions, setFilterOptions] = useState<AttributeOption[]>([]);
 
-  const [selectedHubId, setSelectedHubId] = useState<string>("");
-  const [selectedCityId, setSelectedCityId] = useState<string>("");
-  const [selectedCategoryId, setSelectedCategoryId] = useState<string>("");
-  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>("");
-  const [selectedFilterAttributeId, setSelectedFilterAttributeId] = useState<string>("");
-  const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>("");
-  const [staff, setStaff] = useState<string>("0");
-  const [weightage, setWeightage] = useState<string>("0");
+  const [selectedHubId, setSelectedHubId] = useState<string>('');
+  const [selectedCityId, setSelectedCityId] = useState<string>('');
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>('');
+  const [selectedFilterAttributeId, setSelectedFilterAttributeId] = useState<string>('');
+  const [selectedFilterOptionId, setSelectedFilterOptionId] = useState<string>('');
+  const [staff, setStaff] = useState<string>('0');
+  const [weightage, setWeightage] = useState<string>('0');
   const [isActive, setIsActive] = useState<boolean>(true);
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-// Provider-related state
+  // Provider-related state
   const [providers, setProviders] = useState<Provider[]>([]);
-  const [selectedProviderId, setSelectedProviderId] = useState<string>("");
-   const [selectedProviderName, setSelectedProviderName] = useState<string>("Select an option");
+  const [selectedProviderId, setSelectedProviderId] = useState<string>('');
+  const [selectedProviderName, setSelectedProviderName] = useState<string>('Select an option');
   useEffect(() => {
     const loadInitialData = async () => {
       try {
@@ -73,24 +79,23 @@ const EditSpHubForm: React.FC = () => {
           const spHub = await fetchSpHubById(spHubId);
           setSelectedHubId(spHub.hub_id.toString());
           setSelectedCityId(spHub.city_id.toString());
-          setSelectedCategoryId(spHub.category_id?.toString() || "");
-          setSelectedSubcategoryId(spHub.subcategory_id?.toString() || "");
-          setSelectedFilterAttributeId(spHub.filter_attribute_id?.toString() || "");
-          setSelectedProviderId(spHub.provider_id?.toString() || "");
+          setSelectedCategoryId(spHub.category_id?.toString() || '');
+          setSelectedSubcategoryId(spHub.subcategory_id?.toString() || '');
+          setSelectedFilterAttributeId(spHub.filter_attribute_id?.toString() || '');
+          setSelectedProviderId(spHub.provider_id?.toString() || '');
           if (spHub.provider_id) {
             await loadProviders(spHub.provider_id);
-           
           }
-          setSelectedFilterOptionId(spHub.filter_option_id?.toString() || "");
+          setSelectedFilterOptionId(spHub.filter_option_id?.toString() || '');
           setStaff(spHub.staff.toString());
           setWeightage(spHub.weightage.toString());
           setIsActive(spHub.is_active);
         }
       } catch (error) {
         toast({
-          variant: "error",
-          title: "Error",
-          description: "Failed to load initial data.",
+          variant: 'error',
+          title: 'Error',
+          description: 'Failed to load initial data.',
         });
       }
     };
@@ -131,8 +136,6 @@ const EditSpHubForm: React.FC = () => {
     }
   }, [selectedCategoryId, selectedSubcategoryId]);
 
-
- 
   useEffect(() => {
     if (selectedFilterAttributeId) {
       const loadFilterOptions = async () => {
@@ -149,28 +152,28 @@ const EditSpHubForm: React.FC = () => {
     }
   }, [selectedFilterAttributeId]);
 
+  const loadProviders = async (providerid: string) => {
+    try {
+      const fetchedProviders = await fetchProviders();
+      setProviders(fetchedProviders);
+      const selectedProvider = fetchedProviders.find(
+        (provider) => provider.id?.toString() === providerid
+      );
 
- const loadProviders = async (providerid:string) => {
-     try {
-       const fetchedProviders = await fetchProviders();
-       setProviders(fetchedProviders);
-       const selectedProvider = fetchedProviders.find((provider) => provider.id?.toString() === providerid);
- 
-         setSelectedProviderName(`${selectedProvider?.first_name} ${selectedProvider?.last_name}`);
-         console.log("tSelectedProviderName",selectedProviderId)
-     } catch (error) {
+      setSelectedProviderName(`${selectedProvider?.first_name} ${selectedProvider?.last_name}`);
+      console.log('tSelectedProviderName', selectedProviderId);
+    } catch (error) {
       setProviders([]);
-     }
-   };
+    }
+  };
 
-
-   const handleValueChange = (value: string) => {
+  const handleValueChange = (value: string) => {
     const selectedProvider = providers.find((provider) => provider.id?.toString() === value);
     if (selectedProvider) {
       setSelectedProviderId(value);
       setSelectedProviderName(`${selectedProvider.first_name} ${selectedProvider.last_name}`);
     } else {
-      setSelectedProviderName("Select an option");
+      setSelectedProviderName('Select an option');
     }
   };
   const onSubmit = async (e: FormEvent) => {
@@ -183,7 +186,7 @@ const EditSpHubForm: React.FC = () => {
       category_id: selectedCategoryId ? selectedCategoryId : undefined,
       subcategory_id: selectedSubcategoryId ? selectedSubcategoryId : undefined,
       filter_attribute_id: selectedFilterAttributeId ? selectedFilterAttributeId : undefined,
-      filter_option_id: selectedFilterOptionId ? selectedFilterOptionId: undefined,
+      filter_option_id: selectedFilterOptionId ? selectedFilterOptionId : undefined,
       staff: parseInt(staff),
       weightage: parseFloat(weightage),
       is_active: isActive,
@@ -193,15 +196,15 @@ const EditSpHubForm: React.FC = () => {
     try {
       await updateSpHub(spHubId!, spHubData);
       toast({
-        variant: "success",
-        title: "Success",
-        description: "SpHub updated successfully.",
+        variant: 'success',
+        title: 'Success',
+        description: 'SpHub updated successfully.',
       });
-      router.push("/admin/sp-hubs");
+      router.push('/admin/sp-hubs');
     } catch (error) {
       toast({
-        variant: "error",
-        title: "Error",
+        variant: 'error',
+        title: 'Error',
         description: `${error}`,
       });
     } finally {
@@ -221,10 +224,7 @@ const EditSpHubForm: React.FC = () => {
             {/* Hub Selector */}
             <div>
               <label className="text-sm font-medium text-gray-700">Hub</label>
-              <Select
-                value={selectedHubId}
-                onValueChange={(value) => setSelectedHubId(value)}
-              >
+              <Select value={selectedHubId} onValueChange={(value) => setSelectedHubId(value)}>
                 <SelectTrigger className="bg-white border-gray-200">
                   <SelectValue placeholder="Select a hub" />
                 </SelectTrigger>
@@ -241,15 +241,12 @@ const EditSpHubForm: React.FC = () => {
             {/* City Selector */}
             <div>
               <label className="text-sm font-medium text-gray-700">City</label>
-              <Select
-                value={selectedCityId}
-                onValueChange={(value) => setSelectedCityId(value)}
-              >
+              <Select value={selectedCityId} onValueChange={(value) => setSelectedCityId(value)}>
                 <SelectTrigger className="bg-white border-gray-200">
                   <SelectValue placeholder="Select a city" />
                 </SelectTrigger>
                 <SelectContent>
-                {cities.map((city) => (
+                  {cities.map((city) => (
                     <SelectItem key={city.id} value={city.id!.toString()}>
                       {city.name}
                     </SelectItem>
@@ -370,26 +367,33 @@ const EditSpHubForm: React.FC = () => {
               />
             </div>
 
- {/* Provider (with Search & Pagination) */}
-                <div className="space-y-2 w-full">
-                                 <label className="text-sm font-medium text-gray-700">Select Provider</label>
-                                 <Select value={selectedProviderId || ""} onValueChange={handleValueChange}>
-                                   <SelectTrigger className="w-full"> {/* Full width */}
-                                     {selectedProviderName || "Select an option"}
-                                   </SelectTrigger>
-                                   <SelectContent className="w-full"> {/* Full width dropdown */}
-                                     <Virtuoso
-                                       style={{ height: "200px", width: "100%" }} // Full width and fixed height
-                                       totalCount={providers.length}
-                                       itemContent={(index) => (
-                                         <SelectItem key={providers[index].id} value={providers[index].id?.toString() ?? ''}>
-                                           {providers[index].first_name} {providers[index].last_name || ""}
-                                         </SelectItem>
-                                       )}
-                                     />
-                                   </SelectContent>
-                                 </Select>
-                               </div>
+            {/* Provider (with Search & Pagination) */}
+            <div className="space-y-2 w-full">
+              <label className="text-sm font-medium text-gray-700">Select Provider</label>
+              <Select value={selectedProviderId || ''} onValueChange={handleValueChange}>
+                <SelectTrigger className="w-full">
+                  {' '}
+                  {/* Full width */}
+                  {selectedProviderName || 'Select an option'}
+                </SelectTrigger>
+                <SelectContent className="w-full">
+                  {' '}
+                  {/* Full width dropdown */}
+                  <Virtuoso
+                    style={{ height: '200px', width: '100%' }} // Full width and fixed height
+                    totalCount={providers.length}
+                    itemContent={(index) => (
+                      <SelectItem
+                        key={providers[index].id}
+                        value={providers[index].id?.toString() ?? ''}
+                      >
+                        {providers[index].first_name} {providers[index].last_name || ''}
+                      </SelectItem>
+                    )}
+                  />
+                </SelectContent>
+              </Select>
+            </div>
             {/* Active Status Switch */}
             <div className="space-y-2">
               <label className="text-sm font-medium text-gray-700">Status</label>
@@ -422,5 +426,3 @@ const EditSpHubForm: React.FC = () => {
 };
 
 export default EditSpHubForm;
-
-                 

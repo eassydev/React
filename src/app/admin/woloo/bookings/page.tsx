@@ -1,49 +1,59 @@
-"use client";
+'use client';
 
-import React, { useState, useEffect } from "react";
-import { DateRange } from "react-day-picker";
+import React, { useState, useEffect } from 'react';
+import { DateRange } from 'react-day-picker';
 import {
   ColumnDef,
   flexRender,
   getCoreRowModel,
   useReactTable,
   PaginationState,
-} from "@tanstack/react-table";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Table, TableHead, TableHeader, TableBody, TableRow, TableCell } from "@/components/ui/table";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+} from '@tanstack/react-table';
+import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  Download,
-  Edit,
-  Printer,
-  Copy,
-  UserPlus,
-  Calendar,
-  Users,
-  Eye,
-} from "lucide-react";
-import { 
-  fetchWolooBookings, 
+  Table,
+  TableHead,
+  TableHeader,
+  TableBody,
+  TableRow,
+  TableCell,
+} from '@/components/ui/table';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Download, Edit, Printer, Copy, UserPlus, Calendar, Users, Eye } from 'lucide-react';
+import {
+  fetchWolooBookings,
   updateWolooBookingStatus,
   assignWolooBookingProvider,
   rescheduleWolooBooking,
   assignWolooBookingStaff,
-  WolooBooking
-} from "@/lib/api";
-import { useToast } from "@/hooks/use-toast";
-import { DateRangePicker } from "@/components/DateRangePicker";
+  WolooBooking,
+} from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
+import { DateRangePicker } from '@/components/DateRangePicker';
 
 const WolooBookingList = () => {
   const [bookings, setBookings] = useState<WolooBooking[]>([]);
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
-  const [filterStatus, setFilterStatus] = useState<string>("");
-  const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string>('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [isExporting, setIsExporting] = useState(false);
   const [selectedBooking, setSelectedBooking] = useState<WolooBooking | null>(null);
@@ -55,50 +65,57 @@ const WolooBookingList = () => {
 
   // Status update form
   const [statusForm, setStatusForm] = useState({
-    status: "",
-    reason: "",
-    notes: "",
+    status: '',
+    reason: '',
+    notes: '',
   });
 
   // Provider assignment form
   const [providerForm, setProviderForm] = useState({
-    provider_id: "",
-    assignment_notes: "",
+    provider_id: '',
+    assignment_notes: '',
     notify_provider: true,
   });
 
   // Reschedule form
   const [rescheduleForm, setRescheduleForm] = useState({
-    booking_date: "",
-    start_service_time: "",
-    end_service_time: "",
-    reschedule_reason: "",
+    booking_date: '',
+    start_service_time: '',
+    end_service_time: '',
+    reschedule_reason: '',
     notify_customer: true,
   });
 
   // Staff assignment form
   const [staffForm, setStaffForm] = useState({
-    staff_assignments: [{ staff_id: "", role: "", name: "" }],
-    assignment_notes: "",
+    staff_assignments: [{ staff_id: '', role: '', name: '' }],
+    assignment_notes: '',
   });
 
   // Fetch bookings with pagination and filters
-  const fetchBookingsData = async (page = 1, size = 50, status = "", search = "", dateFrom = "", dateTo = "") => {
+  const fetchBookingsData = async (
+    page = 1,
+    size = 50,
+    status = '',
+    search = '',
+    dateFrom = '',
+    dateTo = ''
+  ) => {
     try {
       const { data, meta } = await fetchWolooBookings(page, size, status, search, dateFrom, dateTo);
       setBookings(data);
       setTotalPages(meta.totalPages);
       setPagination((prev) => ({ ...prev, pageIndex: page - 1 }));
     } catch (error) {
-      console.error("Error fetching Woloo bookings:", error);
-      toast({ title: "Error", description: "Failed to fetch bookings.", variant: "destructive" });
+      console.error('Error fetching Woloo bookings:', error);
+      toast({ title: 'Error', description: 'Failed to fetch bookings.', variant: 'destructive' });
     }
   };
 
   useEffect(() => {
     const timer = setTimeout(() => {
-      const dateFrom = dateRange?.from ? dateRange.from.toISOString().split('T')[0] : "";
-      const dateTo = dateRange?.to ? dateRange.to.toISOString().split('T')[0] : "";
+      const dateFrom = dateRange?.from ? dateRange.from.toISOString().split('T')[0] : '';
+      const dateTo = dateRange?.to ? dateRange.to.toISOString().split('T')[0] : '';
 
       fetchBookingsData(
         pagination.pageIndex + 1,
@@ -108,7 +125,7 @@ const WolooBookingList = () => {
         dateFrom,
         dateTo
       );
-      setPagination(prev => ({ ...prev, pageIndex: 0 }));
+      setPagination((prev) => ({ ...prev, pageIndex: 0 }));
     }, 500);
 
     return () => clearTimeout(timer);
@@ -117,30 +134,34 @@ const WolooBookingList = () => {
   const handleExport = async () => {
     try {
       setIsExporting(true);
-      toast({ title: "Success", description: "Bookings exported successfully." });
+      toast({ title: 'Success', description: 'Bookings exported successfully.' });
     } catch (error) {
-      console.error("Error exporting bookings:", error);
-      toast({ title: "Error", description: "Failed to export bookings.", variant: "destructive" });
+      console.error('Error exporting bookings:', error);
+      toast({ title: 'Error', description: 'Failed to export bookings.', variant: 'destructive' });
     } finally {
       setIsExporting(false);
     }
   };
 
   const handleCopy = () => {
-    const formattedData = bookings.map((item) => 
-      `${item.woloo_order_id}, ${item.customer_name}, ${item.service_category}, ${item.status}`
-    ).join("\n");
+    const formattedData = bookings
+      .map(
+        (item) =>
+          `${item.woloo_order_id}, ${item.customer_name}, ${item.service_category}, ${item.status}`
+      )
+      .join('\n');
     navigator.clipboard.writeText(formattedData);
-    toast({ title: "Copied to Clipboard", description: "Booking data copied." });
+    toast({ title: 'Copied to Clipboard', description: 'Booking data copied.' });
   };
 
   const handlePrint = () => {
     const printableContent = bookings
-      .map((item) => 
-        `<tr><td>${item.woloo_order_id}</td><td>${item.customer_name}</td><td>${item.service_category}</td><td>${item.status}</td></tr>`
+      .map(
+        (item) =>
+          `<tr><td>${item.woloo_order_id}</td><td>${item.customer_name}</td><td>${item.service_category}</td><td>${item.status}</td></tr>`
       )
-      .join("");
-    const newWindow = window.open("", "_blank");
+      .join('');
+    const newWindow = window.open('', '_blank');
     newWindow?.document.write(`
       <html>
         <head>
@@ -175,13 +196,24 @@ const WolooBookingList = () => {
 
     try {
       await updateWolooBookingStatus(selectedBooking.id!, statusForm);
-      toast({ title: "Success", description: "Booking status updated successfully." });
+      toast({ title: 'Success', description: 'Booking status updated successfully.' });
       setIsStatusDialogOpen(false);
-      const dateFrom = dateRange?.from ? dateRange.from.toISOString().split('T')[0] : "";
-      const dateTo = dateRange?.to ? dateRange.to.toISOString().split('T')[0] : "";
-      fetchBookingsData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm, dateFrom, dateTo);
+      const dateFrom = dateRange?.from ? dateRange.from.toISOString().split('T')[0] : '';
+      const dateTo = dateRange?.to ? dateRange.to.toISOString().split('T')[0] : '';
+      fetchBookingsData(
+        pagination.pageIndex + 1,
+        pagination.pageSize,
+        filterStatus,
+        searchTerm,
+        dateFrom,
+        dateTo
+      );
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Failed to update status.", variant: "destructive" });
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to update status.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -190,13 +222,24 @@ const WolooBookingList = () => {
 
     try {
       await assignWolooBookingProvider(selectedBooking.id!, providerForm);
-      toast({ title: "Success", description: "Provider assigned successfully." });
+      toast({ title: 'Success', description: 'Provider assigned successfully.' });
       setIsProviderDialogOpen(false);
-      const dateFrom = dateRange?.from ? dateRange.from.toISOString().split('T')[0] : "";
-      const dateTo = dateRange?.to ? dateRange.to.toISOString().split('T')[0] : "";
-      fetchBookingsData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm, dateFrom, dateTo);
+      const dateFrom = dateRange?.from ? dateRange.from.toISOString().split('T')[0] : '';
+      const dateTo = dateRange?.to ? dateRange.to.toISOString().split('T')[0] : '';
+      fetchBookingsData(
+        pagination.pageIndex + 1,
+        pagination.pageSize,
+        filterStatus,
+        searchTerm,
+        dateFrom,
+        dateTo
+      );
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Failed to assign provider.", variant: "destructive" });
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to assign provider.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -205,13 +248,24 @@ const WolooBookingList = () => {
 
     try {
       await rescheduleWolooBooking(selectedBooking.id!, rescheduleForm);
-      toast({ title: "Success", description: "Booking rescheduled successfully." });
+      toast({ title: 'Success', description: 'Booking rescheduled successfully.' });
       setIsRescheduleDialogOpen(false);
-      const dateFrom = dateRange?.from ? dateRange.from.toISOString().split('T')[0] : "";
-      const dateTo = dateRange?.to ? dateRange.to.toISOString().split('T')[0] : "";
-      fetchBookingsData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm, dateFrom, dateTo);
+      const dateFrom = dateRange?.from ? dateRange.from.toISOString().split('T')[0] : '';
+      const dateTo = dateRange?.to ? dateRange.to.toISOString().split('T')[0] : '';
+      fetchBookingsData(
+        pagination.pageIndex + 1,
+        pagination.pageSize,
+        filterStatus,
+        searchTerm,
+        dateFrom,
+        dateTo
+      );
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Failed to reschedule booking.", variant: "destructive" });
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to reschedule booking.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -220,13 +274,24 @@ const WolooBookingList = () => {
 
     try {
       await assignWolooBookingStaff(selectedBooking.id!, staffForm);
-      toast({ title: "Success", description: "Staff assigned successfully." });
+      toast({ title: 'Success', description: 'Staff assigned successfully.' });
       setIsStaffDialogOpen(false);
-      const dateFrom = dateRange?.from ? dateRange.from.toISOString().split('T')[0] : "";
-      const dateTo = dateRange?.to ? dateRange.to.toISOString().split('T')[0] : "";
-      fetchBookingsData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm, dateFrom, dateTo);
+      const dateFrom = dateRange?.from ? dateRange.from.toISOString().split('T')[0] : '';
+      const dateTo = dateRange?.to ? dateRange.to.toISOString().split('T')[0] : '';
+      fetchBookingsData(
+        pagination.pageIndex + 1,
+        pagination.pageSize,
+        filterStatus,
+        searchTerm,
+        dateFrom,
+        dateTo
+      );
     } catch (error: any) {
-      toast({ title: "Error", description: error.message || "Failed to assign staff.", variant: "destructive" });
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to assign staff.',
+        variant: 'destructive',
+      });
     }
   };
 
@@ -238,35 +303,37 @@ const WolooBookingList = () => {
       completed: 'bg-green-200 text-green-800',
       cancelled: 'bg-red-200 text-red-800',
     };
-    
+
     return (
-      <span className={`badge px-2 py-1 rounded ${statusColors[status as keyof typeof statusColors] || 'bg-gray-200 text-gray-800'}`}>
+      <span
+        className={`badge px-2 py-1 rounded ${statusColors[status as keyof typeof statusColors] || 'bg-gray-200 text-gray-800'}`}
+      >
         {status.charAt(0).toUpperCase() + status.slice(1)}
       </span>
     );
   };
 
   const bookingColumns: ColumnDef<WolooBooking>[] = [
-    { accessorKey: "woloo_order_id", header: "Order ID", size: 150 },
-    { accessorKey: "customer_name", header: "Customer", size: 150 },
-    { accessorKey: "customer_mobile", header: "Mobile" },
-    { accessorKey: "service_category", header: "Service", size: 200 },
-    { accessorKey: "booking_date", header: "Date" },
-    { accessorKey: "start_service_time", header: "Start Time" },
+    { accessorKey: 'woloo_order_id', header: 'Order ID', size: 150 },
+    { accessorKey: 'customer_name', header: 'Customer', size: 150 },
+    { accessorKey: 'customer_mobile', header: 'Mobile' },
+    { accessorKey: 'service_category', header: 'Service', size: 200 },
+    { accessorKey: 'booking_date', header: 'Date' },
+    { accessorKey: 'start_service_time', header: 'Start Time' },
     {
-      accessorKey: "status",
-      header: "Status",
+      accessorKey: 'status',
+      header: 'Status',
       cell: ({ row }) => getStatusBadge(row.original.status),
     },
-    { accessorKey: "provider_name", header: "Provider" },
+    { accessorKey: 'provider_name', header: 'Provider' },
     {
-      accessorKey: "final_price",
-      header: "Price",
+      accessorKey: 'final_price',
+      header: 'Price',
       cell: ({ row }) => `₹${row.original.final_price}`,
     },
     {
-      id: "actions",
-      header: "Actions",
+      id: 'actions',
+      header: 'Actions',
       cell: ({ row }) => (
         <div className="flex items-center space-x-1">
           <Button
@@ -284,7 +351,7 @@ const WolooBookingList = () => {
                 size="icon"
                 onClick={() => {
                   setSelectedBooking(row.original);
-                  setStatusForm({ status: row.original.status, reason: "", notes: "" });
+                  setStatusForm({ status: row.original.status, reason: '', notes: '' });
                 }}
               >
                 <Edit className="w-4 h-4 text-blue-600" />
@@ -297,7 +364,10 @@ const WolooBookingList = () => {
               <div className="space-y-4">
                 <div>
                   <Label>Status</Label>
-                  <Select value={statusForm.status} onValueChange={(value) => setStatusForm(prev => ({ ...prev, status: value }))}>
+                  <Select
+                    value={statusForm.status}
+                    onValueChange={(value) => setStatusForm((prev) => ({ ...prev, status: value }))}
+                  >
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
@@ -314,7 +384,7 @@ const WolooBookingList = () => {
                   <Label>Reason</Label>
                   <Input
                     value={statusForm.reason}
-                    onChange={(e) => setStatusForm(prev => ({ ...prev, reason: e.target.value }))}
+                    onChange={(e) => setStatusForm((prev) => ({ ...prev, reason: e.target.value }))}
                     placeholder="Reason for status change"
                   />
                 </div>
@@ -322,7 +392,7 @@ const WolooBookingList = () => {
                   <Label>Notes</Label>
                   <Textarea
                     value={statusForm.notes}
-                    onChange={(e) => setStatusForm(prev => ({ ...prev, notes: e.target.value }))}
+                    onChange={(e) => setStatusForm((prev) => ({ ...prev, notes: e.target.value }))}
                     placeholder="Additional notes"
                   />
                 </div>
@@ -333,11 +403,7 @@ const WolooBookingList = () => {
 
           <Dialog open={isProviderDialogOpen} onOpenChange={setIsProviderDialogOpen}>
             <DialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSelectedBooking(row.original)}
-              >
+              <Button variant="ghost" size="icon" onClick={() => setSelectedBooking(row.original)}>
                 <UserPlus className="w-4 h-4 text-green-600" />
               </Button>
             </DialogTrigger>
@@ -350,7 +416,9 @@ const WolooBookingList = () => {
                   <Label>Provider ID</Label>
                   <Input
                     value={providerForm.provider_id}
-                    onChange={(e) => setProviderForm(prev => ({ ...prev, provider_id: e.target.value }))}
+                    onChange={(e) =>
+                      setProviderForm((prev) => ({ ...prev, provider_id: e.target.value }))
+                    }
                     placeholder="Enter provider ID"
                   />
                 </div>
@@ -358,7 +426,9 @@ const WolooBookingList = () => {
                   <Label>Assignment Notes</Label>
                   <Textarea
                     value={providerForm.assignment_notes}
-                    onChange={(e) => setProviderForm(prev => ({ ...prev, assignment_notes: e.target.value }))}
+                    onChange={(e) =>
+                      setProviderForm((prev) => ({ ...prev, assignment_notes: e.target.value }))
+                    }
                     placeholder="Notes for provider assignment"
                   />
                 </div>
@@ -369,11 +439,7 @@ const WolooBookingList = () => {
 
           <Dialog open={isRescheduleDialogOpen} onOpenChange={setIsRescheduleDialogOpen}>
             <DialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSelectedBooking(row.original)}
-              >
+              <Button variant="ghost" size="icon" onClick={() => setSelectedBooking(row.original)}>
                 <Calendar className="w-4 h-4 text-orange-600" />
               </Button>
             </DialogTrigger>
@@ -387,7 +453,9 @@ const WolooBookingList = () => {
                   <Input
                     type="date"
                     value={rescheduleForm.booking_date}
-                    onChange={(e) => setRescheduleForm(prev => ({ ...prev, booking_date: e.target.value }))}
+                    onChange={(e) =>
+                      setRescheduleForm((prev) => ({ ...prev, booking_date: e.target.value }))
+                    }
                   />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -396,7 +464,12 @@ const WolooBookingList = () => {
                     <Input
                       type="time"
                       value={rescheduleForm.start_service_time}
-                      onChange={(e) => setRescheduleForm(prev => ({ ...prev, start_service_time: e.target.value }))}
+                      onChange={(e) =>
+                        setRescheduleForm((prev) => ({
+                          ...prev,
+                          start_service_time: e.target.value,
+                        }))
+                      }
                     />
                   </div>
                   <div>
@@ -404,7 +477,9 @@ const WolooBookingList = () => {
                     <Input
                       type="time"
                       value={rescheduleForm.end_service_time}
-                      onChange={(e) => setRescheduleForm(prev => ({ ...prev, end_service_time: e.target.value }))}
+                      onChange={(e) =>
+                        setRescheduleForm((prev) => ({ ...prev, end_service_time: e.target.value }))
+                      }
                     />
                   </div>
                 </div>
@@ -412,7 +487,9 @@ const WolooBookingList = () => {
                   <Label>Reschedule Reason</Label>
                   <Textarea
                     value={rescheduleForm.reschedule_reason}
-                    onChange={(e) => setRescheduleForm(prev => ({ ...prev, reschedule_reason: e.target.value }))}
+                    onChange={(e) =>
+                      setRescheduleForm((prev) => ({ ...prev, reschedule_reason: e.target.value }))
+                    }
                     placeholder="Reason for rescheduling"
                   />
                 </div>
@@ -423,11 +500,7 @@ const WolooBookingList = () => {
 
           <Dialog open={isStaffDialogOpen} onOpenChange={setIsStaffDialogOpen}>
             <DialogTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={() => setSelectedBooking(row.original)}
-              >
+              <Button variant="ghost" size="icon" onClick={() => setSelectedBooking(row.original)}>
                 <Users className="w-4 h-4 text-purple-600" />
               </Button>
             </DialogTrigger>
@@ -444,7 +517,7 @@ const WolooBookingList = () => {
                       onChange={(e) => {
                         const newStaff = [...staffForm.staff_assignments];
                         newStaff[index].staff_id = e.target.value;
-                        setStaffForm(prev => ({ ...prev, staff_assignments: newStaff }));
+                        setStaffForm((prev) => ({ ...prev, staff_assignments: newStaff }));
                       }}
                     />
                     <Input
@@ -453,7 +526,7 @@ const WolooBookingList = () => {
                       onChange={(e) => {
                         const newStaff = [...staffForm.staff_assignments];
                         newStaff[index].role = e.target.value;
-                        setStaffForm(prev => ({ ...prev, staff_assignments: newStaff }));
+                        setStaffForm((prev) => ({ ...prev, staff_assignments: newStaff }));
                       }}
                     />
                     <Input
@@ -462,7 +535,7 @@ const WolooBookingList = () => {
                       onChange={(e) => {
                         const newStaff = [...staffForm.staff_assignments];
                         newStaff[index].name = e.target.value;
-                        setStaffForm(prev => ({ ...prev, staff_assignments: newStaff }));
+                        setStaffForm((prev) => ({ ...prev, staff_assignments: newStaff }));
                       }}
                     />
                   </div>
@@ -470,10 +543,15 @@ const WolooBookingList = () => {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setStaffForm(prev => ({
-                    ...prev,
-                    staff_assignments: [...prev.staff_assignments, { staff_id: "", role: "", name: "" }]
-                  }))}
+                  onClick={() =>
+                    setStaffForm((prev) => ({
+                      ...prev,
+                      staff_assignments: [
+                        ...prev.staff_assignments,
+                        { staff_id: '', role: '', name: '' },
+                      ],
+                    }))
+                  }
                 >
                   Add Staff Member
                 </Button>
@@ -481,7 +559,9 @@ const WolooBookingList = () => {
                   <Label>Assignment Notes</Label>
                   <Textarea
                     value={staffForm.assignment_notes}
-                    onChange={(e) => setStaffForm(prev => ({ ...prev, assignment_notes: e.target.value }))}
+                    onChange={(e) =>
+                      setStaffForm((prev) => ({ ...prev, assignment_notes: e.target.value }))
+                    }
                     placeholder="Notes for staff assignment"
                   />
                 </div>
@@ -517,7 +597,11 @@ const WolooBookingList = () => {
             <option value="completed">Completed</option>
             <option value="cancelled">Cancelled</option>
           </select>
-          <select value={pagination.pageSize} onChange={handlePageSizeChange} className="border p-2 rounded">
+          <select
+            value={pagination.pageSize}
+            onChange={handlePageSizeChange}
+            className="border p-2 rounded"
+          >
             <option value={50}>50</option>
             <option value={100}>100</option>
             <option value={150}>150</option>
@@ -527,10 +611,12 @@ const WolooBookingList = () => {
             {isExporting ? 'Exporting...' : 'Export'}
           </Button>
           <Button onClick={handleCopy}>
-            <Copy className="w-4 h-4 mr-2" />Copy
+            <Copy className="w-4 h-4 mr-2" />
+            Copy
           </Button>
           <Button onClick={handlePrint}>
-            <Printer className="w-4 h-4 mr-2" />Print
+            <Printer className="w-4 h-4 mr-2" />
+            Print
           </Button>
         </div>
       </div>
@@ -538,10 +624,7 @@ const WolooBookingList = () => {
         <CardHeader className="flex flex-row items-center justify-between gap-4">
           <CardTitle>Bookings</CardTitle>
           <div className="flex space-x-2">
-            <DateRangePicker
-              selectedRange={dateRange}
-              onChangeRange={setDateRange}
-            />
+            <DateRangePicker selectedRange={dateRange} onChangeRange={setDateRange} />
             <div className="relative">
               <input
                 type="text"

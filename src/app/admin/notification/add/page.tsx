@@ -1,19 +1,19 @@
-"use client";
+'use client';
 
-import React, { useEffect, useState } from "react";
-import { Input } from "@/components/ui/input";
+import React, { useEffect, useState } from 'react';
+import { Input } from '@/components/ui/input';
 import {
   Select,
   SelectTrigger,
   SelectContent,
   SelectItem,
   SelectValue,
-} from "@/components/ui/select";
-import { Switch } from "@/components/ui/switch";
-import { Button } from "@/components/ui/button";
-import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
-import { useToast } from "@/hooks/use-toast";
-import ReactSelect from "react-select";
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import { Button } from '@/components/ui/button';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { useToast } from '@/hooks/use-toast';
+import ReactSelect from 'react-select';
 import { useRouter } from 'next/navigation';
 
 import {
@@ -24,14 +24,14 @@ import {
   fetchAllUsersWithouPagination,
   getAllNotifications,
   Notification,
-} from "@/lib/api";
+} from '@/lib/api';
 
 const AddNotificationForm: React.FC = () => {
   const [notification, setNotification] = useState<Notification>({
-    title: "",
-    message: "",
-    redirect_screen: "",
-    type: "customer",
+    title: '',
+    message: '',
+    redirect_screen: '',
+    type: 'customer',
     is_active: true,
     send_to_all: true,
     category_id: undefined,
@@ -57,7 +57,7 @@ const AddNotificationForm: React.FC = () => {
         const data = await getAllNotifications();
         setNotificationTypes(data || []);
       } catch (error) {
-        toast({ title: "Error", description: "Failed to load notification types." });
+        toast({ title: 'Error', description: 'Failed to load notification types.' });
       }
     };
     loadNotificationTypes();
@@ -70,7 +70,7 @@ const AddNotificationForm: React.FC = () => {
         const data = await fetchAllCategories();
         setCategories(data || []);
       } catch (error) {
-        toast({ title: "Error", description: "Failed to load categories." });
+        toast({ title: 'Error', description: 'Failed to load categories.' });
       }
     };
     loadCategories();
@@ -84,7 +84,7 @@ const AddNotificationForm: React.FC = () => {
           const data = await fetchSubCategoriesByCategoryId(notification.category_id!);
           setSubcategories(data || []);
         } catch (error) {
-          toast({ title: "Error", description: "Failed to load subcategories." });
+          toast({ title: 'Error', description: 'Failed to load subcategories.' });
         }
       };
       loadSubcategories();
@@ -99,14 +99,14 @@ const AddNotificationForm: React.FC = () => {
       if (!notification.send_to_all) {
         try {
           let data: any[] = [];
-          if (notification.type === "provider") {
+          if (notification.type === 'provider') {
             data = await fetchAllProvidersWithoutpagination();
-          } else if (notification.type === "customer") {
+          } else if (notification.type === 'customer') {
             data = await fetchAllUsersWithouPagination();
           }
           setRecipients(data || []);
         } catch (error) {
-          toast({ title: "Error", description: "Failed to load recipients." });
+          toast({ title: 'Error', description: 'Failed to load recipients.' });
         }
       } else {
         setRecipients([]);
@@ -139,22 +139,21 @@ const AddNotificationForm: React.FC = () => {
     try {
       await createNotification(notification);
       toast({
-        variant: "success",
-        title: "Success",
-        description: "Notification created successfully!",
+        variant: 'success',
+        title: 'Success',
+        description: 'Notification created successfully!',
       });
     } catch (error: any) {
       toast({
-        title: "Error",
-        description: error.message || "Failed to create notification.",
-        variant: "destructive",
+        title: 'Error',
+        description: error.message || 'Failed to create notification.',
+        variant: 'destructive',
       });
     } finally {
       setIsSubmitting(false);
     }
 
     router.push('/admin/notification'); // Redirect after successful update
-
   };
 
   return (
@@ -222,7 +221,11 @@ const AddNotificationForm: React.FC = () => {
               <label className="block text-sm font-medium">Category</label>
               <Select
                 onValueChange={(value) =>
-                  setNotification({ ...notification, category_id: value, subcategory_id: undefined })
+                  setNotification({
+                    ...notification,
+                    category_id: value,
+                    subcategory_id: undefined,
+                  })
                 }
               >
                 <SelectTrigger>
@@ -265,7 +268,7 @@ const AddNotificationForm: React.FC = () => {
               <Select
                 value={notification.type}
                 onValueChange={(value) =>
-                  setNotification({ ...notification, type: value as "customer" | "provider" })
+                  setNotification({ ...notification, type: value as 'customer' | 'provider' })
                 }
               >
                 <SelectTrigger>
@@ -291,8 +294,6 @@ const AddNotificationForm: React.FC = () => {
               </div>
             </div>
 
-
-
             {!notification.send_to_all && recipients.length > 0 && (
               <div>
                 <label className="block text-sm font-medium">Recipients</label>
@@ -310,8 +311,8 @@ const AddNotificationForm: React.FC = () => {
             {!notification.send_to_all && recipients.length === 0 && (
               <div className="p-4 bg-yellow-100 border border-yellow-400 rounded">
                 <p className="text-yellow-800">
-                  ⚠️ No recipients found for type "{notification.type}".
-                  Please check if there are any {notification.type}s in the database.
+                  ⚠️ No recipients found for type "{notification.type}". Please check if there are
+                  any {notification.type}s in the database.
                 </p>
               </div>
             )}
@@ -327,7 +328,7 @@ const AddNotificationForm: React.FC = () => {
             </div>
 
             <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? "Submitting..." : "Create Notification"}
+              {isSubmitting ? 'Submitting...' : 'Create Notification'}
             </Button>
           </form>
         </CardContent>
