@@ -9,7 +9,7 @@ import { Virtuoso } from "react-virtuoso";
 import { useRouter } from 'next/navigation';
 
 import { Save, FileText, Loader2, Type, Globe2, Plus } from 'lucide-react';
-import { fetchAllCategories, createBooking, fetchSubCategoriesByCategoryId, fetchAllUsersWithouPagination, searchUser, fetchUserAddresses, fetchProvidersByFilters, Provider, Package, fetchFilterOptionsByAttributeId, fetchFilterAttributes, AttributeOption, createRateCard, Category, Subcategory, Attribute, SearchUserResult } from '@/lib/api';
+import { fetchAllCategories, createBooking, fetchSubCategoriesByCategoryId, fetchAllUsersWithouPagination, searchUser, fetchUserAddresses, fetchProvidersByFilters, Provider, Package, fetchFilterOptionsByAttributeId, fetchFilterAttributes, fetchServiceSegments, AttributeOption, createRateCard, Category, Subcategory, Attribute, ServiceSegment, SearchUserResult } from '@/lib/api';
 import { AddressModal } from '@/components/AddressModal';
 // Add this at the top of your file, after the imports
 declare global {
@@ -33,10 +33,12 @@ const AddBookingForm: React.FC = () => {
   const [isSearching, setIsSearching] = useState<boolean>(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
+  const [serviceSegments, setServiceSegments] = useState<any[]>([]); // **NEW: Service segments**
   const [filterAttributes, setFilterAttributes] = useState<Attribute[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
   const [selectedPackageId, setSelectedPackageId] = useState<string>('');
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState<string>('');
+  const [selectedSegmentId, setSelectedSegmentId] = useState<string>(''); // **NEW: Selected segment**
   const [selectedFilterAttributesId, setSelectedFilterAttributesId] = useState<string>('');
   const [serviceDate, setServiceDate] = useState<string>('');
   const [serviceTime, setServiceTime] = useState<string>('');
@@ -112,7 +114,8 @@ const AddBookingForm: React.FC = () => {
         console.log('Missing required fields for price calculation:', {
           hasCategory: !!selectedCategoryId,
           hasSubcategory: !!selectedSubcategoryId,
-          hasProvider: !!providerId
+          hasProvider: !!providerId,
+          hasSegment: !!selectedSegmentId
         });
         setPriceBreakdown(null);
         setAutoCalculatedPrice(0);
@@ -126,6 +129,7 @@ const AddBookingForm: React.FC = () => {
           category_id: selectedCategoryId,
           subcategory_id: selectedSubcategoryId,
           provider_id: providerId,
+          segment_id: selectedSegmentId || null, // **NEW: Include segment**
           filter_attribute_id: selectedFilterAttributesId || null,
           filter_option_id: selectedFilterOptionId || null,
           quantity: parseInt(quantity) || 1
@@ -194,7 +198,7 @@ const AddBookingForm: React.FC = () => {
     };
 
     fetchServicePrice();
-  }, [selectedCategoryId, selectedSubcategoryId, providerId, selectedFilterAttributesId, selectedFilterOptionId, quantity]);
+  }, [selectedCategoryId, selectedSubcategoryId, selectedSegmentId, providerId, selectedFilterAttributesId, selectedFilterOptionId, quantity]);
 
   // Fetch categories on load
   useEffect(() => {
@@ -230,13 +234,50 @@ const AddBookingForm: React.FC = () => {
         }
       };
       loadSubcategoriesAndFilters();
+
+      // Reset dependent selections when category changes
+      setSelectedSubcategoryId('');
+      setSelectedSegmentId('');
+      setSelectedFilterAttributesId('');
+      setSelectedFilterOptionId('');
     } else {
       setSubcategories([]);
       setFilterAttributes([]);
+      setServiceSegments([]);
+      setSelectedSubcategoryId('');
+      setSelectedSegmentId('');
+      setSelectedFilterAttributesId('');
+      setSelectedFilterOptionId('');
     }
   }, [selectedCategoryId]);
 
 
+
+  // **NEW: Fetch service segments when category and subcategory are selected**
+  useEffect(() => {
+    if (selectedCategoryId && selectedSubcategoryId) {
+      const loadServiceSegments = async () => {
+        try {
+          console.log('Fetching service segments for:', { selectedCategoryId, selectedSubcategoryId });
+          const segmentData = await fetchServiceSegments(selectedCategoryId, selectedSubcategoryId);
+          console.log('Service segments loaded:', segmentData);
+          setServiceSegments(segmentData);
+
+          // Reset segment selection when segments change
+          setSelectedSegmentId('');
+        } catch (error) {
+          console.error('Error loading service segments:', error);
+          setServiceSegments([]);
+          setSelectedSegmentId('');
+        }
+      };
+      loadServiceSegments();
+    } else {
+      // Clear segments if category or subcategory is not selected
+      setServiceSegments([]);
+      setSelectedSegmentId('');
+    }
+  }, [selectedCategoryId, selectedSubcategoryId]);
 
   // Fetch filter attributes when a subcategory is selected
   useEffect(() => {
@@ -344,14 +385,14 @@ const AddBookingForm: React.FC = () => {
       setIsLoadingProviders(false);
       setIsLoadingMoreProviders(false);
     }
-  }, [selectedCategoryId, selectedSubcategoryId, selectedFilterAttributesId, selectedFilterOptionId]);
+  }, [selectedCategoryId, selectedSubcategoryId, selectedSegmentId, selectedFilterAttributesId, selectedFilterOptionId]);
 
   // Load providers when filters change
   useEffect(() => {
     setProviderPage(1);
     setProviders([]);
     loadProviders(1, providerSearchTerm);
-  }, [selectedCategoryId, selectedSubcategoryId, selectedFilterAttributesId, selectedFilterOptionId, loadProviders]);
+  }, [selectedCategoryId, selectedSubcategoryId, selectedSegmentId, selectedFilterAttributesId, selectedFilterOptionId, loadProviders]);
 
   // Handle provider search
   const handleProviderSearch = useCallback((searchTerm: string) => {
@@ -583,6 +624,7 @@ const AddBookingForm: React.FC = () => {
       // Send encrypted IDs directly to backend (don't use parseInt on encrypted strings)
       bookingData.category_id = selectedCategoryId || null;
       bookingData.subcategory_id = selectedSubcategoryId || null;
+      bookingData.segment_id = selectedSegmentId || null; // **NEW: Include segment**
       bookingData.filter_attribute_id = selectedFilterAttributesId || null;
       bookingData.filter_option_id = selectedFilterOptionId || null;
 
@@ -705,6 +747,42 @@ const AddBookingForm: React.FC = () => {
                           )}
                         </SelectContent>
                       </Select>
+                    </div>
+                  )}
+
+                  {/* Service Segment Selector */}
+                  {serviceSegments.length > 0 && (
+                    <div className="space-y-2">
+                      <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                        <Globe2 className="w-4 h-4 text-green-500" />
+                        <span>Select Service Segment</span>
+                        <span className="text-xs text-gray-500">({serviceSegments.length} available)</span>
+                      </label>
+                      <Select
+                        value={selectedSegmentId}
+                        onValueChange={(value) => {
+                          setSelectedSegmentId(value);
+                          console.log('Selected segment:', value);
+                        }}
+                      >
+                        <SelectTrigger className="bg-white border-gray-200">
+                          <SelectValue placeholder="Select a service segment" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {serviceSegments.map((segment) =>
+                            segment?.id && segment?.segment_name ? (
+                              <SelectItem key={segment.id} value={segment.id.toString()}>
+                                {segment.segment_name}
+                              </SelectItem>
+                            ) : null
+                          )}
+                        </SelectContent>
+                      </Select>
+                      {selectedSegmentId && (
+                        <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
+                          ✅ Segment selected: {serviceSegments.find(s => s.id === selectedSegmentId)?.segment_name}
+                        </div>
+                      )}
                     </div>
                   )}
 
@@ -1114,6 +1192,7 @@ const AddBookingForm: React.FC = () => {
                   <strong>Debug - Current Selections:</strong>
                   <div>Category: {selectedCategoryId ? '✅ Selected' : '❌ Not Selected'}</div>
                   <div>Subcategory: {selectedSubcategoryId ? '✅ Selected' : '❌ Not Selected'}</div>
+                  <div>Service Segment: {selectedSegmentId ? '✅ Selected' : '⚪ Optional'} ({serviceSegments.length} available)</div>
                   <div>Provider: {providerId ? '✅ Selected' : '❌ Not Selected'}</div>
                   <div>Filter Attribute: {selectedFilterAttributesId ? '✅ Selected' : '⚪ Optional'}</div>
                   <div>Filter Option: {selectedFilterOptionId ? '✅ Selected' : '⚪ Optional'}</div>
@@ -1158,6 +1237,7 @@ const AddBookingForm: React.FC = () => {
                             category_id: selectedCategoryId,
                             subcategory_id: selectedSubcategoryId,
                             provider_id: providerId,
+                            segment_id: selectedSegmentId || null, // **NEW: Include segment**
                             filter_attribute_id: selectedFilterAttributesId || null,
                             filter_option_id: selectedFilterOptionId || null,
                             quantity: parseInt(quantity) || 1

@@ -1775,7 +1775,7 @@ export const fetchServiceSegments = async (
     if (filter_attribute_id) params.filter_attribute_id = filter_attribute_id;
 
 
-    const response: AxiosResponse<ApiResponse> = await apiClient.get('/filter/segment', {
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/booking/service-segments', {
       params,
       headers: {
         'admin-auth-token': token || '',
