@@ -137,6 +137,10 @@ const AddBookingForm: React.FC = () => {
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/admin-api';
         // Correct path for admin booking routes
         const fullUrl = `${apiUrl}/booking/calculate-price`;
+
+        // DEBUG: Log the URL being used
+        console.log('Environment API URL:', process.env.NEXT_PUBLIC_API_URL);
+        console.log('Final API URL:', fullUrl);
         console.log('API URL:', fullUrl);
 
         // Call backend to get calculated price
@@ -1164,6 +1168,7 @@ const AddBookingForm: React.FC = () => {
                           const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/admin-api';
                           // Correct path for admin booking routes
                           const fullUrl = `${apiUrl}/booking/calculate-price`;
+                          console.log('Manual fetch - Environment API URL:', process.env.NEXT_PUBLIC_API_URL);
                           console.log('Manual fetch - URL:', fullUrl);
 
                           const response = await fetch(fullUrl, {
