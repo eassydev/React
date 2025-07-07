@@ -1,48 +1,15 @@
-'use client';
+"use client";
 import React, { useState, useEffect, FormEvent, useCallback } from 'react';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-  CardFooter,
-} from '@/components/ui/card';
+import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import {
-  Select,
-  SelectItem,
-  SelectTrigger,
-  SelectContent,
-  SelectValue,
-} from '@/components/ui/select';
-import { useToast } from '@/hooks/use-toast';
-import { Virtuoso } from 'react-virtuoso';
+import { Select, SelectItem, SelectTrigger, SelectContent, SelectValue } from '@/components/ui/select';
+import { useToast } from "@/hooks/use-toast";
+import { Virtuoso } from "react-virtuoso";
 import { useRouter } from 'next/navigation';
 
 import { Save, FileText, Loader2, Type, Globe2, Plus } from 'lucide-react';
-import {
-  fetchAllCategories,
-  createBooking,
-  fetchSubCategoriesByCategoryId,
-  fetchAllUsersWithouPagination,
-  searchUser,
-  fetchUserAddresses,
-  fetchProvidersByFilters,
-  Provider,
-  Package,
-  fetchFilterOptionsByAttributeId,
-  fetchFilterAttributes,
-  fetchServiceSegments,
-  AttributeOption,
-  createRateCard,
-  Category,
-  Subcategory,
-  Attribute,
-  ServiceSegment,
-  SearchUserResult,
-} from '@/lib/api';
+import { fetchAllCategories, createBooking, fetchSubCategoriesByCategoryId, fetchAllUsersWithouPagination, searchUser, fetchUserAddresses, fetchProvidersByFilters, Provider, Package, fetchFilterOptionsByAttributeId, fetchFilterAttributes, fetchServiceSegments, AttributeOption, createRateCard, Category, Subcategory, Attribute, ServiceSegment, SearchUserResult } from '@/lib/api';
 import { AddressModal } from '@/components/AddressModal';
 // Add this at the top of your file, after the imports
 declare global {
@@ -94,7 +61,7 @@ const AddBookingForm: React.FC = () => {
     mobile: string;
     displayId?: string;
   } | null>(null);
-  const [userSearchTerm, setUserSearchTerm] = useState<string>('');
+  const [userSearchTerm, setUserSearchTerm] = useState<string>("");
   const [providerId, setProviderId] = useState<string | null>(null); // Store encrypted ID
   const [providers, setProviders] = useState<{ id: string; sampleid: number; name: string }[]>([]); // id encrypted, sampleid decrypted
   const [providerSearchTerm, setProviderSearchTerm] = useState<string>('');
@@ -103,9 +70,7 @@ const AddBookingForm: React.FC = () => {
   const [isLoadingProviders, setIsLoadingProviders] = useState<boolean>(false);
   const [isLoadingMoreProviders, setIsLoadingMoreProviders] = useState<boolean>(false);
   // const [users, setUsers] = useState<{ id: number; name: string }[]>([]);
-  const [addresses, setAddresses] = useState<
-    { id: string; sampleid: number; full_address: string }[]
-  >([]);
+  const [addresses, setAddresses] = useState<{ id: string; sampleid: number; full_address: string }[]>([]);
   const [deliveryAddressId, setDeliveryAddressId] = useState<string | null>(null); // Store encrypted ID
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
 
@@ -141,7 +106,7 @@ const AddBookingForm: React.FC = () => {
         providerId,
         selectedFilterAttributesId,
         selectedFilterOptionId,
-        quantity,
+        quantity
       });
 
       // Only fetch price if we have the required selections
@@ -150,7 +115,7 @@ const AddBookingForm: React.FC = () => {
           hasCategory: !!selectedCategoryId,
           hasSubcategory: !!selectedSubcategoryId,
           hasProvider: !!providerId,
-          hasSegment: !!selectedSegmentId,
+          hasSegment: !!selectedSegmentId
         });
         setPriceBreakdown(null);
         setAutoCalculatedPrice(0);
@@ -167,7 +132,7 @@ const AddBookingForm: React.FC = () => {
           segment_id: selectedSegmentId || null, // **NEW: Include segment**
           filter_attribute_id: selectedFilterAttributesId || null,
           filter_option_id: selectedFilterOptionId || null,
-          quantity: parseInt(quantity) || 1,
+          quantity: parseInt(quantity) || 1
         };
 
         console.log('Fetching price for:', priceRequest);
@@ -189,7 +154,7 @@ const AddBookingForm: React.FC = () => {
             'Content-Type': 'application/json',
             'admin-auth-token': localStorage.getItem('token') || '',
           },
-          body: JSON.stringify(priceRequest),
+          body: JSON.stringify(priceRequest)
         });
 
         console.log('Price API response status:', response.status);
@@ -202,10 +167,10 @@ const AddBookingForm: React.FC = () => {
           if (priceData.status && priceData.basePrice !== undefined) {
             setAutoCalculatedPrice(priceData.basePrice);
             setPriceBreakdown({
-              basePrice: priceData.itemTotal || priceData.basePrice * parseInt(quantity),
+              basePrice: priceData.itemTotal || (priceData.basePrice * parseInt(quantity)),
               gst: priceData.gstAmount || 0,
               convenienceCharge: priceData.convenienceCharge || 0,
-              total: priceData.finalAmount || 0,
+              total: priceData.finalAmount || 0
             });
             setCalculatedTotal(priceData.finalAmount || 0);
             console.log('Price calculation successful:', {
@@ -213,7 +178,7 @@ const AddBookingForm: React.FC = () => {
               itemTotal: priceData.itemTotal,
               gstAmount: priceData.gstAmount,
               convenienceCharge: priceData.convenienceCharge,
-              finalAmount: priceData.finalAmount,
+              finalAmount: priceData.finalAmount
             });
           } else {
             console.error('Invalid response structure:', priceData);
@@ -233,15 +198,7 @@ const AddBookingForm: React.FC = () => {
     };
 
     fetchServicePrice();
-  }, [
-    selectedCategoryId,
-    selectedSubcategoryId,
-    selectedSegmentId,
-    providerId,
-    selectedFilterAttributesId,
-    selectedFilterOptionId,
-    quantity,
-  ]);
+  }, [selectedCategoryId, selectedSubcategoryId, selectedSegmentId, providerId, selectedFilterAttributesId, selectedFilterOptionId, quantity]);
 
   // Fetch categories on load
   useEffect(() => {
@@ -294,15 +251,14 @@ const AddBookingForm: React.FC = () => {
     }
   }, [selectedCategoryId]);
 
+
+
   // **NEW: Fetch service segments when category and subcategory are selected**
   useEffect(() => {
     if (selectedCategoryId && selectedSubcategoryId) {
       const loadServiceSegments = async () => {
         try {
-          console.log('Fetching service segments for:', {
-            selectedCategoryId,
-            selectedSubcategoryId,
-          });
+          console.log('Fetching service segments for:', { selectedCategoryId, selectedSubcategoryId });
           const segmentData = await fetchServiceSegments(selectedCategoryId, selectedSubcategoryId);
           console.log('Service segments loaded:', segmentData);
           setServiceSegments(segmentData);
@@ -328,10 +284,7 @@ const AddBookingForm: React.FC = () => {
     if (selectedSubcategoryId) {
       const loadFilterAttributes = async () => {
         try {
-          const filterAttributeData = await fetchFilterAttributes(
-            selectedCategoryId,
-            selectedSubcategoryId
-          );
+          const filterAttributeData = await fetchFilterAttributes(selectedCategoryId, selectedSubcategoryId);
           setFilterAttributes(filterAttributeData);
         } catch (error) {
           setFilterAttributes([]);
@@ -340,6 +293,7 @@ const AddBookingForm: React.FC = () => {
       loadFilterAttributes();
     }
   }, [selectedSubcategoryId, selectedCategoryId]);
+
 
   useEffect(() => {
     if (selectedFilterAttributesId) {
@@ -357,11 +311,14 @@ const AddBookingForm: React.FC = () => {
     }
   }, [selectedFilterAttributesId]);
 
+
   useEffect(() => {
     // Fetch providers and users on component mount
     const loadInitialData = async () => {
       try {
-        const userData = await searchUser('');
+        const userData = await searchUser("");
+
+
 
         setUsers(
           userData.map((user: any) => ({
@@ -370,101 +327,80 @@ const AddBookingForm: React.FC = () => {
           }))
         );
       } catch (error) {
-        toast({ variant: 'error', title: 'Error', description: 'Failed to load initial data.' });
+        toast({ variant: "error", title: "Error", description: "Failed to load initial data." });
       }
     };
 
     loadInitialData();
   }, [toast]);
 
+
   // Load providers with pagination and search support
-  const loadProviders = useCallback(
-    async (page = 1, search = '', append = false) => {
-      try {
-        if (page === 1) {
-          setIsLoadingProviders(true);
-        } else {
-          setIsLoadingMoreProviders(true);
-        }
-
-        console.log('Loading providers with fetchProvidersByFilters...', { page, search });
-
-        // Use the updated API function with pagination and search
-        const result = await fetchProvidersByFilters(
-          selectedCategoryId || '',
-          selectedSubcategoryId || '',
-          selectedFilterAttributesId || '',
-          selectedFilterOptionId || '',
-          page,
-          50,
-          search
-        );
-
-        if (result.data) {
-          const formattedProviders = result.data.map((provider: any) => ({
-            id: provider.id, // Encrypted ID
-            sampleid: provider.sampleid, // Decrypted ID for selection
-            name:
-              provider.company_name ||
-              provider.name ||
-              `${provider.first_name} ${provider.last_name || ''} - ${provider.phone || 'No Phone'}`,
-          }));
-
-          if (append) {
-            setProviders((prev) => [...prev, ...formattedProviders]);
-          } else {
-            setProviders(formattedProviders);
-          }
-
-          // Update pagination state
-          setHasMoreProviders(result.meta?.hasMore || false);
-          setProviderPage(page);
-
-          console.log(`Loaded ${formattedProviders.length} providers - Page ${page}`);
-        }
-      } catch (error) {
-        console.error('Error loading providers:', error);
-        if (!append) {
-          setProviders([]);
-        }
-      } finally {
-        setIsLoadingProviders(false);
-        setIsLoadingMoreProviders(false);
+  const loadProviders = useCallback(async (page = 1, search = '', append = false) => {
+    try {
+      if (page === 1) {
+        setIsLoadingProviders(true);
+      } else {
+        setIsLoadingMoreProviders(true);
       }
-    },
-    [
-      selectedCategoryId,
-      selectedSubcategoryId,
-      selectedSegmentId,
-      selectedFilterAttributesId,
-      selectedFilterOptionId,
-    ]
-  );
+
+      console.log('Loading providers with fetchProvidersByFilters...', { page, search });
+
+      // Use the updated API function with pagination and search
+      const result = await fetchProvidersByFilters(
+        selectedCategoryId || '',
+        selectedSubcategoryId || '',
+        selectedFilterAttributesId || '',
+        selectedFilterOptionId || '',
+        page,
+        50,
+        search
+      );
+
+      if (result.data) {
+        const formattedProviders = result.data.map((provider: any) => ({
+          id: provider.id, // Encrypted ID
+          sampleid: provider.sampleid, // Decrypted ID for selection
+          name: provider.company_name || provider.name || `${provider.first_name} ${provider.last_name || ''} - ${provider.phone || 'No Phone'}`,
+        }));
+
+        if (append) {
+          setProviders(prev => [...prev, ...formattedProviders]);
+        } else {
+          setProviders(formattedProviders);
+        }
+
+        // Update pagination state
+        setHasMoreProviders(result.meta?.hasMore || false);
+        setProviderPage(page);
+
+        console.log(`Loaded ${formattedProviders.length} providers - Page ${page}`);
+      }
+    } catch (error) {
+      console.error('Error loading providers:', error);
+      if (!append) {
+        setProviders([]);
+      }
+    } finally {
+      setIsLoadingProviders(false);
+      setIsLoadingMoreProviders(false);
+    }
+  }, [selectedCategoryId, selectedSubcategoryId, selectedSegmentId, selectedFilterAttributesId, selectedFilterOptionId]);
 
   // Load providers when filters change
   useEffect(() => {
     setProviderPage(1);
     setProviders([]);
     loadProviders(1, providerSearchTerm);
-  }, [
-    selectedCategoryId,
-    selectedSubcategoryId,
-    selectedSegmentId,
-    selectedFilterAttributesId,
-    selectedFilterOptionId,
-    loadProviders,
-  ]);
+  }, [selectedCategoryId, selectedSubcategoryId, selectedSegmentId, selectedFilterAttributesId, selectedFilterOptionId, loadProviders]);
 
   // Handle provider search
-  const handleProviderSearch = useCallback(
-    (searchTerm: string) => {
-      setProviderSearchTerm(searchTerm);
-      setProviderPage(1);
-      setProviders([]);
-      loadProviders(1, searchTerm);
-    },
-    [loadProviders]
-  );
+  const handleProviderSearch = useCallback((searchTerm: string) => {
+    setProviderSearchTerm(searchTerm);
+    setProviderPage(1);
+    setProviders([]);
+    loadProviders(1, searchTerm);
+  }, [loadProviders]);
 
   // Load more providers
   const loadMoreProviders = useCallback(() => {
@@ -472,6 +408,8 @@ const AddBookingForm: React.FC = () => {
       loadProviders(providerPage + 1, providerSearchTerm, true);
     }
   }, [hasMoreProviders, isLoadingMoreProviders, providerPage, providerSearchTerm, loadProviders]);
+
+
 
   useEffect(() => {
     // Fetch addresses when a user is selected
@@ -482,9 +420,9 @@ const AddBookingForm: React.FC = () => {
           setAddresses(addressData); // addressData is already mapped in fetchUserAddresses
         } catch (error: any) {
           toast({
-            variant: 'error',
-            title: 'Error',
-            description: error.message || 'Failed to load user addresses.',
+            variant: "error",
+            title: "Error",
+            description: error.message || "Failed to load user addresses.",
           });
         }
       };
@@ -495,110 +433,107 @@ const AddBookingForm: React.FC = () => {
   }, [userId, toast]);
 
   // Optimize the user search function
-  const handleUserSearch = useCallback(
-    async (searchTerm: string, page = 1, append = false) => {
-      if (!searchTerm.trim()) {
-        setUsers([]);
-        setHasMoreResults(false);
-        return;
+  const handleUserSearch = useCallback(async (searchTerm: string, page = 1, append = false) => {
+    if (!searchTerm.trim()) {
+      setUsers([]);
+      setHasMoreResults(false);
+      return;
+    }
+
+    try {
+      if (page === 1) {
+        setIsSearching(true);
+      } else {
+        setIsLoadingMore(true);
       }
 
-      try {
-        if (page === 1) {
-          setIsSearching(true);
+      // Use the page parameter in the API call
+      const response = await searchUser(searchTerm, page, 10);
+
+      // Log the response structure to debug
+      console.log("Search API response:", response);
+
+      // Check if response is an array directly (old API format)
+      if (Array.isArray(response)) {
+        const formattedUsers: SearchUserResult[] = response.map((user: any) => ({
+          id: user.id,
+          first_name: user.first_name,
+          last_name: user.last_name,
+          mobile: user.mobile,
+          name: `${user.first_name} ${user.last_name}`,
+          displayId: user.sampleid || user.id.toString(),
+        }));
+
+        if (append) {
+          setUsers(prev => [...prev, ...formattedUsers]);
         } else {
-          setIsLoadingMore(true);
+          setUsers(formattedUsers);
         }
 
-        // Use the page parameter in the API call
-        const response = await searchUser(searchTerm, page, 10);
+        // Assume there might be more if we got results
+        setHasMoreResults(formattedUsers.length >= 10);
+      }
+      // Check if response has data property (new API format)
+      else if (response && response.data) {
+        const userData = response.data;
+        const hasMore = response.meta?.totalPages > page;
+        setHasMoreResults(hasMore);
 
-        // Log the response structure to debug
-        console.log('Search API response:', response);
+        const formattedUsers: SearchUserResult[] = userData.map((user: any) => ({
+          id: user.id, // Encrypted ID (for reference)
+          sampleid: user.sampleid, // Decrypted ID (for selection)
+          first_name: user.first_name,
+          last_name: user.last_name,
+          mobile: user.mobile,
+          name: `${user.first_name} ${user.last_name}`,
+          displayId: user.sampleid || user.id.toString(),
+        }));
 
-        // Check if response is an array directly (old API format)
-        if (Array.isArray(response)) {
-          const formattedUsers: SearchUserResult[] = response.map((user: any) => ({
-            id: user.id,
-            first_name: user.first_name,
-            last_name: user.last_name,
-            mobile: user.mobile,
-            name: `${user.first_name} ${user.last_name}`,
-            displayId: user.sampleid || user.id.toString(),
-          }));
-
-          if (append) {
-            setUsers((prev) => [...prev, ...formattedUsers]);
-          } else {
-            setUsers(formattedUsers);
-          }
-
-          // Assume there might be more if we got results
-          setHasMoreResults(formattedUsers.length >= 10);
+        if (append) {
+          setUsers(prev => [...prev, ...formattedUsers]);
+        } else {
+          setUsers(formattedUsers);
         }
-        // Check if response has data property (new API format)
-        else if (response && response.data) {
-          const userData = response.data;
-          const hasMore = response.meta?.totalPages > page;
-          setHasMoreResults(hasMore);
-
-          const formattedUsers: SearchUserResult[] = userData.map((user: any) => ({
-            id: user.id, // Encrypted ID (for reference)
-            sampleid: user.sampleid, // Decrypted ID (for selection)
-            first_name: user.first_name,
-            last_name: user.last_name,
-            mobile: user.mobile,
-            name: `${user.first_name} ${user.last_name}`,
-            displayId: user.sampleid || user.id.toString(),
-          }));
-
-          if (append) {
-            setUsers((prev) => [...prev, ...formattedUsers]);
-          } else {
-            setUsers(formattedUsers);
-          }
-        }
-        // Fallback for unexpected response format
-        else {
-          console.error('Unexpected API response format:', response);
-          setUsers([]);
-          setHasMoreResults(false);
-        }
-
-        // Update the current page
-        setSearchPage(page);
-      } catch (error) {
-        console.error('Search error:', error);
-        toast({
-          variant: 'error',
-          title: 'Error',
-          description: 'Failed to search users.',
-        });
+      }
+      // Fallback for unexpected response format
+      else {
+        console.error("Unexpected API response format:", response);
         setUsers([]);
         setHasMoreResults(false);
-      } finally {
-        setIsSearching(false);
-        setIsLoadingMore(false);
       }
-    },
-    [toast]
-  );
+
+      // Update the current page
+      setSearchPage(page);
+    } catch (error) {
+      console.error("Search error:", error);
+      toast({
+        variant: "error",
+        title: "Error",
+        description: "Failed to search users."
+      });
+      setUsers([]);
+      setHasMoreResults(false);
+    } finally {
+      setIsSearching(false);
+      setIsLoadingMore(false);
+    }
+  }, [toast]);
 
   const handleUserSelect = useCallback((user: SearchUserResult) => {
-    setUserId(user.id.toString()); // Use encrypted ID for backend
-    setSelectedUser({
-      id: parseInt(user.sampleid?.toString() || '0'), // Use decrypted sampleid for display, fallback to '0'
-      name: user.name || `${user.first_name || ''} ${user.last_name || ''}`,
-      mobile: user.mobile,
-      displayId: user.displayId || user.sampleid?.toString() || user.id.toString(),
-    });
+  setUserId(user.id.toString()); // Use encrypted ID for backend
+  setSelectedUser({
+    id: parseInt(user.sampleid?.toString() || '0'), // Use decrypted sampleid for display, fallback to '0'
+    name: user.name || `${user.first_name || ''} ${user.last_name || ''}`,
+    mobile: user.mobile,
+    displayId: user.displayId || user.sampleid?.toString() || user.id.toString()
+  });
 
-    // Clear search state after a short delay
-    requestAnimationFrame(() => {
-      setUserSearchTerm('');
-      setUsers([]);
-    });
-  }, []);
+  // Clear search state after a short delay
+  requestAnimationFrame(() => {
+    setUserSearchTerm("");
+    setUsers([]);
+  });
+}, []);
 
   // Function to load more results
   const loadMoreResults = useCallback(() => {
@@ -608,44 +543,37 @@ const AddBookingForm: React.FC = () => {
   }, [handleUserSearch, hasMoreResults, isLoadingMore, searchPage, userSearchTerm]);
 
   // Reset pagination when search term changes
-  const handleSearchInputChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      const value = e.target.value;
-      setUserSearchTerm(value);
+  const handleSearchInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setUserSearchTerm(value);
 
-      // Reset pagination state
-      setSearchPage(1);
-      setHasMoreResults(true);
+    // Reset pagination state
+    setSearchPage(1);
+    setHasMoreResults(true);
 
-      if (window.searchTimeout) {
-        clearTimeout(window.searchTimeout);
-        window.searchTimeout = null;
-      }
+    if (window.searchTimeout) {
+      clearTimeout(window.searchTimeout);
+      window.searchTimeout = null;
+    }
 
-      if (!value.trim()) {
-        setUsers([]);
-        return;
-      }
+    if (!value.trim()) {
+      setUsers([]);
+      return;
+    }
 
-      if (value.trim().length < 4) {
-        return;
-      }
+    if (value.trim().length < 4) {
+      return;
+    }
 
-      window.searchTimeout = setTimeout(() => {
-        // Always start from page 1 for new searches
-        handleUserSearch(value, 1, false);
-      }, 600);
-    },
-    [handleUserSearch]
-  );
+    window.searchTimeout = setTimeout(() => {
+      // Always start from page 1 for new searches
+      handleUserSearch(value, 1, false);
+    }, 600);
+  }, [handleUserSearch]);
 
   // Handler for when a new address is created
-  const handleAddressCreated = (newAddress: {
-    id: string;
-    sampleid: number;
-    full_address: string;
-  }) => {
-    setAddresses((prev) => [...prev, newAddress]);
+  const handleAddressCreated = (newAddress: { id: string; sampleid: number; full_address: string }) => {
+    setAddresses(prev => [...prev, newAddress]);
     setDeliveryAddressId(newAddress.id); // Auto-select the newly created address
   };
 
@@ -656,9 +584,9 @@ const AddBookingForm: React.FC = () => {
     // **NEW: Validate that price has been calculated**
     if (!priceBreakdown || !calculatedTotal || calculatedTotal <= 0) {
       toast({
-        variant: 'error',
-        title: 'Error',
-        description: 'Please select all required fields to calculate the price before submitting.',
+        variant: "error",
+        title: "Error",
+        description: "Please select all required fields to calculate the price before submitting.",
       });
       setIsSubmitting(false);
       return;
@@ -692,7 +620,7 @@ const AddBookingForm: React.FC = () => {
     };
 
     // Add category or package-specific data based on selectionType
-    if (selectionType === 'Category') {
+    if (selectionType === "Category") {
       // Send encrypted IDs directly to backend (don't use parseInt on encrypted strings)
       bookingData.category_id = selectedCategoryId || null;
       bookingData.subcategory_id = selectedSubcategoryId || null;
@@ -703,7 +631,7 @@ const AddBookingForm: React.FC = () => {
       // Debug logging
       console.log('Frontend Debug - selectedCategoryId:', selectedCategoryId);
       console.log('Frontend Debug - bookingData.category_id:', bookingData.category_id);
-    } else if (selectionType === 'Package') {
+    } else if (selectionType === "Package") {
       bookingData.package_id = selectedPackageId || null;
     }
 
@@ -713,21 +641,22 @@ const AddBookingForm: React.FC = () => {
       await createBooking(bookingData);
 
       toast({
-        variant: 'success',
-        title: 'Success',
-        description: 'Booking created successfully.',
+        variant: "success",
+        title: "Success",
+        description: "Booking created successfully.",
       });
       setIsSubmitting(false);
-      router.push('/admin/booking'); // Redirect after successful submission
+      router.push("/admin/booking"); // Redirect after successful submission
     } catch (error) {
       toast({
-        variant: 'error',
-        title: 'Error',
+        variant: "error",
+        title: "Error",
         description: `Failed to create rate card: ${error}`,
       });
       setIsSubmitting(false);
     }
   };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
@@ -764,6 +693,8 @@ const AddBookingForm: React.FC = () => {
                   </SelectContent>
                 </Select>
               </div>
+
+
 
               {selectionType === 'Category' && (
                 <div className="space-y-4">
@@ -825,9 +756,7 @@ const AddBookingForm: React.FC = () => {
                       <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                         <Globe2 className="w-4 h-4 text-green-500" />
                         <span>Select Service Segment</span>
-                        <span className="text-xs text-gray-500">
-                          ({serviceSegments.length} available)
-                        </span>
+                        <span className="text-xs text-gray-500">({serviceSegments.length} available)</span>
                       </label>
                       <Select
                         value={selectedSegmentId}
@@ -851,8 +780,7 @@ const AddBookingForm: React.FC = () => {
                       </Select>
                       {selectedSegmentId && (
                         <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
-                          ✅ Segment selected:{' '}
-                          {serviceSegments.find((s) => s.id === selectedSegmentId)?.segment_name}
+                          ✅ Segment selected: {serviceSegments.find(s => s.id === selectedSegmentId)?.segment_name}
                         </div>
                       )}
                     </div>
@@ -888,9 +816,7 @@ const AddBookingForm: React.FC = () => {
                   {/* Filter Options Selector */}
                   {filterOptions.length > 0 && (
                     <div className="space-y-2">
-                      <label className="text-sm font-medium text-gray-700">
-                        Select Filter Option
-                      </label>
+                      <label className="text-sm font-medium text-gray-700">Select Filter Option</label>
                       <Select
                         value={selectedFilterOptionId}
                         onValueChange={(value) => setSelectedFilterOptionId(value)}
@@ -940,6 +866,7 @@ const AddBookingForm: React.FC = () => {
                 </div>
               )}
 
+
               {/* <div>
                 <label className="text-sm font-medium text-gray-700">Select User</label>
                 <Select value={String(userId)} onValueChange={(value) => setUserId(Number(value))}>
@@ -977,15 +904,13 @@ const AddBookingForm: React.FC = () => {
                     )}
                   </div>
                   {userSearchTerm.trim().length > 0 && userSearchTerm.trim().length < 4 && (
-                    <p className="text-xs text-amber-600">
-                      Please enter at least 4 characters to search
-                    </p>
+                    <p className="text-xs text-amber-600">Please enter at least 4 characters to search</p>
                   )}
 
                   {users.length > 0 && (
                     <div className="border rounded-md overflow-hidden">
                       <Virtuoso
-                        style={{ height: '200px', width: '100%' }}
+                        style={{ height: "200px", width: "100%" }}
                         totalCount={users.length}
                         itemContent={(index) => {
                           const user = users[index];
@@ -1016,16 +941,14 @@ const AddBookingForm: React.FC = () => {
                                     <span className="text-xs">Loading more...</span>
                                   </div>
                                 ) : (
-                                  <span className="text-xs text-gray-500">
-                                    Scroll for more results
-                                  </span>
+                                  <span className="text-xs text-gray-500">Scroll for more results</span>
                                 )}
                               </div>
                             ) : users.length > 0 ? (
                               <div className="p-2 text-center">
                                 <span className="text-xs text-gray-500">End of results</span>
                               </div>
-                            ) : null,
+                            ) : null
                         }}
                       />
                     </div>
@@ -1048,20 +971,18 @@ const AddBookingForm: React.FC = () => {
                         </Button>
                       </div>
                       <div className="mt-1 text-sm">
-                        <div>
-                          <strong>Name:</strong> {selectedUser.name}
-                        </div>
-                        <div>
-                          <strong>ID:</strong> {selectedUser.displayId || selectedUser.id}
-                        </div>
-                        <div>
-                          <strong>Mobile:</strong> {selectedUser.mobile}
-                        </div>
+                        <div><strong>Name:</strong> {selectedUser.name}</div>
+                        <div><strong>ID:</strong> {selectedUser.displayId || selectedUser.id}</div>
+                        <div><strong>Mobile:</strong> {selectedUser.mobile}</div>
                       </div>
                     </div>
                   )}
                 </div>
               </div>
+
+
+
+
 
               {/* Provider Search and Selection */}
               <div className="space-y-2">
@@ -1146,21 +1067,22 @@ const AddBookingForm: React.FC = () => {
                   <div className="p-2 bg-green-50 rounded-md">
                     <div className="flex justify-between items-center">
                       <span className="font-medium text-sm">Selected Provider</span>
-                      <Button variant="ghost" size="sm" onClick={() => setProviderId(null)}>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setProviderId(null)}
+                      >
                         Clear
                       </Button>
                     </div>
                     <div className="mt-1 text-sm">
-                      <div>
-                        <strong>Name:</strong> {providers.find((p) => p.id === providerId)?.name}
-                      </div>
-                      <div>
-                        <strong>ID:</strong> {providers.find((p) => p.id === providerId)?.sampleid}
-                      </div>
+                      <div><strong>Name:</strong> {providers.find(p => p.id === providerId)?.name}</div>
+                      <div><strong>ID:</strong> {providers.find(p => p.id === providerId)?.sampleid}</div>
                     </div>
                   </div>
                 )}
               </div>
+
 
               {userId && (
                 <div className="space-y-2">
@@ -1181,7 +1103,7 @@ const AddBookingForm: React.FC = () => {
                   {addresses.length > 0 ? (
                     <>
                       <Select
-                        value={deliveryAddressId || ''}
+                        value={deliveryAddressId || ""}
                         onValueChange={(value) => setDeliveryAddressId(value || null)}
                       >
                         <SelectTrigger className="bg-white border-gray-200">
@@ -1197,8 +1119,7 @@ const AddBookingForm: React.FC = () => {
                       </Select>
                       {deliveryAddressId && (
                         <div className="mt-1 text-sm text-gray-600">
-                          Selected Address ID:{' '}
-                          {addresses.find((a) => a.id === deliveryAddressId)?.sampleid}
+                          Selected Address ID: {addresses.find(a => a.id === deliveryAddressId)?.sampleid}
                         </div>
                       )}
                     </>
@@ -1270,17 +1191,10 @@ const AddBookingForm: React.FC = () => {
                 <div className="text-xs text-gray-600 bg-white p-2 rounded border">
                   <strong>Debug - Current Selections:</strong>
                   <div>Category: {selectedCategoryId ? '✅ Selected' : '❌ Not Selected'}</div>
-                  <div>
-                    Subcategory: {selectedSubcategoryId ? '✅ Selected' : '❌ Not Selected'}
-                  </div>
-                  <div>
-                    Service Segment: {selectedSegmentId ? '✅ Selected' : '⚪ Optional'} (
-                    {serviceSegments.length} available)
-                  </div>
+                  <div>Subcategory: {selectedSubcategoryId ? '✅ Selected' : '❌ Not Selected'}</div>
+                  <div>Service Segment: {selectedSegmentId ? '✅ Selected' : '⚪ Optional'} ({serviceSegments.length} available)</div>
                   <div>Provider: {providerId ? '✅ Selected' : '❌ Not Selected'}</div>
-                  <div>
-                    Filter Attribute: {selectedFilterAttributesId ? '✅ Selected' : '⚪ Optional'}
-                  </div>
+                  <div>Filter Attribute: {selectedFilterAttributesId ? '✅ Selected' : '⚪ Optional'}</div>
                   <div>Filter Option: {selectedFilterOptionId ? '✅ Selected' : '⚪ Optional'}</div>
                 </div>
 
@@ -1294,9 +1208,7 @@ const AddBookingForm: React.FC = () => {
                     className="w-full max-w-xs"
                     min="1"
                   />
-                  <p className="text-xs text-gray-500">
-                    Price will be calculated automatically based on your selections
-                  </p>
+                  <p className="text-xs text-gray-500">Price will be calculated automatically based on your selections</p>
 
                   {/* Manual trigger button for debugging */}
                   <Button
@@ -1311,7 +1223,7 @@ const AddBookingForm: React.FC = () => {
                           providerId,
                           selectedFilterAttributesId,
                           selectedFilterOptionId,
-                          quantity,
+                          quantity
                         });
 
                         if (!selectedCategoryId || !selectedSubcategoryId || !providerId) {
@@ -1328,7 +1240,7 @@ const AddBookingForm: React.FC = () => {
                             segment_id: selectedSegmentId || null, // **NEW: Include segment**
                             filter_attribute_id: selectedFilterAttributesId || null,
                             filter_option_id: selectedFilterOptionId || null,
-                            quantity: parseInt(quantity) || 1,
+                            quantity: parseInt(quantity) || 1
                           };
 
                           console.log('Manual fetch - Request:', priceRequest);
@@ -1336,10 +1248,7 @@ const AddBookingForm: React.FC = () => {
                           const apiUrl = process.env.NEXT_PUBLIC_API_URL || '/admin-api';
                           // Correct path for admin booking routes
                           const fullUrl = `${apiUrl}/booking/calculate-price`;
-                          console.log(
-                            'Manual fetch - Environment API URL:',
-                            process.env.NEXT_PUBLIC_API_URL
-                          );
+                          console.log('Manual fetch - Environment API URL:', process.env.NEXT_PUBLIC_API_URL);
                           console.log('Manual fetch - URL:', fullUrl);
 
                           const response = await fetch(fullUrl, {
@@ -1348,7 +1257,7 @@ const AddBookingForm: React.FC = () => {
                               'Content-Type': 'application/json',
                               'admin-auth-token': localStorage.getItem('token') || '',
                             },
-                            body: JSON.stringify(priceRequest),
+                            body: JSON.stringify(priceRequest)
                           });
 
                           console.log('Manual fetch - Response status:', response.status);
@@ -1361,11 +1270,10 @@ const AddBookingForm: React.FC = () => {
                             if (priceData.status && priceData.basePrice !== undefined) {
                               setAutoCalculatedPrice(priceData.basePrice);
                               setPriceBreakdown({
-                                basePrice:
-                                  priceData.itemTotal || priceData.basePrice * parseInt(quantity),
+                                basePrice: priceData.itemTotal || (priceData.basePrice * parseInt(quantity)),
                                 gst: priceData.gstAmount || 0,
                                 convenienceCharge: priceData.convenienceCharge || 0,
-                                total: priceData.finalAmount || 0,
+                                total: priceData.finalAmount || 0
                               });
                               setCalculatedTotal(priceData.finalAmount || 0);
                               console.log('Manual calculation successful:', {
@@ -1373,13 +1281,10 @@ const AddBookingForm: React.FC = () => {
                                 itemTotal: priceData.itemTotal,
                                 gstAmount: priceData.gstAmount,
                                 convenienceCharge: priceData.convenienceCharge,
-                                finalAmount: priceData.finalAmount,
+                                finalAmount: priceData.finalAmount
                               });
                             } else {
-                              console.error(
-                                'Manual fetch - Invalid response structure:',
-                                priceData
-                              );
+                              console.error('Manual fetch - Invalid response structure:', priceData);
                               setPriceBreakdown(null);
                             }
                           } else {
@@ -1414,9 +1319,7 @@ const AddBookingForm: React.FC = () => {
 
               {priceBreakdown && !isLoadingPrice && (
                 <div className="p-4 bg-green-50 rounded-lg border border-green-200">
-                  <h3 className="text-sm font-medium text-green-800 mb-3">
-                    💰 Automatically Calculated Price
-                  </h3>
+                  <h3 className="text-sm font-medium text-green-800 mb-3">💰 Automatically Calculated Price</h3>
                   <div className="space-y-2 text-sm text-green-700">
                     <div className="flex justify-between">
                       <span>Service Price × {quantity}:</span>
@@ -1442,22 +1345,17 @@ const AddBookingForm: React.FC = () => {
                 </div>
               )}
 
-              {!priceBreakdown &&
-                !isLoadingPrice &&
-                (selectedCategoryId || selectedSubcategoryId) && (
-                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
-                    <div className="text-sm text-gray-600">
-                      📋 Please select Category, Subcategory, and Provider to see automatic price
-                      calculation
-                    </div>
+              {!priceBreakdown && !isLoadingPrice && (selectedCategoryId || selectedSubcategoryId) && (
+                <div className="p-4 bg-gray-50 rounded-lg border border-gray-200">
+                  <div className="text-sm text-gray-600">
+                    📋 Please select Category, Subcategory, and Provider to see automatic price calculation
                   </div>
-                )}
+                </div>
+              )}
 
               {/* Razorpay Order ID */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Razorpay Order ID (Optional)
-                </label>
+                <label className="text-sm font-medium text-gray-700">Razorpay Order ID (Optional)</label>
                 <Input
                   type="text"
                   placeholder="Enter Razorpay order ID (optional)"
@@ -1468,9 +1366,7 @@ const AddBookingForm: React.FC = () => {
 
               {/* Invoice Number */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Invoice Number (Optional)
-                </label>
+                <label className="text-sm font-medium text-gray-700">Invoice Number (Optional)</label>
                 <Input
                   type="text"
                   placeholder="Enter invoice number (auto-generated if empty)"
@@ -1481,9 +1377,7 @@ const AddBookingForm: React.FC = () => {
 
               {/* Advance Receipt Number */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Advance Receipt Number (Optional)
-                </label>
+                <label className="text-sm font-medium text-gray-700">Advance Receipt Number (Optional)</label>
                 <Input
                   type="text"
                   placeholder="Enter advance receipt number (auto-generated if empty)"
@@ -1494,9 +1388,7 @@ const AddBookingForm: React.FC = () => {
 
               {/* Transaction ID */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Transaction ID (Optional)
-                </label>
+                <label className="text-sm font-medium text-gray-700">Transaction ID (Optional)</label>
                 <Input
                   type="text"
                   placeholder="Enter transaction ID (optional)"
@@ -1508,9 +1400,7 @@ const AddBookingForm: React.FC = () => {
               <div className="flex space-x-3 pt-6">
                 <Button
                   className="w-100 flex-1 h-11 bg-primary"
-                  disabled={
-                    isSubmitting || !priceBreakdown || !calculatedTotal || calculatedTotal <= 0
-                  }
+                  disabled={isSubmitting || !priceBreakdown || !calculatedTotal || calculatedTotal <= 0}
                   type="submit"
                 >
                   {isSubmitting ? (
