@@ -17,7 +17,7 @@ export default function PaymentSuccessPage() {
       razorpay_payment_link_status: searchParams.get('razorpay_payment_link_status'),
       razorpay_signature: searchParams.get('razorpay_signature'),
       source: searchParams.get('source'),
-      booking_id: searchParams.get('booking_id')
+      booking_id: searchParams.get('booking_id'),
     };
 
     setPaymentDetails(details);
@@ -28,7 +28,8 @@ export default function PaymentSuccessPage() {
   };
 
   const handleWhatsAppSupport = () => {
-    window.location.href = 'https://wa.me/917042717777?text=Hi, I need help with my booking payment';
+    window.location.href =
+      'https://wa.me/917042717777?text=Hi, I need help with my booking payment';
   };
 
   return (
@@ -38,20 +39,22 @@ export default function PaymentSuccessPage() {
           <div className="mx-auto mb-4">
             <CheckCircle className="h-20 w-20 text-green-500 mx-auto" />
           </div>
-          <h1 className="text-3xl font-bold text-green-600 mb-2">
-            Payment Successful!
-          </h1>
+          <h1 className="text-3xl font-bold text-green-600 mb-2">Payment Successful!</h1>
         </div>
-        
+
         <div className="space-y-6">
           <div className="text-center text-gray-700">
             <p className="text-lg mb-2">Thank you for your payment!</p>
-            <p className="text-sm">Your booking has been confirmed and you will receive a confirmation message shortly.</p>
+            <p className="text-sm">
+              Your booking has been confirmed and you will receive a confirmation message shortly.
+            </p>
           </div>
 
           {paymentDetails && paymentDetails.razorpay_payment_id && (
             <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-              <h3 className="font-semibold text-green-800 mb-3 text-center">Payment Confirmation</h3>
+              <h3 className="font-semibold text-green-800 mb-3 text-center">
+                Payment Confirmation
+              </h3>
               <div className="text-sm text-center">
                 <span className="font-medium text-gray-700">Transaction ID:</span>
                 <div className="mt-1 font-mono text-xs bg-white px-3 py-2 rounded border break-all">
@@ -71,16 +74,16 @@ export default function PaymentSuccessPage() {
           </div>
 
           <div className="space-y-3">
-            <button 
-              onClick={handleCallSupport} 
+            <button
+              onClick={handleCallSupport}
               className="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-4 rounded-lg flex items-center justify-center transition-colors"
             >
               <Phone className="h-4 w-4 mr-2" />
               Call Support
             </button>
-            
-            <button 
-              onClick={handleWhatsAppSupport} 
+
+            <button
+              onClick={handleWhatsAppSupport}
               className="w-full border border-green-600 text-green-600 hover:bg-green-50 font-medium py-3 px-4 rounded-lg flex items-center justify-center transition-colors"
             >
               <MessageCircle className="h-4 w-4 mr-2" />

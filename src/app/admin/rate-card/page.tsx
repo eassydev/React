@@ -42,7 +42,7 @@ import {
   fetchFilterAttributes,
   fetchFilterOptionsByAttributeId,
   fetchServiceSegments,
-  fetchProvidersByFilters
+  fetchProvidersByFilters,
 } from '@/lib/api';
 
 import Link from 'next/link';
@@ -95,7 +95,7 @@ const RateCardList = () => {
     attributes: [],
     attributeOptions: [],
     segments: [],
-    providers: []
+    providers: [],
   });
   const [activeFilters, setActiveFilters] = useState<ActiveFilters>({
     category_id: '',
@@ -107,7 +107,7 @@ const RateCardList = () => {
     min_price: '',
     max_price: '',
     recommended: '',
-    best_deal: ''
+    best_deal: '',
   });
   const [showFilters, setShowFilters] = useState(false);
   const [isLoadingFilters, setIsLoadingFilters] = useState(false);
@@ -135,7 +135,7 @@ const RateCardList = () => {
       };
 
       // Remove undefined values
-      Object.keys(filters).forEach(key => filters[key] === undefined && delete filters[key]);
+      Object.keys(filters).forEach((key) => filters[key] === undefined && delete filters[key]);
 
       const { data, meta } = await fetchRateCards(filters);
       console.log(`✅ Rate cards filtered: ${data.length} results found`);
@@ -165,14 +165,15 @@ const RateCardList = () => {
       const categories = await fetchAllCategories();
       console.log('✅ Categories loaded:', categories);
 
-      setFilterOptions(prev => ({
+      setFilterOptions((prev) => ({
         ...prev,
-        categories: Array.isArray(categories) ? categories.map(cat => ({
-          id: cat.id?.toString() || '',
-          name: cat.name || 'Unknown Category'
-        })) : []
+        categories: Array.isArray(categories)
+          ? categories.map((cat) => ({
+              id: cat.id?.toString() || '',
+              name: cat.name || 'Unknown Category',
+            }))
+          : [],
       }));
-
     } catch (error) {
       console.error('❌ Error loading categories:', error);
       toast({
@@ -188,7 +189,14 @@ const RateCardList = () => {
   // Load subcategories when category is selected
   const fetchSubcategoriesForCategory = async (categoryId: string) => {
     if (!categoryId) {
-      setFilterOptions(prev => ({ ...prev, subcategories: [], attributes: [], attributeOptions: [], segments: [], providers: [] }));
+      setFilterOptions((prev) => ({
+        ...prev,
+        subcategories: [],
+        attributes: [],
+        attributeOptions: [],
+        segments: [],
+        providers: [],
+      }));
       return;
     }
 
@@ -197,19 +205,20 @@ const RateCardList = () => {
       const subcategories = await fetchSubCategoriesByCategoryId(categoryId);
       console.log('✅ Subcategories loaded:', subcategories);
 
-      setFilterOptions(prev => ({
+      setFilterOptions((prev) => ({
         ...prev,
-        subcategories: Array.isArray(subcategories) ? subcategories.map(sub => ({
-          id: sub.id?.toString() || '',
-          name: sub.name || 'Unknown Subcategory',
-          category_id: sub.category_id?.toString() || categoryId
-        })) : [],
+        subcategories: Array.isArray(subcategories)
+          ? subcategories.map((sub) => ({
+              id: sub.id?.toString() || '',
+              name: sub.name || 'Unknown Subcategory',
+              category_id: sub.category_id?.toString() || categoryId,
+            }))
+          : [],
         attributes: [], // Reset dependent filters
         attributeOptions: [],
         segments: [],
-        providers: []
+        providers: [],
       }));
-
     } catch (error) {
       console.error('❌ Error loading subcategories:', error);
       toast({
@@ -223,7 +232,13 @@ const RateCardList = () => {
   // Load attributes when subcategory is selected
   const fetchAttributesForSubcategory = async (categoryId: string, subcategoryId: string) => {
     if (!categoryId || !subcategoryId) {
-      setFilterOptions(prev => ({ ...prev, attributes: [], attributeOptions: [], segments: [], providers: [] }));
+      setFilterOptions((prev) => ({
+        ...prev,
+        attributes: [],
+        attributeOptions: [],
+        segments: [],
+        providers: [],
+      }));
       return;
     }
 
@@ -232,17 +247,18 @@ const RateCardList = () => {
       const attributes = await fetchFilterAttributes(categoryId, subcategoryId);
       console.log('✅ Attributes loaded:', attributes);
 
-      setFilterOptions(prev => ({
+      setFilterOptions((prev) => ({
         ...prev,
-        attributes: Array.isArray(attributes) ? attributes.map(attr => ({
-          id: attr.id?.toString() || '',
-          name: attr.name || 'Unknown Attribute'
-        })) : [],
+        attributes: Array.isArray(attributes)
+          ? attributes.map((attr) => ({
+              id: attr.id?.toString() || '',
+              name: attr.name || 'Unknown Attribute',
+            }))
+          : [],
         attributeOptions: [], // Reset dependent filters
         segments: [],
-        providers: []
+        providers: [],
       }));
-
     } catch (error) {
       console.error('❌ Error loading attributes:', error);
       toast({
@@ -256,7 +272,7 @@ const RateCardList = () => {
   // Load attribute options when attribute is selected
   const fetchOptionsForAttribute = async (attributeId: string) => {
     if (!attributeId) {
-      setFilterOptions(prev => ({ ...prev, attributeOptions: [] }));
+      setFilterOptions((prev) => ({ ...prev, attributeOptions: [] }));
       return;
     }
 
@@ -281,25 +297,27 @@ const RateCardList = () => {
 
       console.log('📋 Processing options array:', optionsArray);
 
-      setFilterOptions(prev => ({
+      setFilterOptions((prev) => ({
         ...prev,
         attributeOptions: optionsArray.map((option, index) => {
           console.log(`📋 Processing option ${index}:`, option);
           return {
             id: option?.id?.toString() || option?.option_id?.toString() || index.toString(),
             value: option?.value || option?.name || option?.option_value || `Option ${index + 1}`,
-            attribute_id: option?.attribute_id?.toString() || option?.filter_attribute_id?.toString() || attributeId
+            attribute_id:
+              option?.attribute_id?.toString() ||
+              option?.filter_attribute_id?.toString() ||
+              attributeId,
           };
-        })
+        }),
       }));
-
     } catch (error) {
       console.error('❌ Error loading attribute options:', error);
 
       // Set empty array on error to prevent crashes
-      setFilterOptions(prev => ({
+      setFilterOptions((prev) => ({
         ...prev,
-        attributeOptions: []
+        attributeOptions: [],
       }));
 
       toast({
@@ -311,9 +329,13 @@ const RateCardList = () => {
   };
 
   // Load segments when category and subcategory are selected
-  const fetchSegmentsForSelection = async (categoryId: string, subcategoryId: string, attributeId?: string) => {
+  const fetchSegmentsForSelection = async (
+    categoryId: string,
+    subcategoryId: string,
+    attributeId?: string
+  ) => {
     if (!categoryId || !subcategoryId) {
-      setFilterOptions(prev => ({ ...prev, segments: [] }));
+      setFilterOptions((prev) => ({ ...prev, segments: [] }));
       return;
     }
 
@@ -322,14 +344,15 @@ const RateCardList = () => {
       const segments = await fetchServiceSegments(categoryId, subcategoryId, attributeId);
       console.log('✅ Segments loaded:', segments);
 
-      setFilterOptions(prev => ({
+      setFilterOptions((prev) => ({
         ...prev,
-        segments: Array.isArray(segments) ? segments.map(segment => ({
-          id: segment.id?.toString() || '',
-          name: segment.segment_name || segment.name || 'Unknown Segment'
-        })) : []
+        segments: Array.isArray(segments)
+          ? segments.map((segment) => ({
+              id: segment.id?.toString() || '',
+              name: segment.segment_name || segment.name || 'Unknown Segment',
+            }))
+          : [],
       }));
-
     } catch (error) {
       console.error('❌ Error loading segments:', error);
       toast({
@@ -341,26 +364,42 @@ const RateCardList = () => {
   };
 
   // Load providers based on all selections
-  const fetchProvidersForSelection = async (categoryId: string, subcategoryId: string, attributeId?: string, optionId?: string) => {
+  const fetchProvidersForSelection = async (
+    categoryId: string,
+    subcategoryId: string,
+    attributeId?: string,
+    optionId?: string
+  ) => {
     if (!categoryId || !subcategoryId) {
-      setFilterOptions(prev => ({ ...prev, providers: [] }));
+      setFilterOptions((prev) => ({ ...prev, providers: [] }));
       return;
     }
 
     try {
-      console.log('🔍 Loading providers for selection:', { categoryId, subcategoryId, attributeId, optionId });
-      const providersResponse = await fetchProvidersByFilters(categoryId, subcategoryId, attributeId, optionId);
+      console.log('🔍 Loading providers for selection:', {
+        categoryId,
+        subcategoryId,
+        attributeId,
+        optionId,
+      });
+      const providersResponse = await fetchProvidersByFilters(
+        categoryId,
+        subcategoryId,
+        attributeId,
+        optionId
+      );
       console.log('✅ Providers loaded:', providersResponse);
 
       const providers = providersResponse?.data || [];
-      setFilterOptions(prev => ({
+      setFilterOptions((prev) => ({
         ...prev,
-        providers: Array.isArray(providers) ? providers.map(provider => ({
-          id: provider.id?.toString() || '',
-          name: provider.company_name || provider.first_name || 'Unknown Provider'
-        })) : []
+        providers: Array.isArray(providers)
+          ? providers.map((provider) => ({
+              id: provider.id?.toString() || '',
+              name: provider.company_name || provider.first_name || 'Unknown Provider',
+            }))
+          : [],
       }));
-
     } catch (error) {
       console.error('❌ Error loading providers:', error);
       toast({
@@ -370,8 +409,6 @@ const RateCardList = () => {
       });
     }
   };
-
-
 
   // Load categories on component mount
   useEffect(() => {
@@ -393,13 +430,10 @@ const RateCardList = () => {
     return () => clearTimeout(timer);
   }, [searchTerm, pagination.pageSize, filterStatus, activeFilters]);
 
-
-
   // Enhanced filter handling with cascading
   const handleFilterChange = async (filterKey: keyof ActiveFilters, value: string) => {
-
     // Update the filter value
-    setActiveFilters(prev => {
+    setActiveFilters((prev) => {
       const newFilters = { ...prev, [filterKey]: value };
 
       // Reset dependent filters based on what changed
@@ -438,13 +472,31 @@ const RateCardList = () => {
       if (value) {
         await fetchOptionsForAttribute(value);
         if (activeFilters.category_id && activeFilters.subcategory_id) {
-          await fetchSegmentsForSelection(activeFilters.category_id, activeFilters.subcategory_id, value);
-          await fetchProvidersForSelection(activeFilters.category_id, activeFilters.subcategory_id, value);
+          await fetchSegmentsForSelection(
+            activeFilters.category_id,
+            activeFilters.subcategory_id,
+            value
+          );
+          await fetchProvidersForSelection(
+            activeFilters.category_id,
+            activeFilters.subcategory_id,
+            value
+          );
         }
       }
     } else if (filterKey === 'option_id') {
-      if (value && activeFilters.category_id && activeFilters.subcategory_id && activeFilters.attribute_id) {
-        await fetchProvidersForSelection(activeFilters.category_id, activeFilters.subcategory_id, activeFilters.attribute_id, value);
+      if (
+        value &&
+        activeFilters.category_id &&
+        activeFilters.subcategory_id &&
+        activeFilters.attribute_id
+      ) {
+        await fetchProvidersForSelection(
+          activeFilters.category_id,
+          activeFilters.subcategory_id,
+          activeFilters.attribute_id,
+          value
+        );
       }
     }
   };
@@ -460,33 +512,35 @@ const RateCardList = () => {
       min_price: '',
       max_price: '',
       recommended: '',
-      best_deal: ''
+      best_deal: '',
     });
     setSearchTerm('');
     setFilterStatus('all');
 
     // Reset filter options to only categories
-    setFilterOptions(prev => ({
+    setFilterOptions((prev) => ({
       ...prev,
       subcategories: [],
       attributes: [],
       attributeOptions: [],
       segments: [],
-      providers: []
+      providers: [],
     }));
   };
 
   const getActiveFilterCount = () => {
-    return Object.values(activeFilters).filter(value => value !== '').length +
-           (searchTerm ? 1 : 0) +
-           (filterStatus !== 'all' ? 1 : 0);
+    return (
+      Object.values(activeFilters).filter((value) => value !== '').length +
+      (searchTerm ? 1 : 0) +
+      (filterStatus !== 'all' ? 1 : 0)
+    );
   };
 
   // Get filtered subcategories based on selected category
   const getFilteredSubcategories = () => {
     if (!activeFilters.category_id) return filterOptions.subcategories;
     return filterOptions.subcategories.filter(
-      sub => sub.category_id === activeFilters.category_id
+      (sub) => sub.category_id === activeFilters.category_id
     );
   };
 
@@ -615,7 +669,7 @@ const RateCardList = () => {
       accessorKey: 'strike_price',
       header: 'Strike Price',
       size: 100,
-      cell: ({ row }) => row.original.strike_price ? `₹${row.original.strike_price}` : '-',
+      cell: ({ row }) => (row.original.strike_price ? `₹${row.original.strike_price}` : '-'),
     },
     {
       accessorKey: 'weight',
@@ -650,11 +704,11 @@ const RateCardList = () => {
       header: 'Recommended',
       size: 100,
       cell: ({ row }) => (
-        <span className={`px-2 py-1 rounded text-xs ${
-          row.original.recommended
-            ? 'bg-green-100 text-green-800'
-            : 'bg-gray-100 text-gray-600'
-        }`}>
+        <span
+          className={`px-2 py-1 rounded text-xs ${
+            row.original.recommended ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-600'
+          }`}
+        >
           {row.original.recommended ? 'Yes' : 'No'}
         </span>
       ),
@@ -664,11 +718,11 @@ const RateCardList = () => {
       header: 'Best Deal',
       size: 100,
       cell: ({ row }) => (
-        <span className={`px-2 py-1 rounded text-xs ${
-          row.original.best_deal
-            ? 'bg-orange-100 text-orange-800'
-            : 'bg-gray-100 text-gray-600'
-        }`}>
+        <span
+          className={`px-2 py-1 rounded text-xs ${
+            row.original.best_deal ? 'bg-orange-100 text-orange-800' : 'bg-gray-100 text-gray-600'
+          }`}
+        >
           {row.original.best_deal ? 'Yes' : 'No'}
         </span>
       ),
@@ -715,7 +769,7 @@ const RateCardList = () => {
         return new Date(date).toLocaleDateString('en-IN', {
           day: '2-digit',
           month: '2-digit',
-          year: 'numeric'
+          year: 'numeric',
         });
       },
     },
@@ -729,7 +783,7 @@ const RateCardList = () => {
         return new Date(date).toLocaleDateString('en-IN', {
           day: '2-digit',
           month: '2-digit',
-          year: 'numeric'
+          year: 'numeric',
         });
       },
     },
@@ -825,10 +879,6 @@ const RateCardList = () => {
           </div>
         </div>
 
-
-
-
-
         {/* Advanced Filters Panel */}
         <Card className="border-none shadow-lg bg-white/90 backdrop-blur">
           <CardHeader className="pb-4">
@@ -857,9 +907,7 @@ const RateCardList = () => {
                   </Button>
                 )}
               </div>
-              <div className="text-sm text-gray-600">
-                {totalItems} total rate cards
-              </div>
+              <div className="text-sm text-gray-600">{totalItems} total rate cards</div>
             </div>
           </CardHeader>
 
@@ -1039,17 +1087,17 @@ const RateCardList = () => {
             {searchTerm && (
               <div className="flex items-center bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm">
                 <span>Search: "{searchTerm}"</span>
-                <button
-                  onClick={() => setSearchTerm('')}
-                  className="ml-2 hover:text-blue-900"
-                >
+                <button onClick={() => setSearchTerm('')} className="ml-2 hover:text-blue-900">
                   <X className="w-3 h-3" />
                 </button>
               </div>
             )}
             {filterStatus !== 'all' && (
               <div className="flex items-center bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">
-                <span>Status: {filterStatus === '1' ? 'Active' : filterStatus === '0' ? 'Inactive' : 'Deleted'}</span>
+                <span>
+                  Status:{' '}
+                  {filterStatus === '1' ? 'Active' : filterStatus === '0' ? 'Inactive' : 'Deleted'}
+                </span>
                 <button
                   onClick={() => setFilterStatus('all')}
                   className="ml-2 hover:text-green-900"
@@ -1060,7 +1108,10 @@ const RateCardList = () => {
             )}
             {activeFilters.category_id && (
               <div className="flex items-center bg-purple-100 text-purple-800 px-3 py-1 rounded-full text-sm">
-                <span>Category: {filterOptions.categories.find(c => c.id === activeFilters.category_id)?.name}</span>
+                <span>
+                  Category:{' '}
+                  {filterOptions.categories.find((c) => c.id === activeFilters.category_id)?.name}
+                </span>
                 <button
                   onClick={() => handleFilterChange('category_id', '')}
                   className="ml-2 hover:text-purple-900"
@@ -1071,7 +1122,13 @@ const RateCardList = () => {
             )}
             {activeFilters.subcategory_id && (
               <div className="flex items-center bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">
-                <span>Subcategory: {filterOptions.subcategories.find(s => s.id === activeFilters.subcategory_id)?.name}</span>
+                <span>
+                  Subcategory:{' '}
+                  {
+                    filterOptions.subcategories.find((s) => s.id === activeFilters.subcategory_id)
+                      ?.name
+                  }
+                </span>
                 <button
                   onClick={() => handleFilterChange('subcategory_id', '')}
                   className="ml-2 hover:text-indigo-900"
@@ -1082,7 +1139,10 @@ const RateCardList = () => {
             )}
             {activeFilters.attribute_id && (
               <div className="flex items-center bg-cyan-100 text-cyan-800 px-3 py-1 rounded-full text-sm">
-                <span>Attribute: {filterOptions.attributes.find(a => a.id === activeFilters.attribute_id)?.name}</span>
+                <span>
+                  Attribute:{' '}
+                  {filterOptions.attributes.find((a) => a.id === activeFilters.attribute_id)?.name}
+                </span>
                 <button
                   onClick={() => handleFilterChange('attribute_id', '')}
                   className="ml-2 hover:text-cyan-900"
@@ -1093,7 +1153,13 @@ const RateCardList = () => {
             )}
             {activeFilters.option_id && (
               <div className="flex items-center bg-lime-100 text-lime-800 px-3 py-1 rounded-full text-sm">
-                <span>Option: {filterOptions.attributeOptions.find(o => o.id === activeFilters.option_id)?.value}</span>
+                <span>
+                  Option:{' '}
+                  {
+                    filterOptions.attributeOptions.find((o) => o.id === activeFilters.option_id)
+                      ?.value
+                  }
+                </span>
                 <button
                   onClick={() => handleFilterChange('option_id', '')}
                   className="ml-2 hover:text-lime-900"
@@ -1104,7 +1170,10 @@ const RateCardList = () => {
             )}
             {activeFilters.provider_id && (
               <div className="flex items-center bg-orange-100 text-orange-800 px-3 py-1 rounded-full text-sm">
-                <span>Provider: {filterOptions.providers.find(p => p.id === activeFilters.provider_id)?.name}</span>
+                <span>
+                  Provider:{' '}
+                  {filterOptions.providers.find((p) => p.id === activeFilters.provider_id)?.name}
+                </span>
                 <button
                   onClick={() => handleFilterChange('provider_id', '')}
                   className="ml-2 hover:text-orange-900"
@@ -1115,7 +1184,10 @@ const RateCardList = () => {
             )}
             {activeFilters.segment_id && (
               <div className="flex items-center bg-teal-100 text-teal-800 px-3 py-1 rounded-full text-sm">
-                <span>Segment: {filterOptions.segments.find(s => s.id === activeFilters.segment_id)?.name}</span>
+                <span>
+                  Segment:{' '}
+                  {filterOptions.segments.find((s) => s.id === activeFilters.segment_id)?.name}
+                </span>
                 <button
                   onClick={() => handleFilterChange('segment_id', '')}
                   className="ml-2 hover:text-teal-900"
@@ -1197,14 +1269,23 @@ const RateCardList = () => {
                 <div className="flex items-center justify-between">
                   <div className="text-sm text-blue-800">
                     <span className="font-medium">Filters Applied:</span>
-                    {searchTerm && <span className="ml-2 px-2 py-1 bg-blue-100 rounded">Search: "{searchTerm}"</span>}
-                    {filterStatus !== 'all' && <span className="ml-2 px-2 py-1 bg-blue-100 rounded">Status: {filterStatus}</span>}
-                    {Object.entries(activeFilters).map(([key, value]) =>
-                      value && (
-                        <span key={key} className="ml-2 px-2 py-1 bg-blue-100 rounded">
-                          {key.replace('_', ' ')}: {value}
-                        </span>
-                      )
+                    {searchTerm && (
+                      <span className="ml-2 px-2 py-1 bg-blue-100 rounded">
+                        Search: "{searchTerm}"
+                      </span>
+                    )}
+                    {filterStatus !== 'all' && (
+                      <span className="ml-2 px-2 py-1 bg-blue-100 rounded">
+                        Status: {filterStatus}
+                      </span>
+                    )}
+                    {Object.entries(activeFilters).map(
+                      ([key, value]) =>
+                        value && (
+                          <span key={key} className="ml-2 px-2 py-1 bg-blue-100 rounded">
+                            {key.replace('_', ' ')}: {value}
+                          </span>
+                        )
                     )}
                   </div>
                   <div className="text-sm text-blue-600">
