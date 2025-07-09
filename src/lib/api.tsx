@@ -1544,30 +1544,76 @@ export const createRateCard = async (rateCard: RateCard): Promise<ApiResponse> =
 
 
 // Function to fetch all rate cards with pagination
+// Enhanced interface for rate card filters
+interface RateCardFilters {
+  page?: number;
+  size?: number;
+  status?: string;
+  search?: string;
+  category_id?: string;
+  subcategory_id?: string;
+  provider_id?: string;
+  segment_id?: string;
+  min_price?: number;
+  max_price?: number;
+  recommended?: boolean;
+  best_deal?: boolean;
+  attribute_id?: string;
+  option_id?: string;
+}
+
+// Overloaded function for backward compatibility
 export const fetchRateCards = async (
-  page: number = 1,
-  size: number = 10,
-  status: string = "all",
+  filtersOrPage?: RateCardFilters | number,
+  size?: number,
+  status?: string,
   search?: string
 ) => {
+  let filters: RateCardFilters = {};
+
+  // Handle backward compatibility
+  if (typeof filtersOrPage === 'number') {
+    // Old signature: (page, size, status, search)
+    filters = {
+      page: filtersOrPage,
+      size,
+      status,
+      search
+    };
+  } else if (filtersOrPage && typeof filtersOrPage === 'object') {
+    // New signature: (filters)
+    filters = filtersOrPage;
+  }
   try {
     const token = getToken();
 
-    // Prepare query parameters
+    // Prepare query parameters with defaults
     const params: Record<string, any> = {
-      page,
-      size,
+      page: filters.page || 1,
+      size: filters.size || 10,
     };
 
     // Include status filter only if it's not 'all'
-    if (status !== "all") {
-      params.active = status; // Assuming your backend expects 'active' parameter
+    if (filters.status && filters.status !== "all") {
+      params.status = filters.status;
     }
 
     // Include search term if provided
-    if (search && search.trim() !== "") {
-      params.search = search.trim();
+    if (filters.search && filters.search.trim() !== "") {
+      params.search = filters.search.trim();
     }
+
+    // Include advanced filters if provided
+    if (filters.category_id) params.category_id = filters.category_id;
+    if (filters.subcategory_id) params.subcategory_id = filters.subcategory_id;
+    if (filters.provider_id) params.provider_id = filters.provider_id;
+    if (filters.segment_id) params.segment_id = filters.segment_id;
+    if (filters.min_price !== undefined) params.min_price = filters.min_price;
+    if (filters.max_price !== undefined) params.max_price = filters.max_price;
+    if (filters.recommended !== undefined) params.recommended = filters.recommended;
+    if (filters.best_deal !== undefined) params.best_deal = filters.best_deal;
+    if (filters.attribute_id) params.attribute_id = filters.attribute_id;
+    if (filters.option_id) params.option_id = filters.option_id;
 
     const response: AxiosResponse = await apiClient.get('/rate-card', {
       params,
@@ -1581,6 +1627,8 @@ export const fetchRateCards = async (
     throw new Error('Failed to fetch rate cards');
   }
 };
+
+
 
 export const fetchAllRatecard = async (): Promise<RateCard[]> => {
   try {
