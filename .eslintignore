@@ -1,6 +1,8 @@
-node_modules
-.next
-.eslintrc.json
-.prettierrc
-public
-src/components/ui
+node_modules/
+.next/
+out/
+build/
+dist/
+*.config.js
+*.config.ts
+public/
