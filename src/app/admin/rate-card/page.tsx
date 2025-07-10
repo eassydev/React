@@ -322,7 +322,7 @@ const RateCardList = () => {
         ...prev,
         segments: Array.isArray(segments) ? segments.map(segment => ({
           id: segment.id?.toString() || '',
-          name: segment.segment_name || segment.name || 'Unknown Segment'
+          name: segment.segment_name || 'Unknown Segment'
         })) : []
       }));
 
