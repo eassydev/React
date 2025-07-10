@@ -26,11 +26,11 @@ function PaymentSuccessContent() {
   }, [searchParams]);
 
   const handleCallSupport = () => {
-    window.location.href = 'tel:+917042717777'; // Your actual support number
+    window.location.href = 'tel:+918657956534'; // Updated support number
   };
 
   const handleWhatsAppSupport = () => {
-    window.location.href = 'https://wa.me/917042717777?text=Hi, I need help with my booking payment'; // Your actual WhatsApp number
+    window.location.href = 'https://wa.me/918657956534?text=Hi, I need help with my booking payment'; // Updated WhatsApp number
   };
 
   return (
