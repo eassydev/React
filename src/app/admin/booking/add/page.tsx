@@ -126,6 +126,9 @@ const AddBookingForm: React.FC = () => {
   } | null>(null);
   const [isLoadingPrice, setIsLoadingPrice] = useState<boolean>(false);
 
+  // **NEW: Rate card ID from price calculation**
+  const [selectedRateCardId, setSelectedRateCardId] = useState<string | null>(null);
+
   // **NEW: Payment link option**
   const [sendPaymentLink, setSendPaymentLink] = useState<boolean>(true);
 
@@ -208,16 +211,25 @@ const AddBookingForm: React.FC = () => {
               total: priceData.finalAmount || 0,
             });
             setCalculatedTotal(priceData.finalAmount || 0);
+
+            // **NEW: Capture rate card ID from price calculation**
+            if (priceData.rateCardId) {
+              setSelectedRateCardId(priceData.rateCardId);
+              console.log('Rate card ID captured:', priceData.rateCardId);
+            }
+
             console.log('Price calculation successful:', {
               basePrice: priceData.basePrice,
               itemTotal: priceData.itemTotal,
               gstAmount: priceData.gstAmount,
               convenienceCharge: priceData.convenienceCharge,
               finalAmount: priceData.finalAmount,
+              rateCardId: priceData.rateCardId
             });
           } else {
             console.error('Invalid response structure:', priceData);
             setPriceBreakdown(null);
+            setSelectedRateCardId(null);
           }
         } else {
           const errorData = await response.text();
@@ -684,6 +696,9 @@ const AddBookingForm: React.FC = () => {
       calculated_total: calculatedTotal,
       calculated_gst: priceBreakdown?.gst || 0,
       calculated_convenience_charge: priceBreakdown?.convenienceCharge || 0,
+
+      // **NEW: Include rate card ID from price calculation**
+      rate_card_id: selectedRateCardId,
 
       // **FIXED: Add missing payment parameters**
       payment_status: 'unpaid', // Default to unpaid for admin bookings

@@ -282,14 +282,10 @@ const RateCardList = () => {
       console.log('✅ Attribute options loaded:', options);
       console.log('✅ Options structure:', JSON.stringify(options, null, 2));
 
-      // Handle different possible response structures
-      let optionsArray = [];
+      // The API function returns AttributeOption[] directly
+      let optionsArray: any[] = [];
       if (Array.isArray(options)) {
         optionsArray = options;
-      } else if (options?.data && Array.isArray(options.data)) {
-        optionsArray = options.data;
-      } else if (options?.options && Array.isArray(options.options)) {
-        optionsArray = options.options;
       } else {
         console.warn('⚠️ Unexpected options structure:', options);
         optionsArray = [];
@@ -346,12 +342,10 @@ const RateCardList = () => {
 
       setFilterOptions((prev) => ({
         ...prev,
-        segments: Array.isArray(segments)
-          ? segments.map((segment) => ({
-              id: segment.id?.toString() || '',
-              name: segment.segment_name || segment.name || 'Unknown Segment',
-            }))
-          : [],
+        segments: Array.isArray(segments) ? segments.map(segment => ({
+          id: segment.id?.toString() || '',
+          name: segment.segment_name || 'Unknown Segment'
+        })) : []
       }));
     } catch (error) {
       console.error('❌ Error loading segments:', error);
