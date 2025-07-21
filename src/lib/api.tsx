@@ -4922,6 +4922,341 @@ export const logout = async (): Promise<void> => {
   } catch (error: any) {}
 };
 
+// ============= B2B API FUNCTIONS =============
+
+// B2B Customers
+export const fetchB2BCustomers = async (page = 1, limit = 10, status = 'all', search = '') => {
+  try {
+    const token = getToken();
+    const params: Record<string, any> = { page, limit };
+
+    if (status !== 'all') params.status = status;
+    if (search.trim()) params.search = search.trim();
+
+    const response: AxiosResponse = await apiClient.get('/b2b/customers', {
+      headers: { 'admin-auth-token': token || '' },
+      params,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching B2B customers:', error);
+    throw new Error('Failed to fetch B2B customers.');
+  }
+};
+
+export const createB2BCustomer = async (customerData: any) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post('/b2b/customers', customerData, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create B2B customer.');
+  }
+};
+
+export const fetchB2BCustomerById = async (id: string) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/b2b/customers/${id}`, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch B2B customer.');
+  }
+};
+
+export const updateB2BCustomer = async (id: string, customerData: any) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.put(`/b2b/customers/${id}`, customerData, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update B2B customer.');
+  }
+};
+
+export const deleteB2BCustomer = async (id: string) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.delete(`/b2b/customers/${id}`, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete B2B customer.');
+  }
+};
+
+// B2B Orders
+export const fetchB2BOrders = async (page = 1, limit = 10, status = 'all', paymentStatus = 'all', search = '') => {
+  try {
+    const token = getToken();
+    const params: Record<string, any> = { page, limit };
+
+    if (status !== 'all') params.status = status;
+    if (paymentStatus !== 'all') params.payment_status = paymentStatus;
+    if (search.trim()) params.search = search.trim();
+
+    const response: AxiosResponse = await apiClient.get('/b2b/orders', {
+      headers: { 'admin-auth-token': token || '' },
+      params,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching B2B orders:', error);
+    throw new Error('Failed to fetch B2B orders.');
+  }
+};
+
+export const createB2BOrder = async (orderData: any) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post('/b2b/orders', orderData, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create B2B order.');
+  }
+};
+
+export const fetchB2BOrderById = async (id: string) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/b2b/orders/${id}`, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch B2B order.');
+  }
+};
+
+export const updateB2BOrderEditableFields = async (id: string, fieldsData: any) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.put(`/b2b/orders/${id}/editable-fields`, fieldsData, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update editable fields.');
+  }
+};
+
+export const fetchEditableFieldsTemplate = async (clientType = 'mobile_stores') => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/b2b/editable-fields/template', {
+      headers: { 'admin-auth-token': token || '' },
+      params: { client_type: clientType },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch editable fields template.');
+  }
+};
+
+export const generateB2BInvoice = async (orderId: string, invoiceItems: any[] = []) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post(`/b2b/orders/${orderId}/invoice`,
+      { invoice_items: invoiceItems },
+      {
+        headers: { 'admin-auth-token': token || '' },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to generate invoice.');
+  }
+};
+
+export const downloadB2BInvoice = async (invoiceId: string) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/b2b/invoices/${invoiceId}/download`, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to download invoice.');
+  }
+};
+
+// ✅ Simplified invoice generation and download (PDF)
+export const downloadB2BInvoiceSimple = async (orderId: string) => {
+  try {
+    const token = getToken();
+
+    // ✅ Try to download PDF directly
+    const response: AxiosResponse = await apiClient.get(`/b2b/orders/${orderId}/invoice/simple`, {
+      headers: { 'admin-auth-token': token || '' },
+      responseType: 'blob', // ✅ For PDF download
+    });
+
+    // ✅ Check if response is actually a PDF
+    const contentType = response.headers['content-type'];
+
+    if (contentType && contentType.includes('application/pdf')) {
+      // ✅ Handle PDF response
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+
+      // ✅ Check if blob is actually a PDF (not empty)
+      if (blob.size === 0) {
+        throw new Error('Generated PDF is empty');
+      }
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Invoice-B2B-${Date.now()}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      return { success: true, message: 'Invoice PDF downloaded successfully' };
+    } else {
+      // ✅ Handle JSON response (fallback case)
+      const text = await response.data.text();
+      const jsonData = JSON.parse(text);
+
+      if (jsonData.success === false) {
+        // ✅ Show invoice data in alert if PDF generation failed
+        alert(`Invoice Generation Failed!\n\nInvoice Data:\nNumber: ${jsonData.data.invoice_number}\nCustomer: ${jsonData.data.customer}\nService: ${jsonData.data.service}\nSubtotal: ₹${jsonData.data.subtotal}\nGST: ₹${jsonData.data.gst_amount}\nTotal: ₹${jsonData.data.total_amount}\n\nError: ${jsonData.data.error}`);
+        return { success: true, message: 'Invoice data displayed (PDF generation failed)' };
+      }
+
+      throw new Error('Unexpected response format');
+    }
+
+  } catch (error: any) {
+    console.error('Invoice download error:', error);
+
+    // ✅ Try to get more specific error info
+    if (error.response?.data) {
+      try {
+        // ✅ If error response is JSON, show it
+        const errorData = typeof error.response.data === 'string'
+          ? JSON.parse(error.response.data)
+          : error.response.data;
+
+        alert(`Invoice Error:\n${errorData.message || error.message}\n\nDetails: ${JSON.stringify(errorData.data || {}, null, 2)}`);
+      } catch (parseError) {
+        alert(`Invoice Error: ${error.message}`);
+      }
+    } else {
+      alert(`Invoice Error: ${error.message}`);
+    }
+
+    throw new Error(error.response?.data?.message || error.message || 'Failed to download invoice.');
+  }
+};
+
+// B2B Invoices
+export const fetchB2BInvoices = async (page = 1, limit = 10, paymentStatus = 'all', dateFrom = '', dateTo = '', search = '') => {
+  try {
+    const token = getToken();
+    const params: Record<string, any> = { page, limit };
+
+    if (paymentStatus !== 'all') params.payment_status = paymentStatus;
+    if (dateFrom) params.date_from = dateFrom;
+    if (dateTo) params.date_to = dateTo;
+    if (search.trim()) params.search = search.trim();
+
+    const response: AxiosResponse = await apiClient.get('/b2b/invoices', {
+      headers: { 'admin-auth-token': token || '' },
+      params,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching B2B invoices:', error);
+    throw new Error('Failed to fetch B2B invoices.');
+  }
+};
+
+export const fetchB2BInvoiceById = async (id: string) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/b2b/invoices/${id}`, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch B2B invoice.');
+  }
+};
+
+// ✅ B2B Service Address Management
+export const fetchB2BServiceAddresses = async (customerId: string) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/b2b/customers/${customerId}/addresses`, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch service addresses.');
+  }
+};
+
+export const createB2BServiceAddress = async (customerId: string, addressData: any) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post(`/b2b/customers/${customerId}/addresses`, addressData, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create service address.');
+  }
+};
+
+// ✅ Rate Card Integration for B2B
+export const fetchRateCardsForB2B = async (categoryId?: string, subcategoryId?: string, segmentId?: string) => {
+  try {
+    const token = getToken();
+    const params: Record<string, any> = {};
+    if (categoryId) params.category_id = categoryId;
+    if (subcategoryId) params.subcategory_id = subcategoryId;
+    if (segmentId) params.segment_id = segmentId;
+
+    const response: AxiosResponse = await apiClient.get('/b2b/rate-cards', {
+      headers: { 'admin-auth-token': token || '' },
+      params,
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch rate cards.');
+  }
+};
+
+// ✅ Provider Integration for B2B
+export const fetchProvidersForB2B = async (categoryId?: string, subcategoryId?: string, pincode?: string, serviceDate?: string) => {
+  try {
+    const token = getToken();
+    const params: Record<string, any> = {};
+    if (categoryId) params.category_id = categoryId;
+    if (subcategoryId) params.subcategory_id = subcategoryId;
+    if (pincode) params.pincode = pincode;
+    if (serviceDate) params.service_date = serviceDate;
+
+    const response: AxiosResponse = await apiClient.get('/b2b/providers', {
+      headers: { 'admin-auth-token': token || '' },
+      params,
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch providers.');
+  }
+};
+
 export const generateUniqueFilename = (prefix: string, extension: string): string => {
   const now = new Date();
   const timestamp = now.toISOString().replace(/[-T:.Z]/g, ''); // Format as YYYYMMDDHHMMSS

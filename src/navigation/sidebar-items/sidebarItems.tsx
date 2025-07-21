@@ -247,6 +247,15 @@ export const sidebarItems: SidebarItem[] = [
     ],
   },
   {
+    title: 'B2B Management',
+    icon: Building2,
+    children: [
+      { title: 'Customers', route: `${basePath}/b2b/customers` },
+      { title: 'Orders', route: `${basePath}/b2b/orders` },
+      { title: 'Invoices', route: `${basePath}/b2b/invoices` },
+    ],
+  },
+  {
     title: 'Woloo',
     icon: Building2,
     children: [
