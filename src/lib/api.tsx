@@ -5094,10 +5094,19 @@ export const downloadB2BInvoiceSimple = async (orderId: string) => {
   try {
     const token = getToken();
 
+    console.log('📄 Starting invoice download for order:', orderId);
+
     // ✅ Try to download PDF directly
     const response: AxiosResponse = await apiClient.get(`/b2b/orders/${orderId}/invoice/simple`, {
       headers: { 'admin-auth-token': token || '' },
       responseType: 'blob', // ✅ For PDF download
+      timeout: 30000, // 30 second timeout
+    });
+
+    console.log('📄 Response received:', {
+      status: response.status,
+      contentType: response.headers['content-type'],
+      dataSize: response.data?.size || 'unknown'
     });
 
     // ✅ Check if response is actually a PDF
@@ -5107,50 +5116,67 @@ export const downloadB2BInvoiceSimple = async (orderId: string) => {
       // ✅ Handle PDF response
       const blob = new Blob([response.data], { type: 'application/pdf' });
 
+      console.log('📄 PDF blob created, size:', blob.size);
+
       // ✅ Check if blob is actually a PDF (not empty)
       if (blob.size === 0) {
         throw new Error('Generated PDF is empty');
       }
 
+      // ✅ Create download link
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `Invoice-B2B-${Date.now()}.pdf`;
+      link.download = `Invoice-B2B-${orderId}-${Date.now()}.pdf`;
+
+      // ✅ Trigger download
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
 
+      // ✅ Clean up
+      setTimeout(() => {
+        window.URL.revokeObjectURL(url);
+      }, 1000);
+
+      console.log('✅ PDF download triggered successfully');
       return { success: true, message: 'Invoice PDF downloaded successfully' };
-    } else {
-      // ✅ Handle JSON response (fallback case)
+
+    } else if (contentType && contentType.includes('application/json')) {
+      // ✅ Handle JSON error response
       const text = await response.data.text();
       const jsonData = JSON.parse(text);
 
-      if (jsonData.success === false) {
+      console.log('📄 JSON response received:', jsonData);
+
+      if (jsonData.success === false && jsonData.data) {
         // ✅ Show invoice data in alert if PDF generation failed
-        alert(`Invoice Generation Failed!\n\nInvoice Data:\nNumber: ${jsonData.data.invoice_number}\nCustomer: ${jsonData.data.customer}\nService: ${jsonData.data.service}\nSubtotal: ₹${jsonData.data.subtotal}\nGST: ₹${jsonData.data.gst_amount}\nTotal: ₹${jsonData.data.total_amount}\n\nError: ${jsonData.data.error}`);
+        alert(`PDF Generation Failed!\n\nInvoice Data:\nNumber: ${jsonData.data.invoice_number}\nCustomer: ${jsonData.data.customer}\nService: ${jsonData.data.service}\nSubtotal: ₹${jsonData.data.subtotal}\nGST: ₹${jsonData.data.gst_amount}\nTotal: ₹${jsonData.data.total_amount}\n\nError: ${jsonData.error}`);
         return { success: true, message: 'Invoice data displayed (PDF generation failed)' };
       }
 
-      throw new Error('Unexpected response format');
+      throw new Error(jsonData.message || 'Unexpected JSON response');
+    } else {
+      throw new Error(`Unexpected content type: ${contentType}`);
     }
 
   } catch (error: any) {
-    console.error('Invoice download error:', error);
+    console.error('❌ Invoice download error:', error);
 
-    // ✅ Try to get more specific error info
-    if (error.response?.data) {
-      try {
-        // ✅ If error response is JSON, show it
-        const errorData = typeof error.response.data === 'string'
-          ? JSON.parse(error.response.data)
-          : error.response.data;
+    // ✅ Handle different types of errors
+    if (error.response) {
+      const status = error.response.status;
+      const statusText = error.response.statusText;
 
-        alert(`Invoice Error:\n${errorData.message || error.message}\n\nDetails: ${JSON.stringify(errorData.data || {}, null, 2)}`);
-      } catch (parseError) {
-        alert(`Invoice Error: ${error.message}`);
+      if (status === 404) {
+        alert('Invoice Error: Booking not found');
+      } else if (status === 500) {
+        alert('Invoice Error: Server error occurred while generating PDF');
+      } else {
+        alert(`Invoice Error: ${status} ${statusText}`);
       }
+    } else if (error.code === 'ECONNABORTED') {
+      alert('Invoice Error: Request timeout - PDF generation took too long');
     } else {
       alert(`Invoice Error: ${error.message}`);
     }
