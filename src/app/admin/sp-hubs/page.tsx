@@ -143,6 +143,17 @@ const SpHubList = () => {
     { accessorKey: 'city.name', header: 'City' },
     { accessorKey: 'category.name', header: 'Category' },
     { accessorKey: 'subcategory.name', header: 'Subcategory' },
+    {
+      accessorKey: 'hubprovider',
+      header: 'SP Name',
+      cell: (info) => {
+        const provider = info.getValue();
+        if (provider && provider.first_name) {
+          return `${provider.first_name} ${provider.last_name || ''}`.trim();
+        }
+        return 'N/A';
+      }
+    },
     { accessorKey: 'staff', header: 'Staff' },
     { accessorKey: 'weightage', header: 'Weightage' },
     {
