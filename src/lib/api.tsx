@@ -932,6 +932,7 @@ export const fetchAllCategories = async (): Promise<Category[]> => {
       throw new Error(response.data.message || 'Failed to fetch categories.');
     }
   } catch (error: any) {
+    console.error('Error in fetchAllCategories:', error);
     throw new Error(error.response?.data?.message || 'Failed to fetch categories.');
   }
 };
@@ -5280,6 +5281,46 @@ export const fetchProvidersForB2B = async (categoryId?: string, subcategoryId?: 
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch providers.');
+  }
+};
+
+// ✅ Price Calculation for B2B (uses same API as admin booking)
+export const calculateServicePriceForB2B = async (params: {
+  category_id?: string;
+  subcategory_id?: string;
+  provider_id?: string;
+  segment_id?: string;
+  filter_attribute_id?: string;
+  filter_option_id?: string;
+  quantity?: number;
+}) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post('/booking/calculate-price', params, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+
+    if (response.data.status) {
+      return {
+        success: true,
+        data: {
+          base_price: response.data.basePrice,
+          final_price: response.data.finalAmount,
+          rate_card: {
+            id: response.data.rateCardId,
+            price: response.data.basePrice,
+            service_name: 'Service', // This would come from rate card details
+            base_price: response.data.basePrice,
+            final_price: response.data.finalAmount
+          },
+          breakdown: response.data.breakdown
+        }
+      };
+    } else {
+      throw new Error(response.data.message || 'Failed to calculate price');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to calculate service price');
   }
 };
 

@@ -14,7 +14,7 @@ import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { useRouter } from 'next/navigation';
 import {
-  fetchAllHubs,
+  fetchAllHubsWithoutPagination,
   Provider,
   fetchProviders,
   Category,
@@ -64,11 +64,11 @@ const AddSpHubForm: React.FC = () => {
     const loadData = async () => {
       try {
         const [hubData, cityData, categoryData] = await Promise.all([
-          fetchAllHubs(),
+          fetchAllHubsWithoutPagination(),
           fetchAllCities(),
           fetchAllCategories(),
         ]);
-        setHubs(hubData.data);
+        setHubs(hubData);
         setCities(cityData.data);
         setCategories(categoryData);
         await loadProviders();
@@ -158,6 +158,37 @@ const AddSpHubForm: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
+    // Validation
+    if (!selectedHubId) {
+      toast({
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Please select a hub.',
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!selectedCityId) {
+      toast({
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Please select a city.',
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    if (!selectedProviderId) {
+      toast({
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Please select a provider.',
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
     const spHubData = {
       hub_id: selectedHubId,
       city_id: selectedCityId,
@@ -200,8 +231,8 @@ const AddSpHubForm: React.FC = () => {
         <CardContent>
           <form onSubmit={onSubmit} className="space-y-4">
             <div>
-              <label className="text-sm font-medium text-gray-700">Hub</label>
-              <Select value={selectedHubId} onValueChange={(value) => setSelectedHubId(value)}>
+              <label className="text-sm font-medium text-gray-700">Hub *</label>
+              <Select value={selectedHubId} onValueChange={(value) => setSelectedHubId(value)} required>
                 <SelectTrigger className="bg-white border-gray-200">
                   <SelectValue placeholder="Select a hub" />
                 </SelectTrigger>
@@ -216,10 +247,10 @@ const AddSpHubForm: React.FC = () => {
             </div>
 
             <div>
-              <label className="text-sm font-medium text-gray-700">Hub</label>
-              <Select value={selectedCityId} onValueChange={(value) => setSelectedCityId(value)}>
+              <label className="text-sm font-medium text-gray-700">City *</label>
+              <Select value={selectedCityId} onValueChange={(value) => setSelectedCityId(value)} required>
                 <SelectTrigger className="bg-white border-gray-200">
-                  <SelectValue placeholder="Select a hub" />
+                  <SelectValue placeholder="Select a city" />
                 </SelectTrigger>
                 <SelectContent>
                   {cities.map((city) => (
@@ -355,8 +386,8 @@ const AddSpHubForm: React.FC = () => {
             </div>
 
             <div className="space-y-2 w-full">
-              <label className="text-sm font-medium text-gray-700">Select Provider</label>
-              <Select value={selectedProviderId || ''} onValueChange={handleValueChange}>
+              <label className="text-sm font-medium text-gray-700">Select Provider *</label>
+              <Select value={selectedProviderId || ''} onValueChange={handleValueChange} required>
                 <SelectTrigger className="w-full">
                   {' '}
                   {/* Full width */}
