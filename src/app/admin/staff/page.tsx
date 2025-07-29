@@ -108,7 +108,7 @@ const StaffListContent = () => {
 
   const handleCopy = () => {
     const formattedData = staff
-      .map((item) => `${item.id}, ${item.first_name}, ${item.active}`)
+      .map((item) => `${item.sampleid || item.id}, ${item.first_name}, ${item.active}`)
       .join('\n');
     navigator.clipboard.writeText(formattedData);
     toast({
@@ -126,7 +126,7 @@ const StaffListContent = () => {
   };
 
   const staffColumns: ColumnDef<any>[] = [
-    { accessorKey: 'id', header: 'ID' },
+    { accessorKey: 'sampleid', header: 'ID' },
     { accessorKey: 'first_name', header: 'First Name' },
     { accessorKey: 'last_name', header: 'Last Name' },
     { accessorKey: 'email', header: 'Email' },
