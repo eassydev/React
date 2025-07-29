@@ -5324,6 +5324,235 @@ export const calculateServicePriceForB2B = async (params: {
   }
 };
 
+// ✅ ========================================
+// ✅ B2B QUOTATION MANAGEMENT API - NEW
+// ✅ ========================================
+
+// B2B Quotation interfaces
+export interface B2BQuotationItem {
+  service: string;
+  description?: string;
+  quantity: number;
+  rate: number;
+  amount: number;
+}
+
+export interface B2BQuotation {
+  id?: string;
+  quotation_number?: string;
+  b2b_booking_id: string;
+  initial_amount: number;
+  negotiated_amount?: number;
+  final_amount?: number;
+  gst_amount?: number;
+  total_amount?: number;
+  status: 'draft' | 'sent' | 'approved' | 'rejected' | 'negotiating' | 'expired';
+  version?: number;
+  quotation_items?: B2BQuotationItem[];
+  terms_and_conditions?: string;
+  validity_days?: number;
+  valid_until?: string;
+  sp_notes?: string;
+  admin_notes?: string;
+  client_notes?: string;
+  rejection_reason?: string;
+  sent_at?: string;
+  sent_via?: 'whatsapp' | 'email' | 'both' | 'manual';
+  viewed_at?: string;
+  responded_at?: string;
+  approved_by?: string;
+  approved_at?: string;
+  pdf_file_path?: string;
+  attachments?: any[];
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Create new quotation
+export const createB2BQuotation = async (quotationData: Partial<B2BQuotation>) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post('/b2b/quotations', quotationData, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create quotation.');
+  }
+};
+
+// Create quotation for specific order
+export const createB2BQuotationForOrder = async (orderId: string, quotationData: Partial<B2BQuotation>) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post(`/b2b/orders/${orderId}/quotations`, quotationData, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create quotation for order.');
+  }
+};
+
+// Get all quotations with filtering
+export const fetchB2BQuotations = async (params: {
+  page?: number;
+  limit?: number;
+  status?: string;
+  b2b_booking_id?: string;
+  search?: string;
+  sort_by?: string;
+  sort_order?: 'ASC' | 'DESC';
+} = {}) => {
+  try {
+    const token = getToken();
+    const queryParams = {
+      page: params.page || 1,
+      limit: params.limit || 10,
+      sort_by: params.sort_by || 'created_at',
+      sort_order: params.sort_order || 'DESC',
+      ...params
+    };
+
+    const response: AxiosResponse = await apiClient.get('/b2b/quotations', {
+      headers: { 'admin-auth-token': token || '' },
+      params: queryParams,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching B2B quotations:', error);
+    throw new Error('Failed to fetch quotations.');
+  }
+};
+
+// Get quotations for specific order
+export const fetchB2BQuotationsForOrder = async (orderId: string, params: {
+  page?: number;
+  limit?: number;
+  status?: string;
+} = {}) => {
+  try {
+    const token = getToken();
+    const queryParams = {
+      page: params.page || 1,
+      limit: params.limit || 10,
+      ...params
+    };
+
+    const response: AxiosResponse = await apiClient.get(`/b2b/orders/${orderId}/quotations`, {
+      headers: { 'admin-auth-token': token || '' },
+      params: queryParams,
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching quotations for order:', error);
+    throw new Error('Failed to fetch quotations for order.');
+  }
+};
+
+// Get quotation by ID
+export const fetchB2BQuotationById = async (id: string) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/b2b/quotations/${id}`, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch quotation.');
+  }
+};
+
+// Update quotation
+export const updateB2BQuotation = async (id: string, quotationData: Partial<B2BQuotation>) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.put(`/b2b/quotations/${id}`, quotationData, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update quotation.');
+  }
+};
+
+// Send quotation to client
+export const sendB2BQuotation = async (id: string, sendVia: 'whatsapp' | 'email' | 'both' = 'both') => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post(`/b2b/quotations/${id}/send`,
+      { send_via: sendVia },
+      {
+        headers: { 'admin-auth-token': token || '' },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to send quotation.');
+  }
+};
+
+// Approve quotation
+export const approveB2BQuotation = async (id: string, adminNotes?: string) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post(`/b2b/quotations/${id}/approve`,
+      { admin_notes: adminNotes },
+      {
+        headers: { 'admin-auth-token': token || '' },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to approve quotation.');
+  }
+};
+
+// Reject quotation
+export const rejectB2BQuotation = async (id: string, rejectionReason: string, adminNotes?: string) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post(`/b2b/quotations/${id}/reject`,
+      {
+        rejection_reason: rejectionReason,
+        admin_notes: adminNotes
+      },
+      {
+        headers: { 'admin-auth-token': token || '' },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to reject quotation.');
+  }
+};
+
+// Generate/Download quotation PDF
+export const downloadB2BQuotationPDF = async (id: string) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/b2b/quotations/${id}/pdf`, {
+      headers: { 'admin-auth-token': token || '' },
+      responseType: 'blob', // For PDF download
+    });
+
+    // Create blob URL and trigger download
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Quotation-${id}-${Date.now()}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    return { success: true, message: 'PDF downloaded successfully' };
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to download quotation PDF.');
+  }
+};
+
 export const generateUniqueFilename = (prefix: string, extension: string): string => {
   const now = new Date();
   const timestamp = now.toISOString().replace(/[-T:.Z]/g, ''); // Format as YYYYMMDDHHMMSS
