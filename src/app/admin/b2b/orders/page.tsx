@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Eye, Edit, Settings, Download } from 'lucide-react';
+import { Plus, Search, Eye, Edit, Settings, Download, FileText } from 'lucide-react';
 import { fetchB2BOrders, downloadB2BInvoiceSimple } from '@/lib/api';
 
 import { Button } from '@/components/ui/button';
@@ -339,6 +339,12 @@ export default function B2BOrdersPage() {
                                 <Link href={`/admin/b2b/orders/${order.id}/editable-fields`}>
                                   <Settings className="w-4 h-4 mr-2" />
                                   Edit Fields
+                                </Link>
+                              </DropdownMenuItem>
+                              <DropdownMenuItem asChild>
+                                <Link href={`/admin/b2b/quotations/add?orderId=${order.id}`}>
+                                  <FileText className="w-4 h-4 mr-2" />
+                                  Create Quotation
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleDownloadInvoice(order.id)}>

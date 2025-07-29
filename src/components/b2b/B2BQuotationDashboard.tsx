@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -83,9 +84,11 @@ const B2BQuotationDashboard: React.FC<B2BQuotationDashboardProps> = ({ orderId }
           </p>
         </div>
 
-        <Button onClick={handleCreateQuotation} className="bg-blue-600 hover:bg-blue-700">
-          <Plus className="h-4 w-4 mr-2" />
-          Create Quotation
+        <Button asChild className="bg-blue-600 hover:bg-blue-700">
+          <Link href={orderId ? `/admin/b2b/quotations/add?orderId=${orderId}` : '/admin/b2b/quotations/add'}>
+            <Plus className="h-4 w-4 mr-2" />
+            Create Quotation
+          </Link>
         </Button>
       </div>
 

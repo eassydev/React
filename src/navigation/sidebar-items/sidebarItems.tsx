@@ -252,6 +252,7 @@ export const sidebarItems: SidebarItem[] = [
     children: [
       { title: 'Customers', route: `${basePath}/b2b/customers` },
       { title: 'Orders', route: `${basePath}/b2b/orders` },
+      { title: 'Quotations', route: `${basePath}/b2b/quotations` }, // ✅ NEW: Quotation management
       { title: 'Invoices', route: `${basePath}/b2b/invoices` },
     ],
   },

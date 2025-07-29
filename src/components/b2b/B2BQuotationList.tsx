@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -308,9 +309,11 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
                         <Button
                           size="sm"
                           variant="outline"
-                          onClick={() => onViewQuotation?.(quotation)}
+                          asChild
                         >
-                          <Eye className="h-4 w-4" />
+                          <Link href={`/admin/b2b/quotations/${quotation.id}`}>
+                            <Eye className="h-4 w-4" />
+                          </Link>
                         </Button>
 
                         {quotation.status === 'draft' && (
