@@ -13,7 +13,7 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Loader2, FileImage, Eye, Upload } from 'lucide-react';
+import { Save, Loader2, FileImage, Eye, Upload, Check, X, Clock } from 'lucide-react';
 import { fetchProviderById, updateProvider, Provider } from '@/lib/api';
 import { useRouter, useParams } from 'next/navigation';
 import {
@@ -47,6 +47,7 @@ const EditProviderForm: React.FC = () => {
 
   const [postalCode, setPostalCode] = useState<string>('');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [gstError, setGstError] = useState('');
   const [panError, setPanError] = useState('');
   const [documents, setDocuments] = useState<any[]>([]);
@@ -55,16 +56,58 @@ const EditProviderForm: React.FC = () => {
   const [newPanCard, setNewPanCard] = useState<File | null>(null);
   const [newGstCertificate, setNewGstCertificate] = useState<File | null>(null);
 
+  // Document numbers for upload
+  const [aadharDocNumber, setAadharDocNumber] = useState<string>('');
+  const [panDocNumber, setPanDocNumber] = useState<string>('');
+  const [gstDocNumber, setGstDocNumber] = useState<string>('');
+
+  // Update document numbers when provider data is loaded
+  useEffect(() => {
+    if (panNumber) {
+      setPanDocNumber(panNumber);
+    }
+    if (gstNumber) {
+      setGstDocNumber(gstNumber);
+    }
+  }, [panNumber, gstNumber]);
+
   const { toast } = useToast();
   const router = useRouter();
   const { id } = useParams();
+
+  // Helper function to get status badge
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case 'approved':
+        return (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+            <Check className="w-3 h-3 mr-1" />
+            Approved
+          </span>
+        );
+      case 'rejected':
+        return (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">
+            <X className="w-3 h-3 mr-1" />
+            Rejected
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+            <Clock className="w-3 h-3 mr-1" />
+            Pending
+          </span>
+        );
+    }
+  };
 
   // Function to fetch provider documents
   const fetchProviderDocuments = async (providerId: string) => {
     try {
       const response = await fetch(`/admin-api/provider/${providerId}/documents`, {
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'admin-auth-token': localStorage.getItem('token') || '',
         },
       });
       if (response.ok) {
@@ -76,20 +119,62 @@ const EditProviderForm: React.FC = () => {
     }
   };
 
+  // Function to update document status
+  const updateDocumentStatus = async (documentId: string, status: 'approved' | 'rejected') => {
+    try {
+      const response = await fetch(`/admin-api/provider/document/${documentId}/status`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'admin-auth-token': localStorage.getItem('token') || '',
+        },
+        body: JSON.stringify({ status }),
+      });
+
+      if (response.ok) {
+        toast({
+          title: 'Success',
+          description: `Document ${status} successfully.`,
+        });
+        await fetchProviderDocuments(id as string);
+      } else {
+        throw new Error(`Failed to ${status} document`);
+      }
+    } catch (error) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: `Failed to ${status} document.`,
+      });
+    }
+  };
+
   // Function to upload new documents
   const uploadDocuments = async () => {
     try {
       const formData = new FormData();
 
-      if (newAadharFront) formData.append('adhaarCardFront', newAadharFront);
-      if (newAadharBack) formData.append('adhaarCardBack', newAadharBack);
-      if (newPanCard) formData.append('panCard', newPanCard);
-      if (newGstCertificate) formData.append('gstCertificate', newGstCertificate);
+      if (newAadharFront) {
+        formData.append('adhaarCardFront', newAadharFront);
+        formData.append('adhaarCardFront_document_number', aadharDocNumber);
+      }
+      if (newAadharBack) {
+        formData.append('adhaarCardBack', newAadharBack);
+        formData.append('adhaarCardBack_document_number', aadharDocNumber);
+      }
+      if (newPanCard) {
+        formData.append('panCard', newPanCard);
+        formData.append('panCard_document_number', panDocNumber);
+      }
+      if (newGstCertificate) {
+        formData.append('gstCertificate', newGstCertificate);
+        formData.append('gstCertificate_document_number', gstDocNumber);
+      }
 
       const response = await fetch(`/admin-api/provider/${id}/documents`, {
         method: 'POST',
         headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
+          'admin-auth-token': localStorage.getItem('token') || '',
         },
         body: formData,
       });
@@ -100,11 +185,14 @@ const EditProviderForm: React.FC = () => {
           description: 'Documents uploaded successfully.',
         });
 
-        // Reset file inputs
+        // Reset file inputs and document numbers
         setNewAadharFront(null);
         setNewAadharBack(null);
         setNewPanCard(null);
         setNewGstCertificate(null);
+        setAadharDocNumber('');
+        setPanDocNumber('');
+        setGstDocNumber('');
 
         // Refresh documents
         await fetchProviderDocuments(id as string);
@@ -122,13 +210,18 @@ const EditProviderForm: React.FC = () => {
 
   useEffect(() => {
     const fetchProviderData = async () => {
+      setIsLoading(true);
       try {
         const providerData = await fetchProviderById(id as string);
-        setFirstName(providerData.first_name);
-        setLastName(providerData.last_name);
+        console.log('🔍 Provider Data Fetched:', providerData);
+        console.log('🔍 GST Number:', providerData.gst_number);
+        console.log('🔍 PAN Number:', providerData.pan_number);
+
+        setFirstName(providerData.first_name || '');
+        setLastName(providerData.last_name || '');
         setGender(providerData.gender || 'male');
-        setEmail(providerData.email);
-        setPhone(providerData.phone);
+        setEmail(providerData.email || '');
+        setPhone(providerData.phone || '');
         setCompanyName(providerData.company_name || '');
         setGstNumber(providerData.gst_number || '');
         setPanNumber(providerData.pan_number || '');
@@ -151,11 +244,14 @@ const EditProviderForm: React.FC = () => {
         // Fetch provider documents
         await fetchProviderDocuments(id as string);
       } catch (error) {
+        console.error('❌ Error fetching provider data:', error);
         toast({
-          variant: 'error',
+          variant: 'destructive',
           title: 'Error',
-          description: 'Failed to load provider data.',
+          description: `Failed to load provider data: ${error instanceof Error ? error.message : 'Unknown error'}`,
         });
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -203,6 +299,15 @@ const EditProviderForm: React.FC = () => {
       provider_type: providerType,
       b2b_approved: b2bApproved ? 1 : 0,
     };
+
+    console.log('🚀 Updating provider with data:', {
+      first_name: firstName,
+      last_name: lastName,
+      linked_account_id: linkedAccountId,
+      gst_number: gstNumber,
+      pan_number: panNumber,
+      image: image ? 'File selected' : 'No file'
+    });
 
     try {
       await updateProvider(id as string, updatedProvider);
@@ -265,7 +370,13 @@ const EditProviderForm: React.FC = () => {
           </CardHeader>
 
           <CardContent className="pt-6">
-            <form onSubmit={onSubmit} className="space-y-6">
+            {isLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-8 h-8 animate-spin" />
+                <span className="ml-2">Loading provider data...</span>
+              </div>
+            ) : (
+              <form onSubmit={onSubmit} className="space-y-6">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-gray-700">First Name</label>
                 <Input
@@ -469,6 +580,7 @@ const EditProviderForm: React.FC = () => {
                 <span className="text-sm text-gray-700">Active</span>
               </div>
             </form>
+            )}
           </CardContent>
 
           <CardFooter className="border-t border-gray-100 mt-6">
@@ -510,48 +622,88 @@ const EditProviderForm: React.FC = () => {
               {/* Aadhar Card Front */}
               <div className="space-y-3">
                 <label className="text-sm font-medium text-gray-700">Aadhar Card Front</label>
-                {documents.find((doc) => doc.document_type === 'adhaarCardFront') ? (
-                  <div className="space-y-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" className="w-full">
-                          <Eye className="w-4 h-4 mr-2" />
-                          View Current
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                          <DialogTitle>Aadhar Card Front</DialogTitle>
-                        </DialogHeader>
-                        <img
-                          src={
-                            documents.find((doc) => doc.document_type === 'adhaarCardFront')
-                              ?.document_url
-                          }
-                          alt="Aadhar Front"
-                          className="w-full h-auto rounded-lg"
-                          onError={(e) => {
-                            e.currentTarget.src = '/placeholder-image.png';
-                          }}
-                        />
-                      </DialogContent>
-                    </Dialog>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setNewAadharFront(e.target.files?.[0] || null)}
-                      className="text-sm"
-                      placeholder="Upload new Aadhar front"
-                    />
-                    {newAadharFront && (
-                      <p className="text-xs text-green-600">
-                        New file selected: {newAadharFront.name}
-                      </p>
-                    )}
-                  </div>
-                ) : (
+                {(() => {
+                  const aadharFrontDoc = documents.find((doc) => doc.document_type === 'adhaarCardFront');
+                  return aadharFrontDoc ? (
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        {getStatusBadge(aadharFrontDoc.status)}
+                        <span className="text-xs text-gray-500">
+                          {aadharFrontDoc.document_number}
+                        </span>
+                      </div>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" className="w-full">
+                            <Eye className="w-4 h-4 mr-2" />
+                            View Current
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                          <DialogHeader>
+                            <DialogTitle>Aadhar Card Front</DialogTitle>
+                          </DialogHeader>
+                          <img
+                            src={aadharFrontDoc.document_url}
+                            alt="Aadhar Front"
+                            className="w-full h-auto rounded-lg"
+                            onError={(e) => {
+                              e.currentTarget.src = '/placeholder-image.png';
+                            }}
+                          />
+                        </DialogContent>
+                      </Dialog>
+                      {aadharFrontDoc.status === 'pending' && (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="flex-1 bg-green-600 hover:bg-green-700"
+                            onClick={() => updateDocumentStatus(aadharFrontDoc.id, 'approved')}
+                          >
+                            <Check className="w-3 h-3 mr-1" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="flex-1"
+                            onClick={() => updateDocumentStatus(aadharFrontDoc.id, 'rejected')}
+                          >
+                            <X className="w-3 h-3 mr-1" />
+                            Reject
+                          </Button>
+                        </div>
+                      )}
+                      <Input
+                        type="text"
+                        placeholder="Aadhar Number"
+                        value={aadharDocNumber}
+                        onChange={(e) => setAadharDocNumber(e.target.value)}
+                        className="text-sm"
+                      />
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setNewAadharFront(e.target.files?.[0] || null)}
+                        className="text-sm"
+                        placeholder="Upload new Aadhar front"
+                      />
+                      {newAadharFront && (
+                        <p className="text-xs text-green-600">
+                          New file selected: {newAadharFront.name}
+                        </p>
+                      )}
+                    </div>
+                  ) : (
                   <div className="space-y-2">
                     <p className="text-sm text-gray-500">No document uploaded</p>
+                    <Input
+                      type="text"
+                      placeholder="Aadhar Number"
+                      value={aadharDocNumber}
+                      onChange={(e) => setAadharDocNumber(e.target.value)}
+                      className="text-sm"
+                    />
                     <Input
                       type="file"
                       accept="image/*"
@@ -563,7 +715,8 @@ const EditProviderForm: React.FC = () => {
                       <p className="text-xs text-green-600">File selected: {newAadharFront.name}</p>
                     )}
                   </div>
-                )}
+                  );
+                })()}
               </div>
 
               {/* Aadhar Card Back */}
@@ -615,46 +768,175 @@ const EditProviderForm: React.FC = () => {
               {/* PAN Card */}
               <div className="space-y-3">
                 <label className="text-sm font-medium text-gray-700">PAN Card</label>
-                {documents.find((doc) => doc.document_type === 'panCard') ? (
-                  <div className="space-y-2">
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button variant="outline" className="w-full">
-                          <Eye className="w-4 h-4 mr-2" />
-                          View Current
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent className="max-w-2xl">
-                        <DialogHeader>
-                          <DialogTitle>PAN Card</DialogTitle>
-                        </DialogHeader>
-                        <img
-                          src={
-                            documents.find((doc) => doc.document_type === 'panCard')?.document_url
-                          }
-                          alt="PAN Card"
-                          className="w-full h-auto rounded-lg"
-                        />
-                      </DialogContent>
-                    </Dialog>
+                {(() => {
+                  const panCardDoc = documents.find((doc) => doc.document_type === 'panCard');
+                  return panCardDoc ? (
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        {getStatusBadge(panCardDoc.status)}
+                        <span className="text-xs text-gray-500">
+                          {panCardDoc.document_number}
+                        </span>
+                      </div>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" className="w-full">
+                            <Eye className="w-4 h-4 mr-2" />
+                            View Current
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                          <DialogHeader>
+                            <DialogTitle>PAN Card</DialogTitle>
+                          </DialogHeader>
+                          <img
+                            src={panCardDoc.document_url}
+                            alt="PAN Card"
+                            className="w-full h-auto rounded-lg"
+                          />
+                        </DialogContent>
+                      </Dialog>
+                      {panCardDoc.status === 'pending' && (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="flex-1 bg-green-600 hover:bg-green-700"
+                            onClick={() => updateDocumentStatus(panCardDoc.id, 'approved')}
+                          >
+                            <Check className="w-3 h-3 mr-1" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="flex-1"
+                            onClick={() => updateDocumentStatus(panCardDoc.id, 'rejected')}
+                          >
+                            <X className="w-3 h-3 mr-1" />
+                            Reject
+                          </Button>
+                        </div>
+                      )}
+                    <Input
+                      type="text"
+                      placeholder="PAN Number"
+                      value={panDocNumber}
+                      onChange={(e) => setPanDocNumber(e.target.value)}
+                      className="text-sm"
+                    />
                     <Input
                       type="file"
                       accept="image/*"
                       onChange={(e) => setNewPanCard(e.target.files?.[0] || null)}
                       className="text-sm"
                     />
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    <p className="text-sm text-gray-500">No document uploaded</p>
-                    <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setNewPanCard(e.target.files?.[0] || null)}
-                      className="text-sm"
-                    />
-                  </div>
-                )}
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-500">No document uploaded</p>
+                      <Input
+                        type="text"
+                        placeholder="PAN Number"
+                        value={panDocNumber}
+                        onChange={(e) => setPanDocNumber(e.target.value)}
+                        className="text-sm"
+                      />
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setNewPanCard(e.target.files?.[0] || null)}
+                        className="text-sm"
+                      />
+                    </div>
+                  );
+                })()}
+              </div>
+
+              {/* GST Certificate */}
+              <div className="space-y-3">
+                <label className="text-sm font-medium text-gray-700">GST Certificate</label>
+                {(() => {
+                  const gstCertDoc = documents.find((doc) => doc.document_type === 'gstCertificate');
+                  return gstCertDoc ? (
+                    <div className="space-y-2">
+                      <div className="flex justify-between items-center">
+                        {getStatusBadge(gstCertDoc.status)}
+                        <span className="text-xs text-gray-500">
+                          {gstCertDoc.document_number}
+                        </span>
+                      </div>
+                      <Dialog>
+                        <DialogTrigger asChild>
+                          <Button variant="outline" className="w-full">
+                            <Eye className="w-4 h-4 mr-2" />
+                            View Current
+                          </Button>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-2xl">
+                          <DialogHeader>
+                            <DialogTitle>GST Certificate</DialogTitle>
+                          </DialogHeader>
+                          <img
+                            src={gstCertDoc.document_url}
+                            alt="GST Certificate"
+                            className="w-full h-auto rounded-lg"
+                          />
+                        </DialogContent>
+                      </Dialog>
+                      {gstCertDoc.status === 'pending' && (
+                        <div className="flex gap-2">
+                          <Button
+                            size="sm"
+                            className="flex-1 bg-green-600 hover:bg-green-700"
+                            onClick={() => updateDocumentStatus(gstCertDoc.id, 'approved')}
+                          >
+                            <Check className="w-3 h-3 mr-1" />
+                            Approve
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="destructive"
+                            className="flex-1"
+                            onClick={() => updateDocumentStatus(gstCertDoc.id, 'rejected')}
+                          >
+                            <X className="w-3 h-3 mr-1" />
+                            Reject
+                          </Button>
+                        </div>
+                      )}
+                      <Input
+                        type="text"
+                        placeholder="GST Number"
+                        value={gstDocNumber}
+                        onChange={(e) => setGstDocNumber(e.target.value)}
+                        className="text-sm"
+                      />
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setNewGstCertificate(e.target.files?.[0] || null)}
+                        className="text-sm"
+                      />
+                    </div>
+                  ) : (
+                    <div className="space-y-2">
+                      <p className="text-sm text-gray-500">No document uploaded</p>
+                      <Input
+                        type="text"
+                        placeholder="GST Number"
+                        value={gstDocNumber}
+                        onChange={(e) => setGstDocNumber(e.target.value)}
+                        className="text-sm"
+                      />
+                      <Input
+                        type="file"
+                        accept="image/*"
+                        onChange={(e) => setNewGstCertificate(e.target.files?.[0] || null)}
+                        className="text-sm"
+                      />
+                    </div>
+                  );
+                })()}
               </div>
             </div>
 

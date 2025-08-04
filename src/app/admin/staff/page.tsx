@@ -41,15 +41,16 @@ const StaffListContent = () => {
   const [totalItems, setTotalItems] = useState(0);
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [isExporting, setIsExporting] = useState(false);
+  const [providerName, setProviderName] = useState<string>('');
   const { toast } = useToast();
   const searchParams = useSearchParams();
   const providerIdFilter = searchParams.get('provider_id');
 
   const fetchStaffData = async (page = 1, size = 5, status = 'all') => {
     try {
-      // Add provider filter to search if provider_id is in URL
-      const searchQuery = providerIdFilter ? `provider_id:${providerIdFilter}` : '';
-      const { data, meta } = await fetchAllStaff(searchQuery, page, size, filterStatus);
+      // Use provider_id from URL params if available, otherwise empty string for all staff
+      const providerId = providerIdFilter || '';
+      const { data, meta } = await fetchAllStaff(providerId, page, size, status);
       setStaff(data);
       setTotalPages(meta.totalPages);
       setTotalItems(meta.totalItems);
@@ -107,7 +108,7 @@ const StaffListContent = () => {
 
   const handleCopy = () => {
     const formattedData = staff
-      .map((item) => `${item.id}, ${item.first_name}, ${item.active}`)
+      .map((item) => `${item.sampleid || item.id}, ${item.first_name}, ${item.active}`)
       .join('\n');
     navigator.clipboard.writeText(formattedData);
     toast({
@@ -125,7 +126,7 @@ const StaffListContent = () => {
   };
 
   const staffColumns: ColumnDef<any>[] = [
-    { accessorKey: 'id', header: 'ID' },
+    { accessorKey: 'sampleid', header: 'ID' },
     { accessorKey: 'first_name', header: 'First Name' },
     { accessorKey: 'last_name', header: 'Last Name' },
     { accessorKey: 'email', header: 'Email' },

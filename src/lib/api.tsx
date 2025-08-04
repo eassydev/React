@@ -2551,6 +2551,7 @@ export const updateProvider = async (id: string, provider: Provider): Promise<Ap
   formData.append('company_name', provider.company_name ?? '');
   formData.append('gst_number', provider.gst_number ?? '');
   formData.append('pan_number', provider.pan_number ?? '');
+  formData.append('linked_account_id', provider.linked_account_id ?? '');
   formData.append('active', provider.active ? '1' : '0');
   formData.append('rating', provider.rating!.toString() ?? '');
   formData.append('country', provider.country ?? '');

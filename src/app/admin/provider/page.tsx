@@ -276,11 +276,16 @@ const ProviderList = () => {
               <Edit className="w-4 h-4 text-blue-600" />
             </Link>
           </Button>
-          <Button variant="ghost" size="icon" title="View Staff">
-            <Link href={`/admin/staff?provider_id=${row.original.id}`} passHref>
-              <Users className="w-4 h-4 text-green-600" />
-            </Link>
-          </Button>
+          {/* Staff Management Button - Show if staff exists */}
+          {row.original.staff_count > 0 && (
+            <Button variant="ghost" size="icon" title={`View Staff (${row.original.staff_count})`}>
+              <Link href={`/admin/staff?provider_id=${row.original.id}`} passHref>
+                <Users className="w-4 h-4 text-green-600" />
+              </Link>
+            </Button>
+          )}
+
+          {/* B2B Provider Type Toggle Button */}
           <Button
             variant="ghost"
             size="icon"
