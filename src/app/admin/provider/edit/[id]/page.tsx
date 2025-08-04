@@ -37,6 +37,9 @@ const EditProviderForm: React.FC = () => {
   const [linkedAccountId, setLinkedAccountId] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
   const [rating, setRating] = useState<string>('0.0');
+  // ✅ B2B PROVIDER FIELDS
+  const [providerType, setProviderType] = useState<'b2c' | 'b2b' | 'hybrid'>('b2c');
+  const [b2bApproved, setB2bApproved] = useState<boolean>(false);
   const [country, setCountry] = useState<string>('');
   const [state, setState] = useState<string>('');
   const [city, setCity] = useState<string>('');
@@ -141,6 +144,9 @@ const EditProviderForm: React.FC = () => {
         setState(providerData.state || '');
         setCity(providerData.city || '');
         setPostalCode(providerData.postal_code || '');
+        // ✅ B2B PROVIDER FIELDS
+        setProviderType(providerData.provider_type || 'b2c');
+        setB2bApproved(providerData.b2b_approved === 1);
 
         // Fetch provider documents
         await fetchProviderDocuments(id as string);
@@ -193,6 +199,9 @@ const EditProviderForm: React.FC = () => {
       state,
       city,
       postal_code: postalCode,
+      // ✅ B2B PROVIDER FIELDS
+      provider_type: providerType,
+      b2b_approved: b2bApproved ? 1 : 0,
     };
 
     try {
@@ -414,6 +423,45 @@ const EditProviderForm: React.FC = () => {
                   onChange={(e) => setRating(e.target.value)}
                   placeholder="Enter rating"
                 />
+              </div>
+
+              {/* ✅ B2B PROVIDER FIELDS */}
+              <div className="col-span-2 border-t pt-4">
+                <h3 className="text-lg font-semibold text-gray-800 mb-4">B2B Provider Settings</h3>
+
+                {/* Provider Type */}
+                <div className="space-y-2 mb-4">
+                  <label className="text-sm font-medium text-gray-700">Provider Type</label>
+                  <select
+                    value={providerType}
+                    onChange={(e) => setProviderType(e.target.value as 'b2c' | 'b2b' | 'hybrid')}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  >
+                    <option value="b2c">B2C Only (Regular Customers)</option>
+                    <option value="b2b">B2B Only (Business Clients)</option>
+                    <option value="hybrid">Hybrid (Both B2C & B2B)</option>
+                  </select>
+                  <p className="text-xs text-gray-500">
+                    {providerType === 'b2c' && 'Provider will only serve individual customers'}
+                    {providerType === 'b2b' && 'Provider will only serve business clients (hidden from customer app)'}
+                    {providerType === 'hybrid' && 'Provider can serve both individual customers and business clients'}
+                  </p>
+                </div>
+
+                {/* B2B Approval */}
+                {(providerType === 'b2b' || providerType === 'hybrid') && (
+                  <div className="flex items-center space-x-2 mb-4">
+                    <Switch
+                      checked={b2bApproved}
+                      onCheckedChange={setB2bApproved}
+                      className="bg-primary"
+                    />
+                    <span className="text-sm text-gray-700">Approved for B2B Services</span>
+                    <p className="text-xs text-gray-500 ml-2">
+                      (Provider can receive B2B orders only when approved)
+                    </p>
+                  </div>
+                )}
               </div>
 
               <div className="flex items-center space-x-2">

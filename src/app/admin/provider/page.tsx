@@ -18,8 +18,8 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table';
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Download, Copy, Users } from 'lucide-react';
-import { fetchAllProviders, deleteProvider, exportProvider, approvedProvider } from '@/lib/api';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Download, Copy, Users, Building2 } from 'lucide-react';
+import { fetchAllProviders, deleteProvider, exportProvider, approvedProvider, updateProviderType } from '@/lib/api';
 import Link from 'next/link';
 import {
   AlertDialog,
@@ -40,6 +40,7 @@ const ProviderList = () => {
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
   const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [filterProviderType, setFilterProviderType] = useState<string>('');
   const [isExporting, setIsExporting] = useState(false);
   const { toast } = useToast();
   const [searchTerm, setSearchTerm] = useState('');
@@ -212,6 +213,59 @@ const ProviderList = () => {
         return <span className={`badge px-2 py-1 rounded ${statusClass}`}>{statusLabel}</span>;
       },
     },
+    // ✅ B2B PROVIDER COLUMNS
+    {
+      accessorKey: 'provider_type',
+      header: 'Provider Type',
+      cell: ({ row }) => {
+        const type = row.original.provider_type || 'b2c';
+        let typeLabel = '';
+        let typeClass = '';
+
+        switch (type) {
+          case 'b2c':
+            typeLabel = 'B2C Only';
+            typeClass = 'bg-blue-100 text-blue-800';
+            break;
+          case 'b2b':
+            typeLabel = 'B2B Only';
+            typeClass = 'bg-purple-100 text-purple-800';
+            break;
+          case 'hybrid':
+            typeLabel = 'Hybrid';
+            typeClass = 'bg-green-100 text-green-800';
+            break;
+          default:
+            typeLabel = 'B2C Only';
+            typeClass = 'bg-blue-100 text-blue-800';
+            break;
+        }
+
+        return <span className={`px-2 py-1 rounded-full text-xs font-medium ${typeClass}`}>{typeLabel}</span>;
+      },
+    },
+    {
+      accessorKey: 'b2b_approved',
+      header: 'B2B Status',
+      cell: ({ row }) => {
+        const providerType = row.original.provider_type || 'b2c';
+        const b2bApproved = row.original.b2b_approved === 1;
+
+        if (providerType === 'b2c') {
+          return <span className="text-gray-400 text-xs">N/A</span>;
+        }
+
+        return (
+          <span className={`px-2 py-1 rounded-full text-xs font-medium ${
+            b2bApproved
+              ? 'bg-green-100 text-green-800'
+              : 'bg-orange-100 text-orange-800'
+          }`}>
+            {b2bApproved ? 'Approved' : 'Pending'}
+          </span>
+        );
+      },
+    },
     {
       id: 'actions',
       header: 'Actions',
@@ -226,6 +280,32 @@ const ProviderList = () => {
             <Link href={`/admin/staff?provider_id=${row.original.id}`} passHref>
               <Users className="w-4 h-4 text-green-600" />
             </Link>
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            title={`${row.original.provider_type === 'b2b' ? 'Convert to B2C' : 'Convert to B2B'}`}
+            onClick={async () => {
+              const newType = row.original.provider_type === 'b2b' ? 'b2c' : 'b2b';
+              try {
+                await updateProviderType(row.original.id, newType, 0);
+                // Refresh the providers list
+                fetchProviders();
+                toast({
+                  title: 'Success',
+                  description: `Provider converted to ${newType.toUpperCase()} successfully.`,
+                  variant: 'success',
+                });
+              } catch (error) {
+                toast({
+                  title: 'Error',
+                  description: String(error),
+                  variant: 'destructive',
+                });
+              }
+            }}
+          >
+            <Building2 className={`w-4 h-4 ${row.original.provider_type === 'b2b' ? 'text-purple-600' : 'text-gray-400'}`} />
           </Button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -275,10 +355,20 @@ const ProviderList = () => {
               onChange={handleStatusChange}
               className="border p-2 rounded"
             >
-              <option value="">All</option>
+              <option value="">All Status</option>
               <option value="0">Active</option>
               <option value="1">Deactivated</option>
               <option value="2">Deleted</option>
+            </select>
+            <select
+              value={filterProviderType}
+              onChange={(e) => setFilterProviderType(e.target.value)}
+              className="border p-2 rounded"
+            >
+              <option value="">All Types</option>
+              <option value="b2c">B2C Only</option>
+              <option value="b2b">B2B Only</option>
+              <option value="hybrid">Hybrid</option>
             </select>
             <select
               value={pagination.pageSize}
@@ -296,6 +386,12 @@ const ProviderList = () => {
             <Button onClick={handleCopy}>
               <Copy className="w-4 h-4 mr-2" />
               Copy
+            </Button>
+            <Button asChild variant="outline" className="flex items-center space-x-2">
+              <Link href="/admin/provider/b2b">
+                <Building2 className="w-4 h-4 mr-1" />
+                <span>B2B Providers</span>
+              </Link>
             </Button>
             <Button asChild variant="default" className="flex items-center space-x-2">
               <Link href="/admin/provider/add">

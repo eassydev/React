@@ -260,6 +260,9 @@ export interface Provider {
   latitude?: number;
   longitude?: number;
   linked_account_id?: string; // Razorpay linked account ID
+  // ✅ B2B PROVIDER FIELDS
+  provider_type?: 'b2c' | 'b2b' | 'hybrid';
+  b2b_approved?: number; // 0 = not approved, 1 = approved
 }
 
 // Define the structure of the Bank object
@@ -2511,6 +2514,10 @@ export const createProvider = async (provider: Provider): Promise<ApiResponse> =
   formData.append('city', provider.city ?? '');
   formData.append('postal_code', provider.postal_code ?? '');
 
+  // ✅ B2B PROVIDER FIELDS
+  formData.append('provider_type', provider.provider_type ?? 'b2c');
+  formData.append('b2b_approved', (provider.b2b_approved ?? 0).toString());
+
   // Append optional fields only if they exist
   if (provider.image) {
     formData.append('image', provider.image);
@@ -2550,6 +2557,10 @@ export const updateProvider = async (id: string, provider: Provider): Promise<Ap
   formData.append('state', provider.state ?? '');
   formData.append('city', provider.city ?? '');
   formData.append('postal_code', provider.postal_code ?? '');
+
+  // ✅ B2B PROVIDER FIELDS
+  formData.append('provider_type', provider.provider_type ?? 'b2c');
+  formData.append('b2b_approved', (provider.b2b_approved ?? 0).toString());
 
   // Append optional fields only if they exist
   if (provider.image) {
@@ -2600,6 +2611,65 @@ export const restoreProvider = async (id: string): Promise<ApiResponse> => {
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to restore provider.');
+  }
+};
+
+// ✅ B2B PROVIDER MANAGEMENT FUNCTIONS
+
+// Update provider type (B2C, B2B, Hybrid)
+export const updateProviderType = async (
+  id: string,
+  provider_type: 'b2c' | 'b2b' | 'hybrid',
+  b2b_approved?: number
+): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(
+      `/provider/${id}/type`,
+      {
+        provider_type,
+        b2b_approved: b2b_approved || 0
+      },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'admin-auth-token': token || '',
+        },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update provider type.');
+  }
+};
+
+// Get all B2B providers with filtering
+export const fetchB2BProviders = async (
+  page: number = 1,
+  size: number = 10,
+  provider_type: string = 'all',
+  b2b_approved: string = 'all'
+): Promise<{ providers: Provider[]; totalPages: number; totalProviders: number }> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/provider/b2b/list', {
+      params: { page, size, provider_type, b2b_approved },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return {
+        providers: response.data.data.providers,
+        totalPages: response.data.data.pagination.total_pages,
+        totalProviders: response.data.data.pagination.total_providers,
+      };
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch B2B providers.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch B2B providers.');
   }
 };
 

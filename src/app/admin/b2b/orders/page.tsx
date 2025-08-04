@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Eye, Edit, Settings, Download, FileText } from 'lucide-react';
+import { Plus, Search, Eye, Edit, Settings, Download, FileText, Upload } from 'lucide-react';
 import { fetchB2BOrders, downloadB2BInvoiceSimple } from '@/lib/api';
 
 import { Button } from '@/components/ui/button';
@@ -173,12 +173,20 @@ export default function B2BOrdersPage() {
             <h1 className="text-3xl font-bold text-gray-900">B2B Orders</h1>
             <p className="text-gray-600 mt-1">Manage B2B service orders with editable fields</p>
           </div>
-          <Button asChild className="flex items-center space-x-2">
-            <Link href="/admin/b2b/orders/add">
-              <Plus className="w-4 h-4 mr-1" />
-              <span>Create Order</span>
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild variant="outline" className="flex items-center space-x-2">
+              <Link href="/admin/b2b/orders/bulk-upload">
+                <Upload className="w-4 h-4 mr-1" />
+                <span>Bulk Upload</span>
+              </Link>
+            </Button>
+            <Button asChild className="flex items-center space-x-2">
+              <Link href="/admin/b2b/orders/add">
+                <Plus className="w-4 h-4 mr-1" />
+                <span>Create Order</span>
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
