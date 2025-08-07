@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Eye, Edit, FileText, Download, Settings } from 'lucide-react';
-import { fetchB2BOrders, generateB2BInvoice, downloadB2BInvoiceSimple } from '@/lib/api';
+import { Plus, Search, Eye, Edit, Settings, Download, FileText, Upload } from 'lucide-react';
+import { fetchB2BOrders, downloadB2BInvoiceSimple } from '@/lib/api';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,6 +50,7 @@ interface B2BOrder {
   status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
   payment_status: 'pending' | 'paid' | 'overdue';
   service_date?: string;
+  booking_received_date?: string;
   created_at: string;
 }
 
@@ -93,6 +94,20 @@ export default function B2BOrdersPage() {
       setTotalRecords(0);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDownloadInvoice = async (orderId: string) => {
+    try {
+      // ✅ Download PDF invoice directly
+      const result = await downloadB2BInvoiceSimple(orderId);
+      if (result.success) {
+        // ✅ PDF download is handled automatically in the API function
+        console.log('Invoice PDF downloaded successfully');
+      }
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      alert('Failed to generate invoice. Please try again.');
     }
   };
 
@@ -145,28 +160,9 @@ export default function B2BOrdersPage() {
     );
   };
 
-  const handleGenerateInvoice = async (orderId: string) => {
-    try {
-      await generateB2BInvoice(orderId, []);
-      fetchOrders(); // Refresh the list
-    } catch (error) {
-      console.error('Error generating invoice:', error);
-    }
-  };
 
-  const handleDownloadInvoice = async (orderId: string) => {
-    try {
-      // ✅ Download PDF invoice directly
-      const result = await downloadB2BInvoiceSimple(orderId);
-      if (result.success) {
-        // ✅ PDF download is handled automatically in the API function
-        console.log('Invoice PDF downloaded successfully');
-      }
-    } catch (error) {
-      console.error('Error downloading invoice:', error);
-      alert('Failed to generate invoice. Please try again.');
-    }
-  };
+
+
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
@@ -177,12 +173,20 @@ export default function B2BOrdersPage() {
             <h1 className="text-3xl font-bold text-gray-900">B2B Orders</h1>
             <p className="text-gray-600 mt-1">Manage B2B service orders with editable fields</p>
           </div>
-          <Button asChild className="flex items-center space-x-2">
-            <Link href="/admin/b2b/orders/add">
-              <Plus className="w-4 h-4 mr-1" />
-              <span>Create Order</span>
-            </Link>
-          </Button>
+          <div className="flex gap-2">
+            <Button asChild variant="outline" className="flex items-center space-x-2">
+              <Link href="/admin/b2b/orders/bulk-upload">
+                <Upload className="w-4 h-4 mr-1" />
+                <span>Bulk Upload</span>
+              </Link>
+            </Button>
+            <Button asChild className="flex items-center space-x-2">
+              <Link href="/admin/b2b/orders/add">
+                <Plus className="w-4 h-4 mr-1" />
+                <span>Create Order</span>
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -259,7 +263,8 @@ export default function B2BOrdersPage() {
                       <TableHead>Amount</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Payment</TableHead>
-                      <TableHead>Date</TableHead>
+                      <TableHead>Service Date</TableHead>
+                      <TableHead>Received Date</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -315,6 +320,10 @@ export default function B2BOrdersPage() {
                           {order.service_date ? new Date(order.service_date).toLocaleDateString() : 'TBD'}
                         </TableCell>
                         <TableCell>
+                          {order.booking_received_date ? new Date(order.booking_received_date).toLocaleDateString() :
+                           order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A'}
+                        </TableCell>
+                        <TableCell>
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                               <Button variant="ghost" size="sm">
@@ -340,14 +349,17 @@ export default function B2BOrdersPage() {
                                   Edit Fields
                                 </Link>
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleGenerateInvoice(order.id)}>
-                                <FileText className="w-4 h-4 mr-2" />
-                                Generate Invoice
+                              <DropdownMenuItem asChild>
+                                <Link href={`/admin/b2b/quotations/add?orderId=${order.id}`}>
+                                  <FileText className="w-4 h-4 mr-2" />
+                                  Create Quotation
+                                </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem onClick={() => handleDownloadInvoice(order.id)}>
                                 <Download className="w-4 h-4 mr-2" />
                                 Download Invoice
                               </DropdownMenuItem>
+
                             </DropdownMenuContent>
                           </DropdownMenu>
                         </TableCell>
