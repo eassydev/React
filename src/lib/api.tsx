@@ -5121,6 +5121,19 @@ export const updateB2BOrderEditableFields = async (id: string, fieldsData: any) 
   }
 };
 
+// ✅ NEW: Update B2B order status and payment status
+export const updateB2BOrderStatus = async (id: string, statusData: { status?: string; payment_status?: string; notes?: string }) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.patch(`/b2b/orders/${id}/status`, statusData, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update B2B order status.');
+  }
+};
+
 export const fetchEditableFieldsTemplate = async (clientType = 'mobile_stores') => {
   try {
     const token = getToken();
