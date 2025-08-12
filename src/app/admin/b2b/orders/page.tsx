@@ -149,9 +149,13 @@ export default function B2BOrdersPage() {
             duration: 3000,
           });
 
-          // Redirect to invoice listing
+          // Redirect to invoice listing with search query
           setTimeout(() => {
-            window.location.href = '/admin/b2b/invoices';
+            if (checkData.data.redirect_to) {
+              window.location.href = checkData.data.redirect_to;
+            } else {
+              window.location.href = `/admin/b2b/invoices?search=${checkData.data.invoice_number}`;
+            }
           }, 1500);
           return;
         }
