@@ -222,12 +222,12 @@ export default function GenerateInvoicePage() {
           description: message
         });
 
-        // Auto-redirect to invoice listing after a short delay
+        // Auto-redirect to invoice listing with search query after a short delay
         setTimeout(() => {
           if (data.data.redirect_to) {
             router.push(data.data.redirect_to);
           } else {
-            router.push('/admin/b2b/invoices');
+            router.push(`/admin/b2b/invoices?search=${data.data.invoice_number}`);
           }
         }, 2000); // 2 second delay to show the success message
 

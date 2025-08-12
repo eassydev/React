@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Search, Download, Eye, FileText, Filter } from 'lucide-react';
 import { fetchB2BInvoices, downloadB2BInvoice } from '@/lib/api';
 
@@ -47,6 +48,7 @@ interface B2BInvoice {
 }
 
 export default function B2BInvoicesPage() {
+  const searchParams = useSearchParams();
   const [invoices, setInvoices] = useState<B2BInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,16 +59,29 @@ export default function B2BInvoicesPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
 
-  const fetchInvoices = async () => {
+  // ✅ Initialize search term from URL parameter on component mount
+  useEffect(() => {
+    const urlSearchTerm = searchParams.get('search');
+    console.log('🔍 URL search parameter detected:', urlSearchTerm);
+    if (urlSearchTerm) {
+      console.log('🔍 Setting search term and fetching invoices with:', urlSearchTerm);
+      setSearchTerm(urlSearchTerm);
+      // Force a fetch with the search term immediately
+      fetchInvoicesWithSearch(urlSearchTerm);
+    }
+  }, [searchParams]);
+
+  const fetchInvoicesWithSearch = async (searchValue = searchTerm) => {
     try {
       setLoading(true);
+      console.log('🔍 Fetching invoices with search value:', searchValue);
       const data = await fetchB2BInvoices(
         currentPage,
         10,
         paymentStatusFilter || 'all',
         dateFromFilter,
         dateToFilter,
-        searchTerm
+        searchValue
       );
 
       // Ensure we have valid data structure
@@ -90,6 +105,9 @@ export default function B2BInvoicesPage() {
       setLoading(false);
     }
   };
+
+  // Alias for backward compatibility
+  const fetchInvoices = () => fetchInvoicesWithSearch();
 
   useEffect(() => {
     fetchInvoices();
