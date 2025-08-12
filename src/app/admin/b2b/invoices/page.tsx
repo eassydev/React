@@ -107,12 +107,12 @@ export default function B2BInvoicesPage() {
 
   const handleDownloadInvoice = async (invoiceId: string) => {
     try {
-      const data = await downloadB2BInvoice(invoiceId);
-      if (data.data?.download_url) {
-        window.open(data.data.download_url, '_blank');
-      }
+      console.log('🔽 Downloading invoice:', invoiceId);
+      await downloadB2BInvoice(invoiceId);
+      console.log('✅ Download initiated successfully');
     } catch (error) {
-      console.error('Error downloading invoice:', error);
+      console.error('❌ Error downloading invoice:', error);
+      alert('Failed to download invoice. Please try again.');
     }
   };
 
@@ -290,7 +290,8 @@ export default function B2BInvoicesPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleDownloadInvoice(invoice.id)}
-                              disabled={!invoice.invoice_file_path}
+                              disabled={false}
+                              title="Download Invoice"
                             >
                               <Download className="w-4 h-4" />
                             </Button>
