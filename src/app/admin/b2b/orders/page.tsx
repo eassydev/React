@@ -131,16 +131,33 @@ export default function B2BOrdersPage() {
 
   const handleGenerateInvoice = async (orderId: string, orderNumber: string) => {
     try {
-      // ✅ FIX: Use correct token key that matches login storage
+      // ✅ First check if invoice already exists
       const adminToken = localStorage.getItem('token') || localStorage.getItem('adminToken');
 
-      console.log('🔑 Token check:', {
-        exists: !!adminToken,
-        length: adminToken?.length,
-        preview: adminToken?.substring(0, 50),
-        from_key: localStorage.getItem('token') ? 'token' : 'adminToken'
+      const checkResponse = await fetch(`/admin-api/b2b/orders/${orderId}/invoice-check`, {
+        headers: {
+          'admin-auth-token': adminToken || ''
+        }
       });
 
+      if (checkResponse.ok) {
+        const checkData = await checkResponse.json();
+        if (checkData.data.exists) {
+          toast({
+            title: "Invoice Already Exists",
+            description: `Invoice ${checkData.data.invoice_number} already exists for this order. Redirecting to invoice listing...`,
+            duration: 3000,
+          });
+
+          // Redirect to invoice listing
+          setTimeout(() => {
+            window.location.href = '/admin/b2b/invoices';
+          }, 1500);
+          return;
+        }
+      }
+
+      // ✅ Generate new invoice
       const response = await fetch(`/admin-api/b2b/orders/${orderId}/generate-invoice`, {
         method: 'POST',
         headers: {
@@ -156,21 +173,29 @@ export default function B2BOrdersPage() {
       });
 
       if (response.status === 401) {
-        alert('❌ Authentication failed. Please check your login status.');
-        console.error('401 Authentication error - check token validity');
+        toast({
+          title: "Authentication Error",
+          description: "Please check your login status and try again.",
+          variant: "destructive",
+        });
         return;
       }
 
       if (response.ok) {
         const data = await response.json();
 
+        // Show appropriate message based on whether invoice was existing or new
+        const message = data.data.existing
+          ? `Invoice ${data.data.invoice_number} already exists for this order`
+          : `Invoice ${data.data.invoice_number} has been generated successfully`;
+
         toast({
-          title: "Invoice Generated Successfully!",
-          description: `Invoice ${data.data.invoice_number} has been generated and status updated.`,
-          duration: 5000,
+          title: data.data.existing ? "Invoice Already Exists" : "Invoice Generated Successfully!",
+          description: message + ". Redirecting to invoice listing...",
+          duration: 3000,
         });
 
-        // Immediately update the specific order in the state
+        // Update the order status immediately
         setOrders(prevOrders =>
           prevOrders.map(order =>
             order.id === orderId
@@ -179,23 +204,51 @@ export default function B2BOrdersPage() {
           )
         );
 
-        // Also refresh the orders list to show updated invoice status
-        console.log('🔄 Refreshing orders list after invoice generation...');
-        await fetchOrders();
-        console.log('✅ Orders list refreshed');
+        // Auto-redirect to invoice listing
+        setTimeout(() => {
+          if (data.data.redirect_to) {
+            window.location.href = data.data.redirect_to;
+          } else {
+            window.location.href = '/admin/b2b/invoices';
+          }
+        }, 1500); // 1.5 second delay to show the success message
 
-        // Optional: Redirect to invoice listing after user sees the status change
-        // Uncomment the lines below if you want automatic redirect
-        // setTimeout(() => {
-        //   window.location.href = '/admin/b2b/invoices';
-        // }, 2000);
       } else {
         const errorData = await response.json();
-        alert(`❌ Failed to generate invoice: ${errorData.message || 'Unknown error'}`);
+        toast({
+          title: "Error",
+          description: `Failed to generate invoice: ${errorData.message || 'Unknown error'}`,
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error('Error generating invoice:', error);
-      alert('❌ Failed to generate invoice. Please check your connection and try again.');
+      toast({
+        title: "Error",
+        description: "Failed to generate invoice. Please check your connection and try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // ✅ NEW: Quick function to check invoice status for an order
+  const checkInvoiceStatus = async (orderId: string) => {
+    try {
+      const adminToken = localStorage.getItem('token') || localStorage.getItem('adminToken');
+      const response = await fetch(`/admin-api/b2b/orders/${orderId}/invoice-check`, {
+        headers: {
+          'admin-auth-token': adminToken || ''
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.data;
+      }
+      return { exists: false };
+    } catch (error) {
+      console.error('Error checking invoice status:', error);
+      return { exists: false };
     }
   };
 
