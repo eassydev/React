@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter, useParams } from 'next/navigation';
-import { ArrowLeft, FileText, Save, Calculator, Download } from 'lucide-react';
+import { ArrowLeft, FileText, Save, Calculator, Download, Eye } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -61,7 +61,39 @@ export default function GenerateInvoicePage() {
 
   useEffect(() => {
     fetchOrderDetails();
+    checkExistingInvoice();
   }, [orderId]);
+
+  const checkExistingInvoice = async () => {
+    try {
+      const response = await fetch(`/admin-api/b2b/orders/${orderId}/invoice-check`, {
+        headers: {
+          'admin-auth-token': localStorage.getItem('adminToken')
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.data.exists) {
+          setInvoiceGenerated(true);
+          setGeneratedInvoice({
+            invoice_id: data.data.invoice_id,
+            invoice_number: data.data.invoice_number,
+            total_amount: data.data.total_amount,
+            payment_status: data.data.payment_status,
+            download_url: data.data.download_url
+          });
+
+          toast({
+            title: 'Invoice Already Exists',
+            description: `Invoice ${data.data.invoice_number} already exists for this order`,
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error checking existing invoice:', error);
+    }
+  };
 
   const fetchOrderDetails = async () => {
     try {
@@ -75,11 +107,6 @@ export default function GenerateInvoicePage() {
         const data = await response.json();
         const orderData = data.data;
         setOrder(orderData);
-
-        // Check if invoice already exists
-        if (orderData.invoice_generated_at) {
-          setInvoiceGenerated(true);
-        }
 
         // Initialize invoice data from order
         setInvoiceData(prev => ({
@@ -184,11 +211,26 @@ export default function GenerateInvoicePage() {
         const data = await response.json();
         setGeneratedInvoice(data.data);
         setInvoiceGenerated(true);
-        
+
+        // Show appropriate message based on whether invoice was existing or new
+        const message = data.data.existing
+          ? `Invoice ${data.data.invoice_number} already exists for this order`
+          : `Invoice ${data.data.invoice_number} generated successfully`;
+
         toast({
-          title: 'Success',
-          description: `Invoice ${data.data.invoice_number} generated successfully`
+          title: data.data.existing ? 'Invoice Already Exists' : 'Success',
+          description: message
         });
+
+        // Auto-redirect to invoice listing after a short delay
+        setTimeout(() => {
+          if (data.data.redirect_to) {
+            router.push(data.data.redirect_to);
+          } else {
+            router.push('/admin/b2b/invoices');
+          }
+        }, 2000); // 2 second delay to show the success message
+
       } else {
         const errorData = await response.json();
         throw new Error(errorData.message || 'Failed to generate invoice');
@@ -279,10 +321,19 @@ export default function GenerateInvoicePage() {
               Invoice Generated
             </Badge>
             {generatedInvoice && (
-              <Button onClick={downloadInvoice} variant="outline">
-                <Download className="h-4 w-4 mr-2" />
-                Download PDF
-              </Button>
+              <>
+                <Button onClick={downloadInvoice} variant="outline">
+                  <Download className="h-4 w-4 mr-2" />
+                  Download PDF
+                </Button>
+                <Button
+                  onClick={() => router.push('/admin/b2b/invoices')}
+                  variant="outline"
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  View All Invoices
+                </Button>
+              </>
             )}
           </div>
         )}
@@ -324,8 +375,15 @@ export default function GenerateInvoicePage() {
                     <Download className="h-4 w-4 mr-2" />
                     Download Invoice PDF
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
+                    onClick={() => router.push('/admin/b2b/invoices')}
+                  >
+                    <Eye className="h-4 w-4 mr-2" />
+                    View All Invoices
+                  </Button>
+                  <Button
+                    variant="outline"
                     onClick={() => router.push('/admin/b2b/payment-reminders')}
                   >
                     <FileText className="h-4 w-4 mr-2" />
