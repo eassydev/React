@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import { Search, Download, Eye, FileText, Filter } from 'lucide-react';
@@ -47,7 +47,8 @@ interface B2BInvoice {
   created_at: string;
 }
 
-export default function B2BInvoicesPage() {
+// Component that uses search params - needs to be wrapped in Suspense
+function B2BInvoicesContent() {
   const searchParams = useSearchParams();
   const [invoices, setInvoices] = useState<B2BInvoice[]>([]);
   const [loading, setLoading] = useState(true);
@@ -354,5 +355,23 @@ export default function B2BInvoicesPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// Main component with Suspense wrapper
+export default function B2BInvoicesPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto py-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Loading invoices...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <B2BInvoicesContent />
+    </Suspense>
   );
 }
