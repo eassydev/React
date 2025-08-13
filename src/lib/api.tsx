@@ -58,6 +58,7 @@ export interface Category {
   is_home: boolean;
   attributes?: Attribute[];
   sac_code?: string | null; // SAC code
+  service_type?: string; // ✅ NEW: Service type field ('b2c', 'b2b', 'both')
   excludeItems?: ExcludeItem[]; // Array of excluded items
   excludedImages?: ExcludeImage[]; // Array of excluded images
   includeItems?: IncludeItem[]; // Array of excluded items
@@ -76,6 +77,7 @@ export interface Subcategory {
   weight?: Number;
   attributes?: Attribute[];
   sac_code?: string | null; // SAC code
+  service_type?: string; // ✅ NEW: Service type field ('b2c', 'b2b', 'both')
   excludeItems?: ExcludeItem[]; // Array of excluded items
   excludedImages?: ExcludeImage[]; // Array of excluded images
   includeItems?: IncludeItem[]; // Array of excluded items
@@ -176,6 +178,7 @@ export interface RateCard {
   weight?: Number;
   strike_price: number;
   active: boolean; // Added best_deal
+  service_type?: string; // ✅ NEW: Service type field ('b2c', 'b2b', 'both')
   serviceDescriptions?: ServiceDetail[]; // Includes service details
   attributes: {
     attribute_id: string;
@@ -993,6 +996,10 @@ export const createCategory = async (category: Category): Promise<ApiResponse> =
   if (category.sac_code) {
     formData.append('sac_code', category.sac_code);
   }
+  if (category.service_type) {
+    formData.append('service_type', category.service_type); // ✅ NEW: Add service_type to FormData
+    console.log('Adding service_type to FormData:', category.service_type); // ✅ DEBUG: Log service_type
+  }
 
   // Attributes and Options
   if (category.attributes && category.attributes.length > 0) {
@@ -1078,6 +1085,9 @@ export const updateCategory = async (id: string, category: Category): Promise<Ap
 
   if (category.sac_code) {
     formData.append('sac_code', category.sac_code);
+  }
+  if (category.service_type) {
+    formData.append('service_type', category.service_type); // ✅ NEW: Add service_type to FormData
   }
 
   // Attributes and Options
@@ -1175,6 +1185,9 @@ export const createSubcategory = async (subcategory: Subcategory): Promise<ApiRe
   }
   if (subcategory.sac_code) {
     formData.append('sac_code', subcategory.sac_code);
+  }
+  if (subcategory.service_type) {
+    formData.append('service_type', subcategory.service_type); // ✅ NEW: Add service_type to FormData
   }
 
   // Attributes and Options
@@ -1375,6 +1388,9 @@ export const updateSubcategory = async (
   if (subcategory.sac_code) {
     formData.append('sac_code', subcategory.sac_code);
   }
+  if (subcategory.service_type) {
+    formData.append('service_type', subcategory.service_type); // ✅ NEW: Add service_type to FormData
+  }
 
   // Attributes and Options
   if (subcategory.attributes && subcategory.attributes.length > 0) {
@@ -1466,6 +1482,7 @@ export const createRateCard = async (rateCard: RateCard): Promise<ApiResponse> =
     strike_price: rateCard.strike_price,
     active: rateCard.active ? 1 : 0,
     subcategory_id: rateCard.subcategory_id ?? null, // Added recommended
+    service_type: rateCard.service_type ?? 'both', // ✅ NEW: Add service_type to payload
     filter_attributes: rateCard.attributes.map((attr) => ({
       attribute_id: attr.attribute_id,
       option_id: attr.option_id,
@@ -1643,6 +1660,7 @@ export const updateRateCard = async (id: string, rateCard: RateCard): Promise<Ap
     strike_price: rateCard.strike_price,
     active: rateCard.active ? 1 : 0,
     subcategory_id: rateCard.subcategory_id ?? null,
+    service_type: rateCard.service_type ?? 'both', // ✅ NEW: Add service_type to payload
     filter_attributes: rateCard.attributes.map((attr) => ({
       attribute_id: attr.attribute_id,
       option_id: attr.option_id,

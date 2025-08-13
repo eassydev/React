@@ -64,6 +64,7 @@ const RateCardForm: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState<string>('');
 
   const [weight, setWeight] = useState<number>(0);
+  const [serviceType, setServiceType] = useState<string>('both'); // ✅ NEW: Service type state
 
   useEffect(() => {
     const loadCategories = async () => {
@@ -202,6 +203,7 @@ const RateCardForm: React.FC = () => {
       strike_price: parseFloat(strikePrice),
       active: isActive,
       provider_id: selectedProviderId,
+      service_type: serviceType, // ✅ NEW: Include service_type in form data
     };
 
     try {
@@ -510,6 +512,24 @@ const RateCardForm: React.FC = () => {
                         No providers found
                       </div>
                     )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Service Type Field */}
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <Globe2 className="w-4 h-4 text-blue-500" />
+                  <span>Service Type</span>
+                </label>
+                <Select value={serviceType} onValueChange={setServiceType}>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Select service type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="both">Both (B2B & B2C)</SelectItem>
+                    <SelectItem value="b2c">B2C Only</SelectItem>
+                    <SelectItem value="b2b">B2B Only</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

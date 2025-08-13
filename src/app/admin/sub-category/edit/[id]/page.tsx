@@ -78,6 +78,7 @@ const SubcategoryEdit: React.FC = () => {
   const [includeItems, setIncludeItems] = useState<IncludeItem[]>([]);
   const [showIncludeSection, setShowIncludeSection] = useState(false);
   const [serviceTime, setServiceTime] = useState<string>('');
+  const [serviceType, setServiceType] = useState<string>('both'); // ✅ NEW: Service type state
 
   useEffect(() => {
     fetchCategoriesList();
@@ -131,6 +132,7 @@ const SubcategoryEdit: React.FC = () => {
       setMetaKeyword(subcategoryData.meta_keyword || '');
       setAttributes(subcategoryData.attributes || []);
       setServiceTime(subcategoryData.service_time || '');
+      setServiceType(subcategoryData.service_type || 'both'); // ✅ NEW: Set service_type from API
       setExcludeHeading(subcategoryData.exclude_heading || '');
       setExcludeDescription(subcategoryData.exclude_description || '');
       // Handle Exclude Items
@@ -310,6 +312,7 @@ const SubcategoryEdit: React.FC = () => {
       exclude_heading: excludeHeading,
       exclude_description: excludeDescription,
       service_time: serviceTime,
+      service_type: serviceType, // ✅ NEW: Include service_type in update data
       active: isActive,
       attributes: attributes,
       excludeItems: formattedExcludeItems, // Add exclude items
@@ -458,6 +461,38 @@ const SubcategoryEdit: React.FC = () => {
                   onChange={(e) => setMetaKeyword(e.target.value)}
                   className="h-11"
                 />
+              </div>
+
+              {/* Service Time Field */}
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <Type className="w-4 h-4 text-blue-500" />
+                  <span>Service Time</span>
+                </label>
+                <Input
+                  placeholder="Eg:- 30 mint"
+                  value={serviceTime}
+                  onChange={(e) => setServiceTime(e.target.value)}
+                  className="h-11"
+                />
+              </div>
+
+              {/* Service Type Field */}
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <Globe2 className="w-4 h-4 text-blue-500" />
+                  <span>Service Type</span>
+                </label>
+                <Select value={serviceType} onValueChange={setServiceType}>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Select service type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="both">Both (B2B & B2C)</SelectItem>
+                    <SelectItem value="b2c">B2C Only</SelectItem>
+                    <SelectItem value="b2b">B2B Only</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Active/Inactive Switch */}

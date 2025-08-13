@@ -93,6 +93,7 @@ const CategoryForm: React.FC = () => {
   const [categoryName, setCategoryName] = useState<string>('');
   const [weight, setWeight] = useState<number>(0);
   const [serviceTime, setServiceTime] = useState<string>('');
+  const [serviceType, setServiceType] = useState<string>('both'); // ✅ NEW: Service type state
 
   const [hstRates, setHstRates] = useState<any[]>([]);
   const [sacCode, setSacCode] = useState<string>('');
@@ -306,10 +307,13 @@ const CategoryForm: React.FC = () => {
       attributes: attributes,
       location_method: locationMethod,
       sac_code: sacCode,
+      service_type: serviceType, // ✅ NEW: Include service_type in form data
       excludeItems: formattedExcludeItems,
       includeItems: includeItems,
       excludedImages: formattedExcludeImages,
     };
+
+    console.log('Category Data being sent:', categoryData); // ✅ DEBUG: Log the data being sent
 
     try {
       const catdata = await createCategory(categoryData);
@@ -448,6 +452,24 @@ const CategoryForm: React.FC = () => {
                   className="h-11"
                   required
                 />
+              </div>
+
+              {/* Service Type Field */}
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <Globe2 className="w-4 h-4 text-blue-500" />
+                  <span>Service Type</span>
+                </label>
+                <Select value={serviceType} onValueChange={setServiceType}>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Select service type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="both">Both (B2B & B2C)</SelectItem>
+                    <SelectItem value="b2c">B2C Only</SelectItem>
+                    <SelectItem value="b2b">B2B Only</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Category Image Field */}

@@ -83,6 +83,7 @@ const CategoryEdit: React.FC = () => {
   const [weight, setWeight] = useState<number>(0);
   const [categoryName, setCategoryName] = useState<string>('');
   const [serviceTime, setServiceTime] = useState<string>('');
+  const [serviceType, setServiceType] = useState<string>('both'); // ✅ NEW: Service type state
   const [sacCode, setSacCode] = useState<string>('');
   const [hstRates, setHstRates] = useState<any[]>([]);
   const [attributes, setAttributes] = useState<Attribute[]>([]);
@@ -129,6 +130,7 @@ const CategoryEdit: React.FC = () => {
       setLocations(categoryData.locations || []);
       setAttributes(categoryData.attributes || []);
       setServiceTime(categoryData.service_time || '');
+      setServiceType(categoryData.service_type || 'both'); // ✅ NEW: Set service_type from API
       setWeight(Number(categoryData.weight) || 0);
       setSacCode(categoryData.sac_code || ''); // Set SAC code field
       setExcludeHeading(categoryData.exclude_heading || '');
@@ -367,6 +369,7 @@ const CategoryEdit: React.FC = () => {
       exclude_description: excludeDescription,
       location_type: locationType,
       service_time: serviceTime,
+      service_type: serviceType, // ✅ NEW: Include service_type in update data
       active: isActive,
       is_home: isHome,
       weight: weight,
@@ -447,6 +450,24 @@ const CategoryEdit: React.FC = () => {
                   className="h-11"
                   required
                 />
+              </div>
+
+              {/* Service Type Field */}
+              <div className="space-y-2">
+                <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
+                  <Globe2 className="w-4 h-4 text-blue-500" />
+                  <span>Service Type</span>
+                </label>
+                <Select value={serviceType} onValueChange={setServiceType}>
+                  <SelectTrigger className="h-11">
+                    <SelectValue placeholder="Select service type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="both">Both (B2B & B2C)</SelectItem>
+                    <SelectItem value="b2c">B2C Only</SelectItem>
+                    <SelectItem value="b2b">B2B Only</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Category Image Field */}
