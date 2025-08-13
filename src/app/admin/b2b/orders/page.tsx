@@ -4,6 +4,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Search, Eye, Edit, Settings, Download, FileText, Upload } from 'lucide-react';
 import { fetchB2BOrders, downloadB2BInvoiceSimple } from '@/lib/api';
+import { useToast } from '@/hooks/use-toast';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -55,6 +56,7 @@ interface B2BOrder {
 }
 
 export default function B2BOrdersPage() {
+  const { toast } = useToast();
   const [orders, setOrders] = useState<B2BOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -77,7 +79,10 @@ export default function B2BOrdersPage() {
 
       // Ensure we have valid data structure
       if (data && data.data) {
-        setOrders(data.data.orders || []);
+        const orders = data.data.orders || [];
+        console.log('📋 Orders fetched:', orders.length);
+        console.log('📋 Sample order invoice_status:', orders[0]?.invoice_status);
+        setOrders(orders);
         setTotalPages(data.data.pagination?.total_pages || 1);
         setTotalRecords(data.data.pagination?.total_records || 0);
       } else {
@@ -99,15 +104,155 @@ export default function B2BOrdersPage() {
 
   const handleDownloadInvoice = async (orderId: string) => {
     try {
-      // ✅ Download PDF invoice directly
-      const result = await downloadB2BInvoiceSimple(orderId);
-      if (result.success) {
-        // ✅ PDF download is handled automatically in the API function
-        console.log('Invoice PDF downloaded successfully');
+      // ✅ Get the invoice ID first, then download
+      const adminToken = localStorage.getItem('token') || localStorage.getItem('adminToken');
+
+      // First, get the invoice details to find the invoice ID
+      const invoiceResponse = await fetch(`/admin-api/b2b/orders/${orderId}`, {
+        headers: {
+          'admin-auth-token': adminToken || ''
+        }
+      });
+
+      if (invoiceResponse.ok) {
+        const orderData = await invoiceResponse.json();
+        // For now, open the download URL directly
+        const downloadUrl = `/admin-api/b2b/invoices/${orderId}/download`;
+        window.open(downloadUrl, '_blank');
+        console.log('Invoice download initiated');
+      } else {
+        throw new Error('Failed to get order details');
       }
     } catch (error) {
       console.error('Error downloading invoice:', error);
-      alert('Failed to generate invoice. Please try again.');
+      alert('Failed to download invoice. Please try again.');
+    }
+  };
+
+  const handleGenerateInvoice = async (orderId: string, orderNumber: string) => {
+    try {
+      // ✅ First check if invoice already exists
+      const adminToken = localStorage.getItem('token') || localStorage.getItem('adminToken');
+
+      const checkResponse = await fetch(`/admin-api/b2b/orders/${orderId}/invoice-check`, {
+        headers: {
+          'admin-auth-token': adminToken || ''
+        }
+      });
+
+      if (checkResponse.ok) {
+        const checkData = await checkResponse.json();
+        if (checkData.data.exists) {
+          toast({
+            title: "Invoice Already Exists",
+            description: `Invoice ${checkData.data.invoice_number} already exists for this order. Redirecting to invoice listing...`,
+            duration: 3000,
+          });
+
+          // Redirect to invoice listing with search query
+          setTimeout(() => {
+            if (checkData.data.redirect_to) {
+              window.location.href = checkData.data.redirect_to;
+            } else {
+              window.location.href = `/admin/b2b/invoices?search=${checkData.data.invoice_number}`;
+            }
+          }, 1500);
+          return;
+        }
+      }
+
+      // ✅ Generate new invoice
+      const response = await fetch(`/admin-api/b2b/orders/${orderId}/generate-invoice`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'admin-auth-token': adminToken || ''
+        },
+        body: JSON.stringify({
+          subtotal: 5000, // Default values - will be calculated from order
+          payment_terms: 'Net 30 days',
+          notes: `Invoice for order ${orderNumber}`,
+          due_days: 30
+        })
+      });
+
+      if (response.status === 401) {
+        toast({
+          title: "Authentication Error",
+          description: "Please check your login status and try again.",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (response.ok) {
+        const data = await response.json();
+
+        // Show appropriate message based on whether invoice was existing or new
+        const message = data.data.existing
+          ? `Invoice ${data.data.invoice_number} already exists for this order`
+          : `Invoice ${data.data.invoice_number} has been generated successfully`;
+
+        toast({
+          title: data.data.existing ? "Invoice Already Exists" : "Invoice Generated Successfully!",
+          description: message + ". Redirecting to invoice listing...",
+          duration: 3000,
+        });
+
+        // Update the order status immediately
+        setOrders(prevOrders =>
+          prevOrders.map(order =>
+            order.id === orderId
+              ? { ...order, invoice_status: 'generated' }
+              : order
+          )
+        );
+
+        // Auto-redirect to invoice listing
+        setTimeout(() => {
+          if (data.data.redirect_to) {
+            window.location.href = data.data.redirect_to;
+          } else {
+            window.location.href = '/admin/b2b/invoices';
+          }
+        }, 1500); // 1.5 second delay to show the success message
+
+      } else {
+        const errorData = await response.json();
+        toast({
+          title: "Error",
+          description: `Failed to generate invoice: ${errorData.message || 'Unknown error'}`,
+          variant: "destructive",
+        });
+      }
+    } catch (error) {
+      console.error('Error generating invoice:', error);
+      toast({
+        title: "Error",
+        description: "Failed to generate invoice. Please check your connection and try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // ✅ NEW: Quick function to check invoice status for an order
+  const checkInvoiceStatus = async (orderId: string) => {
+    try {
+      const adminToken = localStorage.getItem('token') || localStorage.getItem('adminToken');
+      const response = await fetch(`/admin-api/b2b/orders/${orderId}/invoice-check`, {
+        headers: {
+          'admin-auth-token': adminToken || ''
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        return data.data;
+      }
+      return { exists: false };
+    } catch (error) {
+      console.error('Error checking invoice status:', error);
+      return { exists: false };
     }
   };
 
@@ -263,6 +408,7 @@ export default function B2BOrdersPage() {
                       <TableHead>Amount</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Payment</TableHead>
+                      <TableHead>Invoice</TableHead>
                       <TableHead>Service Date</TableHead>
                       <TableHead>Received Date</TableHead>
                       <TableHead>Actions</TableHead>
@@ -317,6 +463,25 @@ export default function B2BOrdersPage() {
                         <TableCell>{getStatusBadge(order.status)}</TableCell>
                         <TableCell>{getPaymentStatusBadge(order.payment_status)}</TableCell>
                         <TableCell>
+                          {order.invoice_status === 'generated' ? (
+                            <Badge variant="default" className="bg-green-100 text-green-800">
+                              Generated
+                            </Badge>
+                          ) : order.invoice_status === 'sent' ? (
+                            <Badge variant="default" className="bg-blue-100 text-blue-800">
+                              Sent
+                            </Badge>
+                          ) : order.invoice_status === 'paid' ? (
+                            <Badge variant="default" className="bg-purple-100 text-purple-800">
+                              Paid
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="text-gray-500">
+                              Pending
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           {order.service_date ? new Date(order.service_date).toLocaleDateString() : 'TBD'}
                         </TableCell>
                         <TableCell>
@@ -355,10 +520,17 @@ export default function B2BOrdersPage() {
                                   Create Quotation
                                 </Link>
                               </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleDownloadInvoice(order.id)}>
-                                <Download className="w-4 h-4 mr-2" />
-                                Download Invoice
-                              </DropdownMenuItem>
+                              {(!order.invoice_status || order.invoice_status === 'pending') ? (
+                                <DropdownMenuItem onClick={() => handleGenerateInvoice(order.id, order.order_number)}>
+                                  <FileText className="w-4 h-4 mr-2" />
+                                  Generate Invoice
+                                </DropdownMenuItem>
+                              ) : (
+                                <DropdownMenuItem onClick={() => handleDownloadInvoice(order.id)}>
+                                  <Download className="w-4 h-4 mr-2" />
+                                  Download Invoice
+                                </DropdownMenuItem>
+                              )}
 
                             </DropdownMenuContent>
                           </DropdownMenu>

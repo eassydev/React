@@ -5183,11 +5183,53 @@ export const generateB2BInvoice = async (orderId: string, invoiceItems: any[] = 
 export const downloadB2BInvoice = async (invoiceId: string) => {
   try {
     const token = getToken();
+
+    console.log('🔽 Starting download for invoice:', invoiceId);
+
+    // ✅ OPTIMIZED: Use authenticated request (no query token needed)
     const response: AxiosResponse = await apiClient.get(`/b2b/invoices/${invoiceId}/download`, {
       headers: { 'admin-auth-token': token || '' },
+      responseType: 'blob', // Handle both PDF and HTML responses
+      timeout: 30000
     });
-    return response.data;
+
+    console.log('📄 Response received:', {
+      status: response.status,
+      contentType: response.headers['content-type'],
+      dataSize: response.data?.size || 'unknown'
+    });
+
+    // Check if it's a PDF or HTML response
+    const contentType = response.headers['content-type'];
+
+    if (contentType?.includes('application/pdf')) {
+      // ✅ PDF Response: Download directly
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Invoice-${invoiceId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      console.log('✅ PDF downloaded successfully');
+    } else if (contentType?.includes('text/html')) {
+      // ✅ HTML Response: Open in new tab
+      const blob = new Blob([response.data], { type: 'text/html' });
+      const url = window.URL.createObjectURL(blob);
+      window.open(url, '_blank');
+      console.log('✅ HTML invoice opened in new tab');
+    } else {
+      // ✅ Redirect Response: Open URL directly
+      const downloadUrl = `/admin-api/b2b/invoices/${invoiceId}/download`;
+      window.open(downloadUrl, '_blank');
+      console.log('✅ Redirect download initiated');
+    }
+
+    return { success: true, message: 'Download initiated' };
   } catch (error: any) {
+    console.error('❌ Download error:', error);
     throw new Error(error.response?.data?.message || 'Failed to download invoice.');
   }
 };

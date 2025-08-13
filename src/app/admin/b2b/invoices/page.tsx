@@ -1,7 +1,8 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { Search, Download, Eye, FileText, Filter } from 'lucide-react';
 import { fetchB2BInvoices, downloadB2BInvoice } from '@/lib/api';
 
@@ -46,7 +47,9 @@ interface B2BInvoice {
   created_at: string;
 }
 
-export default function B2BInvoicesPage() {
+// Component that uses search params - needs to be wrapped in Suspense
+function B2BInvoicesContent() {
+  const searchParams = useSearchParams();
   const [invoices, setInvoices] = useState<B2BInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -57,16 +60,29 @@ export default function B2BInvoicesPage() {
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
 
-  const fetchInvoices = async () => {
+  // ✅ Initialize search term from URL parameter on component mount
+  useEffect(() => {
+    const urlSearchTerm = searchParams.get('search');
+    console.log('🔍 URL search parameter detected:', urlSearchTerm);
+    if (urlSearchTerm) {
+      console.log('🔍 Setting search term and fetching invoices with:', urlSearchTerm);
+      setSearchTerm(urlSearchTerm);
+      // Force a fetch with the search term immediately
+      fetchInvoicesWithSearch(urlSearchTerm);
+    }
+  }, [searchParams]);
+
+  const fetchInvoicesWithSearch = async (searchValue = searchTerm) => {
     try {
       setLoading(true);
+      console.log('🔍 Fetching invoices with search value:', searchValue);
       const data = await fetchB2BInvoices(
         currentPage,
         10,
         paymentStatusFilter || 'all',
         dateFromFilter,
         dateToFilter,
-        searchTerm
+        searchValue
       );
 
       // Ensure we have valid data structure
@@ -91,6 +107,9 @@ export default function B2BInvoicesPage() {
     }
   };
 
+  // Alias for backward compatibility
+  const fetchInvoices = () => fetchInvoicesWithSearch();
+
   useEffect(() => {
     fetchInvoices();
   }, [currentPage, searchTerm, paymentStatusFilter, dateFromFilter, dateToFilter]);
@@ -107,12 +126,12 @@ export default function B2BInvoicesPage() {
 
   const handleDownloadInvoice = async (invoiceId: string) => {
     try {
-      const data = await downloadB2BInvoice(invoiceId);
-      if (data.data?.download_url) {
-        window.open(data.data.download_url, '_blank');
-      }
+      console.log('🔽 Downloading invoice:', invoiceId);
+      await downloadB2BInvoice(invoiceId);
+      console.log('✅ Download initiated successfully');
     } catch (error) {
-      console.error('Error downloading invoice:', error);
+      console.error('❌ Error downloading invoice:', error);
+      alert('Failed to download invoice. Please try again.');
     }
   };
 
@@ -290,7 +309,8 @@ export default function B2BInvoicesPage() {
                               variant="ghost"
                               size="sm"
                               onClick={() => handleDownloadInvoice(invoice.id)}
-                              disabled={!invoice.invoice_file_path}
+                              disabled={false}
+                              title="Download Invoice"
                             >
                               <Download className="w-4 h-4" />
                             </Button>
@@ -335,5 +355,23 @@ export default function B2BInvoicesPage() {
         )}
       </div>
     </div>
+  );
+}
+
+// Main component with Suspense wrapper
+export default function B2BInvoicesPage() {
+  return (
+    <Suspense fallback={
+      <div className="container mx-auto py-6">
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+            <p className="mt-2 text-gray-600">Loading invoices...</p>
+          </div>
+        </div>
+      </div>
+    }>
+      <B2BInvoicesContent />
+    </Suspense>
   );
 }
