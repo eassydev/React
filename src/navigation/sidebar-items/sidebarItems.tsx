@@ -257,6 +257,7 @@ export const sidebarItems: SidebarItem[] = [
       { title: 'Orders', route: `${basePath}/b2b/orders` },
       { title: 'Quotations', route: `${basePath}/b2b/quotations` }, // ✅ NEW: Quotation management
       { title: 'Invoices', route: `${basePath}/b2b/invoices` },
+      { title: 'Payment Reminders', route: `${basePath}/b2b/payment-reminders` }, // ✅ NEW: Payment reminders
     ],
   },
   {
