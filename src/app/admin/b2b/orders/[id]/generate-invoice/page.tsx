@@ -248,9 +248,8 @@ export default function GenerateInvoicePage() {
 
   const downloadInvoice = async () => {
     try {
-      const adminToken = localStorage.getItem('adminToken');
-      // ✅ Use token in URL for window.open downloads
-      const downloadUrl = `/admin-api/b2b/invoices/${generatedInvoice?.invoice_id}/download?token=${encodeURIComponent(adminToken || '')}`;
+      // ✅ Simple approach - let backend handle auth
+      const downloadUrl = `/admin-api/b2b/invoices/${generatedInvoice?.invoice_id}/download`;
       window.open(downloadUrl, '_blank');
     } catch (error) {
       toast({

@@ -116,8 +116,8 @@ export default function B2BOrdersPage() {
 
       if (invoiceResponse.ok) {
         const orderData = await invoiceResponse.json();
-        // ✅ Use token in URL for window.open downloads
-        const downloadUrl = `/admin-api/b2b/invoices/${orderId}/download?token=${encodeURIComponent(adminToken || '')}`;
+        // ✅ Simple approach - let backend handle auth via session/cookies
+        const downloadUrl = `/admin-api/b2b/invoices/${orderId}/download`;
         window.open(downloadUrl, '_blank');
         console.log('Invoice download initiated');
       } else {
