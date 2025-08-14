@@ -248,18 +248,10 @@ export default function GenerateInvoicePage() {
 
   const downloadInvoice = async () => {
     try {
-      const response = await fetch(`/admin-api/b2b/invoices/${generatedInvoice?.invoice_id}/download`, {
-        headers: {
-          'admin-auth-token': localStorage.getItem('adminToken')
-        }
-      });
-
-      if (response.ok) {
-        // Handle PDF download
-        window.open(response.url, '_blank');
-      } else {
-        throw new Error('Failed to download invoice');
-      }
+      const adminToken = localStorage.getItem('adminToken');
+      // ✅ Use token in URL for window.open downloads
+      const downloadUrl = `/admin-api/b2b/invoices/${generatedInvoice?.invoice_id}/download?token=${encodeURIComponent(adminToken || '')}`;
+      window.open(downloadUrl, '_blank');
     } catch (error) {
       toast({
         variant: 'destructive',
