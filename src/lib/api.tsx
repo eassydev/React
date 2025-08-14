@@ -5410,7 +5410,11 @@ export const fetchOverdueInvoices = async (page = 1, limit = 20) => {
     const token = getToken();
     const response: AxiosResponse = await apiClient.get('/b2b/invoices/overdue', {
       headers: { 'admin-auth-token': token || '' },
-      params: { page, limit },
+      params: {
+        page,
+        limit,
+        _t: Date.now() // Cache-busting parameter
+      },
     });
     return response.data;
   } catch (error: any) {

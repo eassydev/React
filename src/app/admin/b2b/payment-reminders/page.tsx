@@ -23,6 +23,36 @@ import {
   sendBulkPaymentReminders
 } from '@/lib/api';
 
+interface PaymentReminders {
+  gentle_reminder?: boolean;
+  gentle_reminder_sent_at?: string;
+  gentle_reminder_sent_by?: string;
+  gentle_reminder_read_status?: string;
+  gentle_reminder_delivery_status?: string;
+  manual_reminder?: boolean;
+  manual_reminder_sent_at?: string;
+  manual_reminder_sent_by?: string;
+  pre_due_1?: boolean;
+  pre_due_1_sent_at?: string;
+  pre_due_2?: boolean;
+  pre_due_2_sent_at?: string;
+  pre_due_3?: boolean;
+  pre_due_3_sent_at?: string;
+  pre_due_4?: boolean;
+  pre_due_4_sent_at?: string;
+  pre_due_5?: boolean;
+  pre_due_5_sent_at?: string;
+  post_due_1?: boolean;
+  post_due_1_sent_at?: string;
+  post_due_2?: boolean;
+  post_due_2_sent_at?: string;
+  post_due_3?: boolean;
+  post_due_3_sent_at?: string;
+  post_due_5?: boolean;
+  post_due_5_sent_at?: string;
+  [key: string]: any; // For any additional reminder types
+}
+
 interface OverdueInvoice {
   id: string;
   invoice_number: string;
@@ -40,7 +70,8 @@ interface OverdueInvoice {
   payment_status: string;
   days_overdue: number;
   urgency_level: 'low' | 'medium' | 'high' | 'critical';
-  last_reminder_sent: string | null;
+  payment_reminders: PaymentReminders; // Properly typed object!
+  last_reminder_sent: string | null; // Optional - calculated by backend (we calculate on frontend now)
 }
 
 interface ReminderHistory {
@@ -73,6 +104,24 @@ export default function PaymentRemindersPage() {
     fetchReminderHistory();
   }, []);
 
+  // Helper function to calculate last reminder date from payment_reminders JSON
+  const getLastReminderDate = (reminders: PaymentReminders | null | undefined): string | null => {
+    if (!reminders) return null;
+
+    const reminderDates = Object.keys(reminders)
+      .filter(key => key.endsWith('_sent_at'))
+      .map(key => reminders[key])
+      .filter(date => date);
+
+    return reminderDates.length > 0 ?
+      reminderDates.sort((a, b) => new Date(b).getTime() - new Date(a).getTime())[0] :
+      null;
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString();
+  };
+
   const fetchOverdueInvoices = async () => {
     try {
       setLoading(true);
@@ -102,20 +151,27 @@ export default function PaymentRemindersPage() {
   const sendManualReminder = async (invoiceId: string) => {
     try {
       await sendManualPaymentReminderAPI(invoiceId, {
-        reminder_type: 'manual_reminder'
+        reminder_type: 'gentle_reminder'
       });
 
       toast({
         title: 'Success',
         description: 'Payment reminder sent successfully'
       });
-      fetchOverdueInvoices();
-      fetchReminderHistory();
-    } catch (error) {
+
+      // Add a small delay to ensure database update is committed
+      setTimeout(() => {
+        fetchOverdueInvoices();
+        fetchReminderHistory();
+      }, 500);
+
+    } catch (error: any) {
+      const errorMessage = error?.response?.data?.message || error?.message || 'Failed to send payment reminder';
+
       toast({
         variant: 'destructive',
         title: 'Error',
-        description: 'Failed to send payment reminder'
+        description: errorMessage
       });
     }
   };
@@ -141,8 +197,12 @@ export default function PaymentRemindersPage() {
         description: `Bulk reminders sent: ${data.data.successful_sends} successful, ${data.data.failed_sends} failed`
       });
       setSelectedInvoices([]);
-      fetchOverdueInvoices();
-      fetchReminderHistory();
+
+      // Add a small delay to ensure database updates are committed
+      setTimeout(() => {
+        fetchOverdueInvoices();
+        fetchReminderHistory();
+      }, 500);
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -247,8 +307,20 @@ export default function PaymentRemindersPage() {
                       Send Bulk Reminders ({selectedInvoices.length})
                     </Button>
                   )}
-                  <Button onClick={fetchOverdueInvoices} variant="outline">
-                    Refresh
+                  <Button
+                    onClick={fetchOverdueInvoices}
+                    variant="outline"
+                    disabled={loading}
+                    className="flex items-center gap-2"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900"></div>
+                        Refreshing...
+                      </>
+                    ) : (
+                      'Refresh'
+                    )}
                   </Button>
                 </div>
               </div>
@@ -304,10 +376,12 @@ export default function PaymentRemindersPage() {
                         <Mail className="h-4 w-4 text-muted-foreground" />
                         <div>
                           <p className="text-muted-foreground">
-                            {invoice.last_reminder_sent ? 
-                              `Last: ${new Date(invoice.last_reminder_sent).toLocaleDateString()}` : 
-                              'No reminders sent'
-                            }
+                            {(() => {
+                              const lastReminder = getLastReminderDate(invoice.payment_reminders);
+                              return lastReminder ?
+                                `Last: ${formatDate(lastReminder)}` :
+                                'No reminders sent';
+                            })()}
                           </p>
                         </div>
                       </div>
