@@ -5364,6 +5364,122 @@ export const fetchB2BInvoiceById = async (id: string) => {
   }
 };
 
+// ✅ PAYMENT REMINDER API FUNCTIONS
+export const sendManualPaymentReminder = async (invoiceId: string, reminderData: { reminder_type?: string; custom_message?: string }) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post(`/b2b/invoices/${invoiceId}/send-reminder`, reminderData, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to send payment reminder.');
+  }
+};
+
+export const sendBulkPaymentReminders = async (reminderData: { invoice_ids: string[]; reminder_type?: string; custom_message?: string }) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post('/b2b/invoices/bulk-reminders', reminderData, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to send bulk payment reminders.');
+  }
+};
+
+export const fetchPaymentReminderHistory = async (page = 1, limit = 20, invoiceId?: string) => {
+  try {
+    const token = getToken();
+    const params: Record<string, any> = { page, limit };
+    if (invoiceId) params.invoice_id = invoiceId;
+
+    const response: AxiosResponse = await apiClient.get('/b2b/invoices/reminder-history', {
+      headers: { 'admin-auth-token': token || '' },
+      params,
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch payment reminder history.');
+  }
+};
+
+export const fetchOverdueInvoices = async (page = 1, limit = 20) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/b2b/invoices/overdue', {
+      headers: { 'admin-auth-token': token || '' },
+      params: { page, limit },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch overdue invoices.');
+  }
+};
+
+export const updateInvoicePaymentStatus = async (invoiceId: string, paymentData: { payment_status: string; payment_date?: string; payment_amount?: number; payment_notes?: string }) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.put(`/b2b/invoices/${invoiceId}/payment-status`, paymentData, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update payment status.');
+  }
+};
+
+// ✅ ADVANCED PROVIDER SEARCH & ASSIGNMENT API FUNCTIONS
+export const getAdvancedProviderSearch = async (filters: {
+  category_id?: string;
+  subcategory_id?: string;
+  city_id?: string;
+  latitude?: number;
+  longitude?: number;
+  distance_km?: number;
+  min_rating?: number;
+  max_rating?: number;
+  service_date?: string;
+  service_time?: string;
+  max_daily_bookings?: number;
+  exclude_overloaded?: boolean;
+  sort_by?: string;
+  sort_order?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/b2b/providers/advanced-search', {
+      headers: { 'admin-auth-token': token || '' },
+      params: filters,
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to perform advanced provider search.');
+  }
+};
+
+export const bulkAssignProviders = async (assignments: Array<{
+  order_id: string;
+  provider_id: string;
+  assignment_notes?: string;
+}>) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post('/b2b/orders/bulk-assign-providers',
+      { assignments },
+      {
+        headers: { 'admin-auth-token': token || '' },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to bulk assign providers.');
+  }
+};
+
 // ✅ B2B Service Address Management
 export const fetchB2BServiceAddresses = async (customerId: string) => {
   try {

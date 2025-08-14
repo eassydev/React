@@ -16,6 +16,12 @@ import {
   Building2
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import {
+  fetchOverdueInvoices as fetchOverdueInvoicesAPI,
+  fetchPaymentReminderHistory,
+  sendManualPaymentReminder as sendManualPaymentReminderAPI,
+  sendBulkPaymentReminders
+} from '@/lib/api';
 
 interface OverdueInvoice {
   id: string;
@@ -70,17 +76,9 @@ export default function PaymentRemindersPage() {
   const fetchOverdueInvoices = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/admin/b2b/invoices/overdue', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setOverdueInvoices(data.data.overdue_invoices);
-        setSummary(data.data.summary);
-      }
+      const data = await fetchOverdueInvoicesAPI();
+      setOverdueInvoices(data.data.overdue_invoices);
+      setSummary(data.data.summary);
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -94,16 +92,8 @@ export default function PaymentRemindersPage() {
 
   const fetchReminderHistory = async () => {
     try {
-      const response = await fetch('/api/admin/b2b/invoices/reminder-history', {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        setReminderHistory(data.data.reminder_history);
-      }
+      const data = await fetchPaymentReminderHistory();
+      setReminderHistory(data.data.reminder_history);
     } catch (error) {
       console.error('Failed to fetch reminder history:', error);
     }
@@ -111,27 +101,16 @@ export default function PaymentRemindersPage() {
 
   const sendManualReminder = async (invoiceId: string) => {
     try {
-      const response = await fetch(`/api/admin/b2b/invoices/${invoiceId}/send-reminder`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        },
-        body: JSON.stringify({
-          reminder_type: 'manual_reminder'
-        })
+      await sendManualPaymentReminderAPI(invoiceId, {
+        reminder_type: 'manual_reminder'
       });
 
-      if (response.ok) {
-        toast({
-          title: 'Success',
-          description: 'Payment reminder sent successfully'
-        });
-        fetchOverdueInvoices();
-        fetchReminderHistory();
-      } else {
-        throw new Error('Failed to send reminder');
-      }
+      toast({
+        title: 'Success',
+        description: 'Payment reminder sent successfully'
+      });
+      fetchOverdueInvoices();
+      fetchReminderHistory();
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -152,30 +131,18 @@ export default function PaymentRemindersPage() {
     }
 
     try {
-      const response = await fetch('/api/admin/b2b/invoices/bulk-reminders', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('adminToken')}`
-        },
-        body: JSON.stringify({
-          invoice_ids: selectedInvoices,
-          reminder_type: 'bulk_manual_reminder'
-        })
+      const data = await sendBulkPaymentReminders({
+        invoice_ids: selectedInvoices,
+        reminder_type: 'bulk_manual_reminder'
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        toast({
-          title: 'Success',
-          description: `Bulk reminders sent: ${data.data.successful_sends} successful, ${data.data.failed_sends} failed`
-        });
-        setSelectedInvoices([]);
-        fetchOverdueInvoices();
-        fetchReminderHistory();
-      } else {
-        throw new Error('Failed to send bulk reminders');
-      }
+      toast({
+        title: 'Success',
+        description: `Bulk reminders sent: ${data.data.successful_sends} successful, ${data.data.failed_sends} failed`
+      });
+      setSelectedInvoices([]);
+      fetchOverdueInvoices();
+      fetchReminderHistory();
     } catch (error) {
       toast({
         variant: 'destructive',
