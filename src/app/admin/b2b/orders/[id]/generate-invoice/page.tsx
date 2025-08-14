@@ -248,8 +248,8 @@ export default function GenerateInvoicePage() {
 
   const downloadInvoice = async () => {
     try {
-      // ✅ Simple approach - let backend handle auth
-      const downloadUrl = `/admin-api/b2b/invoices/${generatedInvoice?.invoice_id}/download`;
+      // ✅ Use proxy download to bypass S3 permission issues
+      const downloadUrl = `/admin-api/b2b/invoices/${generatedInvoice?.invoice_id}/proxy-download`;
       window.open(downloadUrl, '_blank');
     } catch (error) {
       toast({

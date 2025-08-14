@@ -116,10 +116,10 @@ export default function B2BOrdersPage() {
 
       if (invoiceResponse.ok) {
         const orderData = await invoiceResponse.json();
-        // ✅ Simple approach - let backend handle auth via session/cookies
-        const downloadUrl = `/admin-api/b2b/invoices/${orderId}/download`;
+        // ✅ Use proxy download to bypass S3 permission issues
+        const downloadUrl = `/admin-api/b2b/invoices/${orderId}/proxy-download`;
         window.open(downloadUrl, '_blank');
-        console.log('Invoice download initiated');
+        console.log('Invoice proxy download initiated');
       } else {
         throw new Error('Failed to get order details');
       }
