@@ -3,9 +3,9 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Search, Download, Eye, FileText, Filter } from 'lucide-react';
+import { Search, Download, Eye, FileText, Filter, Loader2, RefreshCw } from 'lucide-react';
 import { fetchB2BInvoices, downloadB2BInvoice } from '@/lib/api';
-
+import { toast } from "@/components/ui/use-toast"
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -52,6 +52,7 @@ function B2BInvoicesContent() {
   const searchParams = useSearchParams();
   const [invoices, setInvoices] = useState<B2BInvoice[]>([]);
   const [loading, setLoading] = useState(true);
+  const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('');
   const [dateFromFilter, setDateFromFilter] = useState('');
@@ -127,11 +128,109 @@ function B2BInvoicesContent() {
   const handleDownloadInvoice = async (invoiceId: string) => {
     try {
       console.log('🔽 Downloading invoice:', invoiceId);
-      await downloadB2BInvoice(invoiceId);
-      console.log('✅ Download initiated successfully');
+
+      const adminToken = localStorage.getItem('token') || localStorage.getItem('adminToken');
+
+      // Use the proxy download endpoint that works with S3
+      const downloadUrl = `/admin-api/b2b/invoices/${invoiceId}/proxy-download`;
+
+      const response = await fetch(downloadUrl, {
+        method: 'GET',
+        headers: {
+          'admin-auth-token': adminToken || ''
+        }
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+
+        // Get filename from response headers or use default
+        const contentDisposition = response.headers.get('content-disposition');
+        let filename = 'invoice.pdf';
+        if (contentDisposition) {
+          const filenameMatch = contentDisposition.match(/filename="(.+)"/);
+          if (filenameMatch) {
+            filename = filenameMatch[1];
+          }
+        }
+
+        link.download = filename;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+
+        toast({
+          title: "Download Started",
+          description: "PDF download has been initiated",
+        });
+
+        console.log('✅ Download initiated successfully');
+      } else {
+        throw new Error('Failed to download PDF');
+      }
     } catch (error) {
       console.error('❌ Error downloading invoice:', error);
-      alert('Failed to download invoice. Please try again.');
+      toast({
+        title: "Error",
+        description: "Failed to download invoice. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  // ✅ NEW: Retry PDF generation for failed invoices
+  const handleRetryPDF = async (invoiceId: string) => {
+    try {
+      setRegeneratingId(invoiceId);
+      const adminToken = localStorage.getItem('token') || localStorage.getItem('adminToken');
+
+      toast({
+        title: "Generating PDF",
+        description: "Please wait while we generate your invoice PDF...",
+      });
+
+      const response = await fetch(`/admin-api/b2b/invoices/${invoiceId}/regenerate-pdf`, {
+        method: 'POST',
+        headers: {
+          'admin-auth-token': adminToken || ''
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        if (data.success) {
+          toast({
+            title: "PDF Generated Successfully",
+            description: "Invoice PDF has been generated and is now available for download",
+          });
+
+          // Refresh the invoices list to show updated PDF status
+          fetchInvoices();
+        } else {
+          toast({
+            title: "PDF Generation Failed",
+            description: data.message || "Failed to generate PDF",
+            variant: "destructive",
+          });
+        }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.message || 'Failed to regenerate PDF');
+      }
+    } catch (error: any) {
+      console.error('Error regenerating PDF:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to regenerate PDF",
+        variant: "destructive",
+      });
+    } finally {
+      setRegeneratingId(null);
     }
   };
 
@@ -259,6 +358,7 @@ function B2BInvoicesContent() {
                       <TableHead>Due Date</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Payment Status</TableHead>
+                      <TableHead>PDF Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -294,6 +394,20 @@ function B2BInvoicesContent() {
                           </div>
                         </TableCell>
                         <TableCell>{getPaymentStatusBadge(invoice.payment_status)}</TableCell>
+
+                        {/* ✅ PDF Status Column */}
+                        <TableCell>
+                          {invoice.invoice_file_path ? (
+                            <Badge variant="default" className="bg-green-100 text-green-800">
+                              PDF Ready
+                            </Badge>
+                          ) : (
+                            <Badge variant="destructive" className="bg-red-100 text-red-800">
+                              PDF Missing
+                            </Badge>
+                          )}
+                        </TableCell>
+
                         <TableCell>
                           <div className="flex items-center space-x-2">
                             <Button
@@ -305,21 +419,39 @@ function B2BInvoicesContent() {
                                 <Eye className="w-4 h-4" />
                               </Link>
                             </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDownloadInvoice(invoice.id)}
-                              disabled={false}
-                              title="Download Invoice"
-                            >
-                              <Download className="w-4 h-4" />
-                            </Button>
+
+                            {/* Download Button - only show if PDF exists */}
+                            {invoice.invoice_file_path ? (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDownloadInvoice(invoice.id)}
+                                title="Download Invoice PDF"
+                              >
+                                <Download className="w-4 h-4" />
+                              </Button>
+                            ) : (
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleRetryPDF(invoice.id)}
+                                disabled={regeneratingId === invoice.id}
+                                title={regeneratingId === invoice.id ? "Generating PDF..." : "Generate PDF"}
+                                className="text-orange-600 hover:text-orange-700"
+                              >
+                                {regeneratingId === invoice.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <RefreshCw className="w-4 h-4" />
+                                )}
+                              </Button>
+                            )}
                           </div>
                         </TableCell>
                       </TableRow>
                     )) : (
                       <TableRow>
-                        <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                        <TableCell colSpan={10} className="text-center py-8 text-gray-500">
                           {loading ? 'Loading invoices...' : 'No invoices found'}
                         </TableCell>
                       </TableRow>
