@@ -53,6 +53,7 @@ function B2BInvoicesContent() {
   const [invoices, setInvoices] = useState<B2BInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('');
   const [dateFromFilter, setDateFromFilter] = useState('');
@@ -126,7 +127,11 @@ function B2BInvoicesContent() {
   };
 
   const handleDownloadInvoice = async (invoiceId: string) => {
+    // ✅ Prevent multiple downloads
+    if (downloadingId === invoiceId) return;
+
     try {
+      setDownloadingId(invoiceId);
       console.log('🔽 Downloading invoice:', invoiceId);
 
       const adminToken = localStorage.getItem('token') || localStorage.getItem('adminToken');
@@ -179,11 +184,16 @@ function B2BInvoicesContent() {
         description: "Failed to download invoice. Please try again.",
         variant: "destructive",
       });
+    } finally {
+      setDownloadingId(null);
     }
   };
 
   // ✅ NEW: Retry PDF generation for failed invoices
   const handleRetryPDF = async (invoiceId: string) => {
+    // ✅ Prevent multiple regeneration requests
+    if (regeneratingId === invoiceId) return;
+
     try {
       setRegeneratingId(invoiceId);
       const adminToken = localStorage.getItem('token') || localStorage.getItem('adminToken');
@@ -426,9 +436,14 @@ function B2BInvoicesContent() {
                                 variant="ghost"
                                 size="sm"
                                 onClick={() => handleDownloadInvoice(invoice.id)}
-                                title="Download Invoice PDF"
+                                disabled={downloadingId === invoice.id}
+                                title={downloadingId === invoice.id ? "Downloading..." : "Download Invoice PDF"}
                               >
-                                <Download className="w-4 h-4" />
+                                {downloadingId === invoice.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Download className="w-4 h-4" />
+                                )}
                               </Button>
                             ) : (
                               <Button
