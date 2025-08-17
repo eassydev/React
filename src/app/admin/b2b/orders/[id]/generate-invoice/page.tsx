@@ -68,7 +68,7 @@ export default function GenerateInvoicePage() {
     try {
       const response = await fetch(`/admin-api/b2b/orders/${orderId}/invoice-check`, {
         headers: {
-          'admin-auth-token': localStorage.getItem('adminToken')
+          'admin-auth-token': localStorage.getItem('adminToken') || ''
         }
       });
 
@@ -99,7 +99,7 @@ export default function GenerateInvoicePage() {
     try {
       const response = await fetch(`/admin-api/b2b/orders/${orderId}`, {
         headers: {
-          'admin-auth-token': localStorage.getItem('adminToken')
+          'admin-auth-token': localStorage.getItem('adminToken') || ''
         }
       });
 
@@ -191,7 +191,7 @@ export default function GenerateInvoicePage() {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'admin-auth-token': localStorage.getItem('adminToken')
+          'admin-auth-token': localStorage.getItem('adminToken') || ''
         },
         body: JSON.stringify({
           subtotal: subtotal,
@@ -212,14 +212,34 @@ export default function GenerateInvoicePage() {
         setGeneratedInvoice(data.data);
         setInvoiceGenerated(true);
 
-        // Show appropriate message based on whether invoice was existing or new
-        const message = data.data.existing
-          ? `Invoice ${data.data.invoice_number} already exists for this order`
-          : `Invoice ${data.data.invoice_number} generated successfully`;
+        // ✅ Handle PDF generation status
+        const pdfStatus = data.data.pdf_status;
+        const pdfError = data.data.pdf_error;
+
+        // Show appropriate message based on invoice and PDF status
+        let title = 'Success';
+        let description = '';
+        let variant: 'default' | 'destructive' = 'default';
+
+        if (data.data.existing) {
+          title = 'Invoice Already Exists';
+          description = `Invoice ${data.data.invoice_number} already exists for this order`;
+        } else if (pdfStatus === 'success') {
+          title = 'Invoice Generated Successfully';
+          description = `Invoice ${data.data.invoice_number} generated successfully with PDF`;
+        } else if (pdfStatus === 'failed') {
+          title = 'Invoice Generated (PDF Failed)';
+          description = `Invoice ${data.data.invoice_number} generated, but PDF generation failed: ${pdfError}`;
+          variant = 'default'; // Still success since invoice was created
+        } else {
+          title = 'Invoice Generated';
+          description = `Invoice ${data.data.invoice_number} generated successfully`;
+        }
 
         toast({
-          title: data.data.existing ? 'Invoice Already Exists' : 'Success',
-          description: message
+          title,
+          description,
+          variant
         });
 
         // Auto-redirect to invoice listing with search query after a short delay
@@ -229,7 +249,7 @@ export default function GenerateInvoicePage() {
           } else {
             router.push(`/admin/b2b/invoices?search=${data.data.invoice_number}`);
           }
-        }, 2000); // 2 second delay to show the success message
+        }, 3000); // 3 second delay to show the message
 
       } else {
         const errorData = await response.json();
@@ -257,6 +277,57 @@ export default function GenerateInvoicePage() {
         title: 'Error',
         description: 'Failed to download invoice'
       });
+    }
+  };
+
+  // ✅ NEW: Retry PDF generation for failed invoices
+  const retryPDFGeneration = async () => {
+    if (!generatedInvoice?.invoice_id) return;
+
+    try {
+      setGenerating(true);
+
+      const response = await fetch(`/admin-api/b2b/invoices/${generatedInvoice.invoice_id}/regenerate-pdf`, {
+        method: 'POST',
+        headers: {
+          'admin-auth-token': localStorage.getItem('adminToken') || ''
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+
+        if (data.data.pdf_status === 'success') {
+          // Update the generated invoice data
+          setGeneratedInvoice((prev: any) => prev ? {
+            ...prev,
+            pdf_status: 'success',
+            pdf_available: true,
+            pdf_url: data.data.pdf_url
+          } : null);
+
+          toast({
+            title: 'PDF Generated Successfully',
+            description: 'Invoice PDF has been generated and is now available for download'
+          });
+        } else {
+          toast({
+            variant: 'destructive',
+            title: 'PDF Generation Failed',
+            description: `Failed to generate PDF: ${data.data.pdf_error}`
+          });
+        }
+      } else {
+        throw new Error('Failed to regenerate PDF');
+      }
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to regenerate PDF'
+      });
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -311,12 +382,49 @@ export default function GenerateInvoicePage() {
             <Badge variant="default" className="bg-green-100 text-green-800">
               Invoice Generated
             </Badge>
+
+            {/* ✅ PDF Status Badge */}
             {generatedInvoice && (
               <>
-                <Button onClick={downloadInvoice} variant="outline">
-                  <Download className="h-4 w-4 mr-2" />
-                  Download PDF
-                </Button>
+                {generatedInvoice.pdf_status === 'success' || generatedInvoice.pdf_available ? (
+                  <Badge variant="default" className="bg-blue-100 text-blue-800">
+                    PDF Ready
+                  </Badge>
+                ) : generatedInvoice.pdf_status === 'failed' ? (
+                  <Badge variant="destructive" className="bg-red-100 text-red-800">
+                    PDF Failed
+                  </Badge>
+                ) : null}
+
+                {/* Download Button - only show if PDF is available */}
+                {(generatedInvoice.pdf_available || generatedInvoice.pdf_status === 'success') && (
+                  <Button onClick={downloadInvoice} variant="outline">
+                    <Download className="h-4 w-4 mr-2" />
+                    Download PDF
+                  </Button>
+                )}
+
+                {/* Retry PDF Button - only show if PDF failed */}
+                {generatedInvoice.pdf_status === 'failed' && generatedInvoice.can_retry && (
+                  <Button
+                    onClick={retryPDFGeneration}
+                    variant="outline"
+                    disabled={generating}
+                  >
+                    {generating ? (
+                      <>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+                        Retrying...
+                      </>
+                    ) : (
+                      <>
+                        <Download className="h-4 w-4 mr-2" />
+                        Retry PDF
+                      </>
+                    )}
+                  </Button>
+                )}
+
                 <Button
                   onClick={() => router.push('/admin/b2b/invoices')}
                   variant="outline"

@@ -188,15 +188,34 @@ export default function B2BOrdersPage() {
       if (response.ok) {
         const data = await response.json();
 
-        // Show appropriate message based on whether invoice was existing or new
-        const message = data.data.existing
-          ? `Invoice ${data.data.invoice_number} already exists for this order`
-          : `Invoice ${data.data.invoice_number} has been generated successfully`;
+        // ✅ Handle PDF generation status
+        const pdfStatus = data.data.pdf_status;
+        const pdfError = data.data.pdf_error;
+
+        // Show appropriate message based on invoice and PDF status
+        let title = "Invoice Generated Successfully!";
+        let description = "";
+        let duration = 3000;
+
+        if (data.data.existing) {
+          title = "Invoice Already Exists";
+          description = `Invoice ${data.data.invoice_number} already exists for this order. Redirecting to invoice listing...`;
+        } else if (pdfStatus === 'success') {
+          title = "Invoice Generated Successfully!";
+          description = `Invoice ${data.data.invoice_number} has been generated successfully with PDF. Redirecting to invoice listing...`;
+        } else if (pdfStatus === 'failed') {
+          title = "Invoice Generated (PDF Failed)";
+          description = `Invoice ${data.data.invoice_number} generated, but PDF generation failed. You can retry PDF generation from the invoice details. Redirecting...`;
+          duration = 5000; // Longer duration for important message
+        } else {
+          title = "Invoice Generated Successfully!";
+          description = `Invoice ${data.data.invoice_number} has been generated successfully. Redirecting to invoice listing...`;
+        }
 
         toast({
-          title: data.data.existing ? "Invoice Already Exists" : "Invoice Generated Successfully!",
-          description: message + ". Redirecting to invoice listing...",
-          duration: 3000,
+          title,
+          description,
+          duration,
         });
 
         // Update the order status immediately
@@ -215,7 +234,7 @@ export default function B2BOrdersPage() {
           } else {
             window.location.href = '/admin/b2b/invoices';
           }
-        }, 1500); // 1.5 second delay to show the success message
+        }, 2000); // 2 second delay to show the message
 
       } else {
         const errorData = await response.json();
