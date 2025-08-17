@@ -5589,6 +5589,63 @@ export const calculateServicePriceForB2B = async (params: {
 };
 
 // ✅ ========================================
+// ✅ B2B CLIENT SCENARIO PRICING API - NEW
+// ✅ ========================================
+
+// ✅ NEW: Client Scenario-Based Pricing Calculation for B2B
+export const calculateB2BPricing = async (params: {
+  client_scenario: string;
+  service_area_sqft?: number;
+  service_type?: string;
+  store_name?: string;
+  store_code?: string;
+  quantity?: number;
+  custom_fields?: object;
+  custom_price?: number;
+}) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post('/admin-api/b2b/pricing/calculate', params, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data,
+        available_scenarios: response.data.available_scenarios
+      };
+    } else {
+      throw new Error(response.data.message || 'Failed to calculate pricing');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to calculate B2B pricing');
+  }
+};
+
+// ✅ NEW: Get Pricing Rules for B2B Scenarios
+export const getB2BPricingRules = async (scenario?: string) => {
+  try {
+    const token = getToken();
+    const endpoint = scenario ? `/admin-api/b2b/pricing/rules/${scenario}` : '/admin-api/b2b/pricing/rules';
+    const response: AxiosResponse = await apiClient.get(endpoint, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+
+    if (response.data.success) {
+      return {
+        success: true,
+        data: response.data.data
+      };
+    } else {
+      throw new Error(response.data.message || 'Failed to get pricing rules');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to get B2B pricing rules');
+  }
+};
+
+// ✅ ========================================
 // ✅ B2B QUOTATION MANAGEMENT API - NEW
 // ✅ ========================================
 

@@ -15,6 +15,9 @@ import {
   fetchB2BServiceAddresses,
   createB2BServiceAddress,
   calculateServicePriceForB2B,
+  // ✅ NEW: Client Scenario Pricing APIs
+  calculateB2BPricing,
+  getB2BPricingRules,
   // ✅ Import types from API
   Category,
   Subcategory,
@@ -100,6 +103,12 @@ export default function SimpleB2BOrderPage() {
   const [calculatedPrice, setCalculatedPrice] = useState<number>(0);
   const [isCalculatingPrice, setIsCalculatingPrice] = useState(false);
 
+  // ✅ NEW: Client Scenario Pricing
+  const [availableScenarios, setAvailableScenarios] = useState<string[]>([]);
+  const [pricingRules, setPricingRules] = useState<any>(null);
+  const [scenarioPricing, setScenarioPricing] = useState<any>(null);
+  const [isCalculatingScenarioPricing, setIsCalculatingScenarioPricing] = useState(false);
+
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -124,6 +133,9 @@ export default function SimpleB2BOrderPage() {
     b2b_service_address_id: '',
     service_address: '', // ✅ Backend expects this field
 
+    // ✅ NEW: Client Scenario for Pricing
+    client_scenario: 'custom', // Default to custom pricing
+
     // Service Selection - Complete Flow
     category_id: '',
     subcategory_id: '',
@@ -136,6 +148,7 @@ export default function SimpleB2BOrderPage() {
     // Service Details
     service_name: '',
     service_description: '',
+    service_type: 'deep_cleaning', // ✅ NEW: For scenario-based pricing
     custom_price: '',
     quantity: '1',
 
@@ -145,7 +158,7 @@ export default function SimpleB2BOrderPage() {
     booking_received_date: new Date().toISOString().split('T')[0], // Default to today
     payment_terms: 'Net 30 days',
     notes: '',
-    
+
     // Store-specific fields
     service_rate: '',
     service_area_sqft: '',
@@ -153,6 +166,12 @@ export default function SimpleB2BOrderPage() {
     store_code: '',
     booking_poc_name: '',
     booking_poc_number: '',
+
+    // ✅ NEW: Custom fields for scenario-specific data
+    custom_fields: {
+      total_stores: '',
+      volume_discount_eligible: false,
+    },
   });
 
   // Fetch initial data
@@ -384,6 +403,44 @@ export default function SimpleB2BOrderPage() {
     }
   }, [formData.b2b_customer_id]);
 
+  // ✅ NEW: Auto-calculate scenario pricing when relevant fields change
+  useEffect(() => {
+    const shouldCalculateScenarioPricing =
+      formData.client_scenario !== 'custom' &&
+      formData.service_area_sqft &&
+      formData.quantity;
+
+    if (shouldCalculateScenarioPricing) {
+      const timeoutId = setTimeout(() => {
+        calculateScenarioPricing();
+      }, 500); // Debounce to avoid too many API calls
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [
+    formData.client_scenario,
+    formData.service_area_sqft,
+    formData.service_type,
+    formData.quantity,
+    formData.custom_fields
+  ]);
+
+  // ✅ NEW: Load available scenarios on component mount
+  useEffect(() => {
+    const loadAvailableScenarios = async () => {
+      try {
+        const response = await getB2BPricingRules();
+        if (response.success && response.data?.available_scenarios) {
+          setAvailableScenarios(response.data.available_scenarios);
+        }
+      } catch (error) {
+        console.error('❌ Error loading available scenarios:', error);
+      }
+    };
+
+    loadAvailableScenarios();
+  }, []);
+
   const fetchCustomers = async () => {
     try {
       console.log('🔄 Fetching customers...');
@@ -452,6 +509,83 @@ export default function SimpleB2BOrderPage() {
     } finally {
       setIsCalculatingPrice(false);
     }
+  };
+
+  // ✅ NEW: Calculate pricing using client scenario
+  const calculateScenarioPricing = async () => {
+    try {
+      setIsCalculatingScenarioPricing(true);
+      console.log('💰 Calculating scenario-based pricing...');
+
+      const pricingParams = {
+        client_scenario: formData.client_scenario,
+        service_area_sqft: parseFloat(formData.service_area_sqft) || 0,
+        service_type: formData.service_type,
+        store_name: formData.store_name,
+        store_code: formData.store_code,
+        quantity: parseInt(formData.quantity) || 1,
+        custom_fields: formData.custom_fields,
+        custom_price: parseFloat(formData.custom_price) || undefined
+      };
+
+      console.log('💰 Pricing params:', pricingParams);
+
+      const response = await calculateB2BPricing(pricingParams);
+      console.log('💰 Scenario pricing response:', response);
+
+      if (response.success && response.data) {
+        setScenarioPricing(response.data);
+        setAvailableScenarios(response.available_scenarios || []);
+
+        // Update form with calculated pricing
+        if (response.data.pricing?.final_amounts) {
+          const finalAmounts = response.data.pricing.final_amounts;
+          setFormData(prev => ({
+            ...prev,
+            custom_price: finalAmounts.total_amount?.toString() || prev.custom_price
+          }));
+          setCalculatedPrice(finalAmounts.total_amount || 0);
+        }
+      }
+    } catch (error) {
+      console.error('❌ Error calculating scenario pricing:', error);
+      alert('Failed to calculate pricing. Please try again.');
+    } finally {
+      setIsCalculatingScenarioPricing(false);
+    }
+  };
+
+  // ✅ NEW: Load pricing rules for selected scenario
+  const loadPricingRules = async (scenario: string) => {
+    try {
+      console.log('📋 Loading pricing rules for scenario:', scenario);
+      const response = await getB2BPricingRules(scenario);
+
+      if (response.success && response.data) {
+        setPricingRules(response.data);
+        console.log('📋 Pricing rules loaded:', response.data);
+      }
+    } catch (error) {
+      console.error('❌ Error loading pricing rules:', error);
+    }
+  };
+
+  // ✅ NEW: Handle client scenario change
+  const handleScenarioChange = (scenario: string) => {
+    setFormData(prev => ({
+      ...prev,
+      client_scenario: scenario
+    }));
+
+    // Load pricing rules for the new scenario
+    if (scenario !== 'custom') {
+      loadPricingRules(scenario);
+    } else {
+      setPricingRules(null);
+    }
+
+    // Clear previous scenario pricing
+    setScenarioPricing(null);
   };
 
   const fetchServiceAddresses = async () => {
@@ -538,6 +672,9 @@ export default function SimpleB2BOrderPage() {
       console.log('📤 Submitting B2B order data:', submitData);
       console.log('📍 Service address field:', submitData.service_address);
       console.log('🏢 Service address ID:', submitData.b2b_service_address_id);
+      console.log('💰 Client scenario:', submitData.client_scenario);
+      console.log('🎯 Service type:', submitData.service_type);
+      console.log('📊 Custom fields:', submitData.custom_fields);
 
       await createB2BOrder(submitData);
       router.push('/admin/b2b/orders');
@@ -752,6 +889,48 @@ export default function SimpleB2BOrderPage() {
               <CardTitle>Service Details</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
+              {/* ✅ NEW: Client Scenario Selection */}
+              <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="font-semibold text-blue-900 mb-3">Client Pricing Scenario</h4>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="client_scenario">Pricing Scenario *</Label>
+                    <Select
+                      value={formData.client_scenario}
+                      onValueChange={handleScenarioChange}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select pricing scenario" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="mobile_furniture_store">Mobile/Furniture Store</SelectItem>
+                        <SelectItem value="ac_manufacturer">AC Manufacturer</SelectItem>
+                        <SelectItem value="home_rental_service">Home Rental Service</SelectItem>
+                        <SelectItem value="ecommerce_giant">E-commerce Giant</SelectItem>
+                        <SelectItem value="furniture_rental_service">Furniture Rental Service</SelectItem>
+                        <SelectItem value="custom">Custom Pricing</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Show pricing rules if available */}
+                  {pricingRules && (
+                    <div className="bg-white border border-gray-200 rounded p-3">
+                      <h5 className="font-medium text-gray-900 mb-2">Pricing Rules</h5>
+                      <div className="text-sm text-gray-600 space-y-1">
+                        <div>{pricingRules.description}</div>
+                        {pricingRules.rules?.base_price_range && (
+                          <div>Range: {pricingRules.rules.base_price_range}</div>
+                        )}
+                        {pricingRules.rules?.per_sqft_rate && (
+                          <div>Rate: {pricingRules.rules.per_sqft_rate}</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label htmlFor="category">Category *</Label>
@@ -945,6 +1124,97 @@ export default function SimpleB2BOrderPage() {
                   rows={3}
                 />
               </div>
+
+              {/* ✅ NEW: Scenario-Specific Fields */}
+              {formData.client_scenario !== 'custom' && (
+                <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-gray-900 mb-3">Scenario-Specific Details</h4>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Service Type for Mobile/Furniture Store */}
+                    {formData.client_scenario === 'mobile_furniture_store' && (
+                      <>
+                        <div>
+                          <Label htmlFor="service_type">Service Type *</Label>
+                          <Select
+                            value={formData.service_type}
+                            onValueChange={(value) => handleInputChange('service_type', value)}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select service type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="deep_cleaning">Deep Cleaning (1.0x)</SelectItem>
+                              <SelectItem value="sanitization">Sanitization (1.2x)</SelectItem>
+                              <SelectItem value="pest_control">Pest Control (1.5x)</SelectItem>
+                              <SelectItem value="maintenance">Maintenance (0.8x)</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        <div>
+                          <Label htmlFor="total_stores">Total Stores (for volume discount)</Label>
+                          <Input
+                            type="number"
+                            value={formData.custom_fields?.total_stores || ''}
+                            onChange={(e) => setFormData(prev => ({
+                              ...prev,
+                              custom_fields: {
+                                ...prev.custom_fields,
+                                total_stores: parseInt(e.target.value) || 0
+                              }
+                            }))}
+                            placeholder="Number of stores"
+                            min="1"
+                          />
+                          <div className="text-xs text-gray-500 mt-1">
+                            10+ stores: 5% discount, 25+ stores: 10% discount, 50+ stores: 15% discount
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Service Area for area-based pricing */}
+                    {(formData.client_scenario === 'mobile_furniture_store' ||
+                      formData.client_scenario === 'home_rental_service') && (
+                      <div>
+                        <Label htmlFor="service_area_sqft">Service Area (sq ft) *</Label>
+                        <Input
+                          type="number"
+                          id="service_area_sqft"
+                          value={formData.service_area_sqft}
+                          onChange={(e) => handleInputChange('service_area_sqft', e.target.value)}
+                          placeholder="Enter area in square feet"
+                          min="1"
+                          step="0.1"
+                        />
+                        {formData.client_scenario === 'mobile_furniture_store' && (
+                          <div className="text-xs text-gray-500 mt-1">
+                            Rate: ₹25/sq ft (Min: ₹2500, Max: ₹3600)
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Auto-calculate pricing button */}
+                  <div className="mt-4">
+                    <Button
+                      type="button"
+                      onClick={calculateScenarioPricing}
+                      disabled={isCalculatingScenarioPricing}
+                      variant="outline"
+                      size="sm"
+                    >
+                      {isCalculatingScenarioPricing ? (
+                        <>Calculating...</>
+                      ) : (
+                        <>Calculate Scenario Pricing</>
+                      )}
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -971,6 +1241,59 @@ export default function SimpleB2BOrderPage() {
                     <div>
                       <span className="text-blue-700">Total:</span> ₹{calculatedPrice}
                     </div>
+                  </div>
+                </div>
+              )}
+
+              {/* ✅ NEW: Scenario Pricing Display */}
+              {scenarioPricing && (
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4">
+                  <h4 className="font-semibold text-green-900 mb-3">Scenario Pricing Calculation</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                    {scenarioPricing.pricing?.base_calculation && (
+                      <div className="space-y-2">
+                        <h5 className="font-medium text-green-800">Base Calculation</h5>
+                        {scenarioPricing.pricing.base_calculation.service_area_sqft > 0 && (
+                          <div>
+                            <span className="text-green-700">Area:</span> {scenarioPricing.pricing.base_calculation.service_area_sqft} sq ft
+                          </div>
+                        )}
+                        {scenarioPricing.pricing.base_calculation.per_sqft_rate && (
+                          <div>
+                            <span className="text-green-700">Rate:</span> ₹{scenarioPricing.pricing.base_calculation.per_sqft_rate}/sq ft
+                          </div>
+                        )}
+                        <div>
+                          <span className="text-green-700">Base Price:</span> ₹{scenarioPricing.pricing.base_calculation.base_price}
+                        </div>
+                        <div>
+                          <span className="text-green-700">Quantity:</span> {scenarioPricing.pricing.base_calculation.quantity}
+                        </div>
+                      </div>
+                    )}
+
+                    {scenarioPricing.pricing?.final_amounts && (
+                      <div className="space-y-2">
+                        <h5 className="font-medium text-green-800">Final Amounts</h5>
+                        <div>
+                          <span className="text-green-700">Subtotal:</span> ₹{scenarioPricing.pricing.final_amounts.subtotal}
+                        </div>
+                        <div>
+                          <span className="text-green-700">GST (18%):</span> ₹{scenarioPricing.pricing.final_amounts.gst_amount}
+                        </div>
+                        <div className="font-semibold">
+                          <span className="text-green-700">Total:</span> ₹{scenarioPricing.pricing.final_amounts.total_amount}
+                        </div>
+                      </div>
+                    )}
+
+                    {scenarioPricing.pricing?.discount_details?.discount_amount > 0 && (
+                      <div className="col-span-2 bg-yellow-50 border border-yellow-200 rounded p-2">
+                        <span className="text-yellow-700 font-medium">Volume Discount Applied:</span>
+                        ₹{scenarioPricing.pricing.discount_details.discount_amount}
+                        ({scenarioPricing.pricing.discount_details.discount_type})
+                      </div>
+                    )}
                   </div>
                 </div>
               )}
