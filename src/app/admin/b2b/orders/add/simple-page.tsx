@@ -429,12 +429,28 @@ export default function SimpleB2BOrderPage() {
   useEffect(() => {
     const loadAvailableScenarios = async () => {
       try {
+        console.log('🔍 Loading available scenarios...');
+        console.log('🔍 getB2BPricingRules function:', typeof getB2BPricingRules);
+
+        // ✅ Check if function exists before calling
+        if (typeof getB2BPricingRules !== 'function') {
+          console.error('❌ getB2BPricingRules function is not available');
+          // ✅ Set default scenarios if API is not available
+          setAvailableScenarios(['mobile_furniture_store', 'ac_manufacturer', 'home_rental_service', 'ecommerce_giant', 'furniture_rental_service', 'custom']);
+          return;
+        }
+
         const response = await getB2BPricingRules();
         if (response.success && response.data?.available_scenarios) {
           setAvailableScenarios(response.data.available_scenarios);
+        } else {
+          // ✅ Fallback to default scenarios
+          setAvailableScenarios(['mobile_furniture_store', 'ac_manufacturer', 'home_rental_service', 'ecommerce_giant', 'furniture_rental_service', 'custom']);
         }
       } catch (error) {
         console.error('❌ Error loading available scenarios:', error);
+        // ✅ Set default scenarios on error
+        setAvailableScenarios(['mobile_furniture_store', 'ac_manufacturer', 'home_rental_service', 'ecommerce_giant', 'furniture_rental_service', 'custom']);
       }
     };
 
@@ -517,6 +533,9 @@ export default function SimpleB2BOrderPage() {
       setIsCalculatingScenarioPricing(true);
       console.log('💰 Calculating scenario-based pricing...');
 
+      // ✅ Debug: Check if function is available
+      console.log('🔍 calculateB2BPricing function:', typeof calculateB2BPricing);
+
       const pricingParams = {
         client_scenario: formData.client_scenario,
         service_area_sqft: parseFloat(formData.service_area_sqft) || 0,
@@ -529,6 +548,11 @@ export default function SimpleB2BOrderPage() {
       };
 
       console.log('💰 Pricing params:', pricingParams);
+
+      // ✅ Check if function exists before calling
+      if (typeof calculateB2BPricing !== 'function') {
+        throw new Error('calculateB2BPricing function is not available. Please refresh the page.');
+      }
 
       const response = await calculateB2BPricing(pricingParams);
       console.log('💰 Scenario pricing response:', response);
@@ -559,6 +583,14 @@ export default function SimpleB2BOrderPage() {
   const loadPricingRules = async (scenario: string) => {
     try {
       console.log('📋 Loading pricing rules for scenario:', scenario);
+      console.log('🔍 getB2BPricingRules function:', typeof getB2BPricingRules);
+
+      // ✅ Check if function exists before calling
+      if (typeof getB2BPricingRules !== 'function') {
+        console.error('❌ getB2BPricingRules function is not available');
+        return;
+      }
+
       const response = await getB2BPricingRules(scenario);
 
       if (response.success && response.data) {
