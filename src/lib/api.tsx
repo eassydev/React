@@ -5593,6 +5593,7 @@ export const calculateServicePriceForB2B = async (params: {
 // ✅ ========================================
 
 // ✅ NEW: Client Scenario-Based Pricing Calculation for B2B
+console.log('🔍 API: calculateB2BPricing function is being defined');
 export const calculateB2BPricing = async (params: {
   client_scenario: string;
   service_area_sqft?: number;
@@ -5605,7 +5606,7 @@ export const calculateB2BPricing = async (params: {
 }) => {
   try {
     const token = getToken();
-    const response: AxiosResponse = await apiClient.post('/admin-api/b2b/pricing/calculate', params, {
+    const response: AxiosResponse = await apiClient.post('/b2b/pricing/calculate', params, {
       headers: { 'admin-auth-token': token || '' },
     });
 
@@ -5627,7 +5628,7 @@ export const calculateB2BPricing = async (params: {
 export const getB2BPricingRules = async (scenario?: string) => {
   try {
     const token = getToken();
-    const endpoint = scenario ? `/admin-api/b2b/pricing/rules/${scenario}` : '/admin-api/b2b/pricing/rules';
+    const endpoint = scenario ? `/b2b/pricing/rules/${scenario}` : '/b2b/pricing/rules';
     const response: AxiosResponse = await apiClient.get(endpoint, {
       headers: { 'admin-auth-token': token || '' },
     });
