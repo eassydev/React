@@ -488,7 +488,7 @@ export default function B2BOrderDetailPage({ params }: { params: { id: string } 
                 {order.booking_received_date && (
                   <div>
                     <Label className="text-gray-500">Booking Received:</Label>
-                    <p>{new Date(order.booking_received_date).toLocaleString()}</p>
+                    <p>{new Date(order.booking_received_date * 1000).toLocaleString()}</p>
                   </div>
                 )}
               </div>

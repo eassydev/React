@@ -504,7 +504,7 @@ export default function B2BOrdersPage() {
                           {order.service_date ? new Date(order.service_date).toLocaleDateString() : 'TBD'}
                         </TableCell>
                         <TableCell>
-                          {order.booking_received_date ? new Date(order.booking_received_date).toLocaleDateString() :
+                          {order.booking_received_date ? new Date(order.booking_received_date * 1000).toLocaleDateString() :
                            order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A'}
                         </TableCell>
                         <TableCell>

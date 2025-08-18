@@ -109,6 +109,13 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
         return date.toISOString().split('T')[0]; // YYYY-MM-DD format
       };
 
+      // Format UNIX timestamp for input fields
+      const formatTimestampForInput = (timestamp: number) => {
+        if (!timestamp) return '';
+        const date = new Date(timestamp * 1000); // Convert seconds to milliseconds
+        return date.toISOString().split('T')[0]; // YYYY-MM-DD format
+      };
+
       const formatTimeForInput = (timeString: string) => {
         if (!timeString) return '';
         // If it's already in HH:MM format, return as is
@@ -134,7 +141,7 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
         // Scheduling - properly formatted for input fields
         service_date: formatDateForInput(orderData.service_date),
         service_time: formatTimeForInput(orderData.service_time),
-        booking_received_date: formatDateForInput(orderData.booking_received_date),
+        booking_received_date: formatTimestampForInput(orderData.booking_received_date),
 
         // Store Information
         service_rate: orderData.service_rate?.toString() || '',
