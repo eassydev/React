@@ -4849,8 +4849,38 @@ export const deleteSetting = async (id: string): Promise<ApiResponse> => {
   }
 };
 
+// ✅ ENHANCED: Admin creation interface
+export interface CreateAdminRequest {
+  full_name?: string;
+  fname?: string;
+  lname?: string;
+  username?: string;
+  email: string;
+  mobile?: string;
+  password: string;
+  role_id: string;
+  active?: number;
+}
+
+export interface AdminUser {
+  id: string;
+  full_name: string;
+  fname?: string;
+  lname?: string;
+  username: string;
+  email: string;
+  mobile?: string;
+  role_id: string;
+  active: number;
+  created?: string;
+  role?: {
+    id: string;
+    role_name: string;
+  };
+}
+
 // Create Admin API
-export const createAdmin = async (adminData: any): Promise<ApiResponse> => {
+export const createAdmin = async (adminData: CreateAdminRequest): Promise<ApiResponse> => {
   try {
     const token = getToken();
     const response: AxiosResponse<ApiResponse> = await apiClient.post('/admin', adminData, {
@@ -5434,6 +5464,84 @@ export const updateInvoicePaymentStatus = async (invoiceId: string, paymentData:
   }
 };
 
+// ✅ NEW: Status Options API Types
+export interface StatusOption {
+  value: string;
+  label: string;
+  color: string;
+}
+
+export interface StatusOptionsResponse {
+  success: boolean;
+  data: {
+    status_options: StatusOption[];
+    payment_status_options: StatusOption[];
+    invoice_status_options: StatusOption[];
+  };
+}
+
+export interface ProviderSearchResult {
+  id: string;
+  value: string;
+  label: string;
+  name: string;
+  email: string;
+  phone: string;
+  rating: number;
+  location: string;
+  is_verified: boolean;
+  is_active: boolean;
+  profile_image?: string;
+}
+
+export interface ProviderSearchResponse {
+  success: boolean;
+  message: string;
+  data: {
+    providers: ProviderSearchResult[];
+    pagination: {
+      current_page: number;
+      total_pages: number;
+      total_count: number;
+      per_page: number;
+      has_next: boolean;
+      has_prev: boolean;
+    };
+    search_query: string;
+  };
+}
+
+// ✅ NEW: Get B2B Status Options
+export const fetchB2BStatusOptions = async (): Promise<StatusOptionsResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/b2b/status-options', {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch status options.');
+  }
+};
+
+// ✅ NEW: Search Providers for Assignment
+export const searchProvidersForAssignment = async (
+  search: string = '',
+  page: number = 1,
+  limit: number = 20
+): Promise<ProviderSearchResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/b2b/providers/search', {
+      headers: { 'admin-auth-token': token || '' },
+      params: { search, page, limit },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to search providers.');
+  }
+};
+
 // ✅ ADVANCED PROVIDER SEARCH & ASSIGNMENT API FUNCTIONS
 export const getAdvancedProviderSearch = async (filters: {
   category_id?: string;
@@ -5662,7 +5770,11 @@ export interface B2BQuotationItem {
 export interface B2BQuotation {
   id?: string;
   quotation_number?: string;
-  b2b_booking_id: string;
+  b2b_booking_id?: string | null; // ✅ UPDATED: Optional for standalone quotations
+  b2b_customer_id: string; // ✅ NEW: Required for all quotations
+  service_name: string; // ✅ NEW: Service name for standalone quotations
+  service_description?: string; // ✅ NEW: Service description for standalone quotations
+  quotation_type: 'booking_linked' | 'standalone'; // ✅ NEW: Quotation type
   initial_amount: number;
   negotiated_amount?: number;
   final_amount?: number;
@@ -5688,6 +5800,44 @@ export interface B2BQuotation {
   attachments?: any[];
   created_at?: string;
   updated_at?: string;
+  // ✅ NEW: Helper properties
+  is_standalone?: boolean;
+}
+
+// ✅ NEW: Customer selection for standalone quotations
+export interface B2BCustomerOption {
+  id: string;
+  company_name: string;
+  contact_person: string;
+  email: string;
+  phone: string;
+  display_name: string;
+  // ✅ ENHANCED: Payment terms for customer-level management
+  credit_days?: number;
+  payment_terms?: string;
+  payment_method_preference?: 'bank_transfer' | 'cheque' | 'online' | 'cash' | 'any';
+  late_payment_fee_percentage?: number;
+  credit_limit?: number;
+}
+
+// ✅ NEW: Quotation creation request
+export interface CreateQuotationRequest {
+  // For booking-linked quotations
+  b2b_booking_id?: string;
+  orderId?: string;
+
+  // For standalone quotations
+  b2b_customer_id?: string;
+  service_name?: string;
+  service_description?: string;
+
+  // Common fields
+  initial_amount: number;
+  quotation_items?: B2BQuotationItem[];
+  terms_and_conditions?: string;
+  validity_days?: number;
+  sp_notes?: string;
+  admin_notes?: string;
 }
 
 // Create new quotation

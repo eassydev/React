@@ -2,8 +2,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Info } from 'lucide-react';
-import { fetchB2BOrderById, updateB2BOrderEditableFields } from '@/lib/api';
+import { ArrowLeft, Save, Info, Edit, UserPlus } from 'lucide-react';
+import {
+  fetchB2BOrderById,
+  updateB2BOrderEditableFields,
+  updateB2BOrderStatus,
+  fetchProvidersForB2B,
+  bulkAssignProviders
+} from '@/lib/api';
 
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,8 +25,26 @@ import {
 } from '@/components/ui/select';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
+import { useToast } from '@/hooks/use-toast';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger
+} from '@/components/ui/dialog';
 
 
+
+interface Provider {
+  id: string;
+  name: string;
+  first_name: string;
+  last_name: string;
+  company_name?: string;
+  phone: string;
+  email: string;
+}
 
 interface B2BOrder {
   id: string;
@@ -48,17 +72,35 @@ interface B2BOrder {
   booking_poc_name?: string;
   booking_poc_number?: string;
   payment_terms?: string;
+  status: string;
+  payment_status: string;
+  provider_id?: string;
+  provider?: Provider;
   notes?: string;
   custom_fields?: Record<string, any>;
 }
 
 export default function EditableFieldsPage({ params }: { params: { id: string } }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [order, setOrder] = useState<B2BOrder | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string>('');
   const [success, setSuccess] = useState<string>('');
+
+  // Status editing state
+  const [editingStatus, setEditingStatus] = useState(false);
+  const [newStatus, setNewStatus] = useState('');
+  const [newPaymentStatus, setNewPaymentStatus] = useState('');
+  const [statusNotes, setStatusNotes] = useState('');
+
+  // Provider assignment state
+  const [providers, setProviders] = useState<Provider[]>([]);
+  const [selectedProviderId, setSelectedProviderId] = useState('');
+  const [providerNotes, setProviderNotes] = useState('');
+  const [isProviderDialogOpen, setIsProviderDialogOpen] = useState(false);
+  const [loadingProviders, setLoadingProviders] = useState(false);
   
   const [formData, setFormData] = useState({
     // Customer & Service Details
@@ -218,6 +260,125 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
     }
   };
 
+  // Status update function
+  const handleStatusUpdate = async () => {
+    if (!order) return;
+
+    try {
+      setSaving(true);
+      setError('');
+
+      const updateData: any = {};
+
+      if (newStatus !== order.status) {
+        updateData.status = newStatus;
+      }
+
+      if (newPaymentStatus !== order.payment_status) {
+        updateData.payment_status = newPaymentStatus;
+      }
+
+      if (statusNotes.trim()) {
+        updateData.notes = statusNotes.trim();
+      }
+
+      if (Object.keys(updateData).length === 0) {
+        setEditingStatus(false);
+        return;
+      }
+
+      await updateB2BOrderStatus(params.id, updateData);
+
+      toast({
+        title: 'Success',
+        description: 'Order status updated successfully',
+      });
+
+      // Refresh order data
+      await fetchOrder();
+      setEditingStatus(false);
+      setStatusNotes('');
+    } catch (error: any) {
+      console.error('Error updating status:', error);
+      setError(error.message || 'Failed to update status');
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to update status',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Fetch providers function
+  const fetchProviders = async () => {
+    try {
+      setLoadingProviders(true);
+      const response = await fetchProvidersForB2B(
+        order?.category_id,
+        order?.subcategory_id
+      );
+      setProviders(response.data.providers || []);
+    } catch (error: any) {
+      console.error('Error fetching providers:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Failed to fetch providers',
+      });
+    } finally {
+      setLoadingProviders(false);
+    }
+  };
+
+  // Provider assignment function
+  const handleProviderAssignment = async () => {
+    if (!selectedProviderId || !order) return;
+
+    try {
+      setSaving(true);
+      setError('');
+
+      const assignments = [{
+        order_id: order.id,
+        provider_id: selectedProviderId,
+        notes: providerNotes.trim()
+      }];
+
+      await bulkAssignProviders(assignments);
+
+      toast({
+        title: 'Success',
+        description: 'Provider assigned successfully',
+      });
+
+      // Refresh order data
+      await fetchOrder();
+      setIsProviderDialogOpen(false);
+      setSelectedProviderId('');
+      setProviderNotes('');
+    } catch (error: any) {
+      console.error('Error assigning provider:', error);
+      setError(error.message || 'Failed to assign provider');
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to assign provider',
+      });
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Initialize status values when order loads
+  useEffect(() => {
+    if (order) {
+      setNewStatus(order.status);
+      setNewPaymentStatus(order.payment_status);
+    }
+  }, [order]);
+
 
 
   if (loading) {
@@ -347,6 +508,214 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
                 <p className="text-sm">{order?.service_address}</p>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Status Management */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              Order Status & Payment
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setEditingStatus(!editingStatus)}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                {editingStatus ? 'Cancel' : 'Edit Status'}
+              </Button>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {!editingStatus ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Order Status</Label>
+                  <div className="mt-1">
+                    <Badge variant={order?.status === 'completed' ? 'default' : 'secondary'}>
+                      {order?.status}
+                    </Badge>
+                  </div>
+                </div>
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Payment Status</Label>
+                  <div className="mt-1">
+                    <Badge variant={order?.payment_status === 'paid' ? 'default' : 'destructive'}>
+                      {order?.payment_status}
+                    </Badge>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="status">Order Status</Label>
+                    <Select value={newStatus} onValueChange={setNewStatus}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="confirmed">Confirmed</SelectItem>
+                        <SelectItem value="assigned">Assigned</SelectItem>
+                        <SelectItem value="in_progress">In Progress</SelectItem>
+                        <SelectItem value="completed">Completed</SelectItem>
+                        <SelectItem value="cancelled">Cancelled</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <Label htmlFor="payment_status">Payment Status</Label>
+                    <Select value={newPaymentStatus} onValueChange={setNewPaymentStatus}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select payment status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pending">Pending</SelectItem>
+                        <SelectItem value="partial">Partial</SelectItem>
+                        <SelectItem value="paid">Paid</SelectItem>
+                        <SelectItem value="refunded">Refunded</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+                <div>
+                  <Label htmlFor="status_notes">Status Update Notes</Label>
+                  <Textarea
+                    id="status_notes"
+                    value={statusNotes}
+                    onChange={(e) => setStatusNotes(e.target.value)}
+                    placeholder="Add notes about this status change..."
+                    rows={3}
+                  />
+                </div>
+                <div className="flex space-x-2">
+                  <Button
+                    type="button"
+                    onClick={handleStatusUpdate}
+                    disabled={saving}
+                  >
+                    {saving ? 'Updating...' : 'Update Status'}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setEditingStatus(false);
+                      setNewStatus(order?.status || '');
+                      setNewPaymentStatus(order?.payment_status || '');
+                      setStatusNotes('');
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Provider Assignment */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center justify-between">
+              Provider Assignment
+              <Dialog open={isProviderDialogOpen} onOpenChange={setIsProviderDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={fetchProviders}
+                  >
+                    <UserPlus className="w-4 h-4 mr-2" />
+                    {order?.provider_id ? 'Change Provider' : 'Assign Provider'}
+                  </Button>
+                </DialogTrigger>
+                <DialogContent>
+                  <DialogHeader>
+                    <DialogTitle>
+                      {order?.provider_id ? 'Change Provider' : 'Assign Provider'}
+                    </DialogTitle>
+                  </DialogHeader>
+                  <div className="space-y-4">
+                    <div>
+                      <Label htmlFor="provider">Select Provider</Label>
+                      <Select
+                        value={selectedProviderId}
+                        onValueChange={setSelectedProviderId}
+                        disabled={loadingProviders}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder={
+                            loadingProviders ? "Loading providers..." : "Select a provider"
+                          } />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {providers.map((provider) => (
+                            <SelectItem key={provider.id} value={provider.id}>
+                              {provider.name} - {provider.phone}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label htmlFor="provider_notes">Assignment Notes</Label>
+                      <Textarea
+                        id="provider_notes"
+                        value={providerNotes}
+                        onChange={(e) => setProviderNotes(e.target.value)}
+                        placeholder="Add notes about this provider assignment..."
+                        rows={3}
+                      />
+                    </div>
+                    <div className="flex space-x-2">
+                      <Button
+                        type="button"
+                        onClick={handleProviderAssignment}
+                        disabled={!selectedProviderId || saving}
+                      >
+                        {saving ? 'Assigning...' : 'Assign Provider'}
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          setIsProviderDialogOpen(false);
+                          setSelectedProviderId('');
+                          setProviderNotes('');
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {order?.provider_id ? (
+              <div className="space-y-2">
+                <div>
+                  <Label className="text-sm font-medium text-gray-500">Current Provider</Label>
+                  <p className="text-sm">
+                    {order.provider?.name || `Provider ID: ${order.provider_id}`}
+                  </p>
+                  {order.provider?.phone && (
+                    <p className="text-sm text-gray-600">{order.provider.phone}</p>
+                  )}
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <p className="text-gray-500 mb-2">No provider assigned</p>
+                <p className="text-sm text-gray-400">Click "Assign Provider" to assign a service provider</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 

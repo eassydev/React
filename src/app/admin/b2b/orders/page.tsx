@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Search, Eye, Edit, Settings, Download, FileText, Upload } from 'lucide-react';
-import { fetchB2BOrders, downloadB2BInvoiceSimple } from '@/lib/api';
+import { fetchB2BOrders, downloadB2BInvoiceSimple, fetchB2BStatusOptions, StatusOption } from '@/lib/api';
+import { StatusBadge } from '@/components/b2b/StatusDropdown';
 import { useToast } from '@/hooks/use-toast';
 
 import { Button } from '@/components/ui/button';
@@ -48,15 +49,20 @@ interface B2BOrder {
   booking_poc_name?: string;
   booking_poc_number?: string;
   service_area_sqft?: number;
-  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled';
+  status: 'pending' | 'accepted' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'rejected';
   payment_status: 'pending' | 'paid' | 'overdue';
+  invoice_status?: 'pending' | 'generated' | 'sent' | 'paid';
   service_date?: string;
-  booking_received_date?: string;
+  booking_received_date?: string | number;
   created_at: string;
 }
 
 export default function B2BOrdersPage() {
   const { toast } = useToast();
+
+  // Status options state
+  const [statusOptions, setStatusOptions] = useState<StatusOption[]>([]);
+  const [paymentStatusOptions, setPaymentStatusOptions] = useState<StatusOption[]>([]);
   const [orders, setOrders] = useState<B2BOrder[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -169,7 +175,7 @@ export default function B2BOrdersPage() {
           'admin-auth-token': adminToken || ''
         },
         body: JSON.stringify({
-          subtotal: 5000, // Default values - will be calculated from order
+          // ✅ FIXED: Remove hardcoded subtotal - let backend calculate from order
           payment_terms: 'Net 30 days',
           notes: `Invoice for order ${orderNumber}`,
           due_days: 30
@@ -277,7 +283,20 @@ export default function B2BOrdersPage() {
 
   useEffect(() => {
     fetchOrders();
+    loadStatusOptions();
   }, [currentPage, searchTerm, statusFilter, paymentStatusFilter]);
+
+  const loadStatusOptions = async () => {
+    try {
+      const response = await fetchB2BStatusOptions();
+      if (response.success) {
+        setStatusOptions(response.data.status_options);
+        setPaymentStatusOptions(response.data.payment_status_options);
+      }
+    } catch (error) {
+      console.error('Failed to load status options:', error);
+    }
+  };
 
   const handleSearch = (value: string) => {
     setSearchTerm(value);
@@ -294,35 +313,7 @@ export default function B2BOrdersPage() {
     setCurrentPage(1);
   };
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, string> = {
-      pending: 'secondary',
-      confirmed: 'default',
-      in_progress: 'default',
-      completed: 'default',
-      cancelled: 'destructive',
-    };
-
-    return (
-      <Badge variant={variants[status] as any}>
-        {status.replace('_', ' ').charAt(0).toUpperCase() + status.replace('_', ' ').slice(1)}
-      </Badge>
-    );
-  };
-
-  const getPaymentStatusBadge = (status: string) => {
-    const variants: Record<string, string> = {
-      pending: 'secondary',
-      paid: 'default',
-      overdue: 'destructive',
-    };
-
-    return (
-      <Badge variant={variants[status] as any}>
-        {status.charAt(0).toUpperCase() + status.slice(1)}
-      </Badge>
-    );
-  };
+  // Status badge functions removed - now using StatusBadge component
 
 
 
@@ -479,8 +470,12 @@ export default function B2BOrdersPage() {
                             )}
                           </div>
                         </TableCell>
-                        <TableCell>{getStatusBadge(order.status)}</TableCell>
-                        <TableCell>{getPaymentStatusBadge(order.payment_status)}</TableCell>
+                        <TableCell>
+                          <StatusBadge type="status" value={order.status} />
+                        </TableCell>
+                        <TableCell>
+                          <StatusBadge type="payment" value={order.payment_status} />
+                        </TableCell>
                         <TableCell>
                           {order.invoice_status === 'generated' ? (
                             <Badge variant="default" className="bg-green-100 text-green-800">
@@ -504,8 +499,12 @@ export default function B2BOrdersPage() {
                           {order.service_date ? new Date(order.service_date).toLocaleDateString() : 'TBD'}
                         </TableCell>
                         <TableCell>
-                          {order.booking_received_date ? new Date(order.booking_received_date * 1000).toLocaleDateString() :
-                           order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A'}
+                          {order.booking_received_date ?
+                            new Date(typeof order.booking_received_date === 'number' ?
+                              order.booking_received_date * 1000 :
+                              order.booking_received_date
+                            ).toLocaleDateString() :
+                            order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A'}
                         </TableCell>
                         <TableCell>
                           <DropdownMenu>
@@ -522,15 +521,9 @@ export default function B2BOrdersPage() {
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>
-                                <Link href={`/admin/b2b/orders/edit/${order.id}`}>
+                                <Link href={`/admin/b2b/orders/${order.id}/editable-fields`}>
                                   <Edit className="w-4 h-4 mr-2" />
                                   Edit Order
-                                </Link>
-                              </DropdownMenuItem>
-                              <DropdownMenuItem asChild>
-                                <Link href={`/admin/b2b/orders/${order.id}/editable-fields`}>
-                                  <Settings className="w-4 h-4 mr-2" />
-                                  Edit Fields
                                 </Link>
                               </DropdownMenuItem>
                               <DropdownMenuItem asChild>

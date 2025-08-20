@@ -3,7 +3,10 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { ArrowLeft, Save, Edit, Calendar, MapPin, User, Building, Phone, Mail, CreditCard, Package } from 'lucide-react';
-import { fetchB2BOrderById, updateB2BOrderStatus } from '@/lib/api';
+import { fetchB2BOrderById, updateB2BOrderStatus, ProviderSearchResult } from '@/lib/api';
+import { StatusDropdown, StatusBadge } from '@/components/b2b/StatusDropdown';
+import { ProviderSearchDropdown } from '@/components/b2b/ProviderSearchDropdown';
+
 
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -42,8 +45,17 @@ interface B2BOrder {
   service_date?: string;
   service_time?: string;
   booking_received_date?: string;
-  status: 'pending' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'rejected';
-  payment_status: 'pending' | 'paid' | 'failed' | 'refunded';
+  status: 'pending' | 'accepted' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'rejected';
+  payment_status: 'pending' | 'paid' | 'overdue';
+  provider?: {
+    id: string;
+    first_name: string;
+    last_name: string;
+    company_name: string;
+    email: string;
+    phone: string;
+    rating: number;
+  };
   payment_terms?: string;
   notes?: string;
   created_at: string;
@@ -57,6 +69,7 @@ export default function B2BOrderDetailPage({ params }: { params: { id: string } 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+  const [selectedProviderId, setSelectedProviderId] = useState<string>('');
   
   // Status editing state
   const [editingStatus, setEditingStatus] = useState(false);
@@ -345,45 +358,66 @@ export default function B2BOrderDetailPage({ params }: { params: { id: string } 
                 <div className="space-y-4">
                   <div>
                     <Label className="text-sm font-medium text-gray-500">Order Status</Label>
-                    <div className="mt-1">{getStatusBadge(order.status)}</div>
+                    <div className="mt-1">
+                      <StatusBadge type="status" value={order.status} />
+                    </div>
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-gray-500">Payment Status</Label>
-                    <div className="mt-1">{getPaymentStatusBadge(order.payment_status)}</div>
+                    <div className="mt-1">
+                      <StatusBadge type="payment" value={order.payment_status} />
+                    </div>
                   </div>
+                  {order.provider && (
+                    <div>
+                      <Label className="text-sm font-medium text-gray-500">Assigned Provider</Label>
+                      <div className="mt-1 p-3 bg-gray-50 rounded-md">
+                        <div className="font-medium text-gray-900">
+                          {order.provider.company_name || `${order.provider.first_name} ${order.provider.last_name}`}
+                        </div>
+                        <div className="text-sm text-gray-600">{order.provider.email}</div>
+                        <div className="text-sm text-gray-600">{order.provider.phone}</div>
+                        {order.provider.rating > 0 && (
+                          <div className="text-sm text-yellow-600">Rating: {order.provider.rating.toFixed(1)}/5</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="space-y-4">
                   <div>
                     <Label htmlFor="status">Order Status</Label>
-                    <Select value={newStatus} onValueChange={setNewStatus}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="confirmed">Confirmed</SelectItem>
-                        <SelectItem value="in_progress">In Progress</SelectItem>
-                        <SelectItem value="completed">Completed</SelectItem>
-                        <SelectItem value="cancelled">Cancelled</SelectItem>
-                        <SelectItem value="rejected">Rejected</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <StatusDropdown
+                      type="status"
+                      value={newStatus}
+                      onChange={setNewStatus}
+                      className="mt-1"
+                    />
                   </div>
-                  
+
                   <div>
                     <Label htmlFor="payment_status">Payment Status</Label>
-                    <Select value={newPaymentStatus} onValueChange={setNewPaymentStatus}>
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pending">Pending</SelectItem>
-                        <SelectItem value="paid">Paid</SelectItem>
-                        <SelectItem value="failed">Failed</SelectItem>
-                        <SelectItem value="refunded">Refunded</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <StatusDropdown
+                      type="payment"
+                      value={newPaymentStatus}
+                      onChange={setNewPaymentStatus}
+                      className="mt-1"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="provider">Assign Provider</Label>
+                    <ProviderSearchDropdown
+                      value={selectedProviderId}
+                      onChange={(providerId: string, provider: ProviderSearchResult | null) => {
+                        setSelectedProviderId(providerId);
+                        // You can handle provider assignment here
+                        console.log('Selected provider:', provider);
+                      }}
+                      className="mt-1"
+                      placeholder={order.provider ? "Change provider..." : "Search and assign provider..."}
+                    />
                   </div>
 
                   <div>
