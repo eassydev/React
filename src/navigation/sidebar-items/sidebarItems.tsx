@@ -254,10 +254,12 @@ export const sidebarItems: SidebarItem[] = [
     icon: Building2,
     children: [
       { title: 'Customers', route: `${basePath}/b2b/customers` },
+      { title: 'Contact Management', route: `${basePath}/b2b/contacts` },
+      { title: 'SPOC Management', route: `${basePath}/b2b/spoc` },
       { title: 'Orders', route: `${basePath}/b2b/orders` },
-      { title: 'Quotations', route: `${basePath}/b2b/quotations` }, // ✅ NEW: Quotation management
+      { title: 'Quotations', route: `${basePath}/b2b/quotations` },
       { title: 'Invoices', route: `${basePath}/b2b/invoices` },
-      { title: 'Payment Reminders', route: `${basePath}/b2b/payment-reminders` }, // ✅ NEW: Payment reminders
+      { title: 'Payment Reminders', route: `${basePath}/b2b/payment-reminders` },
     ],
   },
   {

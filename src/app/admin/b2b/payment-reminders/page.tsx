@@ -348,6 +348,9 @@ export default function PaymentRemindersPage() {
                           <p className="text-sm text-muted-foreground">
                             Order: {invoice.booking.order_number}
                           </p>
+                          <p className="text-sm font-medium text-blue-600">
+                            Service: {invoice.booking.service_name}
+                          </p>
                         </div>
                       </div>
                       <Badge className={getUrgencyColor(invoice.urgency_level)}>
@@ -424,6 +427,9 @@ export default function PaymentRemindersPage() {
                       <div>
                         <h3 className="font-semibold">{history.invoice_number}</h3>
                         <p className="text-sm text-muted-foreground">{history.company_name}</p>
+                        <p className="text-sm font-medium text-blue-600">
+                          Order: {history.order_number} • Service: {history.service_name}
+                        </p>
                         <p className="text-sm text-muted-foreground">
                           {formatCurrency(history.total_amount)} • Due: {new Date(history.due_date).toLocaleDateString()}
                         </p>

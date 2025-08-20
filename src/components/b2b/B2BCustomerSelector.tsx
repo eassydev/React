@@ -24,11 +24,13 @@ interface B2BCustomer {
 interface B2BCustomerSelectorProps {
   onSelect: (customer: B2BCustomer) => void;
   selectedCustomer?: B2BCustomer | null;
+  showChangeButton?: boolean; // ✅ Add prop to control change button visibility
 }
 
 export const B2BCustomerSelector: React.FC<B2BCustomerSelectorProps> = ({
   onSelect,
-  selectedCustomer
+  selectedCustomer,
+  showChangeButton = true // ✅ Default to true for backward compatibility
 }) => {
   const [customers, setCustomers] = useState<B2BCustomer[]>([]);
   const [loading, setLoading] = useState(false);
@@ -182,19 +184,22 @@ export const B2BCustomerSelector: React.FC<B2BCustomerSelectorProps> = ({
                     {selectedCustomer.city}, {selectedCustomer.state} - {selectedCustomer.pincode}
                   </div>
                 </div>
-                <div className="mt-2">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSearchTerm('');
-                      setShowDropdown(true);
-                    }}
-                  >
-                    Change Customer
-                  </Button>
-                </div>
+                {/* ✅ Conditionally show change button */}
+                {showChangeButton && (
+                  <div className="mt-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        setSearchTerm('');
+                        setShowDropdown(true);
+                      }}
+                    >
+                      Change Customer
+                    </Button>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>

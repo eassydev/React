@@ -341,7 +341,7 @@ function B2BInvoicesContent() {
         <div className="flex justify-between items-center text-sm text-gray-600">
           <span>Showing {invoices.length} of {totalRecords} invoices</span>
           <div className="flex space-x-4">
-            <span>Total Value: {formatCurrency(invoices.reduce((sum, inv) => sum + inv.total_amount, 0))}</span>
+            <span>Total Value: {formatCurrency(invoices.reduce((sum, inv) => sum + (inv.total_amount || 0), 0))}</span>
           </div>
         </div>
 
@@ -394,12 +394,12 @@ function B2BInvoicesContent() {
                         </TableCell>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{formatCurrency(invoice.total_amount)}</div>
+                            <div className="font-medium">{formatCurrency(invoice.total_amount || 0)}</div>
                             <div className="text-sm text-gray-500">
-                              Subtotal: {formatCurrency(invoice.subtotal)}
+                              Subtotal: {formatCurrency(invoice.subtotal || 0)}
                             </div>
                             <div className="text-sm text-gray-500">
-                              Tax: {formatCurrency(invoice.tax_amount)}
+                              Tax: {formatCurrency(invoice.tax_amount || 0)}
                             </div>
                           </div>
                         </TableCell>
