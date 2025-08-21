@@ -1,8 +1,9 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ChevronDown } from 'lucide-react';
-import { fetchB2BStatusOptions, StatusOption } from '@/lib/api';
+import { StatusOption } from '@/lib/api';
+import { useStatusOptions } from '@/contexts/StatusOptionsContext';
 
 interface StatusDropdownProps {
   type: 'status' | 'payment' | 'invoice';
@@ -21,37 +22,20 @@ export const StatusDropdown: React.FC<StatusDropdownProps> = ({
   className = '',
   placeholder = 'Select status...'
 }) => {
-  const [options, setOptions] = useState<StatusOption[]>([]);
-  const [loading, setLoading] = useState(true);
   const [isOpen, setIsOpen] = useState(false);
+  const { statusOptions, paymentStatusOptions, invoiceStatusOptions, loading } = useStatusOptions();
 
-  useEffect(() => {
-    const loadStatusOptions = async () => {
-      try {
-        setLoading(true);
-        const response = await fetchB2BStatusOptions();
-        
-        if (response.success) {
-          switch (type) {
-            case 'payment':
-              setOptions(response.data.payment_status_options);
-              break;
-            case 'invoice':
-              setOptions(response.data.invoice_status_options);
-              break;
-            default:
-              setOptions(response.data.status_options);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load status options:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadStatusOptions();
-  }, [type]);
+  // ✅ Get options based on type from context
+  const options = React.useMemo(() => {
+    switch (type) {
+      case 'payment':
+        return paymentStatusOptions;
+      case 'invoice':
+        return invoiceStatusOptions;
+      default:
+        return statusOptions;
+    }
+  }, [type, statusOptions, paymentStatusOptions, invoiceStatusOptions]);
 
   const selectedOption = options.find(option => option.value === value);
 
@@ -139,124 +123,24 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
   value,
   className = ''
 }) => {
-  const [options, setOptions] = useState<StatusOption[]>([]);
+  const { getStatusColor, getStatusLabel } = useStatusOptions();
 
-  useEffect(() => {
-    const loadStatusOptions = async () => {
-      try {
-        const response = await fetchB2BStatusOptions();
-        
-        if (response.success) {
-          switch (type) {
-            case 'payment':
-              setOptions(response.data.payment_status_options);
-              break;
-            case 'invoice':
-              setOptions(response.data.invoice_status_options);
-              break;
-            default:
-              setOptions(response.data.status_options);
-          }
-        }
-      } catch (error) {
-        console.error('Failed to load status options:', error);
-      }
-    };
-
-    loadStatusOptions();
-  }, [type]);
-
-  const option = options.find(opt => opt.value === value);
-
-  if (!option) {
-    return (
-      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 ${className}`}>
-        {value}
-      </span>
-    );
-  }
+  const color = getStatusColor(value, type);
+  const label = getStatusLabel(value, type);
 
   return (
     <span
-      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium text-white ${className}`}
-      style={{ backgroundColor: option.color }}
+      className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${className}`}
+      style={{
+        backgroundColor: `${color}20`,
+        color: color,
+        border: `1px solid ${color}`
+      }}
     >
-      {option.label}
+      {label}
     </span>
   );
 };
 
-// Hook for status options
-export const useStatusOptions = () => {
-  const [statusOptions, setStatusOptions] = useState<StatusOption[]>([]);
-  const [paymentStatusOptions, setPaymentStatusOptions] = useState<StatusOption[]>([]);
-  const [invoiceStatusOptions, setInvoiceStatusOptions] = useState<StatusOption[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  useEffect(() => {
-    const loadOptions = async () => {
-      try {
-        setLoading(true);
-        setError(null);
-        const response = await fetchB2BStatusOptions();
-        
-        if (response.success) {
-          setStatusOptions(response.data.status_options);
-          setPaymentStatusOptions(response.data.payment_status_options);
-          setInvoiceStatusOptions(response.data.invoice_status_options);
-        }
-      } catch (err: any) {
-        setError(err.message);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadOptions();
-  }, []);
-
-  const getStatusColor = (value: string, type: 'status' | 'payment' | 'invoice' = 'status') => {
-    let options;
-    switch (type) {
-      case 'payment':
-        options = paymentStatusOptions;
-        break;
-      case 'invoice':
-        options = invoiceStatusOptions;
-        break;
-      default:
-        options = statusOptions;
-    }
-    
-    const option = options.find(opt => opt.value === value);
-    return option?.color || '#6b7280';
-  };
-
-  const getStatusLabel = (value: string, type: 'status' | 'payment' | 'invoice' = 'status') => {
-    let options;
-    switch (type) {
-      case 'payment':
-        options = paymentStatusOptions;
-        break;
-      case 'invoice':
-        options = invoiceStatusOptions;
-        break;
-      default:
-        options = statusOptions;
-    }
-    
-    const option = options.find(opt => opt.value === value);
-    return option?.label || value;
-  };
-
-  return {
-    statusOptions,
-    paymentStatusOptions,
-    invoiceStatusOptions,
-    loading,
-    error,
-    getStatusColor,
-    getStatusLabel
-  };
-};
+// ✅ Status options are now managed by StatusOptionsContext
+// The useStatusOptions hook is imported from @/contexts/StatusOptionsContext

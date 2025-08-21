@@ -11,16 +11,25 @@ export default function B2BBulkUploadPage() {
   const router = useRouter();
 
   const handleUploadComplete = (results: any) => {
-    // Show success message and optionally redirect
-    toast({
-      title: 'Upload Completed',
-      description: `Successfully imported ${results.successful_imports} orders`,
-    });
+    // Only redirect if there were successful imports
+    if (results.successful_imports > 0) {
+      toast({
+        title: 'Upload Completed Successfully',
+        description: `Successfully imported ${results.successful_imports} orders${results.failed_imports > 0 ? ` (${results.failed_imports} failed)` : ''}`,
+      });
 
-    // Optionally redirect to orders list after a delay
-    setTimeout(() => {
-      router.push('/admin/b2b/orders');
-    }, 3000);
+      // Redirect to orders list after a delay only on success
+      setTimeout(() => {
+        router.push('/admin/b2b/orders');
+      }, 3000);
+    } else {
+      // Show error message and don't redirect
+      toast({
+        title: 'Import Failed',
+        description: `No orders were imported. ${results.failed_imports} rows failed.`,
+        variant: 'destructive',
+      });
+    }
   };
 
   const handleBack = () => {

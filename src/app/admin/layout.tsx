@@ -18,6 +18,7 @@ import { cn } from '@/lib/utils';
 import { AccountSwitcher } from './components/account-switcher';
 import Sidebar from './components/sidebar';
 import { UserNav } from './components/user-nav';
+import { StatusOptionsProvider } from '@/contexts/StatusOptionsContext';
 
 interface LayoutProps {
   readonly children: ReactNode;
@@ -116,7 +117,11 @@ export default function Layout({ children }: LayoutProps) {
             </div>
           </div>
           <Separator />
-          <div className="p-4">{children}</div>
+          <div className="p-4">
+            <StatusOptionsProvider>
+              {children}
+            </StatusOptionsProvider>
+          </div>
           <Toaster />
         </ResizablePanel>
       </ResizablePanelGroup>

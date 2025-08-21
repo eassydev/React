@@ -30,7 +30,6 @@ import { B2BSPOCList } from './B2BSPOCList';
 import { B2BSPOCWorkloadChart } from './B2BSPOCWorkloadChart';
 import { B2BSPOCTableView } from './B2BSPOCTableView';
 import { tokenUtils } from '@/lib/utils'; // ✅ FIXED: Import existing tokenUtils
-import usePermissions from '@/hooks/usePermissions'; // ✅ Add role detection - using default export
 
 interface SPOCAssignment {
   id: string;
@@ -101,11 +100,35 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
   const [statistics, setStatistics] = useState<any>(null);
 
   // ✅ Add role detection for UI restrictions
-  const { getRole, isSuperAdmin } = usePermissions();
-  const userRole = getRole();
+  // ✅ FIXED: Use SPOC hardcoded system instead of database permissions
+  const [userRole, setUserRole] = useState<string | null>(null);
+  const [adminInfo, setAdminInfo] = useState<any>(null);
 
-  // ✅ Simplified permission logic - role-based access
-  const canManageSpocs = isSuperAdmin() || userRole === 'super_admin' || userRole === 'manager';
+  // Get admin info from localStorage (set during login)
+  useEffect(() => {
+    const storedAdminInfo = localStorage.getItem('adminInfo');
+    console.log('🔍 SPOC Manager - stored admin info:', storedAdminInfo);
+
+    if (storedAdminInfo) {
+      try {
+        const parsed = JSON.parse(storedAdminInfo);
+        console.log('🔍 SPOC Manager - parsed admin info:', parsed);
+        setAdminInfo(parsed);
+        setUserRole(parsed.role);
+      } catch (error) {
+        console.error('❌ Error parsing admin info:', error);
+      }
+    }
+  }, []);
+
+  // ✅ SPOC hardcoded permission logic (matches backend spocAuth.js)
+  const canManageSpocs = userRole === 'super_admin' || userRole === 'manager';
+
+  console.log('🔍 SPOC Manager Debug:', {
+    userRole,
+    canManageSpocs,
+    adminInfo: adminInfo ? 'Present' : 'Missing'
+  });
 
   // SPOC type configuration
   const spocTypes = [
@@ -129,6 +152,8 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
       setError(null);
 
       const token = tokenUtils.get(); // ✅ FIXED: Use existing tokenUtils
+      console.log('🔍 Loading SPOC assignments with token:', token ? 'Present' : 'Missing');
+
       const response = await fetch('/admin-api/b2b/spoc/assignments', {
         headers: {
           'admin-auth-token': token || '',
@@ -136,11 +161,17 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
         }
       });
 
+      console.log('🔍 SPOC assignments response:', response.status, response.statusText);
+
       if (!response.ok) {
-        throw new Error('Failed to load SPOC assignments');
+        const errorData = await response.json().catch(() => ({}));
+        console.error('🔍 SPOC assignments error:', errorData);
+        throw new Error(errorData.message || `HTTP ${response.status}: Failed to load SPOC assignments`);
       }
 
       const data = await response.json();
+      console.log('🔍 SPOC assignments data:', data);
+
       if (data.success) {
         setAssignments(data.data.assignments || []);
         setStatistics(data.data.summary || {});
@@ -148,7 +179,7 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
         throw new Error(data.message || 'Failed to load SPOC assignments');
       }
     } catch (err) {
-      console.error('Error loading assignments:', err);
+      console.error('❌ Error loading assignments:', err);
       setError(err instanceof Error ? err.message : 'Failed to load assignments');
     } finally {
       setLoading(false);
@@ -158,6 +189,8 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
   const loadWorkloadData = async () => {
     try {
       const token = tokenUtils.get(); // ✅ FIXED: Use existing tokenUtils
+      console.log('🔍 Loading SPOC workload with token:', token ? 'Present' : 'Missing');
+
       const response = await fetch('/admin-api/b2b/spoc/workload', {
         headers: {
           'admin-auth-token': token || '',
@@ -165,14 +198,21 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
         }
       });
 
+      console.log('🔍 SPOC workload response:', response.status, response.statusText);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('🔍 SPOC workload data:', data);
+
         if (data.success) {
           setWorkloadData(data.data.spoc_workloads || []);
         }
+      } else {
+        const errorData = await response.json().catch(() => ({}));
+        console.error('🔍 SPOC workload error:', errorData);
       }
     } catch (err) {
-      console.error('Error loading workload data:', err);
+      console.error('❌ Error loading workload data:', err);
     }
   };
 
@@ -289,6 +329,14 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
           <p className="text-gray-600 mt-1">
             Manage Single Point of Contact assignments and workload distribution
           </p>
+          {/* ✅ DEBUG: Show current user info */}
+          {process.env.NODE_ENV === 'development' && (
+            <div className="mt-2 p-2 bg-yellow-50 border border-yellow-200 rounded text-xs">
+              <strong>Debug:</strong> Role: {userRole || 'Unknown'} |
+              Can Manage SPOCs: {canManageSpocs ? 'Yes' : 'No'} |
+              System: SPOC Hardcoded
+            </div>
+          )}
         </div>
         <div className="flex items-center gap-3">
           {/* ✅ Hide "Assign SPOC" button for SPOC users */}

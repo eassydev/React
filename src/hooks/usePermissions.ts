@@ -35,16 +35,26 @@ export const usePermissions = () => {
 
     // Try to get admin info from localStorage first
     const storedAdminInfo = localStorage.getItem('adminInfo');
+    console.log('🔍 usePermissions - storedAdminInfo:', storedAdminInfo);
+
     if (storedAdminInfo) {
       try {
         const adminData = JSON.parse(storedAdminInfo);
+        console.log('🔍 usePermissions - parsed adminData:', adminData);
+
         setAdminInfo(adminData);
         setPermissions(adminData.permissions || []);
         setLoading(false);
+
+        console.log('🔍 usePermissions - set role:', adminData.role);
+        console.log('🔍 usePermissions - set permissions:', adminData.permissions);
       } catch (error) {
-        console.error('Error parsing stored admin info:', error);
+        console.error('❌ Error parsing stored admin info:', error);
         localStorage.removeItem('adminInfo');
       }
+    } else {
+      console.log('🔍 usePermissions - no adminInfo in localStorage');
+      setLoading(false);
     }
   }, []);
 

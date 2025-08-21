@@ -89,6 +89,12 @@ export default function LoginForm() {
         tokenUtils.set(response.token);
         console.log('Token stored successfully');
 
+        // ✅ FIX: Store admin info in localStorage for usePermissions hook
+        if (response.admin) {
+          localStorage.setItem('adminInfo', JSON.stringify(response.admin));
+          console.log('Admin info stored:', response.admin);
+        }
+
         toast({
           title: 'Login successful',
           description: response.message || 'You are now logged in.',

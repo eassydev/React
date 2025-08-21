@@ -62,6 +62,11 @@ const B2BExcelUpload: React.FC<ExcelUploadProps> = ({ onUploadComplete }) => {
   const [importResults, setImportResults] = useState<any>(null);
   const [activeTab, setActiveTab] = useState('upload');
 
+  // ✅ NEW: Enhanced import options
+  const [importMode, setImportMode] = useState<'create_customers' | 'customer_id'>('create_customers');
+  const [skipInvalid, setSkipInvalid] = useState(true);
+  const [createCustomers, setCreateCustomers] = useState(true);
+
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (file) {
@@ -97,9 +102,10 @@ const B2BExcelUpload: React.FC<ExcelUploadProps> = ({ onUploadComplete }) => {
     }
   };
 
-  const downloadTemplate = async (format: 'xlsx' | 'csv' = 'xlsx') => {
+  // ✅ ENHANCED: Template download with mode support
+  const downloadTemplate = async (format: 'xlsx' | 'csv' = 'xlsx', mode: 'create_customers' | 'customer_id' = importMode) => {
     try {
-      const response = await fetch(`/admin-api/b2b/orders/excel-template?format=${format}`, {
+      const response = await fetch(`/admin-api/b2b/orders/excel-template-enhanced?format=${format}&mode=${mode}`, {
         headers: {
           'admin-auth-token': localStorage.getItem('token') || '',
         },
@@ -113,7 +119,8 @@ const B2BExcelUpload: React.FC<ExcelUploadProps> = ({ onUploadComplete }) => {
       const url = window.URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = `B2B_Orders_Template.${format}`;
+      const templateName = mode === 'customer_id' ? 'B2B_Orders_CustomerID_Template' : 'B2B_Orders_Template';
+      link.download = `${templateName}.${format}`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
@@ -121,7 +128,7 @@ const B2BExcelUpload: React.FC<ExcelUploadProps> = ({ onUploadComplete }) => {
 
       toast({
         title: 'Success',
-        description: `Template downloaded successfully as ${format.toUpperCase()}`,
+        description: `${mode === 'customer_id' ? 'Customer ID' : 'Customer Creation'} template downloaded as ${format.toUpperCase()}`,
       });
     } catch (error: any) {
       toast({
@@ -178,6 +185,7 @@ const B2BExcelUpload: React.FC<ExcelUploadProps> = ({ onUploadComplete }) => {
     }
   };
 
+  // ✅ ENHANCED: Import with mode support
   const importData = async () => {
     if (!selectedFile || !previewData) {
       toast({
@@ -192,10 +200,11 @@ const B2BExcelUpload: React.FC<ExcelUploadProps> = ({ onUploadComplete }) => {
       setImporting(true);
       const formData = new FormData();
       formData.append('excel_file', selectedFile);
-      formData.append('skip_invalid', 'true');
-      formData.append('create_customers', 'true');
+      formData.append('skip_invalid', skipInvalid.toString());
+      formData.append('create_customers', createCustomers.toString());
+      formData.append('import_mode', importMode);
 
-      const response = await fetch('/admin-api/b2b/orders/excel-import', {
+      const response = await fetch('/admin-api/b2b/orders/excel-import-enhanced', {
         method: 'POST',
         headers: {
           'admin-auth-token': localStorage.getItem('token') || '',
@@ -255,6 +264,51 @@ const B2BExcelUpload: React.FC<ExcelUploadProps> = ({ onUploadComplete }) => {
             </TabsList>
 
             <TabsContent value="upload" className="space-y-6">
+              {/* ✅ NEW: Import Mode Selection */}
+              <div className="border rounded-lg p-4 bg-green-50">
+                <h3 className="font-semibold mb-3 flex items-center gap-2">
+                  <Upload className="h-4 w-4" />
+                  Import Mode
+                </h3>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="create_customers"
+                      name="import_mode"
+                      value="create_customers"
+                      checked={importMode === 'create_customers'}
+                      onChange={(e) => setImportMode(e.target.value as 'create_customers')}
+                      className="w-4 h-4 text-blue-600"
+                    />
+                    <label htmlFor="create_customers" className="text-sm font-medium">
+                      Customer Creation Mode
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-600 ml-6">
+                    Creates new customers if they don't exist. Requires: company_name, contact_person, email, phone, service_name, custom_price
+                  </p>
+
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="radio"
+                      id="customer_id"
+                      name="import_mode"
+                      value="customer_id"
+                      checked={importMode === 'customer_id'}
+                      onChange={(e) => setImportMode(e.target.value as 'customer_id')}
+                      className="w-4 h-4 text-blue-600"
+                    />
+                    <label htmlFor="customer_id" className="text-sm font-medium">
+                      Customer ID Mode (Faster)
+                    </label>
+                  </div>
+                  <p className="text-xs text-gray-600 ml-6">
+                    Uses existing customer IDs. Requires: customer_id, service_name, custom_price. Best for bulk orders from existing customers.
+                  </p>
+                </div>
+              </div>
+
               {/* Template Download Section */}
               <div className="border rounded-lg p-4 bg-blue-50">
                 <h3 className="font-semibold mb-2 flex items-center gap-2">
@@ -262,17 +316,51 @@ const B2BExcelUpload: React.FC<ExcelUploadProps> = ({ onUploadComplete }) => {
                   Download Template
                 </h3>
                 <p className="text-sm text-gray-600 mb-3">
-                  Download the Excel template with sample data and required column headers.
+                  Download the Excel template for your selected import mode with sample data and required column headers.
                 </p>
                 <div className="flex gap-2">
-                  <Button onClick={() => downloadTemplate('xlsx')} variant="outline" size="sm">
+                  <Button onClick={() => downloadTemplate('xlsx', importMode)} variant="outline" size="sm">
                     <FileSpreadsheet className="h-4 w-4 mr-2" />
-                    Excel (.xlsx)
+                    Excel (.xlsx) - {importMode === 'customer_id' ? 'Customer ID' : 'Customer Creation'}
                   </Button>
-                  <Button onClick={() => downloadTemplate('csv')} variant="outline" size="sm">
+                  <Button onClick={() => downloadTemplate('csv', importMode)} variant="outline" size="sm">
                     <FileText className="h-4 w-4 mr-2" />
-                    CSV (.csv)
+                    CSV (.csv) - {importMode === 'customer_id' ? 'Customer ID' : 'Customer Creation'}
                   </Button>
+                </div>
+              </div>
+
+              {/* ✅ NEW: Import Options */}
+              <div className="border rounded-lg p-4 bg-yellow-50">
+                <h3 className="font-semibold mb-3">Import Options</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="skip_invalid"
+                      checked={skipInvalid}
+                      onChange={(e) => setSkipInvalid(e.target.checked)}
+                      className="w-4 h-4 text-blue-600"
+                    />
+                    <label htmlFor="skip_invalid" className="text-sm font-medium">
+                      Skip invalid rows and continue import
+                    </label>
+                  </div>
+
+                  {importMode === 'create_customers' && (
+                    <div className="flex items-center space-x-2">
+                      <input
+                        type="checkbox"
+                        id="create_customers"
+                        checked={createCustomers}
+                        onChange={(e) => setCreateCustomers(e.target.checked)}
+                        className="w-4 h-4 text-blue-600"
+                      />
+                      <label htmlFor="create_customers" className="text-sm font-medium">
+                        Create new customers if they don't exist
+                      </label>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -299,8 +387,8 @@ const B2BExcelUpload: React.FC<ExcelUploadProps> = ({ onUploadComplete }) => {
                 )}
 
                 <div className="flex gap-2">
-                  <Button 
-                    onClick={previewUpload} 
+                  <Button
+                    onClick={previewUpload}
                     disabled={!selectedFile || uploading}
                     className="flex-1"
                   >
@@ -471,10 +559,35 @@ const B2BExcelUpload: React.FC<ExcelUploadProps> = ({ onUploadComplete }) => {
                         {importResults.errors.map((error: string, index: number) => (
                           <Alert key={index} variant="destructive">
                             <XCircle className="h-4 w-4" />
-                            <AlertDescription>{error}</AlertDescription>
+                            <AlertDescription className="text-sm">
+                              {error}
+                            </AlertDescription>
                           </Alert>
                         ))}
                       </div>
+
+                      {/* ✅ NEW: Helper button for getting valid IDs */}
+                      {importResults.errors.some((error: string) =>
+                        error.includes('Category') || error.includes('Subcategory') || error.includes('excel-helper')
+                      ) && (
+                        <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                          <p className="text-sm text-blue-800 mb-2">
+                            <strong>Need valid Category/Subcategory IDs?</strong>
+                          </p>
+                          <Button
+                            onClick={() => window.open('/admin-api/b2b/orders/excel-helper', '_blank')}
+                            variant="outline"
+                            size="sm"
+                            className="text-blue-600 border-blue-300 hover:bg-blue-100"
+                          >
+                            <FileText className="h-4 w-4 mr-2" />
+                            Get Valid IDs
+                          </Button>
+                          <p className="text-xs text-blue-600 mt-1">
+                            This will open a new tab with all valid Category and Subcategory IDs you can use in your Excel file.
+                          </p>
+                        </div>
+                      )}
                     </div>
                   )}
                 </>
