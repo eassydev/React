@@ -36,6 +36,9 @@ export default function AddB2BCustomerPage() {
     pan_number: '',
     credit_limit: '',
     credit_days: '30',
+    payment_terms: 'Net 30',
+    payment_method_preference: 'any',
+    late_payment_fee_percentage: '0.00',
     status: 'active',
   });
 
@@ -56,6 +59,7 @@ export default function AddB2BCustomerPage() {
         ...formData,
         credit_limit: parseFloat(formData.credit_limit) || 0,
         credit_days: parseInt(formData.credit_days) || 30,
+        late_payment_fee_percentage: parseFloat(formData.late_payment_fee_percentage) || 0.00,
         // Clean up GST and PAN numbers
         gst_number: formData.gst_number.trim() || null,
         pan_number: formData.pan_number.trim() || null,
@@ -301,6 +305,67 @@ export default function AddB2BCustomerPage() {
                       <SelectItem value="inactive">Inactive</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Payment Terms */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Payment Terms & Preferences</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="payment_terms">Payment Terms</Label>
+                  <Select value={formData.payment_terms} onValueChange={(value) => handleInputChange('payment_terms', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select payment terms" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Net 15">Net 15 (Payment due in 15 days)</SelectItem>
+                      <SelectItem value="Net 30">Net 30 (Payment due in 30 days)</SelectItem>
+                      <SelectItem value="Net 45">Net 45 (Payment due in 45 days)</SelectItem>
+                      <SelectItem value="Net 60">Net 60 (Payment due in 60 days)</SelectItem>
+                      <SelectItem value="Due on Receipt">Due on Receipt</SelectItem>
+                      <SelectItem value="2/10 Net 30">2/10 Net 30 (2% discount if paid in 10 days)</SelectItem>
+                      <SelectItem value="COD">Cash on Delivery</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">Standard payment terms for this customer</p>
+                </div>
+                <div>
+                  <Label htmlFor="payment_method_preference">Preferred Payment Method</Label>
+                  <Select value={formData.payment_method_preference} onValueChange={(value) => handleInputChange('payment_method_preference', value)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select payment method" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="any">Any Method</SelectItem>
+                      <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                      <SelectItem value="cheque">Cheque</SelectItem>
+                      <SelectItem value="online">Online Payment</SelectItem>
+                      <SelectItem value="cash">Cash</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <p className="text-xs text-gray-500 mt-1">Customer's preferred payment method</p>
+                </div>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="late_payment_fee_percentage">Late Payment Fee (%)</Label>
+                  <Input
+                    id="late_payment_fee_percentage"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    max="25"
+                    value={formData.late_payment_fee_percentage}
+                    onChange={(e) => handleInputChange('late_payment_fee_percentage', e.target.value)}
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Monthly late payment fee percentage (0-25%)</p>
                 </div>
               </div>
             </CardContent>
