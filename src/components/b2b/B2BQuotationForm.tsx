@@ -9,7 +9,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Plus, Trash2, Save, Send, Calculator } from 'lucide-react';
-import { createB2BQuotation, updateB2BQuotation, createB2BQuotationForOrder, B2BQuotation, B2BQuotationItem } from '@/lib/api';
+import { createB2BQuotation, updateB2BQuotation, createB2BQuotationForOrder, B2BQuotation, B2BQuotationItem, getAllB2BCustomers, B2BCustomer } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 
 interface B2BQuotationFormProps {
@@ -26,8 +26,21 @@ const B2BQuotationForm: React.FC<B2BQuotationFormProps> = ({
   onCancel
 }) => {
   const [loading, setLoading] = useState(false);
+  const [customers, setCustomers] = useState<B2BCustomer[]>([]);
+  const [customersLoading, setCustomersLoading] = useState(false);
+  const [selectedCustomer, setSelectedCustomer] = useState<string>(quotation?.b2b_customer_id || '');
+  const [customerSearch, setCustomerSearch] = useState<string>('');
+  const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
+
+  // ✅ Determine quotation mode
+  const isBookingBased = !!orderId;
+  const isStandalone = !orderId && !quotation?.b2b_booking_id;
+
   const [formData, setFormData] = useState<Partial<B2BQuotation>>({
     b2b_booking_id: orderId || quotation?.b2b_booking_id || '',
+    b2b_customer_id: quotation?.b2b_customer_id || '',
+    service_name: quotation?.service_name || '', // ✅ NEW: Required for standalone quotations
+    service_description: quotation?.service_description || '', // ✅ NEW: Optional description
     initial_amount: quotation?.initial_amount || 0,
     final_amount: quotation?.final_amount || 0,
     quotation_items: quotation?.quotation_items || [],
@@ -63,6 +76,92 @@ const B2BQuotationForm: React.FC<B2BQuotationFormProps> = ({
     calculateTotals();
   }, [quotationItems]);
 
+  // ✅ Load customers for standalone quotations
+  useEffect(() => {
+    if (isStandalone) {
+      const loadCustomers = async () => {
+        try {
+          setCustomersLoading(true);
+          console.log('🔍 Loading customers for standalone quotation...');
+          const response = await getAllB2BCustomers();
+          console.log('📥 Customer API response:', response);
+
+          if (response.success) {
+            const customerList = response.data.customers || [];
+            console.log('👥 Loaded customers:', customerList.length, 'customers');
+            setCustomers(customerList);
+
+            if (customerList.length === 0) {
+              toast({
+                title: 'No Customers',
+                description: 'No active customers found. Please add customers first.',
+                variant: 'destructive',
+              });
+            }
+          } else {
+            console.error('❌ API returned success: false');
+            toast({
+              title: 'Error',
+              description: response.message || 'Failed to load customers',
+              variant: 'destructive',
+            });
+          }
+        } catch (error) {
+          console.error('❌ Error loading customers:', error);
+          toast({
+            title: 'Error',
+            description: 'Failed to load customers. Please check your connection.',
+            variant: 'destructive',
+          });
+        } finally {
+          setCustomersLoading(false);
+        }
+      };
+      loadCustomers();
+    }
+  }, [isStandalone]);
+
+  // ✅ Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as Element;
+      if (!target.closest('.customer-search-container')) {
+        setShowCustomerDropdown(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  // ✅ Filter customers based on search query
+  const filteredCustomers = customers.filter(customer => {
+    if (!customerSearch.trim()) return true;
+    const searchLower = customerSearch.toLowerCase();
+    return (
+      customer.company_name?.toLowerCase().includes(searchLower) ||
+      customer.contact_person?.toLowerCase().includes(searchLower) ||
+      customer.email?.toLowerCase().includes(searchLower) ||
+      customer.phone?.includes(customerSearch.trim())
+    );
+  });
+
+  // ✅ Get selected customer details
+  const selectedCustomerDetails = customers.find(c => c.id === selectedCustomer);
+
+  // ✅ Handle customer selection
+  const handleCustomerSelect = (customerId: string) => {
+    setSelectedCustomer(customerId);
+    setFormData(prev => ({ ...prev, b2b_customer_id: customerId }));
+    setShowCustomerDropdown(false);
+
+    // Set search to selected customer name for better UX
+    const customer = customers.find(c => c.id === customerId);
+    if (customer) {
+      setCustomerSearch(`${customer.company_name} - ${customer.contact_person}`);
+    }
+  };
+
   const handleItemChange = (index: number, field: keyof B2BQuotationItem, value: string | number) => {
     const updatedItems = [...quotationItems];
     updatedItems[index] = {
@@ -95,14 +194,36 @@ const B2BQuotationForm: React.FC<B2BQuotationFormProps> = ({
     try {
       setLoading(true);
 
-      // Validation
-      if (!formData.b2b_booking_id) {
-        toast({
-          title: 'Error',
-          description: 'Booking ID is required',
-          variant: 'destructive',
-        });
-        return;
+      // ✅ Validation based on quotation method
+      if (isStandalone) {
+        // Standalone quotation validation
+        if (!selectedCustomer || !formData.b2b_customer_id) {
+          toast({
+            title: 'Error',
+            description: 'Please select a customer for this quotation',
+            variant: 'destructive',
+          });
+          return;
+        }
+
+        if (!formData.service_name?.trim()) {
+          toast({
+            title: 'Error',
+            description: 'Service name is required for standalone quotations',
+            variant: 'destructive',
+          });
+          return;
+        }
+      } else {
+        // Booking-based quotation validation
+        if (!formData.b2b_booking_id) {
+          toast({
+            title: 'Error',
+            description: 'Booking ID is required',
+            variant: 'destructive',
+          });
+          return;
+        }
       }
 
       if (quotationItems.some(item => !item.service || item.rate <= 0)) {
@@ -171,18 +292,173 @@ const B2BQuotationForm: React.FC<B2BQuotationFormProps> = ({
         </CardHeader>
 
         <CardContent className="space-y-6">
+          {/* Quotation Mode Indicator */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+            <h3 className="font-medium text-blue-900">
+              {isBookingBased ? '📋 Booking-based Quotation' : '🆕 Standalone Quotation'}
+            </h3>
+            <p className="text-sm text-blue-700 mt-1">
+              {isBookingBased
+                ? 'Creating quotation for existing booking/order'
+                : 'Creating new quotation without existing booking'}
+            </p>
+          </div>
+
           {/* Basic Information */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label htmlFor="booking_id">Booking ID</Label>
-              <Input
-                id="booking_id"
-                value={formData.b2b_booking_id}
-                onChange={(e) => setFormData(prev => ({ ...prev, b2b_booking_id: e.target.value }))}
-                placeholder="Enter booking ID"
-                disabled={!!orderId || !!quotation?.id}
-              />
-            </div>
+            {/* Customer Selection - Only for standalone quotations */}
+            {isStandalone && (
+              <div className="md:col-span-2">
+                <Label htmlFor="customer_id">Select Customer *</Label>
+                <div className="relative customer-search-container">
+                  <Input
+                    type="text"
+                    placeholder={
+                      customersLoading
+                        ? "Loading customers..."
+                        : customers.length === 0
+                          ? "No customers available"
+                          : "Search customers by name, contact, email, or phone..."
+                    }
+                    value={customerSearch}
+                    onChange={(e) => {
+                      setCustomerSearch(e.target.value);
+                      setShowCustomerDropdown(true);
+                      // Clear selection if user is typing
+                      if (e.target.value !== selectedCustomerDetails?.company_name + ' - ' + selectedCustomerDetails?.contact_person) {
+                        setSelectedCustomer('');
+                        setFormData(prev => ({ ...prev, b2b_customer_id: '' }));
+                      }
+                    }}
+                    onFocus={() => setShowCustomerDropdown(true)}
+                    disabled={customersLoading}
+                    className="pr-10"
+                  />
+
+                  {/* Search/Dropdown Icon */}
+                  <div className="absolute inset-y-0 right-0 flex items-center pr-3 pointer-events-none">
+                    {customersLoading ? (
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                    ) : (
+                      <svg className="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                      </svg>
+                    )}
+                  </div>
+
+                  {/* Dropdown Results */}
+                  {showCustomerDropdown && !customersLoading && (
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-300 rounded-md shadow-lg max-h-60 overflow-auto">
+                      {filteredCustomers.length === 0 ? (
+                        <div className="px-4 py-3 text-sm text-gray-500">
+                          {customers.length === 0
+                            ? "No customers found. Please add customers first."
+                            : customerSearch.trim()
+                              ? `No customers match "${customerSearch}"`
+                              : "Start typing to search customers..."
+                          }
+                        </div>
+                      ) : (
+                        filteredCustomers.map((customer) => (
+                          <div
+                            key={customer.id}
+                            className="px-4 py-3 hover:bg-gray-100 cursor-pointer border-b border-gray-100 last:border-b-0"
+                            onClick={() => handleCustomerSelect(customer.id)}
+                          >
+                            <div className="font-medium text-gray-900">
+                              {customer.company_name}
+                            </div>
+                            <div className="text-sm text-gray-600">
+                              👤 {customer.contact_person} • 📧 {customer.email} • 📞 {customer.phone}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+
+                {/* Selected Customer Display */}
+                {selectedCustomerDetails && (
+                  <div className="mt-2 p-3 bg-green-50 border border-green-200 rounded-lg">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <div className="font-medium text-green-900">
+                          ✅ Selected: {selectedCustomerDetails.company_name}
+                        </div>
+                        <div className="text-sm text-green-700">
+                          Contact: {selectedCustomerDetails.contact_person} • {selectedCustomerDetails.email}
+                        </div>
+                      </div>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => {
+                          setSelectedCustomer('');
+                          setCustomerSearch('');
+                          setFormData(prev => ({ ...prev, b2b_customer_id: '' }));
+                        }}
+                        className="text-green-700 hover:text-green-900"
+                      >
+                        Change
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                <p className="text-xs text-gray-500 mt-1">
+                  {customersLoading
+                    ? "Loading available customers..."
+                    : customers.length === 0
+                      ? "No customers available. Please add customers in the B2B Customers section first."
+                      : selectedCustomerDetails
+                        ? "Customer selected. You can click 'Change' to select a different customer."
+                        : "Type to search and select the customer who will receive this quotation"}
+                </p>
+              </div>
+            )}
+
+            {/* Booking ID - Only for booking-based quotations */}
+            {isBookingBased && (
+              <div>
+                <Label htmlFor="booking_id">Booking ID</Label>
+                <Input
+                  id="booking_id"
+                  value={formData.b2b_booking_id}
+                  onChange={(e) => setFormData(prev => ({ ...prev, b2b_booking_id: e.target.value }))}
+                  placeholder="Enter booking ID"
+                  disabled={!!orderId || !!quotation?.id}
+                />
+              </div>
+            )}
+
+            {/* Service Information - Only for standalone quotations */}
+            {isStandalone && (
+              <>
+                <div>
+                  <Label htmlFor="service_name">Service Name *</Label>
+                  <Input
+                    id="service_name"
+                    value={formData.service_name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, service_name: e.target.value }))}
+                    placeholder="e.g., Deep Cleaning Service, Pest Control, etc."
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="service_description">Service Description</Label>
+                  <Textarea
+                    id="service_description"
+                    value={formData.service_description}
+                    onChange={(e) => setFormData(prev => ({ ...prev, service_description: e.target.value }))}
+                    placeholder="Brief description of the service to be provided..."
+                    rows={3}
+                  />
+                </div>
+              </>
+            )}
 
             <div>
               <Label htmlFor="validity_days">Validity (Days)</Label>

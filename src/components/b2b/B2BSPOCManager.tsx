@@ -104,6 +104,14 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
   const [userRole, setUserRole] = useState<string | null>(null);
   const [adminInfo, setAdminInfo] = useState<any>(null);
 
+  // ✅ Helper function to safely format satisfaction score
+  const formatSatisfactionScore = (score: any): string => {
+    if (!score) return 'N/A';
+    const numScore = Number(score);
+    if (isNaN(numScore)) return 'N/A';
+    return numScore.toFixed(1);
+  };
+
   // Get admin info from localStorage (set during login)
   useEffect(() => {
     const storedAdminInfo = localStorage.getItem('adminInfo');
@@ -580,24 +588,32 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {assignments
-                    .filter(a => a.client_satisfaction_score)
-                    .slice(0, 5)
-                    .map((assignment) => (
+                  {assignments.filter(a => a.client_satisfaction_score).length > 0 ? (
+                    assignments
+                      .filter(a => a.client_satisfaction_score)
+                      .slice(0, 5)
+                      .map((assignment) => (
                       <div key={assignment.id} className="flex items-center justify-between p-3 border rounded-lg">
                         <div>
-                          <p className="font-medium">{assignment.spocUser.full_name || assignment.spocUser.username}</p>
-                          <p className="text-sm text-gray-600">{assignment.customer.company_name}</p>
+                          <p className="font-medium">{assignment.spocUser?.full_name || assignment.spocUser?.username || 'Unknown SPOC'}</p>
+                          <p className="text-sm text-gray-600">{assignment.customer?.company_name || 'Unknown Client'}</p>
                         </div>
                         <div className="text-right">
                           <div className="flex items-center gap-1">
                             <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                            <span className="font-medium">{assignment.client_satisfaction_score.toFixed(1)}</span>
+                            <span className="font-medium">{formatSatisfactionScore(assignment.client_satisfaction_score)}</span>
                           </div>
                           <p className="text-xs text-gray-500">Client Rating</p>
                         </div>
                       </div>
-                    ))}
+                      ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Star className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <p className="text-lg font-medium">No Performance Data</p>
+                      <p className="text-sm">Client satisfaction scores will appear here once SPOCs interact with clients</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -612,24 +628,32 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  {assignments
-                    .filter(a => a.last_interaction_date)
-                    .sort((a, b) => new Date(b.last_interaction_date).getTime() - new Date(a.last_interaction_date).getTime())
-                    .slice(0, 5)
-                    .map((assignment) => (
+                  {assignments.filter(a => a.last_interaction_date).length > 0 ? (
+                    assignments
+                      .filter(a => a.last_interaction_date)
+                      .sort((a, b) => new Date(b.last_interaction_date).getTime() - new Date(a.last_interaction_date).getTime())
+                      .slice(0, 5)
+                      .map((assignment) => (
                       <div key={assignment.id} className="flex items-center gap-3 p-3 border rounded-lg">
                         <div className="w-2 h-2 bg-green-500 rounded-full"></div>
                         <div className="flex-1">
-                          <p className="font-medium">{assignment.spocUser.full_name || assignment.spocUser.username}</p>
+                          <p className="font-medium">{assignment.spocUser?.full_name || assignment.spocUser?.username || 'Unknown SPOC'}</p>
                           <p className="text-sm text-gray-600">
-                            Interacted with {assignment.customer.company_name}
+                            Interacted with {assignment.customer?.company_name || 'Unknown Client'}
                           </p>
                           <p className="text-xs text-gray-500">
-                            {new Date(assignment.last_interaction_date).toLocaleDateString()}
+                            {assignment.last_interaction_date ? new Date(assignment.last_interaction_date).toLocaleDateString() : 'No date'}
                           </p>
                         </div>
                       </div>
-                    ))}
+                      ))
+                  ) : (
+                    <div className="text-center py-8 text-gray-500">
+                      <Clock className="w-12 h-12 mx-auto mb-4 text-gray-300" />
+                      <p className="text-lg font-medium">No Recent Activity</p>
+                      <p className="text-sm">SPOC interactions and activities will appear here</p>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

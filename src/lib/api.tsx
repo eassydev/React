@@ -5112,6 +5112,25 @@ export const deleteB2BCustomer = async (id: string) => {
   }
 };
 
+// ✅ NEW: Get all B2B customers for dropdown selection (no pagination)
+export const getAllB2BCustomers = async () => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/b2b/customers', {
+      headers: { 'admin-auth-token': token || '' },
+      params: {
+        page: 1,
+        limit: 1000, // Get a large number to include all customers
+        status: 'active' // Only active customers
+      }
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching all B2B customers:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch B2B customers.');
+  }
+};
+
 // B2B Orders
 export const fetchB2BOrders = async (page = 1, limit = 10, status = 'all', paymentStatus = 'all', search = '') => {
   try {
