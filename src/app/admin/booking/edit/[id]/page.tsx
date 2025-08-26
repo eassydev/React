@@ -47,6 +47,7 @@ const EditBookingForm: React.FC = () => {
 
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
   const [selectionType, setSelectionType] = useState<string>('Category');
+  const [bookingData, setBookingData] = useState<any>(null);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
@@ -175,6 +176,19 @@ const EditBookingForm: React.FC = () => {
 
       try {
         const booking = await fetchBookingById(bookingId.toString());
+
+        // Debug: Log the booking data structure
+        console.log('🔍 Booking API Response:', booking);
+        console.log('📊 BookingItem data:', booking.booking);
+        console.log('💰 Main Booking data (bookingcoupon):', booking.bookingcoupon);
+
+        // Store booking data for price display
+        // The API returns: { booking: BookingItem, bookingcoupon: MainBooking }
+        // We need both for complete price information
+        setBookingData({
+          ...booking.booking,           // BookingItem data (total_amount, total_gst)
+          mainBooking: booking.bookingcoupon  // Main Booking data (convenience_charge, final_amount)
+        });
 
         // Set basic booking details
         setUserId(booking.user?.id || null); // Use encrypted user ID from user object
@@ -687,6 +701,56 @@ const EditBookingForm: React.FC = () => {
                   <option value="Initiated">Initiated</option>
                 </select>
               </div>
+
+              {/* Price Information Display */}
+              {bookingData && (
+                <div className="p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <h3 className="text-sm font-medium text-blue-800 mb-3">
+                    💰 Booking Amount Details
+                  </h3>
+                  {/* Debug info */}
+                  <div className="text-xs text-gray-500 mb-2">
+                    Debug: BookingData available: {bookingData ? 'Yes' : 'No'} |
+                    MainBooking available: {bookingData.mainBooking ? 'Yes' : 'No'}
+                  </div>
+                  <div className="space-y-2 text-sm text-blue-700">
+                    {(() => {
+                      // Get the correct values from the right data sources
+                      const totalAmountPaid = Number(bookingData.mainBooking?.total_amount || bookingData.total_amount) || 0;
+                      const gstAmount = Number(bookingData.mainBooking?.total_gst || bookingData.total_gst) || 0;
+                      const convenienceCharge = Number(bookingData.mainBooking?.convenience_charge) || 0;
+
+                      // Calculate basic service amount: total_amount - gst - convenience_charge
+                      const basicServiceAmount = totalAmountPaid - gstAmount - convenienceCharge;
+
+                      return (
+                        <>
+                          <div className="flex justify-between">
+                            <span>Basic Service Amount:</span>
+                            <span>₹{basicServiceAmount.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>GST Amount:</span>
+                            <span>₹{gstAmount.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Convenience Charge:</span>
+                            <span>₹{convenienceCharge.toFixed(2)}</span>
+                          </div>
+                          <hr className="border-blue-300 my-2" />
+                          <div className="flex justify-between font-bold text-base">
+                            <span>Total Amount Paid:</span>
+                            <span>₹{totalAmountPaid.toFixed(2)}</span>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                  <div className="mt-3 p-2 bg-blue-100 rounded text-xs text-blue-600">
+                    ℹ️ This shows the complete pricing breakdown for this booking
+                  </div>
+                </div>
+              )}
 
               <div className="flex space-x-3 pt-6">
                 <Button

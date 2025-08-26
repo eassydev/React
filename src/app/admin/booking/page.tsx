@@ -372,10 +372,16 @@ const BookingList = () => {
       },
     },
     {
-      header: 'Basic Amount',
+      header: 'Basic Service Amount',
       cell: (info) => {
         const row = info.row.original;
-        return <span>₹ {row.total_amount}</span>;
+        // Calculate basic service amount: total_amount - gst - convenience_charge
+        const totalAmountPaid = Number(row.booking?.total_amount || row.total_amount) || 0;
+        const gstAmount = Number(row.booking?.total_gst || row.total_gst) || 0;
+        const convenienceCharge = Number(row.booking?.convenience_charge || row.convenience_charge) || 0;
+        const basicServiceAmount = totalAmountPaid - gstAmount - convenienceCharge;
+
+        return <span>₹ {basicServiceAmount.toFixed(2)}</span>;
       },
     },
     {
@@ -386,10 +392,22 @@ const BookingList = () => {
       },
     },
     {
-      header: 'Final Amount',
+      header: 'Convenience Charge',
       cell: (info) => {
         const row = info.row.original;
-        return <span>₹ {row.final_amount}</span>;
+        // Get convenience charge from the main booking relationship
+        const convenienceCharge = row.booking?.convenience_charge || row.convenience_charge || 0;
+        return <span>₹ {Number(convenienceCharge).toFixed(2)}</span>;
+      },
+    },
+    {
+      header: 'Total Amount Paid',
+      cell: (info) => {
+        const row = info.row.original;
+        // total_amount is already the final amount paid (including GST + convenience charge)
+        const totalAmountPaid = Number(row.booking?.total_amount || row.total_amount) || 0;
+
+        return <span>₹ {totalAmountPaid.toFixed(2)}</span>;
       },
     },
     {

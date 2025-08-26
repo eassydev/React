@@ -6,6 +6,7 @@ import { ArrowLeft, Save, Edit, Calendar, MapPin, User, Building, Phone, Mail, C
 import { fetchB2BOrderById, updateB2BOrderStatus, ProviderSearchResult } from '@/lib/api';
 import { StatusDropdown, StatusBadge } from '@/components/b2b/StatusDropdown';
 import { ProviderSearchDropdown } from '@/components/b2b/ProviderSearchDropdown';
+import { ServiceAttachments } from '@/components/b2b/ServiceAttachments';
 
 
 import { Button } from '@/components/ui/button';
@@ -503,6 +504,12 @@ export default function B2BOrderDetailPage({ params }: { params: { id: string } 
               </div>
             </CardContent>
           </Card>
+
+          {/* Service Attachments */}
+          <ServiceAttachments
+            bookingId={params.id}
+            readonly={true}
+          />
 
           {/* Order Timeline */}
           <Card>

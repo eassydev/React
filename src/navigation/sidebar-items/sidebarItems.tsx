@@ -21,6 +21,8 @@ import {
   Tags,
   FileText,
   HelpCircle,
+  FileImage,
+  HardDrive,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -260,6 +262,8 @@ export const sidebarItems: SidebarItem[] = [
       { title: 'Quotations', route: `${basePath}/b2b/quotations` },
       { title: 'Invoices', route: `${basePath}/b2b/invoices` },
       { title: 'Payment Reminders', route: `${basePath}/b2b/payment-reminders` },
+      { title: 'Service Attachments', route: `${basePath}/b2b/service-attachments` },
+      { title: 'File Lifecycle', route: `${basePath}/b2b/file-lifecycle` },
     ],
   },
   {

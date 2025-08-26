@@ -54,7 +54,10 @@ const ViewBookingPage: React.FC = () => {
 
       try {
         const booking = await fetchBookingById(bookingId.toString());
-        console.log('booking', booking);
+        console.log('🔍 Booking View API Response:', booking);
+        console.log('📊 BookingItem data:', booking.booking);
+        console.log('💰 Main Booking data (bookingcoupon):', booking.bookingcoupon);
+
         setBookingDetails(booking.booking);
         setReport(booking.report);
         setFeedback(booking.feedback);
@@ -255,12 +258,50 @@ const ViewBookingPage: React.FC = () => {
                   <p>
                     <strong>Package:</strong> {bookingDetails.package?.name || 'N/A'}
                   </p>
-                  <p>
-                    <strong>Price:</strong> ₹{bookingDetails.total_amount || 0}
-                  </p>
-                  <p>
-                    <strong>Strike Price:</strong> ₹{bookingDetails.discount_amount || 0}
-                  </p>
+                  {/* Price Breakdown Section */}
+                  <div className="p-4 bg-blue-50 rounded-lg border border-blue-200 mt-4">
+                    <h4 className="text-sm font-medium text-blue-800 mb-3">
+                      💰 Payment Breakdown
+                    </h4>
+                    {(() => {
+                      // Get the correct values from the right data sources
+                      const totalAmountPaid = Number(bookingCoupon?.total_amount || bookingDetails.total_amount) || 0;
+                      const gstAmount = Number(bookingCoupon?.total_gst || bookingDetails.total_gst) || 0;
+                      const convenienceCharge = Number(bookingCoupon?.convenience_charge) || 0;
+                      const discountAmount = Number(bookingDetails.discount_amount) || 0;
+
+                      // Calculate basic service amount: total_amount - gst - convenience_charge
+                      const basicServiceAmount = totalAmountPaid - gstAmount - convenienceCharge;
+
+                      return (
+                        <div className="space-y-2 text-sm text-blue-700">
+                          <div className="flex justify-between">
+                            <span>Basic Service Amount:</span>
+                            <span>₹{basicServiceAmount.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>GST Amount:</span>
+                            <span>₹{gstAmount.toFixed(2)}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span>Convenience Charge:</span>
+                            <span>₹{convenienceCharge.toFixed(2)}</span>
+                          </div>
+                          {discountAmount > 0 && (
+                            <div className="flex justify-between text-red-600">
+                              <span>Discount Applied:</span>
+                              <span>-₹{discountAmount.toFixed(2)}</span>
+                            </div>
+                          )}
+                          <hr className="border-blue-300 my-2" />
+                          <div className="flex justify-between font-bold text-base">
+                            <span>Total Amount Paid:</span>
+                            <span>₹{totalAmountPaid.toFixed(2)}</span>
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </div>
                 </div>
                 <div>
                   <h3 className="font-semibold text-lg">Booking Report Details</h3>

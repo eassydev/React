@@ -297,19 +297,16 @@ const B2BQuotationDetail: React.FC<B2BQuotationDetailProps> = ({
                 Customer Information
               </h3>
               <div className="space-y-2 text-sm">
-                {/* @ts-ignore - booking relationship */}
-                <p><strong>Company:</strong> {quotation.booking?.customer?.company_name || 'N/A'}</p>
-                {/* @ts-ignore - booking relationship */}
-                <p><strong>Contact:</strong> {quotation.booking?.customer?.contact_person || 'N/A'}</p>
-                {/* @ts-ignore - booking relationship */}
+                {/* Customer info from either booking relationship or direct customer relationship */}
+                <p><strong>Company:</strong> {quotation.booking?.customer?.company_name || quotation.customer?.company_name || 'N/A'}</p>
+                <p><strong>Contact:</strong> {quotation.booking?.customer?.contact_person || quotation.customer?.contact_person || 'N/A'}</p>
                 <p className="flex items-center gap-2">
                   <Phone className="h-3 w-3" />
-                  {quotation.booking?.customer?.phone || 'N/A'}
+                  {quotation.booking?.customer?.phone || quotation.customer?.phone || 'N/A'}
                 </p>
-                {/* @ts-ignore - booking relationship */}
                 <p className="flex items-center gap-2">
                   <Mail className="h-3 w-3" />
-                  {quotation.booking?.customer?.email || 'N/A'}
+                  {quotation.booking?.customer?.email || quotation.customer?.email || 'N/A'}
                 </p>
               </div>
             </div>

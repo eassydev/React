@@ -5804,6 +5804,26 @@ export interface B2BQuotation {
   quotation_items?: B2BQuotationItem[];
   terms_and_conditions?: string;
   validity_days?: number;
+
+  // ✅ NEW: Relationship fields for customer information
+  booking?: {
+    customer?: {
+      id: string;
+      company_name: string;
+      contact_person: string;
+      email: string;
+      phone: string;
+      address?: string;
+    };
+  };
+  customer?: {
+    id: string;
+    company_name: string;
+    contact_person: string;
+    email: string;
+    phone: string;
+    address?: string;
+  };
   valid_until?: string;
   sp_notes?: string;
   admin_notes?: string;
@@ -10365,6 +10385,165 @@ export const submitContactForm = async (contactData: {
     return response.data;
   } catch (error) {
     console.error('❌ Error submitting contact form:', error);
+    throw error;
+  }
+};
+
+// ===== B2B SERVICE ATTACHMENTS API =====
+
+export interface ServiceAttachment {
+  id: string;
+  type: 'before_image' | 'after_image' | 'before_video' | 'after_video';
+  fileName: string;
+  fileSize: number;
+  mimeType: string;
+  uploadedAt: string;
+  isArchived: boolean;
+  downloadUrl: string;
+  uploadedBy?: {
+    id: string;
+    companyName: string;
+    contactPerson: string;
+  };
+}
+
+export interface ServiceAttachmentsResponse {
+  success: boolean;
+  data: {
+    attachments: ServiceAttachment[];
+    total: number;
+  };
+  message?: string;
+}
+
+export interface AttachmentDownloadResponse {
+  success: boolean;
+  data: {
+    downloadUrl: string;
+    expiresAt: string;
+  };
+  message?: string;
+}
+
+// Get service attachments for a B2B booking
+export const fetchB2BBookingAttachments = async (bookingId: string): Promise<ServiceAttachmentsResponse> => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('Authentication token not found');
+    }
+
+    console.log(`📸 Fetching service attachments for booking: ${bookingId}`);
+
+    const response: AxiosResponse<ServiceAttachmentsResponse> = await apiClient.get(
+      `/b2b/bookings/${bookingId}/attachments`,
+      {
+        headers: {
+          'admin-auth-token': token,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    console.log('✅ Service attachments fetched successfully:', response.data);
+
+    // Ensure the response has the expected structure
+    if (!response.data || typeof response.data !== 'object') {
+      console.warn('⚠️  Invalid response structure:', response.data);
+      return {
+        success: false,
+        data: { attachments: [], total: 0 },
+        message: 'Invalid response structure'
+      };
+    }
+
+    // Ensure attachments is an array
+    if (!Array.isArray(response.data.data?.attachments)) {
+      console.warn('⚠️  Attachments is not an array:', response.data.data?.attachments);
+      return {
+        success: response.data.success || false,
+        data: {
+          attachments: [],
+          total: 0
+        },
+        message: response.data.message || 'No attachments found'
+      };
+    }
+
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error fetching service attachments:', error);
+    // Return a safe fallback structure
+    return {
+      success: false,
+      data: { attachments: [], total: 0 },
+      message: error instanceof Error ? error.message : 'Failed to fetch attachments'
+    };
+  }
+};
+
+// Get download URL for a specific attachment
+export const fetchAttachmentDownloadUrl = async (attachmentId: string): Promise<AttachmentDownloadResponse> => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('Authentication token not found');
+    }
+
+    console.log(`📥 Getting download URL for attachment: ${attachmentId}`);
+
+    const response: AxiosResponse<AttachmentDownloadResponse> = await apiClient.get(
+      `/b2b/attachments/${attachmentId}/download`,
+      {
+        headers: {
+          'admin-auth-token': token,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    console.log('✅ Download URL fetched successfully');
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error fetching download URL:', error);
+    throw error;
+  }
+};
+
+// Get all service attachments with filtering and pagination
+export const fetchAllServiceAttachments = async (params?: {
+  page?: number;
+  limit?: number;
+  type?: string;
+  providerId?: string;
+  customerId?: string;
+  dateFrom?: string;
+  dateTo?: string;
+  status?: string;
+}): Promise<ServiceAttachmentsResponse> => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('Authentication token not found');
+    }
+
+    console.log('📸 Fetching all service attachments with filters:', params);
+
+    const response: AxiosResponse<ServiceAttachmentsResponse> = await apiClient.get(
+      '/b2b/attachments',
+      {
+        headers: {
+          'admin-auth-token': token,
+          'Content-Type': 'application/json',
+        },
+        params,
+      }
+    );
+
+    console.log('✅ All service attachments fetched successfully');
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error fetching all service attachments:', error);
     throw error;
   }
 };
