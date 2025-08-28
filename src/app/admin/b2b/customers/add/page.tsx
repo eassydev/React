@@ -28,6 +28,7 @@ export default function AddB2BCustomerPage() {
     contact_person: '',
     email: '',
     phone: '',
+    password: '', // ✅ NEW: Add password field
     address: '',
     city: '',
     state: '',
@@ -166,6 +167,28 @@ export default function AddB2BCustomerPage() {
                     placeholder="Contact phone number"
                     required
                   />
+                </div>
+              </div>
+
+              {/* ✅ NEW: Password Field */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="password">Password *</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => handleInputChange('password', e.target.value)}
+                    placeholder="Enter secure password (min 6 characters)"
+                    required
+                    minLength={6}
+                  />
+                  <p className="text-sm text-gray-500 mt-1">
+                    Password for customer portal access (minimum 6 characters)
+                  </p>
+                </div>
+                <div>
+                  {/* Empty div for grid alignment */}
                 </div>
               </div>
             </CardContent>
