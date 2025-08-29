@@ -154,7 +154,16 @@ const AddBookingForm: React.FC = () => {
           hasSubcategory: !!selectedSubcategoryId,
           hasProvider: !!providerId,
           hasSegment: !!selectedSegmentId,
+          segmentsAvailable: serviceSegments.length,
         });
+        setPriceBreakdown(null);
+        setAutoCalculatedPrice(0);
+        return;
+      }
+
+      // ✅ Only require segment if segments are available for this category/subcategory
+      if (serviceSegments.length > 0 && !selectedSegmentId) {
+        console.log('Segment is required but not selected (segments are available)');
         setPriceBreakdown(null);
         setAutoCalculatedPrice(0);
         return;
@@ -253,6 +262,7 @@ const AddBookingForm: React.FC = () => {
     selectedFilterAttributesId,
     selectedFilterOptionId,
     quantity,
+    serviceSegments.length, // ✅ Add this to recalculate when segments become available
   ]);
 
   // Fetch categories on load
@@ -317,10 +327,16 @@ const AddBookingForm: React.FC = () => {
           });
           const segmentData = await fetchServiceSegments(selectedCategoryId, selectedSubcategoryId);
           console.log('Service segments loaded:', segmentData);
-          setServiceSegments(segmentData);
+          setServiceSegments(segmentData || []);
 
-          // Reset segment selection when segments change
-          setSelectedSegmentId('');
+          // ✅ If no segments are available, clear the selected segment and allow user to proceed
+          if (!segmentData || segmentData.length === 0) {
+            console.log('ℹ️ No segments available for this category/subcategory combination');
+            setSelectedSegmentId('');
+          } else {
+            // Reset segment selection when segments change
+            setSelectedSegmentId('');
+          }
         } catch (error) {
           console.error('Error loading service segments:', error);
           setServiceSegments([]);
@@ -834,12 +850,14 @@ const AddBookingForm: React.FC = () => {
                     </div>
                   )}
 
-                  {/* Service Segment Selector */}
-                  {serviceSegments.length > 0 && (
+                  {/* Service Segment Selector - Always show when category and subcategory are selected */}
+                  {selectedCategoryId && selectedSubcategoryId && (
                     <div className="space-y-2">
                       <label className="flex items-center space-x-2 text-sm font-medium text-gray-700">
                         <Globe2 className="w-4 h-4 text-green-500" />
-                        <span>Select Service Segment</span>
+                        <span>
+                          Select Service Segment {serviceSegments.length > 0 ? '' : '(Optional - No segments available)'}
+                        </span>
                         <span className="text-xs text-gray-500">
                           ({serviceSegments.length} available)
                         </span>
@@ -850,9 +868,14 @@ const AddBookingForm: React.FC = () => {
                           setSelectedSegmentId(value);
                           console.log('Selected segment:', value);
                         }}
+                        disabled={serviceSegments.length === 0}
                       >
                         <SelectTrigger className="bg-white border-gray-200">
-                          <SelectValue placeholder="Select a service segment" />
+                          <SelectValue placeholder={
+                            serviceSegments.length === 0
+                              ? "No segments available for this category/subcategory"
+                              : "Select a service segment"
+                          } />
                         </SelectTrigger>
                         <SelectContent>
                           {serviceSegments.map((segment) =>
@@ -868,6 +891,11 @@ const AddBookingForm: React.FC = () => {
                         <div className="text-xs text-green-600 bg-green-50 p-2 rounded">
                           ✅ Segment selected:{' '}
                           {serviceSegments.find((s) => s.id === selectedSegmentId)?.segment_name}
+                        </div>
+                      )}
+                      {serviceSegments.length === 0 && (
+                        <div className="text-xs text-gray-500 bg-gray-50 p-2 rounded">
+                          ℹ️ No service segments are configured for this category/subcategory combination. You can proceed without selecting a segment.
                         </div>
                       )}
                     </div>
