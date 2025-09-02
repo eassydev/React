@@ -1822,12 +1822,17 @@ export const fetchServiceSegments = async (
     });
 
     if (response.data.status) {
-      return response.data.data;
+      // ✅ Return the data array, or empty array if no segments found
+      return response.data.data || [];
     } else {
-      throw new Error(response.data.message || 'Failed to fetch service segments.');
+      // ✅ Don't throw error for "no segments found" - return empty array instead
+      console.log('No service segments found:', response.data.message);
+      return [];
     }
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch service segments.');
+    // ✅ Handle API errors more gracefully - return empty array instead of throwing
+    console.error('Error fetching service segments:', error.response?.data?.message || error.message);
+    return [];
   }
 };
 

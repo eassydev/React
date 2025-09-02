@@ -244,9 +244,16 @@ export default function SimpleB2BOrderPage() {
           const response = await fetchServiceSegments(selectedCategoryId, selectedSubcategoryId);
           console.log('📦 Service segments loaded:', response);
           setServiceSegments(response || []);
+
+          // ✅ If no segments are available, clear the selected segment and allow user to proceed
+          if (!response || response.length === 0) {
+            console.log('ℹ️ No segments available for this category/subcategory combination');
+            setSelectedSegmentId('');
+          }
         } catch (error) {
           console.error('❌ Error loading service segments:', error);
           setServiceSegments([]);
+          setSelectedSegmentId('');
         }
       };
       loadServiceSegments();
@@ -351,11 +358,15 @@ export default function SimpleB2BOrderPage() {
   }, [selectedSegmentId, formData.quantity]);
 
   // ✅ Calculate price when provider changes (if all required fields are selected)
+  // ✅ Updated: Allow price calculation even when no segments are available
   useEffect(() => {
-    if (formData.provider_id && selectedCategoryId && selectedSubcategoryId && selectedSegmentId && formData.quantity) {
-      calculatePrice();
+    if (formData.provider_id && selectedCategoryId && selectedSubcategoryId && formData.quantity) {
+      // Only require segment if segments are available for this category/subcategory
+      if (serviceSegments.length === 0 || selectedSegmentId) {
+        calculatePrice();
+      }
     }
-  }, [formData.provider_id]);
+  }, [formData.provider_id, serviceSegments.length]);
 
   // ✅ Load providers when category and subcategory are selected
   useEffect(() => {
@@ -699,6 +710,8 @@ export default function SimpleB2BOrderPage() {
         final_amount: finalAmount,
         service_rate: formData.service_rate ? parseFloat(formData.service_rate) : undefined,
         service_area_sqft: formData.service_area_sqft ? parseFloat(formData.service_area_sqft) : undefined,
+        // ✅ Handle optional segment: only include segment_id if one is selected or if segments are available
+        segment_id: selectedSegmentId || (serviceSegments.length === 0 ? null : formData.segment_id),
       };
 
       console.log('📤 Submitting B2B order data:', submitData);
@@ -1066,7 +1079,9 @@ export default function SimpleB2BOrderPage() {
               {/* Service Segment - Always show when category and subcategory are selected */}
               {selectedCategoryId && selectedSubcategoryId && (
                 <div>
-                  <Label htmlFor="segment">Service Segment *</Label>
+                  <Label htmlFor="segment">
+                    Service Segment {serviceSegments.length > 0 ? '*' : '(Optional - No segments available)'}
+                  </Label>
                   <Select
                     value={selectedSegmentId}
                     onValueChange={setSelectedSegmentId}
@@ -1075,7 +1090,7 @@ export default function SimpleB2BOrderPage() {
                     <SelectTrigger>
                       <SelectValue placeholder={
                         serviceSegments.length === 0
-                          ? "Loading segments..."
+                          ? "No segments available for this category/subcategory"
                           : "Select service segment"
                       } />
                     </SelectTrigger>
@@ -1091,7 +1106,7 @@ export default function SimpleB2BOrderPage() {
                   </Select>
                   <div className="text-xs text-gray-500 mt-1">
                     {serviceSegments.length === 0 ? (
-                      <span>Loading service segments...</span>
+                      <span>ℹ️ No service segments are configured for this category/subcategory combination. You can proceed without selecting a segment.</span>
                     ) : (
                       <span>✅ {serviceSegments.length} segments available</span>
                     )}
