@@ -947,6 +947,38 @@ export interface Course {
   updated_at?: string; // Optional: timestamp when updated
 }
 
+export interface FAQItem {
+  id?: string; // Optional for editing
+  question: string; // FAQ question
+  answer: string; // FAQ answer (can be rich text)
+  sort_order?: number; // Display order
+  is_active?: boolean; // Active status
+}
+
+export interface SEOContent {
+  id?: string; // Optional for editing (encrypted ID)
+  title: string; // SEO content title
+  slug: string; // URL slug for the content
+  meta_title?: string; // Meta title for SEO
+  meta_description?: string; // Meta description for SEO
+  description?: string; // Alternative description field from API
+  meta_keywords?: string; // Meta keywords for SEO
+  content: string; // Rich text content (HTML)
+  category_id?: string; // Optional category association
+  subcategory_id?: string; // Optional subcategory association
+  service_type?: 'bathroom-cleaning' | 'home-cleaning' | 'sofa-cleaning' | 'general' | 'custom'; // Service type
+  content_type?: 'service-page' | 'landing-page' | 'blog-post' | 'faq' | 'general'; // Content type
+  target_audience?: 'customer' | 'provider' | 'both'; // Target audience
+  featured_image?: File | null; // Optional featured image
+  is_active: boolean; // Active status
+  is_featured?: boolean; // Featured content flag
+  sort_order?: number; // Sort order for display
+  faq_items?: FAQItem[]; // FAQ questions and answers (for FAQ content type)
+  created_at?: string | number; // Creation timestamp (string or Unix timestamp)
+  updated_at?: string | number; // Update timestamp (string or Unix timestamp)
+  deleted_at?: string | number | null; // Deletion timestamp
+}
+
 export interface Badge {
   id?: string; // Optional: encrypted ID for editing
   name: string; // Badge name
@@ -9371,6 +9403,169 @@ export const fetchCourses = async (
   } catch (error) {
     console.error('Error fetching categories:', error);
     throw new Error('Failed to fetch categories');
+  }
+};
+
+// SEO Content API Functions
+
+// Create SEO Content
+export const createSEOContent = async (seoContent: SEOContent): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const formData = new FormData();
+
+    // Append basic fields
+    formData.append('title', seoContent.title);
+    formData.append('slug', seoContent.slug);
+    formData.append('content', seoContent.content);
+    formData.append('is_active', seoContent.is_active ? '1' : '0');
+
+    // Append optional fields
+    if (seoContent.meta_title) formData.append('meta_title', seoContent.meta_title);
+    if (seoContent.meta_description) formData.append('meta_description', seoContent.meta_description);
+    if (seoContent.meta_keywords) formData.append('meta_keywords', seoContent.meta_keywords);
+    if (seoContent.category_id) formData.append('category_id', seoContent.category_id);
+    if (seoContent.subcategory_id) formData.append('subcategory_id', seoContent.subcategory_id);
+    if (seoContent.service_type) formData.append('service_type', seoContent.service_type);
+    if (seoContent.content_type) formData.append('content_type', seoContent.content_type);
+    if (seoContent.target_audience) formData.append('target_audience', seoContent.target_audience);
+    if (seoContent.is_featured !== undefined) formData.append('is_featured', seoContent.is_featured ? '1' : '0');
+    if (seoContent.sort_order !== undefined) formData.append('sort_order', seoContent.sort_order.toString());
+
+    // Append featured image if provided
+    if (seoContent.featured_image) {
+      formData.append('featured_image', seoContent.featured_image);
+    }
+
+    // Append FAQ items if provided
+    if (seoContent.faq_items && seoContent.faq_items.length > 0) {
+      formData.append('faq_items', JSON.stringify(seoContent.faq_items));
+    }
+
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/seo/create', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create SEO content.');
+  }
+};
+
+// Fetch SEO Content with pagination and filters
+export const fetchSEOContent = async (
+  page = 1,
+  size = 10,
+  service_type?: string,
+  content_type?: string,
+  is_active?: boolean,
+  search?: string
+) => {
+  try {
+    const token = getToken();
+    const params: any = { page, size };
+
+    if (service_type && service_type !== 'all') params.service_type = service_type;
+    if (content_type && content_type !== 'all') params.content_type = content_type;
+    if (is_active !== undefined) params.is_active = is_active;
+    if (search && search.trim() !== '') params.search = search.trim();
+
+    const response = await apiClient.get('/seo/content', {
+      params,
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch SEO content.');
+  }
+};
+
+// Fetch SEO Content by ID
+export const fetchSEOContentById = async (id: string) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get(`/seo/content/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch SEO content.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch SEO content.');
+  }
+};
+
+// Update SEO Content
+export const updateSEOContent = async (id: string, seoContent: SEOContent): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const formData = new FormData();
+
+    // Append basic fields
+    formData.append('title', seoContent.title);
+    formData.append('slug', seoContent.slug);
+    formData.append('content', seoContent.content);
+    formData.append('is_active', seoContent.is_active ? '1' : '0');
+
+    // Append optional fields
+    if (seoContent.meta_title) formData.append('meta_title', seoContent.meta_title);
+    if (seoContent.meta_description) formData.append('meta_description', seoContent.meta_description);
+    if (seoContent.meta_keywords) formData.append('meta_keywords', seoContent.meta_keywords);
+    if (seoContent.category_id) formData.append('category_id', seoContent.category_id);
+    if (seoContent.subcategory_id) formData.append('subcategory_id', seoContent.subcategory_id);
+    if (seoContent.service_type) formData.append('service_type', seoContent.service_type);
+    if (seoContent.content_type) formData.append('content_type', seoContent.content_type);
+    if (seoContent.target_audience) formData.append('target_audience', seoContent.target_audience);
+    if (seoContent.is_featured !== undefined) formData.append('is_featured', seoContent.is_featured ? '1' : '0');
+    if (seoContent.sort_order !== undefined) formData.append('sort_order', seoContent.sort_order.toString());
+
+    // Append featured image if provided
+    if (seoContent.featured_image) {
+      formData.append('featured_image', seoContent.featured_image);
+    }
+
+    // Append FAQ items if provided
+    if (seoContent.faq_items && seoContent.faq_items.length > 0) {
+      formData.append('faq_items', JSON.stringify(seoContent.faq_items));
+    }
+
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/seo/content/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update SEO content.');
+  }
+};
+
+// Delete SEO Content
+export const deleteSEOContent = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/seo/content/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete SEO content.');
   }
 };
 

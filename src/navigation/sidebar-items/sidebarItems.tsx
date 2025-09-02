@@ -287,6 +287,11 @@ export const sidebarItems: SidebarItem[] = [
       { title: 'Bookings', route: `${basePath}/woloo/bookings` },
     ],
   },
+  {
+    title: 'SEO Content',
+    icon: FileText,
+    route: `${basePath}/seo-content`,
+  },
   // {
   //   title: "Auth",
   //   icon: Receipt,
