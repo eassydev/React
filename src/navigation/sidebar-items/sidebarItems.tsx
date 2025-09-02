@@ -23,6 +23,8 @@ import {
   HelpCircle,
   FileImage,
   HardDrive,
+  BarChart3,
+  TrendingUp,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -49,11 +51,19 @@ const basePath = '/admin';
 
 export const sidebarItems: SidebarItem[] = [
   { heading: 'Admin' },
-  // {
-  //   title: "Dashboard",
-  //   icon: PanelsTopLeft,
-  //   route: basePath,
-  // },
+  {
+    title: "Dashboard",
+    icon: PanelsTopLeft,
+    route: basePath,
+  },
+  {
+    title: 'Analytics',
+    icon: BarChart3,
+    children: [
+      { title: 'Dashboard', route: `${basePath}` },
+      { title: 'Detailed Reports', route: `${basePath}/analytics` },
+    ],
+  },
   // { heading: "Apps & Pages" },
   {
     title: 'Banner',

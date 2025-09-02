@@ -13,9 +13,37 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { salesData, overviewChartData } from '@/constants/dummyData';
+import AnalyticsDashboard from '@/components/analytics/AnalyticsDashboard';
+import {
+  fetchDashboardSummary,
+  formatNumber,
+  formatCurrency,
+  formatPercentage,
+  type DashboardSummaryResponse
+} from '@/lib/api';
 
 export default function Page() {
   const [selectedRange, setSelectedRange] = React.useState<DateRange | undefined>(undefined);
+  const [dashboardData, setDashboardData] = React.useState<DashboardSummaryResponse | null>(null);
+  const [loading, setLoading] = React.useState(false);
+
+  // Load dashboard data on component mount
+  React.useEffect(() => {
+    loadDashboardData();
+  }, []);
+
+  const loadDashboardData = async () => {
+    try {
+      setLoading(true);
+      const data = await fetchDashboardSummary();
+      setDashboardData(data);
+    } catch (error) {
+      console.error('Failed to load dashboard data:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="flex-col md:flex">
       <div className="flex-1 space-y-4">
@@ -29,7 +57,7 @@ export default function Page() {
         <Tabs defaultValue="overview" className="space-y-4">
           <TabsList>
             <TabsTrigger value="overview">Overview</TabsTrigger>
-            <TabsTrigger value="analytics" disabled>
+            <TabsTrigger value="analytics">
               Analytics
             </TabsTrigger>
             <TabsTrigger value="reports" disabled>
@@ -44,38 +72,54 @@ export default function Page() {
                   <DollarSign className="size-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">$45,231.89</div>
-                  <p className="text-xs text-muted-foreground">+20.1% from last month</p>
+                  <div className="text-2xl font-bold">
+                    {loading ? '...' : dashboardData ? formatCurrency(dashboardData.data.current_month.orders_value) : '$45,231.89'}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {loading ? '...' : dashboardData ? formatPercentage(dashboardData.data.growth_rates.revenue) + ' from last month' : '+20.1% from last month'}
+                  </p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Subscriptions</CardTitle>
+                  <CardTitle className="text-sm font-medium">Registrations</CardTitle>
                   <Users className="size-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">+2350</div>
-                  <p className="text-xs text-muted-foreground">+180.1% from last month</p>
+                  <div className="text-2xl font-bold">
+                    {loading ? '...' : dashboardData ? formatNumber(dashboardData.data.current_month.registrations) : '+2350'}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {loading ? '...' : dashboardData ? formatPercentage(dashboardData.data.growth_rates.registrations) + ' from last month' : '+180.1% from last month'}
+                  </p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Sales</CardTitle>
+                  <CardTitle className="text-sm font-medium">Orders</CardTitle>
                   <CreditCard className="size-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">+12,234</div>
-                  <p className="text-xs text-muted-foreground">+19% from last month</p>
+                  <div className="text-2xl font-bold">
+                    {loading ? '...' : dashboardData ? formatNumber(dashboardData.data.current_month.orders_received) : '+12,234'}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {loading ? '...' : dashboardData ? formatPercentage(dashboardData.data.growth_rates.orders) + ' from last month' : '+19% from last month'}
+                  </p>
                 </CardContent>
               </Card>
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-medium">Active Now</CardTitle>
+                  <CardTitle className="text-sm font-medium">Downloads</CardTitle>
                   <Activity className="size-4 text-muted-foreground" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">+573</div>
-                  <p className="text-xs text-muted-foreground">+201 since last hour</p>
+                  <div className="text-2xl font-bold">
+                    {loading ? '...' : dashboardData ? formatNumber(dashboardData.data.current_month.downloads) : '+573'}
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    {loading ? '...' : dashboardData ? formatPercentage(dashboardData.data.growth_rates.downloads) + ' from last month' : '+201 since last hour'}
+                  </p>
                 </CardContent>
               </Card>
             </div>
@@ -134,6 +178,10 @@ export default function Page() {
                 </CardContent>
               </Card>
             </div>
+          </TabsContent>
+
+          <TabsContent value="analytics" className="space-y-4">
+            <AnalyticsDashboard className="mt-0" />
           </TabsContent>
         </Tabs>
       </div>
