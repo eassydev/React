@@ -57,7 +57,7 @@ const B2BQuotationDashboard: React.FC<B2BQuotationDashboardProps> = ({ orderId }
   const fetchQuotationStats = async () => {
     try {
       setIsLoadingStats(true);
-      const response = await fetch('/api/admin/b2b/quotations/statistics', {
+      const response = await fetch('/admin-api/b2b/quotations/statistics', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
