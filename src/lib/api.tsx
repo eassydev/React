@@ -11008,7 +11008,9 @@ export const formatPercentage = (value: number): string => {
 /**
  * Get detailed tabular analytics report
  */
-export const fetchDetailedReport = async (): Promise<{
+export const fetchDetailedReport = async (
+  businessType: 'b2b' | 'b2c' | 'both' = 'both'
+): Promise<{
   success: boolean;
   data: {
     title: string;
@@ -11040,6 +11042,9 @@ export const fetchDetailedReport = async (): Promise<{
     }
 
     const response = await apiClient.get('/analytics/detailed-report', {
+      params: {
+        business_type: businessType,
+      },
       headers: {
         'admin-auth-token': token,
         'Content-Type': 'application/json',
@@ -11080,6 +11085,50 @@ export const fetchFYAnalytics = async (): Promise<{
     return response.data;
   } catch (error) {
     console.error('❌ Error fetching FY analytics:', error);
+    throw error;
+  }
+};
+
+/**
+ * Export detailed analytics report as CSV
+ */
+export const exportDetailedReportCSV = async (
+  businessType: 'b2b' | 'b2c' | 'both' = 'both'
+): Promise<void> => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get('/analytics/export-detailed-report', {
+      params: {
+        business_type: businessType,
+      },
+      headers: {
+        'admin-auth-token': token,
+      },
+      responseType: 'blob', // Important for file download
+    });
+
+    // Create blob and download
+    const blob = new Blob([response.data], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+
+    // Generate filename
+    const filename = `analytics-report-${businessType}-${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = filename;
+
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+  } catch (error) {
+    console.error('❌ Error exporting detailed report:', error);
     throw error;
   }
 };

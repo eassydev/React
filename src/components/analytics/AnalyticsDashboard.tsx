@@ -353,7 +353,7 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
         </TabsContent>
 
         <TabsContent value="detailed" className="space-y-4">
-          <DetailedReportTable />
+          <DetailedReportTable businessType={businessType} />
         </TabsContent>
 
         <TabsContent value="fy" className="space-y-4">

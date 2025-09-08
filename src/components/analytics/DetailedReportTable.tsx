@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Download, RefreshCw, FileText } from 'lucide-react';
-import { fetchDetailedReport, formatNumber, formatCurrency } from '@/lib/api';
+import { fetchDetailedReport, exportDetailedReportCSV, formatNumber, formatCurrency } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 interface DetailedReportData {
@@ -29,9 +29,10 @@ interface DetailedReportData {
 
 interface DetailedReportTableProps {
   className?: string;
+  businessType?: 'b2b' | 'b2c' | 'both';
 }
 
-export default function DetailedReportTable({ className }: DetailedReportTableProps) {
+export default function DetailedReportTable({ className, businessType = 'both' }: DetailedReportTableProps) {
   const [data, setData] = useState<DetailedReportData[]>([]);
   const [loading, setLoading] = useState(false);
   const [lastUpdated, setLastUpdated] = useState<string>('');
@@ -39,13 +40,13 @@ export default function DetailedReportTable({ className }: DetailedReportTablePr
 
   useEffect(() => {
     loadDetailedReport();
-  }, []);
+  }, [businessType]); // Re-load when business type changes
 
   const loadDetailedReport = async () => {
     try {
       setLoading(true);
-      const response = await fetchDetailedReport();
-      
+      const response = await fetchDetailedReport(businessType);
+
       if (response.success) {
         setData(response.data.periods);
         setLastUpdated(new Date(response.data.generated_at).toLocaleString());
@@ -61,51 +62,24 @@ export default function DetailedReportTable({ className }: DetailedReportTablePr
     }
   };
 
-  const exportToCSV = () => {
-    const headers = [
-      'Period',
-      'Downloads',
-      'Registrations',
-      'Orders Received',
-      'GOV (₹)',
-      'AOV (₹)',
-      'Orders Executed',
-      'Executed Value (₹)',
-      'Invoices Raised',
-      'Invoice Value (₹)',
-      'Collections',
-      'Collection Value (₹)',
-      'Overdue (30+ days)',
-      'Overdue Value (₹)'
-    ];
-
-    const csvContent = [
-      headers.join(','),
-      ...data.map(row => [
-        row.period,
-        row.downloads,
-        row.registrations,
-        row.orders_received,
-        row.gov,
-        row.aov.toFixed(2),
-        row.orders_executed,
-        row.executed_value,
-        row.invoices_raised,
-        row.invoice_value,
-        row.collections,
-        row.collection_value,
-        row.overdue,
-        row.overdue_value
-      ].join(','))
-    ].join('\n');
-
-    const blob = new Blob([csvContent], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = `analytics-report-${new Date().toISOString().split('T')[0]}.csv`;
-    a.click();
-    window.URL.revokeObjectURL(url);
+  const exportToCSV = async () => {
+    try {
+      setLoading(true);
+      await exportDetailedReportCSV(businessType);
+      toast({
+        title: 'Success',
+        description: 'Report exported successfully',
+        variant: 'default',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to export report',
+        variant: 'destructive',
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const getPeriodBadgeVariant = (periodType: string) => {
