@@ -67,7 +67,7 @@ const SEOContentPage = (): JSX.Element => {
   const { toast } = useToast();
   const router = useRouter();
 
-  const pageSize = 10;
+  const pageSize = 100;
 
   // Fetch SEO content data
   const fetchData = async () => {
@@ -93,7 +93,7 @@ const SEOContentPage = (): JSX.Element => {
         searchTerm
       );
 
-      console.log('SEO content response:', response);
+      
 
       // Handle both possible response structures
       if (response.message === "SEO content retrieved successfully" || response.status) {
