@@ -9352,7 +9352,7 @@ export const createSEOContent = async (seoContent: SEOContent): Promise<ApiRespo
 // Fetch SEO Content with pagination and filters
 export const fetchSEOContent = async (
   page = 1,
-  size = 10,
+  size = 100,
   service_type?: string,
   content_type?: string,
   is_active?: boolean,
