@@ -43,6 +43,112 @@ const getToken = (): string | null => {
 
 // Define the structure of the Category object
 
+// ✅ NEW: Analytics interfaces
+export interface AnalyticsReportData {
+  period: string;
+  period_type: string;
+  downloads: number;
+  registrations: number;
+  orders_received_total: number;
+  orders_value_total: number;
+  orders_executed_total: number;
+  executed_value_total: number;
+  invoices_raised_total: number;
+  invoice_value_total: number;
+  collected_total: number;
+  collection_value_total: number;
+  overdue_invoices_total: number;
+  overdue_value_total: number;
+  avg_overdue_days_total: number;
+  avg_order_value_total: number;
+  orders_received_b2c: number;
+  orders_value_b2c: number;
+  orders_received_b2b: number;
+  orders_value_b2b: number;
+}
+
+export interface AnalyticsSummary {
+  totals: {
+    downloads: number;
+    registrations: number;
+    orders_received: number;
+    orders_value: number;
+    orders_executed: number;
+    executed_value: number;
+    invoices_raised: number;
+    invoice_value: number;
+    collected: number;
+    collection_value: number;
+    overdue_invoices: number;
+    overdue_value: number;
+  };
+  averages: {
+    downloads_per_period: number;
+    registrations_per_period: number;
+    orders_per_period: number;
+    order_value_per_period: number;
+    avg_order_value: number;
+    collection_rate: number;
+    overdue_rate: number;
+  };
+  growth_rates: {
+    downloads: number;
+    registrations: number;
+    orders: number;
+    revenue: number;
+  };
+}
+
+export interface ComprehensiveAnalyticsResponse {
+  success: boolean;
+  data: {
+    period: string;
+    date_range: {
+      start: string;
+      end: string;
+    };
+    business_type: string;
+    report: AnalyticsReportData[];
+    summary: AnalyticsSummary;
+    generated_at: string;
+  };
+}
+
+export interface DashboardSummaryResponse {
+  success: boolean;
+  data: {
+    current_month: {
+      downloads: number;
+      registrations: number;
+      orders_received: number;
+      orders_value: number;
+      orders_executed: number;
+      executed_value: number;
+      collection_rate: number;
+      overdue_rate: number;
+    };
+    growth_rates: {
+      downloads: number;
+      registrations: number;
+      orders: number;
+      revenue: number;
+    };
+    business_split: {
+      b2c: {
+        orders: number;
+        value: number;
+        percentage: number;
+      };
+      b2b: {
+        orders: number;
+        value: number;
+        percentage: number;
+      };
+    };
+  };
+  generated_at: string;
+}
+
 export interface Category {
   id?: string; // Optional for editing
   name: string;
@@ -10744,6 +10850,285 @@ export const fetchAllServiceAttachments = async (params?: {
     return response.data;
   } catch (error) {
     console.error('❌ Error fetching all service attachments:', error);
+    throw error;
+  }
+};
+
+// ✅ NEW: Analytics API Functions
+
+/**
+ * Get comprehensive analytics report
+ */
+export const fetchComprehensiveAnalytics = async (
+  startDate?: string,
+  endDate?: string,
+  period: 'monthly' | 'weekly' | 'daily' = 'monthly',
+  businessType: 'b2b' | 'b2c' | 'both' = 'both'
+): Promise<ComprehensiveAnalyticsResponse> => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    params.append('period', period);
+    params.append('business_type', businessType);
+
+    const response: AxiosResponse<ComprehensiveAnalyticsResponse> = await apiClient.get(
+      `/analytics/comprehensive-report?${params.toString()}`,
+      {
+        headers: {
+          'admin-auth-token': token,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error fetching comprehensive analytics:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get Month-to-Date analytics report
+ */
+export const fetchMTDAnalytics = async (
+  businessType: 'b2b' | 'b2c' | 'both' = 'both'
+): Promise<{ success: boolean; data: AnalyticsReportData; generated_at: string }> => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get(
+      `/analytics/mtd-report?business_type=${businessType}`,
+      {
+        headers: {
+          'admin-auth-token': token,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error fetching MTD analytics:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get Life-to-Date analytics report
+ */
+export const fetchLTDAnalytics = async (
+  businessType: 'b2b' | 'b2c' | 'both' = 'both'
+): Promise<{ success: boolean; data: AnalyticsReportData; generated_at: string }> => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get(
+      `/analytics/ltd-report?business_type=${businessType}`,
+      {
+        headers: {
+          'admin-auth-token': token,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error fetching LTD analytics:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get dashboard summary metrics
+ */
+export const fetchDashboardSummary = async (): Promise<DashboardSummaryResponse> => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response: AxiosResponse<DashboardSummaryResponse> = await apiClient.get(
+      '/analytics/dashboard-summary',
+      {
+        headers: {
+          'admin-auth-token': token,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error fetching dashboard summary:', error);
+    throw error;
+  }
+};
+
+/**
+ * Format number with commas for display
+ */
+export const formatNumber = (num: number): string => {
+  return new Intl.NumberFormat('en-IN').format(num);
+};
+
+/**
+ * Format currency for display
+ */
+export const formatCurrency = (amount: number): string => {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(amount);
+};
+
+/**
+ * Format percentage for display
+ */
+export const formatPercentage = (value: number): string => {
+  return `${value >= 0 ? '+' : ''}${value.toFixed(1)}%`;
+};
+
+/**
+ * Get detailed tabular analytics report
+ */
+export const fetchDetailedReport = async (
+  businessType: 'b2b' | 'b2c' | 'both' = 'both'
+): Promise<{
+  success: boolean;
+  data: {
+    title: string;
+    periods: Array<{
+      period: string;
+      period_type: string;
+      downloads: number;
+      registrations: number;
+      orders_received: number;
+      gov: number;
+      aov: number;
+      orders_executed: number;
+      executed_value: number;
+      invoices_raised: number;
+      invoice_value: number;
+      collections: number;
+      collection_value: number;
+      overdue: number;
+      overdue_value: number;
+    }>;
+    columns: string[];
+    generated_at: string;
+  };
+}> => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get('/analytics/detailed-report', {
+      params: {
+        business_type: businessType,
+      },
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error fetching detailed report:', error);
+    throw error;
+  }
+};
+
+/**
+ * Get Financial Year analytics report
+ */
+export const fetchFYAnalytics = async (): Promise<{
+  success: boolean;
+  data: {
+    current_fy: string;
+    report: Array<AnalyticsReportData>;
+    generated_at: string;
+  };
+}> => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get('/analytics/fy-report', {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('❌ Error fetching FY analytics:', error);
+    throw error;
+  }
+};
+
+/**
+ * Export detailed analytics report as CSV
+ */
+export const exportDetailedReportCSV = async (
+  businessType: 'b2b' | 'b2c' | 'both' = 'both'
+): Promise<void> => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get('/analytics/export-detailed-report', {
+      params: {
+        business_type: businessType,
+      },
+      headers: {
+        'admin-auth-token': token,
+      },
+      responseType: 'blob', // Important for file download
+    });
+
+    // Create blob and download
+    const blob = new Blob([response.data], { type: 'text/csv' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+
+    // Generate filename
+    const filename = `analytics-report-${businessType}-${new Date().toISOString().split('T')[0]}.csv`;
+    link.download = filename;
+
+    // Trigger download
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+  } catch (error) {
+    console.error('❌ Error exporting detailed report:', error);
     throw error;
   }
 };
