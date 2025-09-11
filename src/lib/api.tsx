@@ -369,6 +369,7 @@ export interface Provider {
   latitude?: number;
   longitude?: number;
   linked_account_id?: string; // Razorpay linked account ID
+  commission?: number; // Commission rate for the provider (percentage)
   // ✅ B2B PROVIDER FIELDS
   provider_type?: 'b2c' | 'b2b' | 'hybrid';
   b2b_approved?: number; // 0 = not approved, 1 = approved

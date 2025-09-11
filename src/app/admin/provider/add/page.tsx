@@ -30,6 +30,7 @@ const AddProviderForm: React.FC = () => {
   const [linkedAccountId, setLinkedAccountId] = useState<string>('');
   const [isActive, setIsActive] = useState<boolean>(true);
   const [rating, setRating] = useState<string>('0.0');
+  const [commission, setCommission] = useState<string>('0.0');
   // ✅ B2B PROVIDER FIELDS
   const [providerType, setProviderType] = useState<'b2c' | 'b2b' | 'hybrid'>('b2c');
   const [b2bApproved, setB2bApproved] = useState<boolean>(false);
@@ -100,6 +101,7 @@ const AddProviderForm: React.FC = () => {
       linked_account_id: linkedAccountId,
       active: isActive ? 0 : 1,
       rating: parseFloat(rating),
+      commission: parseFloat(commission),
       country,
       state,
       city,
@@ -312,6 +314,30 @@ const AddProviderForm: React.FC = () => {
                   onChange={(e) => setRating(e.target.value)}
                   placeholder="Enter rating"
                 />
+              </div>
+
+              {/* Commission Rate */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Commission Rate (%)
+                  <span className="text-xs text-gray-500 ml-2">
+                    Individual commission rate for this provider
+                  </span>
+                </label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  max="100"
+                  value={commission}
+                  onChange={(e) => setCommission(e.target.value)}
+                  placeholder="Enter commission rate (e.g., 15.5)"
+                  className="w-full"
+                />
+                <p className="text-xs text-gray-500">
+                  Leave as 0.0 to use default category commission rates.
+                  This will override category-specific rates for this provider.
+                </p>
               </div>
 
               {/* ✅ B2B PROVIDER FIELDS */}

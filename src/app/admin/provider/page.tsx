@@ -267,6 +267,27 @@ const ProviderList = () => {
       },
     },
     {
+      accessorKey: 'commission',
+      header: 'Commission (%)',
+      cell: ({ row }) => {
+        const commission = row.original.commission;
+
+        if (!commission || commission === 0) {
+          return (
+            <span className="text-gray-400 text-xs px-2 py-1 bg-gray-100 rounded">
+              Default
+            </span>
+          );
+        }
+
+        return (
+          <span className="text-blue-800 text-sm font-medium px-2 py-1 bg-blue-100 rounded">
+            {commission}%
+          </span>
+        );
+      },
+    },
+    {
       id: 'actions',
       header: 'Actions',
       cell: ({ row }) => (
