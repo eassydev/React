@@ -18,8 +18,9 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table';
-import { ChevronLeft, ChevronRight, Edit, Download } from 'lucide-react';
-import { fetchPayoutsDetailed } from '@/lib/api';
+import { ChevronLeft, ChevronRight, Edit, Download, Play, Square, CheckCircle, Settings } from 'lucide-react';
+import { fetchPayoutsDetailed, singlePaymentAction } from '@/lib/api';
+import PaymentControlPanel from '@/components/PaymentControlPanel';
 import Link from 'next/link';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
@@ -94,6 +95,8 @@ export default function SpPayoutPage() {
   });
   const [totalPages, setTotalPages] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [selectedPayments, setSelectedPayments] = useState<Set<string>>(new Set());
+  const [showControlPanel, setShowControlPanel] = useState(false);
 
   useEffect(() => {
     const fetchPayouts = async () => {
@@ -117,6 +120,60 @@ export default function SpPayoutPage() {
     fetchPayouts();
   }, [pagination, toast]);
 
+  const handleSinglePaymentAction = async (action: string, paymentId: string) => {
+    const actionMessages = {
+      stop: 'stop',
+      allow: 'allow',
+      'mark-paid': 'mark as paid'
+    };
+
+    const confirmMessage = `Are you sure you want to ${actionMessages[action as keyof typeof actionMessages]} this payment?`;
+    if (!confirm(confirmMessage)) return;
+
+    try {
+      const result = await singlePaymentAction(action, paymentId);
+
+      toast({
+        title: 'Success',
+        description: result.message,
+      });
+
+      // Refresh the payouts list
+      fetchPayouts();
+
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Action failed.',
+      });
+    }
+  };
+
+  const handleSelectPayment = (paymentId: string, checked: boolean) => {
+    const newSelected = new Set(selectedPayments);
+    if (checked) {
+      newSelected.add(paymentId);
+    } else {
+      newSelected.delete(paymentId);
+    }
+    setSelectedPayments(newSelected);
+  };
+
+  const handleSelectAll = (checked: boolean) => {
+    if (checked) {
+      const allIds = payouts.map(payout => payout.id);
+      setSelectedPayments(new Set(allIds));
+    } else {
+      setSelectedPayments(new Set());
+    }
+  };
+
+  const refreshPayouts = () => {
+    fetchPayouts();
+    setSelectedPayments(new Set());
+  };
+
   // const handleExport = async () => {
   //   try {
   //     await exportPayoutsToExcel();
@@ -135,6 +192,27 @@ export default function SpPayoutPage() {
   // };
 
   const payoutColumns: ColumnDef<SpPayout>[] = [
+    {
+      id: 'select',
+      header: ({ table }) => (
+        <input
+          type="checkbox"
+          checked={table.getIsAllPageRowsSelected()}
+          onChange={(e) => handleSelectAll(e.target.checked)}
+          className="rounded border-gray-300"
+        />
+      ),
+      cell: ({ row }) => (
+        <input
+          type="checkbox"
+          checked={selectedPayments.has(row.original.id)}
+          onChange={(e) => handleSelectPayment(row.original.id, e.target.checked)}
+          className="rounded border-gray-300"
+        />
+      ),
+      enableSorting: false,
+      enableHiding: false,
+    },
     {
       accessorKey: 'sno',
       header: 'S.No',
@@ -322,22 +400,58 @@ export default function SpPayoutPage() {
         const isPaid = payout.payout_status === 'Paid';
 
         return (
-          <div className="flex items-center space-x-2">
-            <Button variant="ghost" size="icon">
+          <div className="flex items-center space-x-1">
+            <Button variant="ghost" size="sm">
               <Link href={`/admin/sp-payout/edit/${payout.id}`} passHref>
                 {isPaid ? (
                   <div className="flex items-center">
                     <span className="mr-1 text-xs">View</span>
-                    <Edit className="w-4 h-4 text-gray-600" />
+                    <Edit className="w-3 h-3 text-gray-600" />
                   </div>
                 ) : (
                   <div className="flex items-center">
                     <span className="mr-1 text-xs">Edit</span>
-                    <Edit className="w-4 h-4 text-blue-600" />
+                    <Edit className="w-3 h-3 text-blue-600" />
                   </div>
                 )}
               </Link>
             </Button>
+
+            {!isPaid && (
+              <>
+                {payout.allow_transfer === 'yes' ? (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSinglePaymentAction('stop', payout.id)}
+                    className="text-red-600 hover:text-red-700"
+                    title="Stop Payment"
+                  >
+                    <Square className="w-3 h-3" />
+                  </Button>
+                ) : (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleSinglePaymentAction('allow', payout.id)}
+                    className="text-green-600 hover:text-green-700"
+                    title="Allow Payment"
+                  >
+                    <Play className="w-3 h-3" />
+                  </Button>
+                )}
+
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleSinglePaymentAction('mark-paid', payout.id)}
+                  className="text-blue-600 hover:text-blue-700"
+                  title="Mark as Paid"
+                >
+                  <CheckCircle className="w-3 h-3" />
+                </Button>
+              </>
+            )}
           </div>
         );
       },
@@ -359,11 +473,68 @@ export default function SpPayoutPage() {
       <div className="max-w-12xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">SP Payout Details</h1>
-          {/* <Button onClick={handleExport} className="flex items-center space-x-2">
-            <Download className="w-4 h-4 mr-1" />
-            <span>Export</span>
-          </Button> */}
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => setShowControlPanel(!showControlPanel)}
+              className="flex items-center space-x-2"
+            >
+              <Settings className="w-4 h-4" />
+              <span>{showControlPanel ? 'Hide' : 'Show'} Payment Control</span>
+            </Button>
+            {/* <Button onClick={handleExport} className="flex items-center space-x-2">
+              <Download className="w-4 h-4 mr-1" />
+              <span>Export</span>
+            </Button> */}
+          </div>
         </div>
+
+        {showControlPanel && (
+          <PaymentControlPanel onRefresh={refreshPayouts} />
+        )}
+
+        {selectedPayments.size > 0 && (
+          <Card className="bg-blue-50 border-blue-200">
+            <CardContent className="p-4">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-blue-800">
+                  {selectedPayments.size} payment(s) selected
+                </span>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => {
+                      const selectedIds = Array.from(selectedPayments);
+                      selectedIds.forEach(id => handleSinglePaymentAction('stop', id));
+                    }}
+                  >
+                    <Square className="w-3 h-3 mr-1" />
+                    Stop Selected
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="default"
+                    onClick={() => {
+                      const selectedIds = Array.from(selectedPayments);
+                      selectedIds.forEach(id => handleSinglePaymentAction('allow', id));
+                    }}
+                  >
+                    <Play className="w-3 h-3 mr-1" />
+                    Allow Selected
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => setSelectedPayments(new Set())}
+                  >
+                    Clear Selection
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <Card className="bg-white shadow-sm">
           <CardHeader className="border-b border-gray-100">
@@ -392,15 +563,33 @@ export default function SpPayoutPage() {
 
                 <TableBody>
                   {payoutTable.getRowModel().rows.length ? (
-                    payoutTable.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id}>
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
-                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
+                    payoutTable.getRowModel().rows.map((row) => {
+                      const payout = row.original;
+                      const isPaid = payout.payout_status === 'Paid';
+                      const isBlocked = payout.allow_transfer === 'no';
+                      const isSelected = selectedPayments.has(payout.id);
+
+                      let rowClassName = '';
+                      if (isSelected) {
+                        rowClassName = 'bg-blue-50 border-l-4 border-blue-400';
+                      } else if (isPaid) {
+                        rowClassName = 'bg-green-50';
+                      } else if (isBlocked) {
+                        rowClassName = 'bg-red-50';
+                      } else {
+                        rowClassName = 'bg-blue-50';
+                      }
+
+                      return (
+                        <TableRow key={row.id} className={rowClassName}>
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id}>
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      );
+                    })
                   ) : (
                     <TableRow>
                       <TableCell colSpan={payoutColumns.length} className="h-24 text-center">

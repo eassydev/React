@@ -3244,6 +3244,78 @@ export const updatePayout = async (id: string, data: any): Promise<any> => {
   }
 };
 
+// Payment Control API functions
+export const getPaymentStats = async (): Promise<any> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/payment-control/stats', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data.stats;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Failed to fetch payment stats.');
+  }
+};
+
+export const searchPayouts = async (filters: any, page = 1, limit = 50): Promise<any> => {
+  try {
+    const token = getToken();
+    const params = new URLSearchParams();
+
+    Object.keys(filters).forEach(key => {
+      if (filters[key]) params.append(key, filters[key]);
+    });
+    params.append('page', page.toString());
+    params.append('limit', limit.toString());
+
+    const response: AxiosResponse = await apiClient.get(`/payment-control/search?${params}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Failed to search payouts.');
+  }
+};
+
+export const bulkPaymentAction = async (action: string, paymentIds?: string[], filters?: any): Promise<any> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post('/payment-control/bulk-action', {
+      action,
+      payment_ids: paymentIds,
+      filters
+    }, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Bulk action failed.');
+  }
+};
+
+export const singlePaymentAction = async (action: string, paymentId: string): Promise<any> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post('/payment-control/single-action', {
+      action,
+      payment_id: paymentId
+    }, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Payment action failed.');
+  }
+};
+
 // Export payouts to Excel
 // export const exportPayoutsToExcel = async (): Promise<void> => {
 //   try {
