@@ -12,6 +12,7 @@ import {
   fetchFilterOptionsByAttributeId,
   fetchServiceSegments, // ✅ Use same function as B2C
   fetchProvidersByFilters, // ✅ Use same function as B2C
+  fetchAllB2BProviders, // ✅ NEW: Fetch all B2B providers without filtering
   fetchB2BServiceAddresses,
   createB2BServiceAddress,
   calculateServicePriceForB2B,
@@ -57,7 +58,10 @@ interface B2BCustomer {
 // ✅ Use imported types from API, only define local interfaces
 interface Provider {
   id: string;
-  name: string;
+  name?: string;
+  first_name?: string;
+  last_name?: string;
+  company_name?: string;
   phone: string;
 }
 
@@ -77,6 +81,27 @@ interface RateCard {
   base_price: number;
   final_price: number;
 }
+
+// ✅ UTILITY: Format provider name for display
+const formatProviderName = (provider: any): string => {
+  if (!provider) return 'Unknown Provider';
+
+  // Use the name field if available (from backend transformation)
+  if (provider.name) {
+    return provider.name;
+  }
+
+  // Fallback: construct name from individual fields
+  if (provider.company_name) {
+    return provider.company_name;
+  }
+
+  const firstName = provider.first_name || '';
+  const lastName = provider.last_name || '';
+  const fullName = `${firstName} ${lastName}`.trim();
+
+  return fullName || 'Unknown Provider';
+};
 
 export default function SimpleB2BOrderPage() {
   const router = useRouter();
@@ -368,35 +393,53 @@ export default function SimpleB2BOrderPage() {
     }
   }, [formData.provider_id, serviceSegments.length]);
 
-  // ✅ Load providers when category and subcategory are selected
+  // ✅ Load ALL B2B providers when category and subcategory are selected (no filtering by category/subcategory)
   useEffect(() => {
     if (selectedCategoryId && selectedSubcategoryId) {
       const loadProviders = async () => {
         try {
-          console.log('🔄 Loading providers for:', { selectedCategoryId, selectedSubcategoryId });
-          const response = await fetchProvidersByFilters(
-            selectedCategoryId || '',
-            selectedSubcategoryId || '',
-            selectedFilterAttributesId || '',
-            selectedFilterOptionId || '',
+          console.log('🔄 Loading all B2B providers (no category filtering)');
+
+          // Debug: Check if user is authenticated
+          const token = localStorage.getItem('token');
+          console.log('🔑 Auth token exists:', !!token);
+          console.log('🔑 Token length:', token?.length || 0);
+
+          const response = await fetchAllB2BProviders(
             1, // page
-            50 // size
+            50 // limit
           );
           console.log('📦 Providers loaded:', response);
 
           // Transform the response to match our Provider interface (same as B2C)
-          const providersData = response.data || [];
+          const providersData = response.data?.providers || [];
           const transformedProviders = providersData.map((provider: any) => ({
             id: provider.id, // Encrypted ID
-            name: provider.company_name ||
-                  provider.name ||
-                  `${provider.first_name} ${provider.last_name || ''} - ${provider.phone || 'No Phone'}`,
-            phone: provider.phone || ''
+            name: formatProviderName(provider), // ✅ Use utility function for consistent naming
+            phone: provider.phone || '',
+            // Keep original fields for fallback
+            first_name: provider.first_name,
+            last_name: provider.last_name,
+            company_name: provider.company_name
           }));
 
           setProviders(transformedProviders);
-        } catch (error) {
+        } catch (error: any) {
           console.error('❌ Error loading providers:', error);
+          console.error('❌ Error details:', {
+            message: error.message,
+            status: error.response?.status,
+            statusText: error.response?.statusText,
+            data: error.response?.data
+          });
+
+          // Check if it's an authentication error
+          if (error.response?.status === 401) {
+            console.error('🔒 Authentication failed - user may need to log in again');
+          } else if (error.response?.status === 403) {
+            console.error('🚫 Access forbidden - user may not have required permissions');
+          }
+
           setProviders([]);
         }
       };

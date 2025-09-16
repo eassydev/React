@@ -2530,6 +2530,34 @@ export const fetchProvidersByFilters = async (
   }
 };
 
+// ✅ NEW: Fetch all B2B providers without category/subcategory filtering
+export const fetchAllB2BProviders = async (
+  page: number = 1,
+  limit: number = 50,
+  search?: string
+) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/b2b/providers', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      params: {
+        page,
+        limit,
+        search,
+      },
+    });
+    if (response.data.success) {
+      return response.data; // Return full response including pagination
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch B2B providers.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch B2B providers.');
+  }
+};
+
 export const fetchAllProviders = async (
   page = 1,
   size = 10,

@@ -38,12 +38,14 @@ import {
 
 interface Provider {
   id: string;
-  name: string;
-  first_name: string;
-  last_name: string;
+  name?: string;
+  first_name?: string;
+  last_name?: string;
   company_name?: string;
   phone: string;
-  email: string;
+  email?: string;
+  display_name?: string;
+  full_name?: string;
 }
 
 interface B2BOrder {
@@ -80,6 +82,57 @@ interface B2BOrder {
   custom_fields?: Record<string, any>;
 }
 
+// ✅ UTILITY: Format provider name for display (robust frontend-only solution)
+const formatProviderName = (provider: any): string => {
+  if (!provider) return 'Unknown Provider';
+
+  console.log('🔍 Provider data:', provider); // Debug log
+
+  // Priority 1: Use the name field if available (from backend transformation)
+  if (provider.name && provider.name !== 'Unknown Provider') {
+    return provider.name;
+  }
+
+  // Priority 2: Use company_name if available
+  if (provider.company_name && provider.company_name.trim()) {
+    return provider.company_name.trim();
+  }
+
+  // Priority 3: Construct from first_name + last_name
+  const firstName = (provider.first_name || '').trim();
+  const lastName = (provider.last_name || '').trim();
+  if (firstName || lastName) {
+    const fullName = `${firstName} ${lastName}`.trim();
+    if (fullName) {
+      return fullName;
+    }
+  }
+
+  // Priority 4: Use any available name-like field
+  if (provider.display_name) return provider.display_name;
+  if (provider.full_name) return provider.full_name;
+
+  // Priority 5: Fallback to ID-based display
+  return `Provider ${provider.id?.slice(-8) || 'Unknown'}`;
+};
+
+// ✅ UTILITY: Check if order has provider assigned (robust check)
+const hasProviderAssigned = (order: any): boolean => {
+  if (!order) return false;
+
+  // Check if provider_id exists and is not null/empty
+  if (order.provider_id && order.provider_id.trim()) {
+    return true;
+  }
+
+  // Fallback: Check if provider object exists with valid data
+  if (order.provider && order.provider.id) {
+    return true;
+  }
+
+  return false;
+};
+
 export default function EditableFieldsPage({ params }: { params: { id: string } }) {
   const router = useRouter();
   const { toast } = useToast();
@@ -101,6 +154,16 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
   const [providerNotes, setProviderNotes] = useState('');
   const [isProviderDialogOpen, setIsProviderDialogOpen] = useState(false);
   const [loadingProviders, setLoadingProviders] = useState(false);
+
+  // ✅ Set selected provider when dialog opens
+  useEffect(() => {
+    if (isProviderDialogOpen && hasProviderAssigned(order)) {
+      const providerId = order?.provider_id || order?.provider?.id;
+      if (providerId) {
+        setSelectedProviderId(providerId);
+      }
+    }
+  }, [isProviderDialogOpen, order]);
   
   const [formData, setFormData] = useState({
     // Customer & Service Details
@@ -142,6 +205,8 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
       setError(''); // Clear any previous errors
       const data = await fetchB2BOrderById(params.id);
       const orderData = data.data;
+      console.log('🔍 Order data received:', orderData); // Debug log
+      console.log('🔍 Provider data:', orderData.provider); // Debug log
       setOrder(orderData);
 
       // Format dates properly for input fields
@@ -236,15 +301,39 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
         return;
       }
 
-      const submitData = {
-        ...formData,
-        // Parse numeric fields
-        custom_price: formData.custom_price ? parseFloat(formData.custom_price) : undefined,
-        quantity: formData.quantity ? parseInt(formData.quantity) : undefined,
-        service_rate: formData.service_rate ? parseFloat(formData.service_rate) : undefined,
-        service_area_sqft: formData.service_area_sqft ? parseFloat(formData.service_area_sqft) : undefined,
-      };
+      // ✅ FIX: Only include fields that should be updated, exclude empty required fields
+      const submitData: any = {};
 
+      // Always include editable fields
+      submitData.service_name = formData.service_name;
+      submitData.service_description = formData.service_description;
+      submitData.custom_price = formData.custom_price ? parseFloat(formData.custom_price) : undefined;
+      submitData.quantity = formData.quantity ? parseInt(formData.quantity) : undefined;
+      submitData.service_date = formData.service_date;
+      submitData.service_time = formData.service_time;
+      submitData.booking_received_date = formData.booking_received_date;
+      submitData.service_rate = formData.service_rate ? parseFloat(formData.service_rate) : undefined;
+      submitData.service_area_sqft = formData.service_area_sqft ? parseFloat(formData.service_area_sqft) : undefined;
+      submitData.store_name = formData.store_name;
+      submitData.store_code = formData.store_code;
+      submitData.booking_poc_name = formData.booking_poc_name;
+      submitData.booking_poc_number = formData.booking_poc_number;
+      submitData.payment_terms = formData.payment_terms;
+      submitData.notes = formData.notes;
+      submitData.custom_fields = formData.custom_fields;
+
+      // ✅ Only include required fields if they have valid values (not empty strings)
+      if (formData.b2b_customer_id && formData.b2b_customer_id.trim()) {
+        submitData.b2b_customer_id = formData.b2b_customer_id;
+      }
+      if (formData.category_id && formData.category_id.trim()) {
+        submitData.category_id = formData.category_id;
+      }
+      if (formData.subcategory_id && formData.subcategory_id.trim()) {
+        submitData.subcategory_id = formData.subcategory_id;
+      }
+
+      console.log('🔍 Submitting data:', submitData); // Debug log
       await updateB2BOrderEditableFields(params.id, submitData);
       setSuccess('Order updated successfully!');
 
@@ -319,7 +408,29 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
         order?.category_id,
         order?.subcategory_id
       );
-      setProviders(response.data.providers || []);
+      console.log('🔍 Providers response:', response); // Debug log
+      console.log('🔍 Providers data:', response.data.providers); // Debug log
+
+      const fetchedProviders = response.data.providers || [];
+
+      // ✅ If current provider is not in the list, add it
+      if (order?.provider && order.provider_id) {
+        const currentProviderExists = fetchedProviders.some(p => p.id === order.provider_id);
+        if (!currentProviderExists) {
+          console.log('🔄 Adding current provider to list:', order.provider);
+          fetchedProviders.unshift({
+            id: order.provider_id,
+            name: formatProviderName(order.provider),
+            first_name: order.provider.first_name,
+            last_name: order.provider.last_name,
+            company_name: order.provider.company_name,
+            phone: order.provider.phone || 'N/A',
+            email: order.provider.email
+          });
+        }
+      }
+
+      setProviders(fetchedProviders);
     } catch (error: any) {
       console.error('Error fetching providers:', error);
       toast({
@@ -631,13 +742,13 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
                     onClick={fetchProviders}
                   >
                     <UserPlus className="w-4 h-4 mr-2" />
-                    {order?.provider_id ? 'Change Provider' : 'Assign Provider'}
+                    {hasProviderAssigned(order) ? 'Change Provider' : 'Assign Provider'}
                   </Button>
                 </DialogTrigger>
                 <DialogContent>
                   <DialogHeader>
                     <DialogTitle>
-                      {order?.provider_id ? 'Change Provider' : 'Assign Provider'}
+                      {hasProviderAssigned(order) ? 'Change Provider' : 'Assign Provider'}
                     </DialogTitle>
                   </DialogHeader>
                   <div className="space-y-4">
@@ -650,13 +761,20 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
                       >
                         <SelectTrigger>
                           <SelectValue placeholder={
-                            loadingProviders ? "Loading providers..." : "Select a provider"
+                            loadingProviders
+                              ? "Loading providers..."
+                              : selectedProviderId
+                                ? `Selected: ${formatProviderName(providers.find(p => p.id === selectedProviderId))}`
+                                : "Select a provider"
                           } />
                         </SelectTrigger>
                         <SelectContent>
                           {providers.map((provider) => (
                             <SelectItem key={provider.id} value={provider.id}>
-                              {provider.name} - {provider.phone}
+                              <div className="flex items-center justify-between w-full">
+                                <span>{formatProviderName(provider)}</span>
+                                <span className="text-gray-500 ml-2">📞 {provider.phone}</span>
+                              </div>
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -698,22 +816,36 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
             </CardTitle>
           </CardHeader>
           <CardContent>
-            {order?.provider_id ? (
-              <div className="space-y-2">
-                <div>
-                  <Label className="text-sm font-medium text-gray-500">Current Provider</Label>
-                  <p className="text-sm">
-                    {order.provider?.name || `Provider ID: ${order.provider_id}`}
-                  </p>
-                  {order.provider?.phone && (
-                    <p className="text-sm text-gray-600">{order.provider.phone}</p>
-                  )}
+            {hasProviderAssigned(order) ? (
+              <div className="space-y-3">
+                <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                  <div className="flex items-center justify-between">
+                    <div className="flex-1">
+                      <Label className="text-sm font-medium text-green-700">✅ Provider Assigned</Label>
+                      <div className="mt-1">
+                        <p className="text-sm font-semibold text-green-900">
+                          {formatProviderName(order.provider)}
+                        </p>
+                        {order.provider?.phone && (
+                          <p className="text-sm text-green-700">📞 {order.provider.phone}</p>
+                        )}
+                        {order.provider?.email && (
+                          <p className="text-sm text-green-700">✉️ {order.provider.email}</p>
+                        )}
+                        <p className="text-xs text-green-600 mt-1">
+                          Provider ID: {order.provider_id || order.provider?.id || 'N/A'}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
             ) : (
-              <div className="text-center py-4">
-                <p className="text-gray-500 mb-2">No provider assigned</p>
-                <p className="text-sm text-gray-400">Click "Assign Provider" to assign a service provider</p>
+              <div className="text-center py-6">
+                <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                  <p className="text-yellow-700 font-medium mb-1">⚠️ No Provider Assigned</p>
+                  <p className="text-sm text-yellow-600">Click "Assign Provider" to assign a service provider to this order</p>
+                </div>
               </div>
             )}
           </CardContent>
