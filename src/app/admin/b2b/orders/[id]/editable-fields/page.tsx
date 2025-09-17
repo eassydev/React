@@ -217,9 +217,19 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
       };
 
       // Format UNIX timestamp for input fields
-      const formatTimestampForInput = (timestamp: number) => {
+      const formatTimestampForInput = (timestamp: number | string) => {
         if (!timestamp) return '';
-        const date = new Date(timestamp * 1000); // Convert seconds to milliseconds
+
+        // Handle both string and number timestamps
+        const numTimestamp = typeof timestamp === 'string' ? parseInt(timestamp) : timestamp;
+        if (isNaN(numTimestamp) || numTimestamp <= 0) return '';
+
+        // Check if timestamp is in milliseconds or seconds
+        const timestampMs = numTimestamp > 1000000000000 ? numTimestamp : numTimestamp * 1000;
+
+        const date = new Date(timestampMs);
+        if (isNaN(date.getTime())) return '';
+
         return date.toISOString().split('T')[0]; // YYYY-MM-DD format
       };
 
@@ -248,7 +258,14 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
         // Scheduling - properly formatted for input fields
         service_date: formatDateForInput(orderData.service_date),
         service_time: formatTimeForInput(orderData.service_time),
-        booking_received_date: formatTimestampForInput(orderData.booking_received_date),
+        booking_received_date: (() => {
+          const formatted = formatTimestampForInput(orderData.booking_received_date);
+          console.log('🔍 Loading booking_received_date:', {
+            raw: orderData.booking_received_date,
+            formatted: formatted
+          });
+          return formatted;
+        })(),
 
         // Store Information
         service_rate: orderData.service_rate?.toString() || '',
@@ -259,7 +276,7 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
         booking_poc_number: orderData.booking_poc_number || '',
 
         // Additional
-        payment_terms: orderData.payment_terms || 'Net 30 days',
+        payment_terms: orderData.customer?.payment_terms || orderData.payment_terms || 'Net 30 days',
         notes: orderData.notes || '',
         custom_fields: orderData.custom_fields || {},
       });
@@ -311,7 +328,27 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
       submitData.quantity = formData.quantity ? parseInt(formData.quantity) : undefined;
       submitData.service_date = formData.service_date;
       submitData.service_time = formData.service_time;
-      submitData.booking_received_date = formData.booking_received_date;
+
+      // ✅ FIX: Convert booking_received_date from YYYY-MM-DD to UNIX timestamp
+      if (formData.booking_received_date) {
+        const dateObj = new Date(formData.booking_received_date);
+
+        // Check if date is valid
+        if (isNaN(dateObj.getTime())) {
+          console.error('❌ Invalid date for booking_received_date:', formData.booking_received_date);
+          submitData.booking_received_date = null;
+        } else {
+          const timestamp = Math.floor(dateObj.getTime() / 1000); // Convert to seconds
+          console.log('🔍 Converting booking_received_date:', {
+            input: formData.booking_received_date,
+            dateObj: dateObj.toISOString(),
+            timestamp: timestamp
+          });
+          submitData.booking_received_date = timestamp;
+        }
+      } else {
+        submitData.booking_received_date = formData.booking_received_date;
+      }
       submitData.service_rate = formData.service_rate ? parseFloat(formData.service_rate) : undefined;
       submitData.service_area_sqft = formData.service_area_sqft ? parseFloat(formData.service_area_sqft) : undefined;
       submitData.store_name = formData.store_name;
@@ -335,12 +372,18 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
 
       console.log('🔍 Submitting data:', submitData); // Debug log
       await updateB2BOrderEditableFields(params.id, submitData);
-      setSuccess('Order updated successfully!');
 
-      // Redirect after a short delay to show success message
-      setTimeout(() => {
-        router.push('/admin/b2b/orders');
-      }, 1500);
+      // Show success toast notification
+      toast({
+        title: 'Success',
+        description: 'Order updated successfully',
+      });
+
+      // Refresh order data to show updated values in the form
+      await fetchOrder();
+
+      // Clear any previous error states
+      setError('');
     } catch (error: any) {
       console.error('Error updating editable fields:', error);
       setError(error.message || 'Failed to update order. Please try again.');
