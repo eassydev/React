@@ -271,6 +271,7 @@ export const sidebarItems: SidebarItem[] = [
       { title: 'Orders', route: `${basePath}/b2b/orders` },
       { title: 'Quotations', route: `${basePath}/b2b/quotations` },
       { title: 'Invoices', route: `${basePath}/b2b/invoices` },
+      { title: 'SP Invoices', route: `${basePath}/b2b/sp-invoices` },
       { title: 'Payment Reminders', route: `${basePath}/b2b/payment-reminders` },
       { title: 'Service Attachments', route: `${basePath}/b2b/service-attachments` },
       { title: 'File Lifecycle', route: `${basePath}/b2b/file-lifecycle` },

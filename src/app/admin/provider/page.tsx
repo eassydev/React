@@ -18,7 +18,7 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table';
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Download, Copy, Users, Building2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Download, Copy, Users, Building2, CreditCard } from 'lucide-react';
 import { fetchAllProviders, deleteProvider, exportProvider, approvedProvider, updateProviderType } from '@/lib/api';
 import Link from 'next/link';
 import {
@@ -305,6 +305,13 @@ const ProviderList = () => {
               </Link>
             </Button>
           )}
+
+          {/* Bank Account Management Button */}
+          <Button variant="ghost" size="icon" title="Manage Bank Accounts">
+            <Link href={`/admin/provider/${row.original.id}/account`} passHref>
+              <CreditCard className="w-4 h-4 text-orange-600" />
+            </Link>
+          </Button>
 
           {/* B2B Provider Type Toggle Button */}
           <Button

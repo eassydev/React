@@ -13,9 +13,10 @@ import {
   CardDescription,
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
-import { Save, Loader2, FileImage, Eye, Upload, Check, X, Clock } from 'lucide-react';
-import { fetchProviderById, updateProvider, Provider } from '@/lib/api';
+import { Save, Loader2, FileImage, Eye, Upload, Check, X, Clock, CreditCard, Plus } from 'lucide-react';
+import { fetchProviderById, updateProvider, Provider, fetchProviderBankDetails, ProviderBankDetail } from '@/lib/api';
 import { useRouter, useParams } from 'next/navigation';
+import Link from 'next/link';
 import {
   Dialog,
   DialogContent,
@@ -56,6 +57,10 @@ const EditProviderForm: React.FC = () => {
   const [newAadharBack, setNewAadharBack] = useState<File | null>(null);
   const [newPanCard, setNewPanCard] = useState<File | null>(null);
   const [newGstCertificate, setNewGstCertificate] = useState<File | null>(null);
+
+  // Bank account state
+  const [bankAccounts, setBankAccounts] = useState<ProviderBankDetail[]>([]);
+  const [bankAccountsLoading, setBankAccountsLoading] = useState<boolean>(false);
 
   // Document numbers for upload
   const [aadharDocNumber, setAadharDocNumber] = useState<string>('');
@@ -209,6 +214,20 @@ const EditProviderForm: React.FC = () => {
     }
   };
 
+  // Function to fetch bank accounts
+  const fetchBankAccounts = async (providerId: string) => {
+    try {
+      setBankAccountsLoading(true);
+      const { data } = await fetchProviderBankDetails(providerId, 1, 10);
+      setBankAccounts(data || []);
+    } catch (error) {
+      console.error('Error fetching bank accounts:', error);
+      setBankAccounts([]);
+    } finally {
+      setBankAccountsLoading(false);
+    }
+  };
+
   useEffect(() => {
     const fetchProviderData = async () => {
       setIsLoading(true);
@@ -243,8 +262,9 @@ const EditProviderForm: React.FC = () => {
         setProviderType(providerData.provider_type || 'b2c');
         setB2bApproved(providerData.b2b_approved === 1);
 
-        // Fetch provider documents
+        // Fetch provider documents and bank accounts
         await fetchProviderDocuments(id as string);
+        await fetchBankAccounts(id as string);
       } catch (error) {
         console.error('❌ Error fetching provider data:', error);
         toast({
@@ -631,6 +651,81 @@ const EditProviderForm: React.FC = () => {
               </Button>
             </div>
           </CardFooter>
+        </Card>
+
+        {/* Bank Account Section */}
+        <Card className="shadow-lg border-0 bg-white">
+          <CardHeader className="border-b border-gray-100 pb-6">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <CreditCard className="w-6 h-6 text-primary" />
+                <div>
+                  <CardTitle className="text-2xl font-bold text-gray-800">Bank Accounts</CardTitle>
+                  <CardDescription>
+                    Manage provider bank account details for payments
+                  </CardDescription>
+                </div>
+              </div>
+              <Button asChild variant="outline" size="sm">
+                <Link href={`/admin/provider/${id}/account`}>
+                  <Plus className="w-4 h-4 mr-2" />
+                  Manage Accounts
+                </Link>
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent className="pt-6">
+            {bankAccountsLoading ? (
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="w-6 h-6 animate-spin" />
+                <span className="ml-2">Loading bank accounts...</span>
+              </div>
+            ) : bankAccounts.length > 0 ? (
+              <div className="space-y-4">
+                {bankAccounts.slice(0, 3).map((account, index) => (
+                  <div key={account.id} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div className="flex-1">
+                      <div className="flex items-center space-x-2">
+                        <h4 className="font-medium">{account.account_holder_name}</h4>
+                        {account.primary && (
+                          <span className="px-2 py-1 text-xs bg-green-100 text-green-800 rounded-full">
+                            Primary
+                          </span>
+                        )}
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          account.status === 'verified' ? 'bg-green-100 text-green-800' :
+                          account.status === 'rejected' ? 'bg-red-100 text-red-800' :
+                          'bg-yellow-100 text-yellow-800'
+                        }`}>
+                          {account.status}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600">
+                        {account.account_number?.replace(/(.{4})/g, '$1 ').trim()} • {account.ifsc_code}
+                      </p>
+                      <p className="text-xs text-gray-500 capitalize">{account.account_type} Account</p>
+                    </div>
+                  </div>
+                ))}
+                {bankAccounts.length > 3 && (
+                  <p className="text-sm text-gray-500 text-center">
+                    And {bankAccounts.length - 3} more account(s)...
+                  </p>
+                )}
+              </div>
+            ) : (
+              <div className="text-center py-8">
+                <CreditCard className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                <p className="text-gray-500 mb-4">No bank accounts added yet</p>
+                <Button asChild variant="outline">
+                  <Link href={`/admin/provider/${id}/account/add`}>
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Bank Account
+                  </Link>
+                </Button>
+              </div>
+            )}
+          </CardContent>
         </Card>
 
         {/* Documents Section */}

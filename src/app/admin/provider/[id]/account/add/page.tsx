@@ -22,6 +22,7 @@ const AddProviderBankDetailForm: React.FC = () => {
   const [bankId, setBankId] = useState<string>('');
   const [accountHolderName, setAccountHolderName] = useState<string>('');
   const [accountNumber, setAccountNumber] = useState<string>('');
+  const [branchName, setBranchName] = useState<string>('');
   const [ifscCode, setIfscCode] = useState<string>('');
   const [accountType, setAccountType] = useState<string>('savings');
   const [status, setStatus] = useState<string>('pending');
@@ -67,6 +68,7 @@ const AddProviderBankDetailForm: React.FC = () => {
       bank_id: bankId,
       account_holder_name: accountHolderName,
       account_number: accountNumber,
+      branch_name: branchName,
       ifsc_code: ifscCode,
       account_type: accountType as 'savings' | 'current' | 'business', // Cast to specific type
       status: status as 'pending' | 'verified' | 'rejected', // Cast to specific type
@@ -142,6 +144,18 @@ const AddProviderBankDetailForm: React.FC = () => {
                   placeholder="Enter account number"
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Branch Name */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Branch Name</label>
+                <Input
+                  type="text"
+                  placeholder="Enter branch name"
+                  value={branchName}
+                  onChange={(e) => setBranchName(e.target.value)}
                   required
                 />
               </div>

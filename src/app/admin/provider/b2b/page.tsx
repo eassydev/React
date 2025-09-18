@@ -18,7 +18,7 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table';
-import { ChevronLeft, ChevronRight, Edit, Building2, Filter } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit, Building2, Filter, CreditCard } from 'lucide-react';
 import { fetchB2BProviders, updateProviderType, Provider } from '@/lib/api';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
@@ -203,6 +203,11 @@ const B2BProvidersPage: React.FC = () => {
           <Button variant="ghost" size="icon" title="Edit Provider" asChild>
             <Link href={`/admin/provider/edit/${row.original.id}`}>
               <Edit className="w-4 h-4" />
+            </Link>
+          </Button>
+          <Button variant="ghost" size="icon" title="Manage Bank Accounts" asChild>
+            <Link href={`/admin/provider/${row.original.id}/account`}>
+              <CreditCard className="w-4 h-4 text-orange-600" />
             </Link>
           </Button>
         </div>

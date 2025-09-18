@@ -391,6 +391,7 @@ export interface ProviderBankDetail {
   bank_id: string;
   account_holder_name: string;
   account_number: string;
+  branch_name?: string;
   ifsc_code: string;
   account_type: 'savings' | 'current' | 'business';
   status?: 'pending' | 'verified' | 'rejected';
@@ -11231,5 +11232,186 @@ export const exportDetailedReportCSV = async (
   } catch (error) {
     console.error('❌ Error exporting detailed report:', error);
     throw error;
+  }
+};
+
+// ✅ SP INVOICE MANAGEMENT API FUNCTIONS
+
+export interface SPInvoice {
+  id: string;
+  booking: {
+    id: string;
+    order_number: string;
+    service_name: string;
+    customer: {
+      company_name: string;
+      contact_person: string;
+    };
+  };
+  provider: {
+    name: string;
+    company_name: string;
+  };
+  invoice_number?: string;
+  invoice_amount?: number;
+  approval_status: 'pending' | 'approved' | 'rejected' | 'needs_revision';
+  uploaded_at: string;
+  approved_at?: string;
+  admin_notes?: string;
+  sp_notes?: string;
+  file_url?: string;
+}
+
+export interface SPInvoiceStats {
+  status_summary: {
+    pending: number;
+    approved: number;
+    rejected: number;
+    needs_revision: number;
+  };
+  financial_summary: {
+    total_pending_amount: number;
+    total_approved_amount: number;
+    avg_invoice_amount: number;
+  };
+}
+
+export interface SPInvoiceFilters {
+  status?: string;
+  search?: string;
+  page?: number;
+  limit?: number;
+}
+
+// Fetch all SP invoices with filters
+export const fetchSPInvoices = async (filters: SPInvoiceFilters = {}) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get('/b2b/sp-invoices', {
+      params: filters,
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching SP invoices:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch SP invoices');
+  }
+};
+
+// Fetch SP invoice statistics
+export const fetchSPInvoiceStats = async () => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get('/b2b/sp-invoices/statistics', {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching SP invoice statistics:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch SP invoice statistics');
+  }
+};
+
+// Fetch single SP invoice by ID
+export const fetchSPInvoiceById = async (id: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get(`/b2b/sp-invoices/${id}`, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching SP invoice details:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch SP invoice details');
+  }
+};
+
+// Approve SP invoice
+export const approveSPInvoice = async (id: string, data: { admin_notes?: string; generate_b2b_invoice?: boolean }) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post(`/b2b/sp-invoices/${id}/approve`, data, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error approving SP invoice:', error);
+    throw new Error(error.response?.data?.message || 'Failed to approve SP invoice');
+  }
+};
+
+// Reject SP invoice
+export const rejectSPInvoice = async (id: string, data: { reason: string; admin_notes?: string }) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post(`/b2b/sp-invoices/${id}/reject`, data, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error rejecting SP invoice:', error);
+    throw new Error(error.response?.data?.message || 'Failed to reject SP invoice');
+  }
+};
+
+// Request revision for SP invoice
+export const requestSPInvoiceRevision = async (id: string, data: { revision_reason: string; admin_notes?: string }) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post(`/b2b/sp-invoices/${id}/request-revision`, data, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error requesting SP invoice revision:', error);
+    throw new Error(error.response?.data?.message || 'Failed to request SP invoice revision');
   }
 };

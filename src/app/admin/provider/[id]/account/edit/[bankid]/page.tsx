@@ -22,6 +22,7 @@ const EditProviderBankDetailForm: React.FC = () => {
   const [bankId, setBankId] = useState<string>('');
   const [accountHolderName, setAccountHolderName] = useState<string>('');
   const [accountNumber, setAccountNumber] = useState<string>('');
+  const [branchName, setBranchName] = useState<string>('');
   const [ifscCode, setIfscCode] = useState<string>('');
   const [accountType, setAccountType] = useState<'savings' | 'current' | 'business'>('savings');
   const [status, setStatus] = useState<'pending' | 'verified' | 'rejected'>('pending');
@@ -59,6 +60,7 @@ const EditProviderBankDetailForm: React.FC = () => {
         setBankId(bankDetail.bank_id?.toString() || ''); // Default to an empty string if undefined
         setAccountHolderName(bankDetail.account_holder_name || ''); // Default to empty string
         setAccountNumber(bankDetail.account_number || '');
+        setBranchName(bankDetail.branch_name || '');
         setIfscCode(bankDetail.ifsc_code || '');
         setAccountType(bankDetail.account_type || 'savings');
         setStatus(bankDetail.status || 'pending');
@@ -85,6 +87,7 @@ const EditProviderBankDetailForm: React.FC = () => {
       bank_id: bankId,
       account_holder_name: accountHolderName,
       account_number: accountNumber,
+      branch_name: branchName,
       ifsc_code: ifscCode,
       account_type: accountType,
       status,
@@ -160,6 +163,18 @@ const EditProviderBankDetailForm: React.FC = () => {
                   placeholder="Enter account number"
                   value={accountNumber}
                   onChange={(e) => setAccountNumber(e.target.value)}
+                  required
+                />
+              </div>
+
+              {/* Branch Name */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Branch Name</label>
+                <Input
+                  type="text"
+                  placeholder="Enter branch name"
+                  value={branchName}
+                  onChange={(e) => setBranchName(e.target.value)}
                   required
                 />
               </div>
