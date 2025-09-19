@@ -18,8 +18,8 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table';
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from 'lucide-react';
-import { fetchBanks, deleteBank } from '@/lib/api';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, Database } from 'lucide-react';
+import { fetchBanks, deleteBank, bulkInsertBanks } from '@/lib/api';
 import Link from 'next/link';
 import {
   AlertDialog,
@@ -35,6 +35,7 @@ const BankList = () => {
   const [pagination, setPagination] = useState<PaginationState>({ pageIndex: 0, pageSize: 50 });
   const [totalPages, setTotalPages] = useState(0);
   const [totalItems, setTotalItems] = useState(0);
+  const [isBulkInserting, setIsBulkInserting] = useState(false);
 
   const { toast } = useToast();
 
@@ -70,6 +71,27 @@ const BankList = () => {
         description: `Failed to delete bank: ${error}`,
         variant: 'destructive',
       });
+    }
+  };
+
+  const handleBulkInsert = async () => {
+    try {
+      setIsBulkInserting(true);
+      const result = await bulkInsertBanks();
+      toast({
+        title: 'Success',
+        description: `Bulk insert completed! Total: ${result.totalBanks}, Inserted: ${result.inserted}, Already existed: ${result.existing}`,
+        variant: 'default',
+      });
+      fetchBanksData(pagination.pageIndex + 1, pagination.pageSize);
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: `Failed to bulk insert banks: ${error}`,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsBulkInserting(false);
     }
   };
 
@@ -136,12 +158,23 @@ const BankList = () => {
       <div className="max-w-12xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">Bank List</h1>
-          <Button asChild variant="default" className="flex items-center space-x-2">
-            <Link href="/admin/bank/add">
-              <Plus className="w-4 h-4 mr-1" />
-              <span>Add Bank</span>
-            </Link>
-          </Button>
+          <div className="flex items-center space-x-3">
+            <Button
+              onClick={handleBulkInsert}
+              disabled={isBulkInserting}
+              variant="outline"
+              className="flex items-center space-x-2 border-blue-200 text-blue-600 hover:bg-blue-50"
+            >
+              <Database className="w-4 h-4 mr-1" />
+              <span>{isBulkInserting ? 'Inserting...' : 'Bulk Insert Banks'}</span>
+            </Button>
+            <Button asChild variant="default" className="flex items-center space-x-2">
+              <Link href="/admin/bank/add">
+                <Plus className="w-4 h-4 mr-1" />
+                <span>Add Bank</span>
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">

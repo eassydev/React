@@ -3049,10 +3049,12 @@ export const fetchBanks = async (page = 1, size = 10) => {
 };
 
 // Function to fetch all banks
-export const fetchAllBanks = async (): Promise<Bank[]> => {
+export const fetchAllBanks = async (search?: string): Promise<Bank[]> => {
   try {
     const token = getToken();
+    const params = search ? { search } : {};
     const response: AxiosResponse<ApiResponse> = await apiClient.get('/bank/all', {
+      params,
       headers: {
         'admin-auth-token': token || '',
       },
@@ -3064,6 +3066,32 @@ export const fetchAllBanks = async (): Promise<Bank[]> => {
     }
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch banks.');
+  }
+};
+
+// Function to create a new bank
+export const createBank = async (bankData: { name: string; is_active?: number }): Promise<Bank> => {
+  console.log('🔄 createBank API called with:', bankData); // Debug log
+  try {
+    const token = getToken();
+    console.log('🔑 Token:', token ? 'Present' : 'Missing'); // Debug log
+
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/bank', bankData, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    console.log('📡 API Response:', response.data); // Debug log
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to create bank.');
+    }
+  } catch (error: any) {
+    console.error('❌ API Error:', error); // Debug log
+    throw new Error(error.response?.data?.message || 'Failed to create bank.');
   }
 };
 
@@ -3082,21 +3110,26 @@ export const fetchBankById = async (id: string): Promise<Bank> => {
   }
 };
 
-// Function to create a new bank
-export const createBank = async (bank: Bank): Promise<ApiResponse> => {
+// Function to bulk insert banks
+export const bulkInsertBanks = async (): Promise<{ totalBanks: number; inserted: number; existing: number }> => {
   try {
     const token = getToken();
-    const response: AxiosResponse<ApiResponse> = await apiClient.post('/bank', bank, {
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/bank/bulk-insert', {}, {
       headers: {
-        'Content-Type': 'application/json',
         'admin-auth-token': token || '',
       },
     });
-    return response.data;
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to bulk insert banks.');
+    }
   } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to create bank.');
+    throw new Error(error.response?.data?.message || 'Failed to bulk insert banks.');
   }
 };
+
+
 
 // Function to update an existing bank
 export const updateBank = async (id: string, bank: Bank): Promise<ApiResponse> => {

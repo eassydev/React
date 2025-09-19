@@ -14,11 +14,11 @@ import {
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { fetchAllBanks, createProviderBankDetail } from '@/lib/api';
+import { createProviderBankDetail } from '@/lib/api';
+import SearchableBankSelect from '@/components/ui/searchable-bank-select';
 import { Save, ImageIcon, Type, FileText, Loader2, Plus, Trash2, Globe2 } from 'lucide-react';
 
 const AddProviderBankDetailForm: React.FC = () => {
-  const [banks, setBanks] = useState<{ id: string; name: string }[]>([]);
   const [bankId, setBankId] = useState<string>('');
   const [accountHolderName, setAccountHolderName] = useState<string>('');
   const [accountNumber, setAccountNumber] = useState<string>('');
@@ -31,33 +31,6 @@ const AddProviderBankDetailForm: React.FC = () => {
   const { toast } = useToast();
   const router = useRouter();
   const { id: providerId } = useParams(); // Provider ID from URL
-
-  // Fetch list of banks
-  useEffect(() => {
-    const loadBanks = async () => {
-      try {
-        const bankData = await fetchAllBanks();
-
-        // Ensure id is a string and filter out banks without an id
-        const formattedBankData = bankData
-          .filter((bank) => bank.id) // Filter out banks without id
-          .map((bank) => ({
-            id: bank.id!.toString(), // Ensure id is a string
-            name: bank.name,
-          }));
-
-        setBanks(formattedBankData);
-      } catch (error) {
-        toast({
-          variant: 'error',
-          title: 'Error',
-          description: 'Failed to load banks.',
-        });
-      }
-    };
-
-    loadBanks();
-  }, []);
 
   const onSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -110,18 +83,12 @@ const AddProviderBankDetailForm: React.FC = () => {
                   <Globe2 className="w-4 h-4 text-blue-500" />
                   <span>Select Bank</span>
                 </label>
-                <Select value={bankId} onValueChange={(value) => setBankId(value)} required>
-                  <SelectTrigger className="bg-white border-gray-200">
-                    <SelectValue placeholder="Select Bank" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {banks.map((bank) => (
-                      <SelectItem key={bank.id} value={bank.id} className="text-black">
-                        {bank.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <SearchableBankSelect
+                  value={bankId}
+                  onValueChange={setBankId}
+                  placeholder="Search and select bank"
+                  required
+                />
               </div>
 
               {/* Account Holder Name */}

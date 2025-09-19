@@ -10,13 +10,8 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 
-// ✅ IMPORT EXISTING COMPONENTS (REUSE INSTEAD OF RECREATE)
-import { CategorySelector } from '@/components/service/CategorySelector';
-import { SubcategorySelector } from '@/components/service/SubcategorySelector';
-import { ProviderSelector } from '@/components/provider/ProviderSelector';
-import { RateCardSelector } from '@/components/service/RateCardSelector';
-import { FilterAttributeSelector } from '@/components/service/FilterAttributeSelector';
-import { ServiceAddressSelector } from '@/components/address/ServiceAddressSelector';
+// ✅ IMPORT B2B SPECIFIC COMPONENTS
+import { ProviderSearchDropdown } from '@/components/b2b/ProviderSearchDropdown';
 
 // ✅ IMPORT B2B SPECIFIC COMPONENTS
 import { B2BCustomerSelector } from '@/components/b2b/B2BCustomerSelector';
@@ -24,13 +19,13 @@ import { B2BServiceAddressManager } from '@/components/b2b/B2BServiceAddressMana
 import { B2BEditableFieldsForm } from '@/components/b2b/B2BEditableFieldsForm';
 
 // API imports
-import { 
-  fetchB2BCustomers, 
+import {
+  fetchB2BCustomers,
   createB2BOrder,
-  fetchCategories,
-  fetchSubcategories,
-  fetchProviders,
-  fetchRateCards,
+  fetchAllCategories,
+  fetchSubCategoriesByCategoryId,
+  fetchAllB2BProviders,
+  fetchRateCardsByProvider,
   fetchServiceSegments
 } from '@/lib/api';
 
@@ -102,6 +97,10 @@ export default function CorrectedB2BOrderPage() {
   const [selectedServiceAddress, setSelectedServiceAddress] = useState<any>(null);
   const [filterAttributes, setFilterAttributes] = useState<any>({});
 
+  // Data arrays
+  const [categories, setCategories] = useState<any[]>([]);
+  const [subcategories, setSubcategories] = useState<any[]>([]);
+
   const [formData, setFormData] = useState<B2BOrderFormData>({
     b2b_customer_id: '',
     b2b_service_address_id: '',
@@ -151,22 +150,24 @@ export default function CorrectedB2BOrderPage() {
     }));
   };
 
-  const handleCategorySelect = (category: any) => {
-    setSelectedCategory(category.id);
+  const handleCategorySelect = (categoryId: string) => {
+    setSelectedCategory(categoryId);
     setFormData(prev => ({
       ...prev,
-      category_id: category.id,
+      category_id: categoryId,
       subcategory_id: '', // Reset dependent fields
       segment_id: '',
       rate_card_id: '',
     }));
+    // Reset subcategory when category changes
+    setSelectedSubcategory('');
   };
 
-  const handleSubcategorySelect = (subcategory: any) => {
-    setSelectedSubcategory(subcategory.id);
+  const handleSubcategorySelect = (subcategoryId: string) => {
+    setSelectedSubcategory(subcategoryId);
     setFormData(prev => ({
       ...prev,
-      subcategory_id: subcategory.id,
+      subcategory_id: subcategoryId,
       segment_id: '', // Reset dependent fields
       rate_card_id: '',
     }));
@@ -228,17 +229,50 @@ export default function CorrectedB2BOrderPage() {
     const finalPrice = parseFloat(formData.final_price) || 0;
     const quantity = parseInt(formData.quantity) || 1;
     const discount = parseFloat(formData.discount_amount) || 0;
-    
+
     const totalBeforeTax = (finalPrice * quantity) - discount;
     const gstAmount = totalBeforeTax * 0.18; // 18% GST
     const finalAmount = totalBeforeTax + gstAmount;
-    
+
     return {
       totalBeforeTax: totalBeforeTax.toFixed(2),
       gstAmount: gstAmount.toFixed(2),
       finalAmount: finalAmount.toFixed(2),
     };
   };
+
+  // ✅ Load categories on component mount
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        const response = await fetchAllCategories();
+        setCategories(response.data || []);
+      } catch (error) {
+        console.error('Error loading categories:', error);
+        setCategories([]);
+      }
+    };
+    loadCategories();
+  }, []);
+
+  // ✅ Load subcategories when category changes
+  useEffect(() => {
+    if (selectedCategory) {
+      const loadSubcategories = async () => {
+        try {
+          const response = await fetchSubCategoriesByCategoryId(selectedCategory);
+          setSubcategories(response.data || []);
+        } catch (error) {
+          console.error('Error loading subcategories:', error);
+          setSubcategories([]);
+        }
+      };
+      loadSubcategories();
+    } else {
+      setSubcategories([]);
+      setSelectedSubcategory('');
+    }
+  }, [selectedCategory]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -309,54 +343,71 @@ export default function CorrectedB2BOrderPage() {
           </CardContent>
         </Card>
 
-        {/* ✅ SERVICE SELECTION - INTEGRATED WITH EXISTING SYSTEM */}
+        {/* ✅ SERVICE SELECTION - INLINE IMPLEMENTATION */}
         {selectedCustomer && (
           <Card>
             <CardHeader>
               <CardTitle>Service Selection</CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              <CategorySelector onSelect={handleCategorySelect} />
-              
+              {/* Category Selection */}
+              <div>
+                <Label htmlFor="category">Category *</Label>
+                <Select value={selectedCategory} onValueChange={handleCategorySelect}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categories.map((category) =>
+                      category.id ? (
+                        <SelectItem key={category.id} value={category.id}>
+                          {category.name}
+                        </SelectItem>
+                      ) : null
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Subcategory Selection */}
               {selectedCategory && (
-                <SubcategorySelector 
-                  categoryId={selectedCategory} 
-                  onSelect={handleSubcategorySelect} 
-                />
-              )}
-              
-              {selectedSubcategory && (
-                <FilterAttributeSelector
-                  categoryId={selectedCategory}
-                  subcategoryId={selectedSubcategory}
-                  onSelect={handleFilterAttributeSelect}
-                />
-              )}
-              
-              {selectedSubcategory && (
-                <RateCardSelector
-                  categoryId={selectedCategory}
-                  subcategoryId={selectedSubcategory}
-                  filters={filterAttributes}
-                  onSelect={handleRateCardSelect}
-                />
+                <div>
+                  <Label htmlFor="subcategory">Subcategory *</Label>
+                  <Select value={selectedSubcategory} onValueChange={handleSubcategorySelect}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select subcategory" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {subcategories.map((subcategory) =>
+                        subcategory.id ? (
+                          <SelectItem key={subcategory.id} value={subcategory.id}>
+                            {subcategory.name}
+                          </SelectItem>
+                        ) : null
+                      )}
+                    </SelectContent>
+                  </Select>
+                </div>
               )}
             </CardContent>
           </Card>
         )}
 
-        {/* ✅ PROVIDER SELECTION - REUSE EXISTING COMPONENT */}
-        {selectedRateCard && (
+        {/* ✅ PROVIDER SELECTION - B2B SPECIFIC */}
+        {selectedSubcategory && (
           <Card>
             <CardHeader>
               <CardTitle>Service Provider</CardTitle>
             </CardHeader>
             <CardContent>
-              <ProviderSelector
-                categoryId={selectedCategory}
-                subcategoryId={selectedSubcategory}
-                serviceDate={formData.service_date}
-                onSelect={handleProviderSelect}
+              <ProviderSearchDropdown
+                value={selectedProvider?.id || ''}
+                onChange={(providerId, provider) => {
+                  setSelectedProvider(provider);
+                  setFormData(prev => ({ ...prev, provider_id: providerId }));
+                }}
+                placeholder="Search and select B2B provider..."
+                required
               />
             </CardContent>
           </Card>

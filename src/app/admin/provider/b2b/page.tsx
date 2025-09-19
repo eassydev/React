@@ -19,7 +19,7 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { ChevronLeft, ChevronRight, Edit, Building2, Filter, CreditCard } from 'lucide-react';
-import { fetchB2BProviders, updateProviderType, Provider } from '@/lib/api';
+import { fetchB2BProviders, updateProviderType, updateProviderActiveStatus, Provider } from '@/lib/api';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
@@ -74,11 +74,11 @@ const B2BProvidersPage: React.FC = () => {
   const handleProviderTypeUpdate = async (providerId: string, newType: 'b2c' | 'b2b' | 'hybrid') => {
     try {
       await updateProviderType(providerId, newType, 0);
-      
+
       // Update local state
-      setProviders(prev => 
-        prev.map(provider => 
-          provider.id === providerId 
+      setProviders(prev =>
+        prev.map(provider =>
+          provider.id === providerId
             ? { ...provider, provider_type: newType, b2b_approved: 0 }
             : provider
         )
@@ -94,6 +94,35 @@ const B2BProvidersPage: React.FC = () => {
         variant: 'destructive',
         title: 'Error',
         description: error.message || 'Failed to update provider type.',
+      });
+    }
+  };
+
+  // ✅ NEW: Handle active status toggle
+  const handleActiveStatusToggle = async (providerId: string, currentActive: number) => {
+    try {
+      const newActive = currentActive === 1 ? 0 : 1;
+      await updateProviderActiveStatus(providerId, newActive);
+
+      // Update local state
+      setProviders(prev =>
+        prev.map(provider =>
+          provider.id === providerId
+            ? { ...provider, active: newActive }
+            : provider
+        )
+      );
+
+      toast({
+        variant: 'success',
+        title: 'Success',
+        description: `Provider ${newActive === 1 ? 'activated' : 'deactivated'} successfully.`,
+      });
+    } catch (error: any) {
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: error.message || 'Failed to update provider status.',
       });
     }
   };
