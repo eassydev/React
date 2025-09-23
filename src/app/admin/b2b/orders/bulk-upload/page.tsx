@@ -11,24 +11,40 @@ export default function B2BBulkUploadPage() {
   const router = useRouter();
 
   const handleUploadComplete = (results: any) => {
-    // Only redirect if there were successful imports
+    // ✅ IMPROVED: Better handling of mixed success/failure scenarios
     if (results.successful_imports > 0) {
-      toast({
-        title: 'Upload Completed Successfully',
-        description: `Successfully imported ${results.successful_imports} orders${results.failed_imports > 0 ? ` (${results.failed_imports} failed)` : ''}`,
-      });
+      if (results.failed_imports > 0) {
+        // Mixed results - some success, some failures
+        toast({
+          title: 'Import Completed with Issues',
+          description: `${results.successful_imports} orders imported successfully, ${results.failed_imports} failed. Review errors below.`,
+          variant: 'default', // Not destructive since some succeeded
+        });
 
-      // Redirect to orders list after a delay only on success
-      setTimeout(() => {
-        router.push('/admin/b2b/orders');
-      }, 3000);
+        // Don't auto-redirect when there are errors - let user review them
+        console.log('Import completed with mixed results - not auto-redirecting');
+      } else {
+        // Complete success
+        toast({
+          title: 'Upload Completed Successfully',
+          description: `Successfully imported ${results.successful_imports} orders`,
+        });
+
+        // Only redirect on complete success
+        setTimeout(() => {
+          router.push('/admin/b2b/orders');
+        }, 3000);
+      }
     } else {
-      // Show error message and don't redirect
+      // Complete failure - no orders imported
       toast({
         title: 'Import Failed',
-        description: `No orders were imported. ${results.failed_imports} rows failed.`,
+        description: `No orders were imported. ${results.failed_imports || 0} rows failed. Please review the errors and fix your data.`,
         variant: 'destructive',
       });
+
+      // Don't redirect on failure
+      console.log('Import failed completely - staying on upload page for error review');
     }
   };
 

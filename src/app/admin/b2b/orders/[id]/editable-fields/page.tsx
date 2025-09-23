@@ -7,7 +7,7 @@ import {
   fetchB2BOrderById,
   updateB2BOrderEditableFields,
   updateB2BOrderStatus,
-  fetchProvidersForB2B,
+  // fetchProvidersForB2B removed - using ProviderSearchDropdown instead
   bulkAssignProviders
 } from '@/lib/api';
 
@@ -33,6 +33,7 @@ import {
   DialogTitle,
   DialogTrigger
 } from '@/components/ui/dialog';
+import { ProviderSearchDropdown } from '@/components/b2b/ProviderSearchDropdown';
 
 
 
@@ -149,11 +150,10 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
   const [statusNotes, setStatusNotes] = useState('');
 
   // Provider assignment state
-  const [providers, setProviders] = useState<Provider[]>([]);
   const [selectedProviderId, setSelectedProviderId] = useState('');
   const [providerNotes, setProviderNotes] = useState('');
   const [isProviderDialogOpen, setIsProviderDialogOpen] = useState(false);
-  const [loadingProviders, setLoadingProviders] = useState(false);
+  // Providers are now handled by ProviderSearchDropdown component
 
   // ✅ Set selected provider when dialog opens
   useEffect(() => {
@@ -443,48 +443,7 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
     }
   };
 
-  // Fetch providers function
-  const fetchProviders = async () => {
-    try {
-      setLoadingProviders(true);
-      const response = await fetchProvidersForB2B(
-        order?.category_id,
-        order?.subcategory_id
-      );
-      console.log('🔍 Providers response:', response); // Debug log
-      console.log('🔍 Providers data:', response.data.providers); // Debug log
-
-      const fetchedProviders = response.data.providers || [];
-
-      // ✅ If current provider is not in the list, add it
-      if (order?.provider && order.provider_id) {
-        const currentProviderExists = fetchedProviders.some(p => p.id === order.provider_id);
-        if (!currentProviderExists) {
-          console.log('🔄 Adding current provider to list:', order.provider);
-          fetchedProviders.unshift({
-            id: order.provider_id,
-            name: formatProviderName(order.provider),
-            first_name: order.provider.first_name,
-            last_name: order.provider.last_name,
-            company_name: order.provider.company_name,
-            phone: order.provider.phone || 'N/A',
-            email: order.provider.email
-          });
-        }
-      }
-
-      setProviders(fetchedProviders);
-    } catch (error: any) {
-      console.error('Error fetching providers:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error',
-        description: 'Failed to fetch providers',
-      });
-    } finally {
-      setLoadingProviders(false);
-    }
-  };
+  // Providers are now handled by ProviderSearchDropdown component
 
   // Provider assignment function
   const handleProviderAssignment = async () => {
@@ -782,7 +741,7 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
                     type="button"
                     variant="outline"
                     size="sm"
-                    onClick={fetchProviders}
+                    onClick={() => setIsProviderDialogOpen(true)}
                   >
                     <UserPlus className="w-4 h-4 mr-2" />
                     {hasProviderAssigned(order) ? 'Change Provider' : 'Assign Provider'}
@@ -797,31 +756,21 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
                   <div className="space-y-4">
                     <div>
                       <Label htmlFor="provider">Select Provider</Label>
-                      <Select
+                      <ProviderSearchDropdown
                         value={selectedProviderId}
-                        onValueChange={setSelectedProviderId}
-                        disabled={loadingProviders}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder={
-                            loadingProviders
-                              ? "Loading providers..."
-                              : selectedProviderId
-                                ? `Selected: ${formatProviderName(providers.find(p => p.id === selectedProviderId))}`
-                                : "Select a provider"
-                          } />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {providers.map((provider) => (
-                            <SelectItem key={provider.id} value={provider.id}>
-                              <div className="flex items-center justify-between w-full">
-                                <span>{formatProviderName(provider)}</span>
-                                <span className="text-gray-500 ml-2">📞 {provider.phone}</span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                        onChange={(providerId, provider) => {
+                          setSelectedProviderId(providerId);
+                          // You can also store the full provider object if needed
+                        }}
+                        placeholder={
+                          selectedProviderId
+                            ? "Change provider..."
+                            : "Search and select provider..."
+                        }
+                      />
+                      <div className="text-xs text-gray-500 mt-1">
+                        <span>🔍 Search by name, phone, or location</span>
+                      </div>
                     </div>
                     <div>
                       <Label htmlFor="provider_notes">Assignment Notes</Label>

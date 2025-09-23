@@ -162,11 +162,11 @@ const CampaignList = () => {
       },
     },
     {
-      accessorKey: 'firebase_url',
-      header: 'UTM Firebase URL',
+      accessorKey: 'dub_url',
+      header: 'UTM Dub.co URL',
       size: 100,
       cell: ({ row }: { row: any }) => {
-        const url = row.getValue('firebase_url') as string;
+        const url = row.getValue('dub_url') as string;
 
         const fallbackCopyTextToClipboard = (text: string) => {
           const textArea = document.createElement('textarea');

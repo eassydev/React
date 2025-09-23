@@ -223,9 +223,32 @@ const B2BExcelUpload: React.FC<ExcelUploadProps> = ({ onUploadComplete }) => {
         });
         onUploadComplete?.(result.data);
       } else {
-        throw new Error(result.message || 'Import failed');
+        // ✅ IMPROVED: Handle failed imports with detailed errors
+        // Even if success=false, we still have import results with detailed errors
+        if (result.data) {
+          setImportResults(result.data);
+          setActiveTab('results');
+
+          // Show summary in toast but detailed errors will be visible in results tab
+          const errorSummary = result.data.errors && result.data.errors.length > 0
+            ? `${result.data.failed_imports} rows failed. Check details below.`
+            : result.message || 'Import failed';
+
+          toast({
+            title: 'Import Completed with Errors',
+            description: errorSummary,
+            variant: 'destructive',
+          });
+
+          // Still call onUploadComplete so parent knows import finished (even with errors)
+          onUploadComplete?.(result.data);
+        } else {
+          // No detailed data available, show generic error
+          throw new Error(result.message || 'Import failed');
+        }
       }
     } catch (error: any) {
+      // Only show generic error if we don't have detailed import results
       toast({
         title: 'Import Failed',
         description: error.message || 'Failed to import data',
@@ -554,21 +577,62 @@ const B2BExcelUpload: React.FC<ExcelUploadProps> = ({ onUploadComplete }) => {
                   {/* Errors */}
                   {importResults.errors && importResults.errors.length > 0 && (
                     <div>
-                      <h3 className="font-semibold mb-2 text-red-600">Import Errors</h3>
-                      <div className="space-y-1 max-h-40 overflow-y-auto">
-                        {importResults.errors.map((error: string, index: number) => (
-                          <Alert key={index} variant="destructive">
-                            <XCircle className="h-4 w-4" />
-                            <AlertDescription className="text-sm">
-                              {error}
-                            </AlertDescription>
-                          </Alert>
-                        ))}
+                      <h3 className="font-semibold mb-3 text-red-600 flex items-center gap-2">
+                        <XCircle className="h-5 w-5" />
+                        Import Errors ({importResults.errors.length} rows failed)
+                      </h3>
+
+                      {/* Error Summary */}
+                      <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                        <p className="text-sm text-red-800">
+                          <strong>Common Issues Found:</strong>
+                        </p>
+                        <ul className="text-sm text-red-700 mt-1 ml-4 list-disc">
+                          {importResults.errors.some((error: string) => error.includes('Category')) && (
+                            <li>Invalid category IDs - Use numeric IDs from the system</li>
+                          )}
+                          {importResults.errors.some((error: string) => error.includes('payment_status')) && (
+                            <li>Invalid payment status - Use: pending, paid, overdue, cancelled</li>
+                          )}
+                          {importResults.errors.some((error: string) => error.includes('address')) && (
+                            <li>Missing or invalid address information</li>
+                          )}
+                          {importResults.errors.some((error: string) => error.includes('customer')) && (
+                            <li>Customer-related validation errors</li>
+                          )}
+                          {importResults.errors.some((error: string) => error.includes('date')) && (
+                            <li>Invalid date format - Use DD/MM/YYYY format</li>
+                          )}
+                        </ul>
                       </div>
 
-                      {/* ✅ NEW: Helper button for getting valid IDs */}
+                      {/* Detailed Errors */}
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {importResults.errors.map((error: string, index: number) => {
+                          // Parse row number and error message for better display
+                          const rowMatch = error.match(/Row (\d+): (.+)/);
+                          const rowNumber = rowMatch ? rowMatch[1] : null;
+                          const errorMessage = rowMatch ? rowMatch[2] : error;
+
+                          return (
+                            <Alert key={index} variant="destructive" className="py-2">
+                              <XCircle className="h-4 w-4" />
+                              <AlertDescription className="text-sm">
+                                {rowNumber && (
+                                  <span className="font-semibold text-red-800">Row {rowNumber}: </span>
+                                )}
+                                <span className="text-red-700">{errorMessage}</span>
+                              </AlertDescription>
+                            </Alert>
+                          );
+                        })}
+                      </div>
+
+                      {/* ✅ ENHANCED: Helper sections for different error types */}
+
+                      {/* Category/Subcategory ID Helper */}
                       {importResults.errors.some((error: string) =>
-                        error.includes('Category') || error.includes('Subcategory') || error.includes('excel-helper')
+                        error.includes('Category') || error.includes('Subcategory')
                       ) && (
                         <div className="mt-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
                           <p className="text-sm text-blue-800 mb-2">
@@ -584,8 +648,41 @@ const B2BExcelUpload: React.FC<ExcelUploadProps> = ({ onUploadComplete }) => {
                             Get Valid IDs
                           </Button>
                           <p className="text-xs text-blue-600 mt-1">
-                            This will open a new tab with all valid Category and Subcategory IDs you can use in your Excel file.
+                            Opens a new tab with all valid Category and Subcategory IDs for your Excel file.
                           </p>
+                        </div>
+                      )}
+
+                      {/* Payment Status Helper */}
+                      {importResults.errors.some((error: string) =>
+                        error.includes('payment_status')
+                      ) && (
+                        <div className="mt-3 p-3 bg-yellow-50 rounded-lg border border-yellow-200">
+                          <p className="text-sm text-yellow-800 mb-2">
+                            <strong>Valid Payment Status Values:</strong>
+                          </p>
+                          <div className="text-xs text-yellow-700 space-y-1">
+                            <div><code className="bg-yellow-100 px-1 rounded">pending</code> - Payment not yet received</div>
+                            <div><code className="bg-yellow-100 px-1 rounded">paid</code> - Payment completed</div>
+                            <div><code className="bg-yellow-100 px-1 rounded">overdue</code> - Payment is overdue</div>
+                            <div><code className="bg-yellow-100 px-1 rounded">cancelled</code> - Payment cancelled</div>
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Date Format Helper */}
+                      {importResults.errors.some((error: string) =>
+                        error.includes('date') || error.includes('Date')
+                      ) && (
+                        <div className="mt-3 p-3 bg-green-50 rounded-lg border border-green-200">
+                          <p className="text-sm text-green-800 mb-2">
+                            <strong>Supported Date Formats:</strong>
+                          </p>
+                          <div className="text-xs text-green-700 space-y-1">
+                            <div><code className="bg-green-100 px-1 rounded">DD/MM/YYYY</code> - e.g., 21/09/2025</div>
+                            <div><code className="bg-green-100 px-1 rounded">MM/DD/YYYY</code> - e.g., 09/21/2025</div>
+                            <div><code className="bg-green-100 px-1 rounded">YYYY-MM-DD</code> - e.g., 2025-09-21</div>
+                          </div>
                         </div>
                       )}
                     </div>

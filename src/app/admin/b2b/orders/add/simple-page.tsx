@@ -12,7 +12,7 @@ import {
   fetchFilterOptionsByAttributeId,
   fetchServiceSegments, // ✅ Use same function as B2C
   fetchProvidersByFilters, // ✅ Use same function as B2C
-  fetchAllB2BProviders, // ✅ NEW: Fetch all B2B providers without filtering
+  // fetchAllB2BProviders removed - using ProviderSearchDropdown instead
   fetchB2BServiceAddresses,
   createB2BServiceAddress,
   calculateServicePriceForB2B,
@@ -46,6 +46,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from '@/components/ui/dialog';
+import { ProviderSearchDropdown } from '@/components/b2b/ProviderSearchDropdown';
 
 interface B2BCustomer {
   id: string;
@@ -113,7 +114,7 @@ export default function SimpleB2BOrderPage() {
   const [filterAttributes, setFilterAttributes] = useState<Attribute[]>([]);
   const [filterOptions, setFilterOptions] = useState<AttributeOption[]>([]);
   const [serviceSegments, setServiceSegments] = useState<ServiceSegment[]>([]);
-  const [providers, setProviders] = useState<Provider[]>([]);
+  // Providers are now handled by ProviderSearchDropdown component
   const [serviceAddresses, setServiceAddresses] = useState<ServiceAddress[]>([]);
 
   // Selection state - Match B2C exactly
@@ -393,62 +394,7 @@ export default function SimpleB2BOrderPage() {
     }
   }, [formData.provider_id, serviceSegments.length]);
 
-  // ✅ Load ALL B2B providers when category and subcategory are selected (no filtering by category/subcategory)
-  useEffect(() => {
-    if (selectedCategoryId && selectedSubcategoryId) {
-      const loadProviders = async () => {
-        try {
-          console.log('🔄 Loading all B2B providers (no category filtering)');
-
-          // Debug: Check if user is authenticated
-          const token = localStorage.getItem('token');
-          console.log('🔑 Auth token exists:', !!token);
-          console.log('🔑 Token length:', token?.length || 0);
-
-          const response = await fetchAllB2BProviders(
-            1, // page
-            50 // limit
-          );
-          console.log('📦 Providers loaded:', response);
-
-          // Transform the response to match our Provider interface (same as B2C)
-          const providersData = response.data?.providers || [];
-          const transformedProviders = providersData.map((provider: any) => ({
-            id: provider.id, // Encrypted ID
-            name: formatProviderName(provider), // ✅ Use utility function for consistent naming
-            phone: provider.phone || '',
-            // Keep original fields for fallback
-            first_name: provider.first_name,
-            last_name: provider.last_name,
-            company_name: provider.company_name
-          }));
-
-          setProviders(transformedProviders);
-        } catch (error: any) {
-          console.error('❌ Error loading providers:', error);
-          console.error('❌ Error details:', {
-            message: error.message,
-            status: error.response?.status,
-            statusText: error.response?.statusText,
-            data: error.response?.data
-          });
-
-          // Check if it's an authentication error
-          if (error.response?.status === 401) {
-            console.error('🔒 Authentication failed - user may need to log in again');
-          } else if (error.response?.status === 403) {
-            console.error('🚫 Access forbidden - user may not have required permissions');
-          }
-
-          setProviders([]);
-        }
-      };
-      loadProviders();
-    } else {
-      setProviders([]);
-      setFormData(prev => ({ ...prev, provider_id: '' }));
-    }
-  }, [selectedCategoryId, selectedSubcategoryId]);
+  // ✅ Providers are now handled by ProviderSearchDropdown component with search functionality
 
   // Fetch service addresses when customer changes
   useEffect(() => {
@@ -1161,34 +1107,18 @@ export default function SimpleB2BOrderPage() {
               {selectedCategoryId && selectedSubcategoryId && (
                 <div>
                   <Label htmlFor="provider">Service Provider *</Label>
-                  <Select
+                  <ProviderSearchDropdown
                     value={formData.provider_id}
-                    onValueChange={(value) => handleInputChange('provider_id', value)}
-                    disabled={providers.length === 0}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder={
-                        providers.length === 0
-                          ? "Loading providers..."
-                          : "Select service provider"
-                      } />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {providers.map((provider) =>
-                        provider.id ? (
-                          <SelectItem key={provider.id} value={provider.id}>
-                            {provider.name}
-                          </SelectItem>
-                        ) : null
-                      )}
-                    </SelectContent>
-                  </Select>
+                    onChange={(providerId, provider) => {
+                      handleInputChange('provider_id', providerId);
+                      // You can also store the full provider object if needed
+                      // setSelectedProvider(provider);
+                    }}
+                    placeholder="Search and select B2B provider..."
+                    required
+                  />
                   <div className="text-xs text-gray-500 mt-1">
-                    {providers.length === 0 ? (
-                      <span>Loading service providers...</span>
-                    ) : (
-                      <span>✅ {providers.length} providers available</span>
-                    )}
+                    <span>🔍 Search by name, phone, or location</span>
                   </div>
                 </div>
               )}
