@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Eye, Edit, Settings, Download, FileText, Upload } from 'lucide-react';
-import { fetchB2BOrders, downloadB2BInvoiceSimple, fetchB2BStatusOptions, StatusOption } from '@/lib/api';
+import { Plus, Search, Eye, Edit, Settings, Download, FileText, Upload, CheckSquare, Square } from 'lucide-react';
+import { fetchB2BOrders, downloadB2BInvoiceSimple, fetchB2BStatusOptions, StatusOption, bulkUpdateB2BOrderStatus } from '@/lib/api';
 import { StatusBadge } from '@/components/b2b/StatusDropdown';
 import { useToast } from '@/hooks/use-toast';
 
@@ -75,6 +75,14 @@ export default function B2BOrdersPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
+
+  // Bulk selection state
+  const [selectedOrders, setSelectedOrders] = useState<string[]>([]);
+  const [showBulkActions, setShowBulkActions] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState('no_change');
+  const [bulkPaymentStatus, setBulkPaymentStatus] = useState('no_change');
+  const [bulkNotes, setBulkNotes] = useState('');
+  const [bulkUpdating, setBulkUpdating] = useState(false);
 
   const fetchOrders = async () => {
     try {
@@ -317,6 +325,79 @@ export default function B2BOrdersPage() {
     setCurrentPage(1);
   };
 
+  // Bulk selection functions
+  const handleSelectOrder = (orderId: string) => {
+    setSelectedOrders(prev =>
+      prev.includes(orderId)
+        ? prev.filter(id => id !== orderId)
+        : [...prev, orderId]
+    );
+  };
+
+  const handleSelectAll = () => {
+    if (selectedOrders.length === orders.length) {
+      setSelectedOrders([]);
+    } else {
+      setSelectedOrders(orders.map(order => order.id));
+    }
+  };
+
+  const handleBulkUpdate = async () => {
+    if (selectedOrders.length === 0) {
+      toast({
+        title: "No Orders Selected",
+        description: "Please select orders to update",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if ((!bulkStatus || bulkStatus === 'no_change') && (!bulkPaymentStatus || bulkPaymentStatus === 'no_change')) {
+      toast({
+        title: "No Status Selected",
+        description: "Please select at least one status to update",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    try {
+      setBulkUpdating(true);
+
+      const updateData: any = {
+        order_ids: selectedOrders
+      };
+
+      if (bulkStatus && bulkStatus !== 'no_change') updateData.status = bulkStatus;
+      if (bulkPaymentStatus && bulkPaymentStatus !== 'no_change') updateData.payment_status = bulkPaymentStatus;
+      if (bulkNotes.trim()) updateData.notes = bulkNotes.trim();
+
+      const response = await bulkUpdateB2BOrderStatus(updateData);
+
+      toast({
+        title: "Bulk Update Successful",
+        description: `Updated ${response.data.successful_updates} orders successfully`,
+      });
+
+      // Reset bulk selection and refresh orders
+      setSelectedOrders([]);
+      setShowBulkActions(false);
+      setBulkStatus('no_change');
+      setBulkPaymentStatus('no_change');
+      setBulkNotes('');
+      fetchOrders();
+
+    } catch (error: any) {
+      toast({
+        title: "Bulk Update Failed",
+        description: error.message || "Failed to update orders",
+        variant: "destructive",
+      });
+    } finally {
+      setBulkUpdating(false);
+    }
+  };
+
   // Status badge functions removed - now using StatusBadge component
 
 
@@ -395,10 +476,107 @@ export default function B2BOrdersPage() {
           </CardContent>
         </Card>
 
-        {/* Results Summary */}
-        <div className="text-sm text-gray-600">
-          Showing {orders.length} of {totalRecords} orders
+        {/* Results Summary and Bulk Actions */}
+        <div className="flex items-center justify-between">
+          <div className="text-sm text-gray-600">
+            Showing {orders.length} of {totalRecords} orders
+            {selectedOrders.length > 0 && (
+              <span className="ml-4 text-blue-600 font-medium">
+                {selectedOrders.length} selected
+              </span>
+            )}
+          </div>
+
+          {selectedOrders.length > 0 && (
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setShowBulkActions(!showBulkActions)}
+              >
+                Bulk Actions ({selectedOrders.length})
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSelectedOrders([])}
+              >
+                Clear Selection
+              </Button>
+            </div>
+          )}
         </div>
+
+        {/* Bulk Actions Panel */}
+        {showBulkActions && selectedOrders.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle>Bulk Update {selectedOrders.length} Orders</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <label className="block text-sm font-medium mb-2">Order Status</label>
+                  <Select value={bulkStatus} onValueChange={setBulkStatus}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="no_change">No Change</SelectItem>
+                      {statusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Payment Status</label>
+                  <Select value={bulkPaymentStatus} onValueChange={setBulkPaymentStatus}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select payment status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="no_change">No Change</SelectItem>
+                      {paymentStatusOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium mb-2">Notes (Optional)</label>
+                  <Input
+                    placeholder="Add bulk update notes..."
+                    value={bulkNotes}
+                    onChange={(e) => setBulkNotes(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex justify-end gap-2 mt-4">
+                <Button
+                  variant="outline"
+                  onClick={() => setShowBulkActions(false)}
+                  disabled={bulkUpdating}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  onClick={handleBulkUpdate}
+                  disabled={bulkUpdating || ((!bulkStatus || bulkStatus === 'no_change') && (!bulkPaymentStatus || bulkPaymentStatus === 'no_change'))}
+                >
+                  {bulkUpdating ? 'Updating...' : `Update ${selectedOrders.length} Orders`}
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Orders Table */}
         <Card>
@@ -415,6 +593,20 @@ export default function B2BOrdersPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead className="w-12">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={handleSelectAll}
+                          className="p-0 h-auto"
+                        >
+                          {selectedOrders.length === orders.length && orders.length > 0 ? (
+                            <CheckSquare className="w-4 h-4" />
+                          ) : (
+                            <Square className="w-4 h-4" />
+                          )}
+                        </Button>
+                      </TableHead>
                       <TableHead>Order #</TableHead>
                       <TableHead>Customer</TableHead>
                       <TableHead>Service</TableHead>
@@ -431,6 +623,20 @@ export default function B2BOrdersPage() {
                   <TableBody>
                     {orders && orders.length > 0 ? orders.map((order) => (
                       <TableRow key={order.id}>
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleSelectOrder(order.id)}
+                            className="p-0 h-auto"
+                          >
+                            {selectedOrders.includes(order.id) ? (
+                              <CheckSquare className="w-4 h-4 text-blue-600" />
+                            ) : (
+                              <Square className="w-4 h-4" />
+                            )}
+                          </Button>
+                        </TableCell>
                         <TableCell className="font-medium">
                           {order.order_number}
                         </TableCell>
@@ -559,7 +765,7 @@ export default function B2BOrdersPage() {
                       </TableRow>
                     )) : (
                       <TableRow>
-                        <TableCell colSpan={8} className="text-center py-8 text-gray-500">
+                        <TableCell colSpan={12} className="text-center py-8 text-gray-500">
                           {loading ? 'Loading orders...' : 'No orders found'}
                         </TableCell>
                       </TableRow>

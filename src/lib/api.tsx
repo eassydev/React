@@ -5821,6 +5821,24 @@ export const fetchB2BStatusOptions = async (): Promise<StatusOptionsResponse> =>
   }
 };
 
+// ✅ NEW: Bulk update B2B order status
+export const bulkUpdateB2BOrderStatus = async (data: {
+  order_ids: string[];
+  status?: string;
+  payment_status?: string;
+  notes?: string;
+}): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post('/b2b/orders/bulk-update-status', data, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to bulk update order status.');
+  }
+};
+
 // ✅ NEW: Search Providers for Assignment
 export const searchProvidersForAssignment = async (
   search: string = '',

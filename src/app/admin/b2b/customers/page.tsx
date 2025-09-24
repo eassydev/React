@@ -38,6 +38,7 @@ import {
 
 interface B2BCustomer {
   id: string;
+  sampleid: number; // Numeric ID for display
   company_name: string;
   contact_person: string;
   email: string;
@@ -187,6 +188,7 @@ export default function B2BCustomersPage() {
                 <Table>
                   <TableHeader>
                     <TableRow>
+                      <TableHead>Customer ID</TableHead>
                       <TableHead>Company</TableHead>
                       <TableHead>Contact Person</TableHead>
                       <TableHead>Email</TableHead>
@@ -201,6 +203,9 @@ export default function B2BCustomersPage() {
                   <TableBody>
                     {customers && customers.length > 0 ? customers.map((customer) => (
                       <TableRow key={customer.id}>
+                        <TableCell className="font-mono text-sm text-gray-600">
+                          {customer.sampleid}
+                        </TableCell>
                         <TableCell className="font-medium">
                           {customer.company_name}
                         </TableCell>
@@ -262,7 +267,7 @@ export default function B2BCustomersPage() {
                       </TableRow>
                     )) : (
                       <TableRow>
-                        <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                        <TableCell colSpan={10} className="text-center py-8 text-gray-500">
                           {loading ? 'Loading customers...' : 'No customers found'}
                         </TableCell>
                       </TableRow>

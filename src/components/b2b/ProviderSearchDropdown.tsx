@@ -166,11 +166,11 @@ export const ProviderSearchDropdown: React.FC<ProviderSearchDropdownProps> = ({
                 </div>
               </div>
               <div className="flex items-center space-x-1 flex-shrink-0">
-                {selectedProvider.rating > 0 && (
+                {selectedProvider.rating && selectedProvider.rating > 0 && (
                   <div className="flex items-center text-yellow-500">
                     <Star className="w-3 h-3 fill-current" />
                     <span className="text-xs text-gray-600 ml-1">
-                      {selectedProvider.rating.toFixed(1)}
+                      {Number(selectedProvider.rating).toFixed(1)}
                     </span>
                   </div>
                 )}
@@ -270,11 +270,11 @@ export const ProviderSearchDropdown: React.FC<ProviderSearchDropdownProps> = ({
                       )}
                     </div>
                     <div className="flex items-center space-x-2 flex-shrink-0">
-                      {provider.rating > 0 && (
+                      {provider.rating && provider.rating > 0 && (
                         <div className="flex items-center text-yellow-500">
                           <Star className="w-4 h-4 fill-current" />
                           <span className="text-sm text-gray-600 ml-1">
-                            {provider.rating.toFixed(1)}
+                            {Number(provider.rating).toFixed(1)}
                           </span>
                         </div>
                       )}
