@@ -55,6 +55,10 @@ interface B2BOrder {
   service_date?: string;
   booking_received_date?: string | number;
   created_at: string;
+  // SP Pricing Breakdown
+  sp_base_price?: number;
+  sp_gst_amount?: number;
+  sp_total_amount?: number;
 }
 
 export default function B2BOrdersPage() {
@@ -466,6 +470,11 @@ export default function B2BOrdersPage() {
                             {order.service_rate && order.service_rate !== order.custom_price && (
                               <div className="text-sm text-gray-500">
                                 Rate: ₹{order.service_rate.toLocaleString()}
+                              </div>
+                            )}
+                            {order.sp_total_amount && (
+                              <div className="text-sm text-blue-600">
+                                SP: ₹{parseFloat(order.sp_total_amount).toLocaleString()}
                               </div>
                             )}
                           </div>

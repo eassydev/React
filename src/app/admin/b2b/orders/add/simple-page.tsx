@@ -178,6 +178,11 @@ export default function SimpleB2BOrderPage() {
     custom_price: '',
     quantity: '1',
 
+    // SP Pricing Breakdown
+    sp_base_price: '',
+    sp_gst_amount: '',
+    sp_total_amount: '',
+
     // Scheduling - Default to today
     service_date: new Date().toISOString().split('T')[0],
     service_time: '',
@@ -632,10 +637,24 @@ export default function SimpleB2BOrderPage() {
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value,
+      };
+
+      // Auto-calculate SP pricing when base price changes
+      if (field === 'sp_base_price' && value) {
+        const basePrice = parseFloat(value) || 0;
+        const gstAmount = Math.round((basePrice * 18) / 100 * 100) / 100; // 18% GST, rounded to 2 decimals
+        const totalAmount = Math.round((basePrice + gstAmount) * 100) / 100; // Total, rounded to 2 decimals
+
+        newData.sp_gst_amount = gstAmount.toString();
+        newData.sp_total_amount = totalAmount.toString();
+      }
+
+      return newData;
+    });
   };
 
   const handleNewAddressChange = (field: string, value: string) => {
@@ -699,6 +718,10 @@ export default function SimpleB2BOrderPage() {
         final_amount: finalAmount,
         service_rate: formData.service_rate ? parseFloat(formData.service_rate) : undefined,
         service_area_sqft: formData.service_area_sqft ? parseFloat(formData.service_area_sqft) : undefined,
+        // SP Pricing Breakdown
+        sp_base_price: formData.sp_base_price ? parseFloat(formData.sp_base_price) : null,
+        sp_gst_amount: formData.sp_gst_amount ? parseFloat(formData.sp_gst_amount) : null,
+        sp_total_amount: formData.sp_total_amount ? parseFloat(formData.sp_total_amount) : null,
         // ✅ Handle optional segment: only include segment_id if one is selected or if segments are available
         segment_id: selectedSegmentId || (serviceSegments.length === 0 ? null : formData.segment_id),
       };
@@ -1385,6 +1408,54 @@ export default function SimpleB2BOrderPage() {
                     required
                   />
                 </div>
+              </div>
+
+              {/* SP Pricing Breakdown Section */}
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <h4 className="text-sm font-semibold text-blue-800 mb-3">Service Provider Pricing Breakdown</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="sp_base_price">SP Base Price (₹)</Label>
+                    <Input
+                      id="sp_base_price"
+                      type="number"
+                      step="0.01"
+                      value={formData.sp_base_price}
+                      onChange={(e) => handleInputChange('sp_base_price', e.target.value)}
+                      placeholder="0.00"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Base amount before GST</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="sp_gst_amount">SP GST Amount (₹)</Label>
+                    <Input
+                      id="sp_gst_amount"
+                      type="number"
+                      step="0.01"
+                      value={formData.sp_gst_amount}
+                      onChange={(e) => handleInputChange('sp_gst_amount', e.target.value)}
+                      placeholder="0.00"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">18% GST on base price</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="sp_total_amount">SP Total Amount (₹)</Label>
+                    <Input
+                      id="sp_total_amount"
+                      type="number"
+                      step="0.01"
+                      value={formData.sp_total_amount}
+                      onChange={(e) => handleInputChange('sp_total_amount', e.target.value)}
+                      placeholder="0.00"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Total SP payment (Base + GST)</p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">

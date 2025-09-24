@@ -56,6 +56,7 @@ interface B2BOrder {
     company_name: string;
     contact_person: string;
     phone: string;
+    payment_terms?: string;
   };
   b2b_customer_id: string;
   service_name: string;
@@ -74,13 +75,16 @@ interface B2BOrder {
   store_code?: string;
   booking_poc_name?: string;
   booking_poc_number?: string;
-  payment_terms?: string;
   status: string;
   payment_status: string;
   provider_id?: string;
   provider?: Provider;
   notes?: string;
   custom_fields?: Record<string, any>;
+  // SP Pricing Breakdown
+  sp_base_price?: number;
+  sp_gst_amount?: number;
+  sp_total_amount?: number;
 }
 
 // ✅ UTILITY: Format provider name for display (robust frontend-only solution)
@@ -177,6 +181,11 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
     custom_price: '',
     quantity: '',
 
+    // SP Pricing Breakdown
+    sp_base_price: '',
+    sp_gst_amount: '',
+    sp_total_amount: '',
+
     // Scheduling
     service_date: '',
     service_time: '',
@@ -255,6 +264,11 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
         custom_price: orderData.custom_price?.toString() || '',
         quantity: orderData.quantity?.toString() || '1',
 
+        // SP Pricing Breakdown
+        sp_base_price: orderData.sp_base_price?.toString() || '',
+        sp_gst_amount: orderData.sp_gst_amount?.toString() || '',
+        sp_total_amount: orderData.sp_total_amount?.toString() || '',
+
         // Scheduling - properly formatted for input fields
         service_date: formatDateForInput(orderData.service_date),
         service_time: formatTimeForInput(orderData.service_time),
@@ -289,10 +303,25 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
   };
 
   const handleInputChange = (field: string, value: string) => {
-    setFormData(prev => ({
-      ...prev,
-      [field]: value,
-    }));
+    setFormData(prev => {
+      const newData = {
+        ...prev,
+        [field]: value,
+      };
+
+      // Auto-calculate SP pricing when base price changes
+      if (field === 'sp_base_price' && value) {
+        const basePrice = parseFloat(value) || 0;
+        const gstAmount = Math.round((basePrice * 18) / 100 * 100) / 100; // 18% GST, rounded to 2 decimals
+        const totalAmount = Math.round((basePrice + gstAmount) * 100) / 100; // Total, rounded to 2 decimals
+
+        newData.sp_gst_amount = gstAmount.toString();
+        newData.sp_total_amount = totalAmount.toString();
+      }
+
+      return newData;
+    });
+
     // Clear any previous error when user starts typing
     if (error) setError('');
     if (success) setSuccess('');
@@ -358,6 +387,11 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
       submitData.payment_terms = formData.payment_terms;
       submitData.notes = formData.notes;
       submitData.custom_fields = formData.custom_fields;
+
+      // SP Pricing Breakdown
+      submitData.sp_base_price = formData.sp_base_price ? parseFloat(formData.sp_base_price) : null;
+      submitData.sp_gst_amount = formData.sp_gst_amount ? parseFloat(formData.sp_gst_amount) : null;
+      submitData.sp_total_amount = formData.sp_total_amount ? parseFloat(formData.sp_total_amount) : null;
 
       // ✅ Only include required fields if they have valid values (not empty strings)
       if (formData.b2b_customer_id && formData.b2b_customer_id.trim()) {
@@ -913,6 +947,55 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
                       <SelectItem value="Due on receipt">Due on receipt</SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* SP Pricing Breakdown */}
+          <Card>
+            <CardHeader>
+              <CardTitle>Service Provider Pricing Breakdown</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="sp_base_price">SP Base Price (₹)</Label>
+                  <Input
+                    id="sp_base_price"
+                    type="number"
+                    step="0.01"
+                    value={formData.sp_base_price}
+                    onChange={(e) => handleInputChange('sp_base_price', e.target.value)}
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Base amount before GST</p>
+                </div>
+
+                <div>
+                  <Label htmlFor="sp_gst_amount">SP GST Amount (₹)</Label>
+                  <Input
+                    id="sp_gst_amount"
+                    type="number"
+                    step="0.01"
+                    value={formData.sp_gst_amount}
+                    onChange={(e) => handleInputChange('sp_gst_amount', e.target.value)}
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">18% GST on base price</p>
+                </div>
+
+                <div>
+                  <Label htmlFor="sp_total_amount">SP Total Amount (₹)</Label>
+                  <Input
+                    id="sp_total_amount"
+                    type="number"
+                    step="0.01"
+                    value={formData.sp_total_amount}
+                    onChange={(e) => handleInputChange('sp_total_amount', e.target.value)}
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Total SP payment (Base + GST)</p>
                 </div>
               </div>
             </CardContent>

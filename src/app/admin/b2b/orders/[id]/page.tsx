@@ -36,6 +36,7 @@ interface B2BOrder {
     city: string;
     state: string;
     gst_number: string;
+    payment_terms?: string;
   };
   service_name: string;
   service_description?: string;
@@ -57,6 +58,10 @@ interface B2BOrder {
     phone: string;
     rating: number;
   };
+  // SP Pricing Breakdown
+  sp_base_price?: number;
+  sp_gst_amount?: number;
+  sp_total_amount?: number;
   payment_terms?: string;
   notes?: string;
   created_at: string;
@@ -487,6 +492,31 @@ export default function B2BOrderDetailPage({ params }: { params: { id: string } 
                   <div className="flex justify-between">
                     <span className="text-sm text-gray-600">Quantity:</span>
                     <span className="text-sm font-medium">{order.quantity}</span>
+                  </div>
+                )}
+
+                {/* SP Pricing Breakdown */}
+                {(order.sp_base_price || order.sp_gst_amount || order.sp_total_amount) && (
+                  <div className="border-t pt-3 mt-3">
+                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Service Provider Pricing</h4>
+                    {order.sp_base_price && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">SP Base Price:</span>
+                        <span className="text-sm font-medium">₹{parseFloat(order.sp_base_price).toLocaleString()}</span>
+                      </div>
+                    )}
+                    {order.sp_gst_amount && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600">SP GST (18%):</span>
+                        <span className="text-sm font-medium">₹{parseFloat(order.sp_gst_amount).toLocaleString()}</span>
+                      </div>
+                    )}
+                    {order.sp_total_amount && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-gray-600 font-semibold">SP Total Amount:</span>
+                        <span className="text-sm font-semibold text-blue-600">₹{parseFloat(order.sp_total_amount).toLocaleString()}</span>
+                      </div>
+                    )}
                   </div>
                 )}
                 {order.total_amount && (
