@@ -311,7 +311,7 @@ const EditProviderForm: React.FC = () => {
       gst_number: gstNumber,
       pan_number: panNumber,
       linked_account_id: linkedAccountId,
-      active: isActive ? 0 : 1,
+      active: isActive ? 1 : 0, // ✅ FIX: Correct the backwards logic
       rating: parseFloat(rating),
       commission: parseFloat(commission),
       country,
