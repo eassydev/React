@@ -41,9 +41,16 @@ interface B2BOrder {
   service_name: string;
   service_description?: string;
   service_address: string;
-  custom_price: number;
+
+  // Client Pricing Fields
+  base_price?: number;           // Rate card price
+  custom_price: number;          // Service price
   quantity?: number;
-  total_amount?: number;
+  discount_amount?: number;      // Discount applied
+  gst_amount?: number;          // GST on client billing
+  final_amount?: number;        // Final amount including GST
+  total_amount?: number;        // Legacy total amount field
+
   service_date?: string;
   service_time?: string;
   booking_received_date?: string;
@@ -58,10 +65,11 @@ interface B2BOrder {
     phone: string;
     rating: number;
   };
+
   // SP Pricing Breakdown
-  sp_base_price?: number;
-  sp_gst_amount?: number;
-  sp_total_amount?: number;
+  sp_base_price?: number;       // SP base price (before GST)
+  sp_gst_amount?: number;       // GST on SP payout
+  sp_total_amount?: number;     // Total SP payout
   payment_terms?: string;
   notes?: string;
   created_at: string;
@@ -483,46 +491,125 @@ export default function B2BOrderDetailPage({ params }: { params: { id: string } 
               </CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <span className="text-sm text-gray-600">Custom Price:</span>
-                  <span className="text-sm font-medium">₹{order.custom_price.toLocaleString()}</span>
-                </div>
-                {order.quantity && order.quantity > 1 && (
-                  <div className="flex justify-between">
-                    <span className="text-sm text-gray-600">Quantity:</span>
-                    <span className="text-sm font-medium">{order.quantity}</span>
+              <div className="space-y-4">
+                {/* Client Pricing Section */}
+                <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                  <h4 className="text-sm font-semibold text-blue-800 mb-3 flex items-center justify-between">
+                    <div className="flex items-center">
+                      <Building className="h-4 w-4 mr-2" />
+                      Client Billing Breakdown
+                    </div>
+                    <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded font-normal">What Client Pays</span>
+                  </h4>
+                  <div className="space-y-2">
+                    {order.base_price && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-blue-700">Rate Card Price:</span>
+                        <span className="text-sm font-medium text-blue-900">₹{parseFloat(order.base_price).toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between">
+                      <span className="text-sm text-blue-700">Service Price (per unit):</span>
+                      <span className="text-sm font-medium text-blue-900">₹{order.custom_price.toLocaleString()}</span>
+                    </div>
+                    {order.quantity && order.quantity > 1 && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-blue-700">Quantity:</span>
+                        <span className="text-sm font-medium text-blue-900">{order.quantity}</span>
+                      </div>
+                    )}
+                    {order.discount_amount && parseFloat(order.discount_amount) > 0 && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-blue-700">Discount:</span>
+                        <span className="text-sm font-medium text-green-600">-₹{parseFloat(order.discount_amount).toLocaleString()}</span>
+                      </div>
+                    )}
+                    {order.gst_amount && (
+                      <div className="flex justify-between">
+                        <span className="text-sm text-blue-700">GST (18%):</span>
+                        <span className="text-sm font-medium text-blue-900">₹{parseFloat(order.gst_amount).toLocaleString()}</span>
+                      </div>
+                    )}
+                    {order.total_amount && (
+                      <div className="flex justify-between bg-blue-100 px-2 py-1 rounded">
+                        <span className="text-sm text-blue-800 font-medium">💰 Subtotal (price × qty):</span>
+                        <span className="text-sm font-semibold text-blue-900">₹{order.total_amount.toLocaleString()}</span>
+                      </div>
+                    )}
+                    {order.final_amount && (
+                      <div className="flex justify-between border-t border-blue-300 pt-2 mt-2 bg-blue-200 px-2 py-2 rounded">
+                        <span className="text-sm font-bold text-blue-800">🏦 TOTAL CLIENT PAYMENT:</span>
+                        <span className="text-lg font-bold text-blue-900">₹{parseFloat(order.final_amount).toLocaleString()}</span>
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
 
                 {/* SP Pricing Breakdown */}
                 {(order.sp_base_price || order.sp_gst_amount || order.sp_total_amount) && (
-                  <div className="border-t pt-3 mt-3">
-                    <h4 className="text-sm font-semibold text-gray-700 mb-2">Service Provider Pricing</h4>
-                    {order.sp_base_price && (
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">SP Base Price:</span>
-                        <span className="text-sm font-medium">₹{parseFloat(order.sp_base_price).toLocaleString()}</span>
+                  <div className="bg-green-50 p-4 rounded-lg border border-green-200">
+                    <h4 className="text-sm font-semibold text-green-800 mb-3 flex items-center justify-between">
+                      <div className="flex items-center">
+                        <User className="h-4 w-4 mr-2" />
+                        Service Provider Payout Breakdown
                       </div>
-                    )}
-                    {order.sp_gst_amount && (
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600">SP GST (18%):</span>
-                        <span className="text-sm font-medium">₹{parseFloat(order.sp_gst_amount).toLocaleString()}</span>
-                      </div>
-                    )}
-                    {order.sp_total_amount && (
-                      <div className="flex justify-between">
-                        <span className="text-sm text-gray-600 font-semibold">SP Total Amount:</span>
-                        <span className="text-sm font-semibold text-blue-600">₹{parseFloat(order.sp_total_amount).toLocaleString()}</span>
-                      </div>
-                    )}
+                      <span className="text-xs bg-green-100 text-green-700 px-2 py-1 rounded font-normal">What SP Receives</span>
+                    </h4>
+                    <div className="space-y-2">
+                      {order.sp_base_price && (
+                        <div className="flex justify-between">
+                          <span className="text-sm text-green-700">SP Base Price:</span>
+                          <span className="text-sm font-medium text-green-900">₹{parseFloat(order.sp_base_price).toLocaleString()}</span>
+                        </div>
+                      )}
+                      {order.sp_gst_amount && (
+                        <div className="flex justify-between">
+                          <span className="text-sm text-green-700">SP GST (18%):</span>
+                          <span className="text-sm font-medium text-green-900">₹{parseFloat(order.sp_gst_amount).toLocaleString()}</span>
+                        </div>
+                      )}
+                      {order.sp_total_amount && (
+                        <div className="flex justify-between border-t border-green-300 pt-2 mt-2">
+                          <span className="text-sm font-semibold text-green-800">SP Total Payout:</span>
+                          <span className="text-sm font-bold text-green-900">₹{parseFloat(order.sp_total_amount).toLocaleString()}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
-                {order.total_amount && (
-                  <div className="flex justify-between border-t pt-2">
-                    <span className="text-sm font-medium">Total Amount:</span>
-                    <span className="text-sm font-bold">₹{order.total_amount.toLocaleString()}</span>
+
+                {/* Profit Margin Calculation */}
+                {order.sp_total_amount && (order.final_amount || order.total_amount) && (
+                  <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
+                    <h4 className="text-sm font-semibold text-purple-800 mb-3 flex items-center">
+                      <CreditCard className="h-4 w-4 mr-2" />
+                      Profit Analysis
+                    </h4>
+                    <div className="space-y-2">
+                      {(() => {
+                        const clientAmount = parseFloat(order.final_amount || order.total_amount);
+                        const spAmount = parseFloat(order.sp_total_amount);
+                        const profit = clientAmount - spAmount;
+                        const profitMargin = clientAmount > 0 ? ((profit / clientAmount) * 100).toFixed(1) : 0;
+
+                        return (
+                          <>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-purple-700">Gross Profit:</span>
+                              <span className={`text-sm font-medium ${profit >= 0 ? 'text-purple-900' : 'text-red-600'}`}>
+                                ₹{profit.toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-sm text-purple-700">Profit Margin:</span>
+                              <span className={`text-sm font-medium ${parseFloat(profitMargin) >= 0 ? 'text-purple-900' : 'text-red-600'}`}>
+                                {profitMargin}%
+                              </span>
+                            </div>
+                          </>
+                        );
+                      })()}
+                    </div>
                   </div>
                 )}
                 {order.payment_terms && (

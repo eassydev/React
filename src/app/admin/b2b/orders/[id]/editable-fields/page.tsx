@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { ArrowLeft, Save, Info, Edit, UserPlus } from 'lucide-react';
+import { ArrowLeft, Save, Info, Edit, UserPlus, User, Building } from 'lucide-react';
 import {
   fetchB2BOrderById,
   updateB2BOrderEditableFields,
@@ -64,8 +64,16 @@ interface B2BOrder {
   service_address: string;
   category_id?: string;
   subcategory_id?: string;
-  custom_price: number;
+
+  // Client Pricing Fields
+  base_price?: number;           // Rate card price
+  custom_price: number;          // Service price
   quantity?: number;
+  discount_amount?: number;      // Discount applied
+  gst_amount?: number;          // GST on client billing
+  final_amount?: number;        // Final amount including GST
+  total_amount?: number;        // Legacy total amount field
+
   service_date?: string;
   service_time?: string;
   booking_received_date?: string;
@@ -81,10 +89,11 @@ interface B2BOrder {
   provider?: Provider;
   notes?: string;
   custom_fields?: Record<string, any>;
+
   // SP Pricing Breakdown
-  sp_base_price?: number;
-  sp_gst_amount?: number;
-  sp_total_amount?: number;
+  sp_base_price?: number;       // SP base price (before GST)
+  sp_gst_amount?: number;       // GST on SP payout
+  sp_total_amount?: number;     // Total SP payout
 }
 
 // ✅ UTILITY: Format provider name for display (robust frontend-only solution)
@@ -177,9 +186,14 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
     category_id: '',
     subcategory_id: '',
 
-    // Pricing
+    // Client Pricing
+    base_price: '',
     custom_price: '',
     quantity: '',
+    discount_amount: '',
+    gst_amount: '',
+    final_amount: '',
+    total_amount: '',
 
     // SP Pricing Breakdown
     sp_base_price: '',
@@ -260,9 +274,14 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
         category_id: orderData.category_id || '',
         subcategory_id: orderData.subcategory_id || '',
 
-        // Pricing
+        // Client Pricing
+        base_price: orderData.base_price?.toString() || '',
         custom_price: orderData.custom_price?.toString() || '',
         quantity: orderData.quantity?.toString() || '1',
+        discount_amount: orderData.discount_amount?.toString() || '',
+        gst_amount: orderData.gst_amount?.toString() || '',
+        final_amount: orderData.final_amount?.toString() || '',
+        total_amount: orderData.total_amount?.toString() || '',
 
         // SP Pricing Breakdown
         sp_base_price: orderData.sp_base_price?.toString() || '',
@@ -353,8 +372,16 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
       // Always include editable fields
       submitData.service_name = formData.service_name;
       submitData.service_description = formData.service_description;
+
+      // Client Pricing Fields
+      submitData.base_price = formData.base_price ? parseFloat(formData.base_price) : null;
       submitData.custom_price = formData.custom_price ? parseFloat(formData.custom_price) : undefined;
       submitData.quantity = formData.quantity ? parseInt(formData.quantity) : undefined;
+      submitData.discount_amount = formData.discount_amount ? parseFloat(formData.discount_amount) : null;
+      submitData.gst_amount = formData.gst_amount ? parseFloat(formData.gst_amount) : null;
+      submitData.final_amount = formData.final_amount ? parseFloat(formData.final_amount) : null;
+      submitData.total_amount = formData.total_amount ? parseFloat(formData.total_amount) : null;
+
       submitData.service_date = formData.service_date;
       submitData.service_time = formData.service_time;
 
@@ -898,15 +925,14 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
                 </div>
 
                 <div>
-                  <Label htmlFor="custom_price">Service Price (₹) *</Label>
+                  <Label htmlFor="quantity">Quantity</Label>
                   <Input
-                    id="custom_price"
+                    id="quantity"
                     type="number"
-                    step="0.01"
-                    value={formData.custom_price}
-                    onChange={(e) => handleInputChange('custom_price', e.target.value)}
-                    placeholder="0.00"
-                    required
+                    min="1"
+                    value={formData.quantity}
+                    onChange={(e) => handleInputChange('quantity', e.target.value)}
+                    placeholder="1"
                   />
                 </div>
               </div>
@@ -922,7 +948,63 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <Label htmlFor="payment_terms">Payment Terms</Label>
+                <Select value={formData.payment_terms} onValueChange={(value) => handleInputChange('payment_terms', value)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="Net 15 days">Net 15 days</SelectItem>
+                    <SelectItem value="Net 30 days">Net 30 days</SelectItem>
+                    <SelectItem value="Net 45 days">Net 45 days</SelectItem>
+                    <SelectItem value="Due on receipt">Due on receipt</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Client Pricing Breakdown */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Building className="h-5 w-5 mr-2" />
+                  Client Billing Breakdown
+                </div>
+                <span className="text-sm bg-blue-100 text-blue-700 px-3 py-1 rounded font-normal">What Client Pays</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="base_price">Rate Card Price (₹)</Label>
+                  <Input
+                    id="base_price"
+                    type="number"
+                    step="0.01"
+                    value={formData.base_price}
+                    onChange={(e) => handleInputChange('base_price', e.target.value)}
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Original rate card price</p>
+                </div>
+
+                <div>
+                  <Label htmlFor="custom_price">Service Price (₹) *</Label>
+                  <Input
+                    id="custom_price"
+                    type="number"
+                    step="0.01"
+                    value={formData.custom_price}
+                    onChange={(e) => handleInputChange('custom_price', e.target.value)}
+                    placeholder="0.00"
+                    required
+                  />
+                  <p className="text-xs text-blue-600 mt-1 font-medium">💡 Price per unit - used to calculate subtotal (price × quantity)</p>
+                </div>
+
                 <div>
                   <Label htmlFor="quantity">Quantity</Label>
                   <Input
@@ -931,22 +1013,67 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
                     min="1"
                     value={formData.quantity}
                     onChange={(e) => handleInputChange('quantity', e.target.value)}
+                    placeholder="1"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Number of units</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="discount_amount">Discount Amount (₹)</Label>
+                  <Input
+                    id="discount_amount"
+                    type="number"
+                    step="0.01"
+                    value={formData.discount_amount}
+                    onChange={(e) => handleInputChange('discount_amount', e.target.value)}
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Discount applied</p>
                 </div>
 
                 <div>
-                  <Label htmlFor="payment_terms">Payment Terms</Label>
-                  <Select value={formData.payment_terms} onValueChange={(value) => handleInputChange('payment_terms', value)}>
-                    <SelectTrigger>
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="Net 15 days">Net 15 days</SelectItem>
-                      <SelectItem value="Net 30 days">Net 30 days</SelectItem>
-                      <SelectItem value="Net 45 days">Net 45 days</SelectItem>
-                      <SelectItem value="Due on receipt">Due on receipt</SelectItem>
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="gst_amount">GST Amount (₹)</Label>
+                  <Input
+                    id="gst_amount"
+                    type="number"
+                    step="0.01"
+                    value={formData.gst_amount}
+                    onChange={(e) => handleInputChange('gst_amount', e.target.value)}
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">18% GST on service price</p>
+                </div>
+
+                <div>
+                  <Label htmlFor="total_amount">Subtotal (₹)</Label>
+                  <Input
+                    id="total_amount"
+                    type="number"
+                    step="0.01"
+                    value={formData.total_amount}
+                    onChange={(e) => handleInputChange('total_amount', e.target.value)}
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-blue-600 mt-1 font-medium">📊 AUTO-CALCULATED: custom_price × quantity = subtotal before GST</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-1 gap-4">
+                <div>
+                  <Label htmlFor="final_amount">Final Amount (₹)</Label>
+                  <Input
+                    id="final_amount"
+                    type="number"
+                    step="0.01"
+                    value={formData.final_amount}
+                    onChange={(e) => handleInputChange('final_amount', e.target.value)}
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-blue-600 mt-1 font-medium">
+                    🏦 <strong>AUTO-CALCULATED: total_amount + gst_amount = FINAL CLIENT PAYMENT</strong>
+                  </p>
                 </div>
               </div>
             </CardContent>
@@ -955,7 +1082,13 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
           {/* SP Pricing Breakdown */}
           <Card>
             <CardHeader>
-              <CardTitle>Service Provider Pricing Breakdown</CardTitle>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <User className="h-5 w-5 mr-2" />
+                  Service Provider Payout Breakdown
+                </div>
+                <span className="text-sm bg-green-100 text-green-700 px-3 py-1 rounded font-normal">What SP Receives</span>
+              </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -998,6 +1131,40 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
                   <p className="text-xs text-gray-500 mt-1">Total SP payment (Base + GST)</p>
                 </div>
               </div>
+
+              {/* Profit Analysis Display */}
+              {(formData.sp_total_amount && (formData.final_amount || formData.total_amount)) && (
+                <div className="bg-purple-50 p-4 rounded-lg border border-purple-200 mt-4">
+                  <h4 className="text-sm font-semibold text-purple-800 mb-3">Profit Analysis</h4>
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                    {(() => {
+                      const clientAmount = parseFloat(formData.final_amount || formData.total_amount || '0');
+                      const spAmount = parseFloat(formData.sp_total_amount || '0');
+                      const profit = clientAmount - spAmount;
+                      const profitMargin = clientAmount > 0 ? ((profit / clientAmount) * 100).toFixed(1) : '0';
+
+                      return (
+                        <>
+                          <div>
+                            <span className="text-purple-700">Client Amount:</span>
+                            <p className="font-medium text-purple-900">₹{clientAmount.toLocaleString()}</p>
+                          </div>
+                          <div>
+                            <span className="text-purple-700">SP Payout:</span>
+                            <p className="font-medium text-purple-900">₹{spAmount.toLocaleString()}</p>
+                          </div>
+                          <div>
+                            <span className="text-purple-700">Gross Profit:</span>
+                            <p className={`font-medium ${profit >= 0 ? 'text-purple-900' : 'text-red-600'}`}>
+                              ₹{profit.toLocaleString()} ({profitMargin}%)
+                            </p>
+                          </div>
+                        </>
+                      );
+                    })()}
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
