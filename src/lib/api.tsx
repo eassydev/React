@@ -2835,6 +2835,29 @@ export const updateProviderType = async (
   }
 };
 
+// ✅ NEW: Update provider active status
+export const updateProviderActiveStatus = async (
+  id: string,
+  active: number
+): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(
+      `/provider/${id}/active-status`,
+      { active },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'admin-auth-token': token || '',
+        },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update provider active status.');
+  }
+};
+
 // Get all B2B providers with filtering
 export const fetchB2BProviders = async (
   page: number = 1,

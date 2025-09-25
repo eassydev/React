@@ -193,12 +193,12 @@ const ProviderList = () => {
 
         switch (statusValue) {
           case 0:
-            statusLabel = 'Active';
-            statusClass = 'bg-green-200 text-green-800';
+            statusLabel = 'Inactive'; // ✅ FIX: 0 = Inactive
+            statusClass = 'bg-yellow-200 text-yellow-800';
             break;
           case 1:
-            statusLabel = 'Inactive';
-            statusClass = 'bg-yellow-200 text-yellow-800';
+            statusLabel = 'Active'; // ✅ FIX: 1 = Active
+            statusClass = 'bg-green-200 text-green-800';
             break;
           case 2:
             statusLabel = 'Deleted';
@@ -389,8 +389,8 @@ const ProviderList = () => {
               className="border p-2 rounded"
             >
               <option value="">All Status</option>
-              <option value="0">Active</option>
-              <option value="1">Deactivated</option>
+              <option value="0">Inactive</option> {/* ✅ FIX: 0 = Inactive */}
+              <option value="1">Active</option> {/* ✅ FIX: 1 = Active */}
               <option value="2">Deleted</option>
             </select>
             <select

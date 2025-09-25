@@ -225,6 +225,25 @@ const B2BProvidersPage: React.FC = () => {
       },
     },
     {
+      accessorKey: 'active',
+      header: 'Status',
+      cell: ({ row }) => {
+        const isActive = row.original.active === 1;
+
+        return (
+          <div className="flex items-center space-x-2">
+            <Switch
+              checked={isActive}
+              onCheckedChange={() => handleActiveStatusToggle(row.original.id!, row.original.active || 0)}
+            />
+            <span className={`text-sm ${isActive ? 'text-green-600' : 'text-red-600'}`}>
+              {isActive ? 'Active' : 'Inactive'}
+            </span>
+          </div>
+        );
+      },
+    },
+    {
       id: 'actions',
       header: 'Actions',
       cell: ({ row }) => (
