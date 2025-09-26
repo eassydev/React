@@ -84,11 +84,7 @@ const ServiceSegmentList = () => {
   };
 
   const serviceSegmentColumns: ColumnDef<any>[] = [
-    {
-      accessorKey: 'sno',
-      header: 'S.No',
-      cell: (info) => info.row.index + 1,
-    },
+    { accessorKey: 'sampleid', header: 'ID' },
     { accessorKey: 'segment_name', header: 'Segment Name' },
     { accessorKey: 'category.name', header: 'Category' },
     { accessorKey: 'subcategory.name', header: 'Subcategory' },

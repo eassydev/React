@@ -244,6 +244,10 @@ const ViewBookingPage: React.FC = () => {
                     {bookingDetails.rateCard.subcategory?.name || 'N/A'}
                   </p>
                   <p>
+                    <strong>Segment:</strong>{' '}
+                    {bookingDetails.rateCard.segment?.segment_name || 'N/A'}
+                  </p>
+                  <p>
                     <strong>Attribute & Option:</strong>{' '}
                     {bookingDetails.rateCard.attributes
                       ?.map(

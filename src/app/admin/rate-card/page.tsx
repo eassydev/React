@@ -622,12 +622,7 @@ const RateCardList = () => {
   };
 
   const rateCardColumns: ColumnDef<any>[] = [
-    {
-      accessorKey: 'sno', // Placeholder key for S.No
-      header: 'S.No',
-      cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
-      size: 60,
-    },
+     { accessorKey: 'sampleid', header: 'ID' },
     {
       accessorKey: 'name',
       header: 'Service Name',

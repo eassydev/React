@@ -189,6 +189,11 @@ export interface Subcategory {
   includeItems?: IncludeItem[]; // Array of excluded items
   meta_description?: string | null; // Field for meta description
   meta_keyword?: string | null; // Field for meta keywords
+  sampleid?: string; // ✅ NEW: Decrypted ID for display
+  category?: {
+    id: string;
+    name: string;
+  };
 }
 
 export interface Location {
@@ -252,6 +257,7 @@ export interface ServiceSegment {
   filter_attribute_id?: string | null; // Allow null for filter_attribute_id
   segment_name: string; // Make segment_name an array of strings
   is_active?: boolean; // is_active can be undefined
+  sampleid?: string; // ✅ NEW: Decrypted ID for display
 }
 export interface ExcludeItem {
   id?: number; // Auto-incremented primary key
@@ -290,6 +296,23 @@ export interface RateCard {
     attribute_id: string;
     option_id: string;
   }[]; // Dynamic filter attributes and options
+  // Nested objects for API responses
+  category?: {
+    id: string;
+    name: string;
+    image?: string;
+  };
+  subcategory?: {
+    id: string;
+    name: string;
+    category_id: string;
+    image?: string;
+  };
+  segment?: {
+    id: string;
+    segment_name: string;
+  };
+  sampleid?: string; // ✅ NEW: Decrypted ID for display
 }
 
 export interface Addon {

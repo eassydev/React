@@ -235,6 +235,7 @@ const BookingList = () => {
       accessorFn: (row) => {
         const category = row.rateCard?.category?.name || 'N/A';
         const subcategory = row.rateCard?.subcategory?.name || 'N/A';
+        const segment = row.rateCard?.segment?.segment_name || 'N/A';
         const attributes =
           row.rateCard?.attributes
             ?.map(
@@ -243,12 +244,13 @@ const BookingList = () => {
             )
             .join(', ') || 'N/A';
 
-        return { category, subcategory, attributes };
+        return { category, subcategory, segment, attributes };
       },
       cell: (info) => {
         const value = info.getValue() as {
           category: string;
           subcategory: string;
+          segment: string;
           attributes: string;
         };
 
@@ -259,6 +261,9 @@ const BookingList = () => {
             </p>
             <p>
               <strong>Subcategory:</strong> {value.subcategory}
+            </p>
+            <p>
+              <strong>Segment:</strong> {value.segment}
             </p>
             <p>
               <strong>Attributes:</strong> {value.attributes}
