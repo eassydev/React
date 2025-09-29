@@ -25,6 +25,7 @@ import {
   HardDrive,
   BarChart3,
   TrendingUp,
+  CheckSquare,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -192,6 +193,15 @@ export const sidebarItems: SidebarItem[] = [
     children: [
       { title: 'All Providers', route: `${basePath}/provider` },
       { title: 'B2B Providers', route: `${basePath}/provider/b2b` },
+    ],
+  },
+  {
+    title: 'Checklist',
+    icon: CheckSquare,
+    children: [
+      { title: 'All Checklists', route: `${basePath}/checklist` },
+      { title: 'Manage Questions', route: `${basePath}/checklist/questions` },
+      { title: 'Create Checklist', route: `${basePath}/checklist/create` },
     ],
   },
   {

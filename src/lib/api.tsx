@@ -2914,7 +2914,7 @@ export const fetchB2BProviders = async (
 // Function to fetch all providers
 export const fetchAllProvidersWithoutpagination = async (): Promise<Provider[]> => {
   try {
-    const token = getToken();
+    const token = getAdminToken();
     const response: AxiosResponse<ApiResponse> = await apiClient.get('/provider/all', {
       headers: {
         'admin-auth-token': token || '',
@@ -5900,6 +5900,341 @@ export const searchProvidersForAssignment = async (
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to search providers.');
+  }
+};
+
+// ✅ CHECKLIST MANAGEMENT API FUNCTIONS
+
+// Checklist interfaces
+export interface ChecklistQuestion {
+  id: string;
+  question_id: string;
+  question_text: string;
+  question_type: string;
+  answer: 'yes' | 'no' | 'na' | 'pending';
+  remarks?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface ChecklistCategory {
+  category_id: string;
+  category_name: string;
+  questions: ChecklistQuestion[];
+}
+
+export interface ChecklistProvider {
+  id: string;
+  company_name: string;
+  phone: string;
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+}
+
+export interface ChecklistStats {
+  totalQuestions: number;
+  answeredQuestions: number;
+  pendingQuestions: number;
+  completionPercentage: number;
+  isCompleted: boolean;
+  categoriesCount: number;
+}
+
+export interface ChecklistItem {
+  id: string;
+  checklist_type: string;
+  created_at: string;
+  updated_at: string;
+  provider: ChecklistProvider;
+  stats: ChecklistStats;
+}
+
+export interface ChecklistQuestionDetail {
+  id: string;
+  answer: 'yes' | 'no' | 'na' | 'pending';
+  remarks?: string;
+  created_at: string;
+  updated_at: string;
+  question: {
+    id: string;
+    question_text: string;
+    type: string;
+    category: {
+      id: string;
+      name: string;
+    };
+  };
+}
+
+export interface ChecklistDetail {
+  id: string;
+  checklist_type: string;
+  created_at: string;
+  updated_at: string;
+  provider: ChecklistProvider;
+  checklistQuestions: ChecklistQuestionDetail[];
+  categories?: Record<string, ChecklistCategory>;
+  stats: ChecklistStats;
+}
+
+export interface Question {
+  id: string;
+  question_text: string;
+  type: 'pre' | 'post' | 'both';
+  category: {
+    id: string;
+    name: string;
+  };
+}
+
+export interface ChecklistAnalytics {
+  totalChecklists: number;
+  completedChecklists: number;
+  pendingChecklists: number;
+  totalQuestions: number;
+  averageCompletionRate: number;
+  providerStats: {
+    totalProviders: number;
+    activeProviders: number;
+    completedProviders: number;
+  };
+}
+
+// Helper function to get admin token
+const getAdminToken = (): string | null => {
+  if (typeof window !== 'undefined') {
+    return localStorage.getItem('token');
+  }
+  return null;
+};
+
+// Fetch all checklists with pagination and filtering
+export const fetchChecklists = async (
+  page: number = 1,
+  limit: number = 10,
+  checklist_type?: string,
+  user_id?: string,
+  status?: string
+): Promise<{ checklists: ChecklistItem[]; totalPages: number; totalChecklists: number }> => {
+  try {
+    const token = getAdminToken();
+    const params: Record<string, any> = { page, limit };
+
+    if (checklist_type) params.checklist_type = checklist_type;
+    if (user_id) params.user_id = user_id;
+    if (status) params.status = status;
+
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/checklist', {
+      params,
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return {
+        checklists: response.data.data.checklists || response.data.data,
+        totalPages: response.data.data.pagination?.total_pages || Math.ceil((response.data.data.total || 0) / limit),
+        totalChecklists: response.data.data.pagination?.total || response.data.data.total || 0,
+      };
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch checklists');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch checklists');
+  }
+};
+
+// Fetch checklist by ID
+export const fetchChecklistById = async (id: string): Promise<ChecklistDetail> => {
+  try {
+    const token = getAdminToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/checklist/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch checklist');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch checklist');
+  }
+};
+
+// Create checklist
+export const createChecklist = async (data: {
+  checklist_type: string;
+  user_ids: string[];
+  questions_id: string[];
+}): Promise<ApiResponse> => {
+  try {
+    const token = getAdminToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/checklist', data, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create checklist');
+  }
+};
+
+// Fetch all questions with pagination and filtering
+export const fetchQuestions = async (
+  page: number = 1,
+  limit: number = 10,
+  category_id?: string,
+  type?: string,
+  search?: string
+): Promise<{ questions: Question[]; totalPages: number; totalQuestions: number }> => {
+  try {
+    const token = getAdminToken();
+    const params: Record<string, any> = { page, limit };
+
+    if (category_id) params.category_id = category_id;
+    if (type) params.type = type;
+    if (search) params.search = search;
+
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/checklist/questions', {
+      params,
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return {
+        questions: response.data.data.questions || response.data.data,
+        totalPages: response.data.data.pagination?.total_pages || Math.ceil((response.data.data.total || 0) / limit),
+        totalQuestions: response.data.data.pagination?.total || response.data.data.total || 0,
+      };
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch questions');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch questions');
+  }
+};
+
+// Create question
+export const createQuestion = async (data: {
+  question_text: string;
+  category_id: string;
+  type: 'pre' | 'post' | 'both';
+}): Promise<ApiResponse> => {
+  try {
+    const token = getAdminToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.post('/checklist/questions', data, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create question');
+  }
+};
+
+// Fetch single question by ID
+export const fetchQuestionById = async (id: string): Promise<Question> => {
+  try {
+    const token = getAdminToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/checklist/questions/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch question');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch question');
+  }
+};
+
+// Update question
+export const updateQuestion = async (id: string, data: {
+  question_text: string;
+  category_id: string;
+  type: 'pre' | 'post' | 'both';
+}): Promise<ApiResponse> => {
+  try {
+    const token = getAdminToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(`/checklist/questions/${id}`, data, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update question');
+  }
+};
+
+// Delete question
+export const deleteQuestion = async (id: string): Promise<ApiResponse> => {
+  try {
+    const token = getAdminToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.delete(`/checklist/questions/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete question');
+  }
+};
+
+// Fetch checklist analytics
+export const fetchChecklistAnalytics = async (): Promise<ChecklistAnalytics> => {
+  try {
+    const token = getAdminToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/checklist/analytics', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch analytics');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch analytics');
+  }
+};
+
+// Fetch Categories for Checklist Questions
+export const fetchChecklistCategories = async () => {
+  try {
+    const token = getAdminToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/checklist/categories', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch categories');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch categories');
   }
 };
 
