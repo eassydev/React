@@ -1039,6 +1039,13 @@ interface ApiResponse {
   status: boolean;
   message: string;
   data?: any;
+  pagination?: {
+    current_page: number;
+    total_pages: number;
+    total_count: number;
+    has_next: boolean;
+    has_prev: boolean;
+  };
 }
 
 interface ApiPermissionResponse {
@@ -2927,6 +2934,54 @@ export const fetchAllProvidersWithoutpagination = async (): Promise<Provider[]> 
     }
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch banks.');
+  }
+};
+
+// Function to search providers with pagination
+export const searchProviders = async (
+  search: string = '',
+  page: number = 1,
+  size: number = 20
+): Promise<{
+  providers: Provider[];
+  pagination: {
+    current_page: number;
+    total_pages: number;
+    total_count: number;
+    has_next: boolean;
+    has_prev: boolean;
+  };
+}> => {
+  try {
+    const token = getAdminToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.get('/provider', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      params: {
+        search,
+        page,
+        size,
+        status: 'all'
+      }
+    });
+
+    if (response.data.status) {
+      return {
+        providers: response.data.data,
+        pagination: response.data.pagination || {
+          current_page: 1,
+          total_pages: 1,
+          total_count: response.data.data?.length || 0,
+          has_next: false,
+          has_prev: false
+        }
+      };
+    } else {
+      throw new Error(response.data.message || 'Failed to search providers.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to search providers.');
   }
 };
 
