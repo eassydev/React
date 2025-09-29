@@ -41,3 +41,20 @@ export const tokenUtils = {
     cookieUtils.remove('token');
   },
 };
+
+// Admin token management utilities
+export const adminTokenUtils = {
+  set: (token: string) => {
+    localStorage.setItem('adminToken', token);
+    cookieUtils.set('adminToken', token, 7);
+  },
+
+  get: (): string | null => {
+    return localStorage.getItem('adminToken') || cookieUtils.get('adminToken');
+  },
+
+  remove: () => {
+    localStorage.removeItem('adminToken');
+    cookieUtils.remove('adminToken');
+  },
+};

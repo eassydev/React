@@ -10,7 +10,7 @@ import { ArrowLeft, Save, Users, FileText, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  fetchAllProvidersWithoutpagination,
+  searchProviders as searchProvidersAPI,
   fetchQuestions,
   createChecklist,
   ChecklistProvider,
@@ -28,21 +28,37 @@ export default function CreateChecklist() {
   const [selectedProviders, setSelectedProviders] = useState<string[]>([]);
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [checklistType, setChecklistType] = useState('both');
+  const [providersLoading, setProvidersLoading] = useState(false);
+  const [providersPagination, setProvidersPagination] = useState({
+    current_page: 1,
+    total_pages: 1,
+    total_count: 0,
+    has_next: false,
+    has_prev: false
+  });
 
   useEffect(() => {
-    fetchProvidersData();
     fetchQuestionsData();
+    // Load initial providers with empty search
+    searchProvidersData('', 1);
   }, []);
 
-  const fetchProvidersData = async () => {
+  // Debounced search effect
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      searchProvidersData(searchProviders, 1);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchProviders]);
+
+  const searchProvidersData = async (searchTerm: string = '', page: number = 1) => {
     try {
-      const providersData = await fetchAllProvidersWithoutpagination();
-      console.log('🔍 Providers data received:', providersData);
-      console.log('🔍 Number of providers:', providersData.length);
-      console.log('🔍 First provider:', providersData[0]);
+      setProvidersLoading(true);
+      const result = await searchProvidersAPI(searchTerm, page, 20);
 
       // Transform Provider to ChecklistProvider format
-      const checklistProviders: ChecklistProvider[] = providersData.map(provider => ({
+      const checklistProviders: ChecklistProvider[] = result.providers.map((provider: ApiProvider) => ({
         id: provider.id || '',
         company_name: provider.company_name || '',
         phone: provider.phone,
@@ -50,10 +66,18 @@ export default function CreateChecklist() {
         first_name: provider.first_name,
         last_name: provider.last_name,
       }));
-      setProviders(checklistProviders);
-      console.log('🔍 Transformed providers:', checklistProviders);
+
+      if (page === 1) {
+        setProviders(checklistProviders);
+      } else {
+        setProviders(prev => [...prev, ...checklistProviders]);
+      }
+
+      setProvidersPagination(result.pagination);
     } catch (error) {
-      console.error('Error fetching providers:', error);
+      console.error('Error searching providers:', error);
+    } finally {
+      setProvidersLoading(false);
     }
   };
 
@@ -113,11 +137,14 @@ export default function CreateChecklist() {
     );
   };
 
-  const filteredProviders = providers.filter(provider =>
-    provider.company_name?.toLowerCase().includes(searchProviders.toLowerCase()) ||
-    provider.phone?.toLowerCase().includes(searchProviders.toLowerCase()) ||
-    `${provider.first_name} ${provider.last_name}`.toLowerCase().includes(searchProviders.toLowerCase())
-  );
+  const loadMoreProviders = async () => {
+    if (providersPagination.has_next && !providersLoading) {
+      await searchProvidersData(searchProviders, providersPagination.current_page + 1);
+    }
+  };
+
+  // No need to filter providers locally since we're using server-side search
+  const filteredProviders = providers;
 
   const filteredQuestions = questions.filter(question =>
     question.question_text.toLowerCase().includes(searchQuestions.toLowerCase()) ||
@@ -177,9 +204,16 @@ export default function CreateChecklist() {
             {/* Provider Selection */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Users className="w-5 h-5 mr-2" />
-                  Select Providers ({selectedProviders.length})
+                <CardTitle className="flex items-center justify-between">
+                  <div className="flex items-center">
+                    <Users className="w-5 h-5 mr-2" />
+                    Select Providers ({selectedProviders.length})
+                  </div>
+                  <div className="text-sm text-gray-500 font-normal">
+                    {providersPagination.total_count > 0 && (
+                      `${filteredProviders.length} of ${providersPagination.total_count} loaded`
+                    )}
+                  </div>
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -208,10 +242,31 @@ export default function CreateChecklist() {
                         </div>
                       </div>
                     ))}
+
+                    {providersLoading && (
+                      <div className="flex justify-center py-4">
+                        <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+                      </div>
+                    )}
+
+                    {providersPagination.has_next && !providersLoading && (
+                      <div className="flex justify-center py-2">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={loadMoreProviders}
+                        >
+                          Load More Providers
+                        </Button>
+                      </div>
+                    )}
                   </div>
-                  
-                  {filteredProviders.length === 0 && (
-                    <p className="text-center text-gray-500 py-4">No providers found</p>
+
+                  {filteredProviders.length === 0 && !providersLoading && (
+                    <p className="text-center text-gray-500 py-4">
+                      {searchProviders ? 'No providers found matching your search' : 'Start typing to search for providers'}
+                    </p>
                   )}
                 </div>
               </CardContent>
