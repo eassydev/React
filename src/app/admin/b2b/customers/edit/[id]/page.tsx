@@ -16,6 +16,9 @@ export default function EditB2BCustomerPage() {
   const router = useRouter();
   const customerId = params.id as string;
 
+  // ✅ DEBUG: Log the customer ID being edited
+  console.log('📝 Edit page loaded for customer ID:', customerId);
+
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -47,8 +50,10 @@ export default function EditB2BCustomerPage() {
   const fetchCustomerData = async () => {
     try {
       setLoading(true);
+      console.log('📥 Fetching customer data for ID:', customerId);
       const response = await fetchB2BCustomerById(customerId);
-      
+      console.log('📥 Customer data received:', response.data?.company_name, 'ID:', response.data?.sampleid);
+
       if (response.success && response.data?.customer) {
         const customer = response.data.customer;
         setFormData({

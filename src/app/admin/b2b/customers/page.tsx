@@ -224,6 +224,7 @@ export default function B2BCustomersPage() {
                               variant="ghost"
                               size="sm"
                               asChild
+                              title={`View ${customer.company_name} (ID: ${customer.sampleid})`}
                             >
                               <Link href={`/admin/b2b/customers/${customer.id}`}>
                                 <Eye className="w-4 h-4" />
@@ -233,6 +234,12 @@ export default function B2BCustomersPage() {
                               variant="ghost"
                               size="sm"
                               asChild
+                              title={`Edit ${customer.company_name} (ID: ${customer.sampleid})`}
+                              onClick={() => console.log('🔍 Edit clicked for:', {
+                                company: customer.company_name,
+                                id: customer.id,
+                                sampleid: customer.sampleid
+                              })}
                             >
                               <Link href={`/admin/b2b/customers/edit/${customer.id}`}>
                                 <Edit className="w-4 h-4" />
