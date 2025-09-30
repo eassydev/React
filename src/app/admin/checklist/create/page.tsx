@@ -10,7 +10,7 @@ import { ArrowLeft, Save, Users, FileText, Search } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import {
-  searchProviders as searchProvidersAPI,
+  fetchAllProvidersWithoutpagination,
   fetchQuestions,
   createChecklist,
   ChecklistProvider,
@@ -29,36 +29,19 @@ export default function CreateChecklist() {
   const [selectedQuestions, setSelectedQuestions] = useState<string[]>([]);
   const [checklistType, setChecklistType] = useState('both');
   const [providersLoading, setProvidersLoading] = useState(false);
-  const [providersPagination, setProvidersPagination] = useState({
-    current_page: 1,
-    total_pages: 1,
-    total_count: 0,
-    has_next: false,
-    has_prev: false
-  });
 
   useEffect(() => {
     fetchQuestionsData();
-    // Load initial providers with empty search
-    searchProvidersData('', 1);
+    fetchProvidersData();
   }, []);
 
-  // Debounced search effect
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      searchProvidersData(searchProviders, 1);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchProviders]);
-
-  const searchProvidersData = async (searchTerm: string = '', page: number = 1) => {
+  const fetchProvidersData = async () => {
     try {
       setProvidersLoading(true);
-      const result = await searchProvidersAPI(searchTerm, page, 20);
+      const result = await fetchAllProvidersWithoutpagination();
 
       // Transform Provider to ChecklistProvider format
-      const checklistProviders: ChecklistProvider[] = result.providers.map((provider: ApiProvider) => ({
+      const checklistProviders: ChecklistProvider[] = result.map((provider: ApiProvider) => ({
         id: provider.id || '',
         company_name: provider.company_name || '',
         phone: provider.phone,
@@ -67,13 +50,7 @@ export default function CreateChecklist() {
         last_name: provider.last_name,
       }));
 
-      if (page === 1) {
-        setProviders(checklistProviders);
-      } else {
-        setProviders(prev => [...prev, ...checklistProviders]);
-      }
-
-      setProvidersPagination(result.pagination);
+      setProviders(checklistProviders);
     } catch (error) {
       console.error('Error searching providers:', error);
     } finally {
@@ -137,14 +114,16 @@ export default function CreateChecklist() {
     );
   };
 
-  const loadMoreProviders = async () => {
-    if (providersPagination.has_next && !providersLoading) {
-      await searchProvidersData(searchProviders, providersPagination.current_page + 1);
-    }
-  };
 
-  // No need to filter providers locally since we're using server-side search
-  const filteredProviders = providers;
+
+  // Filter providers based on search term
+  const filteredProviders = providers.filter(provider =>
+    provider.company_name?.toLowerCase().includes(searchProviders.toLowerCase()) ||
+    provider.first_name?.toLowerCase().includes(searchProviders.toLowerCase()) ||
+    provider.last_name?.toLowerCase().includes(searchProviders.toLowerCase()) ||
+    provider.phone?.includes(searchProviders) ||
+    provider.email?.toLowerCase().includes(searchProviders.toLowerCase())
+  );
 
   const filteredQuestions = questions.filter(question =>
     question.question_text.toLowerCase().includes(searchQuestions.toLowerCase()) ||
@@ -210,8 +189,8 @@ export default function CreateChecklist() {
                     Select Providers ({selectedProviders.length})
                   </div>
                   <div className="text-sm text-gray-500 font-normal">
-                    {providersPagination.total_count > 0 && (
-                      `${filteredProviders.length} of ${providersPagination.total_count} loaded`
+                    {filteredProviders.length > 0 && (
+                      `${filteredProviders.length} providers available`
                     )}
                   </div>
                 </CardTitle>
@@ -249,18 +228,7 @@ export default function CreateChecklist() {
                       </div>
                     )}
 
-                    {providersPagination.has_next && !providersLoading && (
-                      <div className="flex justify-center py-2">
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={loadMoreProviders}
-                        >
-                          Load More Providers
-                        </Button>
-                      </div>
-                    )}
+
                   </div>
 
                   {filteredProviders.length === 0 && !providersLoading && (
