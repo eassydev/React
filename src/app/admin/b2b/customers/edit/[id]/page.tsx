@@ -54,8 +54,9 @@ export default function EditB2BCustomerPage() {
       const response = await fetchB2BCustomerById(customerId);
       console.log('📥 Customer data received:', response.data?.company_name, 'ID:', response.data?.sampleid);
 
-      if (response.success && response.data?.customer) {
-        const customer = response.data.customer;
+      // ✅ FIXED: Backend now returns data directly, not nested in .customer
+      if (response.success && response.data) {
+        const customer = response.data;
         setFormData({
           company_name: customer.company_name || '',
           contact_person: customer.contact_person || '',
@@ -67,8 +68,8 @@ export default function EditB2BCustomerPage() {
           pincode: customer.pincode || '',
           gst_number: customer.gst_number || '',
           pan_number: customer.pan_number || '',
-          credit_limit: customer.credit_limit?.toString() || '',
-          credit_days: customer.credit_days?.toString() || '',
+          credit_limit: customer.credit_limit?.toString() || '0',
+          credit_days: customer.credit_days?.toString() || '30',
           payment_terms: customer.payment_terms || 'Net 30',
           payment_method_preference: customer.payment_method_preference || 'any',
           late_payment_fee_percentage: customer.late_payment_fee_percentage?.toString() || '0.00',

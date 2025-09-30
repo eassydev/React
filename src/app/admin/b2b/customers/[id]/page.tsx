@@ -51,9 +51,10 @@ export default function B2BCustomerDetailPage() {
     try {
       setLoading(true);
       const response = await fetchB2BCustomerById(customerId);
-      
-      if (response.success && response.data?.customer) {
-        setCustomer(response.data.customer);
+
+      // ✅ FIXED: Backend now returns data directly, not nested in .customer
+      if (response.success && response.data) {
+        setCustomer(response.data);
       } else {
         setError('Customer not found');
       }
