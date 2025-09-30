@@ -122,22 +122,31 @@ export default function B2BOrdersPage() {
 
   const handleDownloadInvoice = async (orderId: string) => {
     try {
-      // ✅ Get the invoice ID first, then download
       const adminToken = localStorage.getItem('token') || localStorage.getItem('adminToken');
 
-      // First, get the invoice details to find the invoice ID
-      const invoiceResponse = await fetch(`/admin-api/b2b/orders/${orderId}`, {
+      if (!adminToken) {
+        alert('Authentication token not found. Please login again.');
+        return;
+      }
+
+      // Get the order details to find the invoice file path
+      const response = await fetch(`/admin-api/b2b/orders/${orderId}`, {
         headers: {
-          'admin-auth-token': adminToken || ''
+          'admin-auth-token': adminToken
         }
       });
 
-      if (invoiceResponse.ok) {
-        const orderData = await invoiceResponse.json();
-        // ✅ Use proxy download to bypass S3 permission issues
-        const downloadUrl = `/admin-api/b2b/invoices/${orderId}/proxy-download`;
-        window.open(downloadUrl, '_blank');
-        console.log('Invoice proxy download initiated');
+      if (response.ok) {
+        const orderData = await response.json();
+        const invoiceFilePath = orderData.data?.invoice_file_path;
+
+        if (invoiceFilePath) {
+          // ✅ SIMPLE: Just open the direct S3 URL (it's already public-read)
+          window.open(invoiceFilePath, '_blank');
+          console.log('Invoice download initiated');
+        } else {
+          alert('Invoice file not found for this order');
+        }
       } else {
         throw new Error('Failed to get order details');
       }

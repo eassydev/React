@@ -134,49 +134,22 @@ function B2BInvoicesContent() {
       setDownloadingId(invoiceId);
       console.log('🔽 Downloading invoice:', invoiceId);
 
-      const adminToken = localStorage.getItem('token') || localStorage.getItem('adminToken');
+      // Find the invoice from the current list to get the direct S3 URL
+      const invoice = invoices.find(inv => inv.id === invoiceId);
 
-      // Use the proxy download endpoint that works with S3
-      const downloadUrl = `/admin-api/b2b/invoices/${invoiceId}/proxy-download`;
+      if (!invoice || !invoice.invoice_file_path) {
+        throw new Error('Invoice file not found');
+      }
 
-      const response = await fetch(downloadUrl, {
-        method: 'GET',
-        headers: {
-          'admin-auth-token': adminToken || ''
-        }
+      // ✅ SIMPLE: Just open the direct S3 URL (it's already public-read)
+      window.open(invoice.invoice_file_path, '_blank');
+
+      toast({
+        title: "Download Started",
+        description: "PDF download has been initiated",
       });
 
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-
-        // Get filename from response headers or use default
-        const contentDisposition = response.headers.get('content-disposition');
-        let filename = 'invoice.pdf';
-        if (contentDisposition) {
-          const filenameMatch = contentDisposition.match(/filename="(.+)"/);
-          if (filenameMatch) {
-            filename = filenameMatch[1];
-          }
-        }
-
-        link.download = filename;
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        window.URL.revokeObjectURL(url);
-
-        toast({
-          title: "Download Started",
-          description: "PDF download has been initiated",
-        });
-
-        console.log('✅ Download initiated successfully');
-      } else {
-        throw new Error('Failed to download PDF');
-      }
+      console.log('✅ Download initiated successfully');
     } catch (error) {
       console.error('❌ Error downloading invoice:', error);
       toast({

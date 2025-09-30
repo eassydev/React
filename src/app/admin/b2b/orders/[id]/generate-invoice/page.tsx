@@ -268,9 +268,19 @@ export default function GenerateInvoicePage() {
 
   const downloadInvoice = async () => {
     try {
-      // ✅ Use proxy download to bypass S3 permission issues
-      const downloadUrl = `/admin-api/b2b/invoices/${generatedInvoice?.invoice_id}/proxy-download`;
-      window.open(downloadUrl, '_blank');
+      // Check if we have the direct S3 URL (pdf_url from generation response)
+      if (generatedInvoice?.pdf_url) {
+        // ✅ SIMPLE: Just open the direct S3 URL (it's already public-read)
+        window.open(generatedInvoice.pdf_url, '_blank');
+        return;
+      }
+
+      // Fallback: If no pdf_url, show error
+      toast({
+        variant: 'destructive',
+        title: 'Error',
+        description: 'Invoice file not available. Please regenerate the PDF.'
+      });
     } catch (error) {
       toast({
         variant: 'destructive',
