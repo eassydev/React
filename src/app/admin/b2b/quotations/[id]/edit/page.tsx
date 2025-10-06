@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import B2BQuotationForm from '@/components/b2b/B2BQuotationForm';
+import { AdditionalCostsManager } from '@/components/b2b/AdditionalCostsManager';
 import { fetchB2BQuotationById, B2BQuotation } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 
@@ -126,6 +127,18 @@ export default function B2BQuotationEditPage() {
         onSuccess={handleSuccess}
         onCancel={handleCancel}
       />
+
+      {/* Additional Costs - Separate from form */}
+      <div className="mt-6">
+        <AdditionalCostsManager
+          entityId={quotationId}
+          entityType="quotation"
+          readonly={quotation.status === 'approved' || quotation.status === 'rejected'}
+          onTotalChange={(total) => {
+            console.log('Additional costs total:', total);
+          }}
+        />
+      </div>
     </div>
   );
 }

@@ -26,9 +26,10 @@ import {
   approveB2BQuotation, 
   rejectB2BQuotation,
   downloadB2BQuotationPDF,
-  B2BQuotation 
+  B2BQuotation
 } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
+import { AdditionalCostsManager } from './AdditionalCostsManager';
 
 interface B2BQuotationDetailProps {
   quotationId: string;
@@ -44,6 +45,7 @@ const B2BQuotationDetail: React.FC<B2BQuotationDetailProps> = ({
   const [quotation, setQuotation] = useState<B2BQuotation | null>(null);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<{ [key: string]: boolean }>({});
+  const [additionalCostsTotal, setAdditionalCostsTotal] = useState(0);
 
   const fetchQuotationDetail = async () => {
     try {
@@ -383,6 +385,22 @@ const B2BQuotationDetail: React.FC<B2BQuotationDetailProps> = ({
                   {formatCurrency(quotation.total_amount)}
                 </span>
               </div>
+              {additionalCostsTotal > 0 && (
+                <>
+                  <div className="flex justify-end gap-4 text-sm text-orange-600 mt-2">
+                    <span>+ Additional Costs:</span>
+                    <span className="w-32 font-semibold">
+                      {formatCurrency(additionalCostsTotal)}
+                    </span>
+                  </div>
+                  <div className="flex justify-end gap-4 text-xl font-bold border-t-2 pt-2 mt-2 text-green-600">
+                    <span>Grand Total:</span>
+                    <span className="w-32">
+                      {formatCurrency(parseFloat(quotation.total_amount.toString()) + parseFloat(additionalCostsTotal.toString()))}
+                    </span>
+                  </div>
+                </>
+              )}
             </div>
           </div>
 
@@ -442,6 +460,16 @@ const B2BQuotationDetail: React.FC<B2BQuotationDetailProps> = ({
           )}
         </CardContent>
       </Card>
+
+      {/* Additional Costs */}
+      <AdditionalCostsManager
+        entityId={quotationId}
+        entityType="quotation"
+        readonly={quotation.status === 'approved' || quotation.status === 'rejected'}
+        onTotalChange={(total) => {
+          setAdditionalCostsTotal(total);
+        }}
+      />
     </div>
   );
 };

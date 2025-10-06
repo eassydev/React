@@ -7,6 +7,7 @@ import { fetchB2BOrderById, updateB2BOrderStatus, ProviderSearchResult } from '@
 import { StatusDropdown, StatusBadge } from '@/components/b2b/StatusDropdown';
 import { ProviderSearchDropdown } from '@/components/b2b/ProviderSearchDropdown';
 import { ServiceAttachments } from '@/components/b2b/ServiceAttachments';
+import { AdditionalCostsManager } from '@/components/b2b/AdditionalCostsManager';
 
 
 import { Button } from '@/components/ui/button';
@@ -51,9 +52,13 @@ interface B2BOrder {
   final_amount?: number;        // Final amount including GST
   total_amount?: number;        // Legacy total amount field
 
+  // Additional Costs
+  additionalCostsTotal?: number;
+  grandTotalWithAdditionalCosts?: number;
+
   service_date?: string;
   service_time?: string;
-  booking_received_date?: string;
+  booking_received_date?: number; // Unix timestamp (seconds)
   status: 'pending' | 'accepted' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'rejected';
   payment_status: 'pending' | 'paid' | 'overdue';
   provider?: {
@@ -72,8 +77,8 @@ interface B2BOrder {
   sp_total_amount?: number;     // Total SP payout
   payment_terms?: string;
   notes?: string;
-  created_at: string;
-  updated_at: string;
+  created_at: number; // Unix timestamp (seconds)
+  updated_at: number; // Unix timestamp (seconds)
 }
 
 export default function B2BOrderDetailPage({ params }: { params: { id: string } }) {
@@ -84,7 +89,8 @@ export default function B2BOrderDetailPage({ params }: { params: { id: string } 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [selectedProviderId, setSelectedProviderId] = useState<string>('');
-  
+  const [additionalCostsTotal, setAdditionalCostsTotal] = useState(0);
+
   // Status editing state
   const [editingStatus, setEditingStatus] = useState(false);
   const [newStatus, setNewStatus] = useState('');
@@ -537,10 +543,30 @@ export default function B2BOrderDetailPage({ params }: { params: { id: string } 
                       </div>
                     )}
                     {order.final_amount && (
-                      <div className="flex justify-between border-t border-blue-300 pt-2 mt-2 bg-blue-200 px-2 py-2 rounded">
-                        <span className="text-sm font-bold text-blue-800">🏦 TOTAL CLIENT PAYMENT:</span>
-                        <span className="text-lg font-bold text-blue-900">₹{parseFloat(order.final_amount).toLocaleString()}</span>
-                      </div>
+                      <>
+                        <div className="flex justify-between border-t border-blue-300 pt-2 mt-2 bg-blue-100 px-2 py-2 rounded">
+                          <span className="text-sm font-semibold text-blue-800">Subtotal (Base Service):</span>
+                          <span className="text-base font-semibold text-blue-900">₹{parseFloat(order.final_amount).toLocaleString()}</span>
+                        </div>
+                        {additionalCostsTotal > 0 && (
+                          <>
+                            <div className="flex justify-between bg-orange-50 px-2 py-1 rounded border border-orange-200">
+                              <span className="text-sm font-medium text-orange-700">+ Additional Costs:</span>
+                              <span className="text-sm font-semibold text-orange-800">₹{parseFloat(additionalCostsTotal.toString()).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between border-t-2 border-blue-400 pt-2 mt-2 bg-blue-200 px-2 py-2 rounded">
+                              <span className="text-sm font-bold text-blue-800">🏦 GRAND TOTAL:</span>
+                              <span className="text-lg font-bold text-blue-900">₹{(parseFloat(order.final_amount.toString()) + parseFloat(additionalCostsTotal.toString())).toLocaleString()}</span>
+                            </div>
+                          </>
+                        )}
+                        {additionalCostsTotal === 0 && (
+                          <div className="flex justify-between border-t border-blue-300 pt-2 mt-2 bg-blue-200 px-2 py-2 rounded">
+                            <span className="text-sm font-bold text-blue-800">🏦 TOTAL CLIENT PAYMENT:</span>
+                            <span className="text-lg font-bold text-blue-900">₹{parseFloat(order.final_amount).toLocaleString()}</span>
+                          </div>
+                        )}
+                      </>
                     )}
                   </div>
                 </div>
@@ -622,6 +648,16 @@ export default function B2BOrderDetailPage({ params }: { params: { id: string } 
             </CardContent>
           </Card>
 
+          {/* Additional Costs */}
+          <AdditionalCostsManager
+            entityId={params.id}
+            entityType="order"
+            readonly={false}
+            onTotalChange={(total) => {
+              setAdditionalCostsTotal(total);
+            }}
+          />
+
           {/* Service Attachments */}
           <ServiceAttachments
             bookingId={params.id}
@@ -637,11 +673,11 @@ export default function B2BOrderDetailPage({ params }: { params: { id: string } 
               <div className="space-y-3 text-sm">
                 <div>
                   <Label className="text-gray-500">Created:</Label>
-                  <p>{new Date(order.created_at).toLocaleString()}</p>
+                  <p>{new Date(order.created_at * 1000).toLocaleString()}</p>
                 </div>
                 <div>
                   <Label className="text-gray-500">Last Updated:</Label>
-                  <p>{new Date(order.updated_at).toLocaleString()}</p>
+                  <p>{new Date(order.updated_at * 1000).toLocaleString()}</p>
                 </div>
                 {order.booking_received_date && (
                   <div>

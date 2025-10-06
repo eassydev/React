@@ -34,6 +34,7 @@ import {
   DialogTrigger
 } from '@/components/ui/dialog';
 import { ProviderSearchDropdown } from '@/components/b2b/ProviderSearchDropdown';
+import { AdditionalCostsManager } from '@/components/b2b/AdditionalCostsManager';
 
 
 
@@ -1329,6 +1330,16 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
             </CardContent>
           </Card>
         </form>
+
+        {/* Additional Costs - Outside form since it has its own save logic */}
+        <AdditionalCostsManager
+          entityId={params.id}
+          entityType="order"
+          readonly={false}
+          onTotalChange={(total) => {
+            console.log('Additional costs total:', total);
+          }}
+        />
       </div>
     </div>
   );

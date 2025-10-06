@@ -53,8 +53,9 @@ interface B2BOrder {
   payment_status: 'pending' | 'paid' | 'overdue';
   invoice_status?: 'pending' | 'generated' | 'sent' | 'paid';
   service_date?: string;
-  booking_received_date?: string | number;
-  created_at: string;
+  booking_received_date?: number; // Unix timestamp (seconds)
+  created_at: number; // Unix timestamp (seconds)
+  updated_at: number; // Unix timestamp (seconds)
   // SP Pricing Breakdown
   sp_base_price?: number;
   sp_gst_amount?: number;
@@ -129,26 +130,27 @@ export default function B2BOrdersPage() {
         return;
       }
 
-      // Get the order details to find the invoice file path
-      const response = await fetch(`/admin-api/b2b/orders/${orderId}`, {
+      // ✅ OPTIMIZED: Use lightweight endpoint that only returns invoice path
+      const response = await fetch(`/admin-api/b2b/orders/${orderId}/invoice-path`, {
         headers: {
           'admin-auth-token': adminToken
         }
       });
 
       if (response.ok) {
-        const orderData = await response.json();
-        const invoiceFilePath = orderData.data?.invoice_file_path;
+        const invoiceData = await response.json();
+        const invoiceFilePath = invoiceData.data?.invoice_file_path;
 
         if (invoiceFilePath) {
           // ✅ SIMPLE: Just open the direct S3 URL (it's already public-read)
           window.open(invoiceFilePath, '_blank');
-          console.log('Invoice download initiated');
+          console.log('Invoice download initiated for:', invoiceData.data.invoice_number);
         } else {
           alert('Invoice file not found for this order');
         }
       } else {
-        throw new Error('Failed to get order details');
+        const errorData = await response.json();
+        alert(errorData.message || 'Invoice not found for this order');
       }
     } catch (error) {
       console.error('Error downloading invoice:', error);
@@ -724,11 +726,8 @@ export default function B2BOrdersPage() {
                         </TableCell>
                         <TableCell>
                           {order.booking_received_date ?
-                            new Date(typeof order.booking_received_date === 'number' ?
-                              order.booking_received_date * 1000 :
-                              order.booking_received_date
-                            ).toLocaleDateString() :
-                            order.created_at ? new Date(order.created_at).toLocaleDateString() : 'N/A'}
+                            new Date(order.booking_received_date * 1000).toLocaleDateString() :
+                            order.created_at ? new Date(order.created_at * 1000).toLocaleDateString() : 'N/A'}
                         </TableCell>
                         <TableCell>
                           <DropdownMenu>
