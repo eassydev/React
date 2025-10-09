@@ -50,8 +50,8 @@ export default function PaymentControlPanel({ onRefresh }: PaymentControlPanelPr
   const [isLoading, setIsLoading] = useState(false);
   const [selectedPayments, setSelectedPayments] = useState<Set<string>>(new Set());
   const [filters, setFilters] = useState({
-    status: '',
-    allow_transfer: '',
+    status: 'all',
+    allow_transfer: 'all',
     provider_name: '',
     order_id: '',
     date_from: '',
@@ -133,8 +133,14 @@ export default function PaymentControlPanel({ onRefresh }: PaymentControlPanelPr
   };
 
   const handleFilteredAction = async (action: string) => {
-    const hasFilters = Object.values(filters).some(value => value !== '');
-    
+    // Check if any meaningful filters are set (excluding "all" values and empty strings)
+    const hasFilters = Object.entries(filters).some(([key, value]) => {
+      if (key === 'status' || key === 'allow_transfer') {
+        return value !== 'all' && value !== '';
+      }
+      return value !== '';
+    });
+
     if (!hasFilters) {
       toast({
         variant: 'destructive',
@@ -149,7 +155,19 @@ export default function PaymentControlPanel({ onRefresh }: PaymentControlPanelPr
 
     setIsLoading(true);
     try {
-      const result = await bulkPaymentAction(action, undefined, filters);
+      // Process filters to remove "all" values before sending to API
+      const processedFilters = Object.entries(filters).reduce((acc, [key, value]) => {
+        if (key === 'status' || key === 'allow_transfer') {
+          if (value !== 'all' && value !== '') {
+            acc[key] = value;
+          }
+        } else if (value !== '') {
+          acc[key] = value;
+        }
+        return acc;
+      }, {} as any);
+
+      const result = await bulkPaymentAction(action, undefined, processedFilters);
       
       toast({
         title: 'Success',
@@ -172,8 +190,8 @@ export default function PaymentControlPanel({ onRefresh }: PaymentControlPanelPr
 
   const clearFilters = () => {
     setFilters({
-      status: '',
-      allow_transfer: '',
+      status: 'all',
+      allow_transfer: 'all',
       provider_name: '',
       order_id: '',
       date_from: '',
@@ -310,7 +328,7 @@ export default function PaymentControlPanel({ onRefresh }: PaymentControlPanelPr
                   <SelectValue placeholder="All Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All Status</SelectItem>
+                  <SelectItem value="all">All Status</SelectItem>
                   <SelectItem value="Not Initiated">Not Initiated</SelectItem>
                   <SelectItem value="Paid">Paid</SelectItem>
                 </SelectContent>
@@ -324,7 +342,7 @@ export default function PaymentControlPanel({ onRefresh }: PaymentControlPanelPr
                   <SelectValue placeholder="Transfer Status" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All</SelectItem>
+                  <SelectItem value="all">All</SelectItem>
                   <SelectItem value="yes">Allowed</SelectItem>
                   <SelectItem value="no">Blocked</SelectItem>
                 </SelectContent>

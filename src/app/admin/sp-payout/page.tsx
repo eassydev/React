@@ -19,11 +19,12 @@ import {
   TableCell,
 } from '@/components/ui/table';
 import { ChevronLeft, ChevronRight, Edit, Download, Play, Square, CheckCircle, Settings } from 'lucide-react';
-import { fetchPayoutsDetailed, singlePaymentAction } from '@/lib/api';
+import { fetchPayoutsDetailed, singlePaymentAction, fetchUTRs, handleFailedTransactions as handleFailedTransactionsAPI, retryFailedPayout, updatePayoutUTR } from '@/lib/api';
 import PaymentControlPanel from '@/components/PaymentControlPanel';
 import Link from 'next/link';
 import { useToast } from '@/components/ui/use-toast';
 import { format } from 'date-fns';
+import { UTREditDialog } from '@/components/ui/utr-edit-dialog';
 
 interface SpPayout {
   id: string;
@@ -43,6 +44,7 @@ interface SpPayout {
   scheduled_transfer: string;
   allow_transfer: string;
   razorpay_transfer_id: string;
+  utr_number: string; // ✅ Added UTR field
   notes: string;
   created_at: number;
   updated_at: number;
@@ -98,25 +100,25 @@ export default function SpPayoutPage() {
   const [selectedPayments, setSelectedPayments] = useState<Set<string>>(new Set());
   const [showControlPanel, setShowControlPanel] = useState(false);
 
-  useEffect(() => {
-    const fetchPayouts = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetchPayoutsDetailed(pagination.pageIndex + 1, pagination.pageSize);
-        setPayouts(response.data);
-        setTotalPages(response.meta.totalPages);
-      } catch (error) {
-        console.error('Error fetching payouts:', error);
-        toast({
-          variant: 'error',
-          title: 'Error',
-          description: 'Failed to fetch payout details.',
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
+  const fetchPayouts = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetchPayoutsDetailed(pagination.pageIndex + 1, pagination.pageSize);
+      setPayouts(response.data);
+      setTotalPages(response.meta.totalPages);
+    } catch (error) {
+      console.error('Error fetching payouts:', error);
+      toast({
+        variant: 'error',
+        title: 'Error',
+        description: 'Failed to fetch payout details.',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     fetchPayouts();
   }, [pagination, toast]);
 
@@ -172,6 +174,66 @@ export default function SpPayoutPage() {
   const refreshPayouts = () => {
     fetchPayouts();
     setSelectedPayments(new Set());
+  };
+
+  const handleFetchUTRs = async () => {
+    try {
+      setIsLoading(true);
+
+      const result = await fetchUTRs(50, false);
+
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: `UTR fetch completed. Found ${result.data.utrs_found} UTRs, updated ${result.data.utrs_updated} records.`,
+        });
+
+        // Refresh the payouts to show updated UTRs
+        fetchPayouts();
+      } else {
+        throw new Error(result.error || 'Failed to fetch UTRs');
+      }
+
+    } catch (error) {
+      console.error('Error fetching UTRs:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to fetch UTRs from Razorpay",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFailedTransactions = async () => {
+    try {
+      setIsLoading(true);
+
+      const result = await handleFailedTransactionsAPI(50, false);
+
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: `Failed transaction detection completed. Found ${result.data.failed_found} failed payouts, marked ${result.data.permanently_failed} as failed (manual retry required).`,
+        });
+
+        // Refresh the payouts to show updated statuses
+        fetchPayouts();
+      } else {
+        throw new Error(result.error || 'Failed to handle failed transactions');
+      }
+
+    } catch (error) {
+      console.error('Error handling failed transactions:', error);
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to handle failed transactions",
+        variant: "destructive",
+      });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   // const handleExport = async () => {
@@ -364,6 +426,68 @@ export default function SpPayoutPage() {
       cell: (info) => info.getValue<string>() || 'N/A',
     },
     {
+      accessorKey: 'utr_number',
+      header: 'UTR Number',
+      cell: ({ row }) => {
+        const utr = row.original.utr_number;
+        const isPaid = row.original.payout_status === 'Paid';
+        const hasTransferId = row.original.razorpay_transfer_id;
+        const payoutId = row.original.id;
+
+        const handleUTRUpdate = (updatedPayoutId: string, newUTR: string) => {
+          // Update the local state to reflect the change
+          setPayouts(prevPayouts =>
+            prevPayouts.map(payout =>
+              payout.id === updatedPayoutId
+                ? { ...payout, utr_number: newUTR }
+                : payout
+            )
+          );
+        };
+
+        if (utr) {
+          return (
+            <div className="flex items-center space-x-2">
+              <span className="font-mono text-sm bg-green-50 text-green-700 px-2 py-1 rounded">
+                {utr}
+              </span>
+              <span className="text-xs text-gray-400" title="UTR cannot be edited once set">
+                🔒
+              </span>
+            </div>
+          );
+        } else if (isPaid && hasTransferId) {
+          return (
+            <div className="flex items-center space-x-2">
+              <span className="text-yellow-600 text-xs bg-yellow-50 px-2 py-1 rounded">
+                Pending
+              </span>
+              <UTREditDialog
+                payoutId={payoutId}
+                currentUTR=""
+                onUTRUpdate={handleUTRUpdate}
+              />
+            </div>
+          );
+        } else {
+          return (
+            <div className="flex items-center space-x-2">
+              <span className="text-gray-400 text-xs">
+                N/A
+              </span>
+              {isPaid && (
+                <UTREditDialog
+                  payoutId={payoutId}
+                  currentUTR=""
+                  onUTRUpdate={handleUTRUpdate}
+                />
+              )}
+            </div>
+          );
+        }
+      },
+    },
+    {
       accessorKey: 'created_at',
       header: 'Created At',
       cell: (info) => {
@@ -398,6 +522,29 @@ export default function SpPayoutPage() {
       cell: ({ row }) => {
         const payout = row.original;
         const isPaid = payout.payout_status === 'Paid';
+        const isFailed = payout.payout_status === 'Failed';
+
+        const handleRetryPayout = async () => {
+          try {
+            const result = await retryFailedPayout(payout.id);
+
+            if (result.success) {
+              toast({
+                title: "Success",
+                description: `Payout retry initiated for ${result.data.provider_name}`,
+              });
+              fetchPayouts(); // Refresh the list
+            } else {
+              throw new Error(result.error || 'Failed to retry payout');
+            }
+          } catch (error) {
+            toast({
+              title: "Error",
+              description: error instanceof Error ? error.message : "Failed to retry payout",
+              variant: "destructive",
+            });
+          }
+        };
 
         return (
           <div className="flex items-center space-x-1">
@@ -416,6 +563,18 @@ export default function SpPayoutPage() {
                 )}
               </Link>
             </Button>
+
+            {isFailed && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleRetryPayout}
+                className="text-green-600 hover:text-green-700"
+                title="Retry Failed Transfer"
+              >
+                <Play className="w-3 h-3" />
+              </Button>
+            )}
 
             {!isPaid && (
               <>
@@ -474,6 +633,24 @@ export default function SpPayoutPage() {
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">SP Payout Details</h1>
           <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              onClick={handleFetchUTRs}
+              className="flex items-center space-x-2 text-blue-600 border-blue-200 hover:bg-blue-50"
+              disabled={isLoading}
+            >
+              <Download className="w-4 h-4" />
+              <span>Fetch UTRs</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={handleFailedTransactions}
+              className="flex items-center space-x-2 text-orange-600 border-orange-200 hover:bg-orange-50"
+              disabled={isLoading}
+            >
+              <CheckCircle className="w-4 h-4" />
+              <span>Handle Failed</span>
+            </Button>
             <Button
               variant="outline"
               onClick={() => setShowControlPanel(!showControlPanel)}

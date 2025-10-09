@@ -3519,6 +3519,71 @@ export const singlePaymentAction = async (action: string, paymentId: string): Pr
 //   }
 // };
 
+// UTR Management API functions
+export const fetchUTRs = async (limit = 50, dryRun = false): Promise<any> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/payouts/fetch-utrs', {
+      params: { limit, dryRun },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Failed to fetch UTRs.');
+  }
+};
+
+export const handleFailedTransactions = async (limit = 50, dryRun = false): Promise<any> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/payouts/handle-failed', {
+      params: { limit, dryRun },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Failed to handle failed transactions.');
+  }
+};
+
+export const retryFailedPayout = async (payoutId: string, scheduledDate?: string): Promise<any> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post(`/payouts/${payoutId}/retry`,
+      scheduledDate ? { scheduledDate } : {},
+      {
+        headers: {
+          'admin-auth-token': token || '',
+        },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Failed to retry payout.');
+  }
+};
+
+export const updatePayoutUTR = async (payoutId: string, utrNumber: string): Promise<any> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.put(`/payouts/${payoutId}/utr`,
+      { utr_number: utrNumber },
+      {
+        headers: {
+          'admin-auth-token': token || '',
+        },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.error || 'Failed to update UTR.');
+  }
+};
+
 // Payout Transactions API functions
 export interface PayoutTransaction {
   id: string;
