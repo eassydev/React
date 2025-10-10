@@ -75,7 +75,7 @@ const EditBookingForm: React.FC = () => {
     { id: string; sampleid: number; full_address: string }[]
   >([]);
   const [deliveryAddressId, setDeliveryAddressId] = useState<number | null>(null);
-  const [status, setStatus] = useState<string>('accepted');
+  const [status, setStatus] = useState<string>('');
 
   const { toast } = useToast();
 
@@ -693,12 +693,14 @@ const EditBookingForm: React.FC = () => {
                   value={status}
                   onChange={(e) => setStatus(e.target.value)}
                 >
-                  <option value="Completed">Completed</option>
-                  <option value="Cancelled">Cancelled</option>
-                  <option value="Pending">Pending</option>
-                  <option value="Accepted">Accepted</option>
-                  <option value="Running">Running</option>
-                  <option value="Initiated">Initiated</option>
+                  <option value="pending">Pending</option>
+                  <option value="accepted">Accepted</option>
+                  <option value="running">Running</option>
+                  <option value="completed">Completed</option>
+                  <option value="cancelled">Cancelled</option>
+                  <option value="disputed">Disputed</option>
+                  <option value="initiated">Initiated</option>
+                  <option value="expired">Expired</option>
                 </select>
               </div>
 
