@@ -38,7 +38,7 @@ const ViewBookingPage: React.FC = () => {
   const [selectedProviderId, setSelectedProviderId] = useState<string>('');
   const [selectedProviderName, setSelectedProviderName] = useState<string>('Select an option');
   const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [status, setStatus] = useState<string>('accepted');
+  const [status, setStatus] = useState<string>('');
   const [bookingDetails, setBookingDetails] = useState<any>(null);
   const [report, setReport] = useState<any>(null);
   const [bookingCoupon, setbookingCoupon] = useState<any>(null);
