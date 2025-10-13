@@ -8,11 +8,11 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
-import { 
-  Users, 
-  Plus, 
-  Edit, 
-  Trash2, 
+import {
+  Users,
+  Plus,
+  Edit,
+  Trash2,
   UserCheck,
   Crown,
   Shield,
@@ -29,7 +29,13 @@ import { B2BSPOCForm } from './B2BSPOCForm';
 import { B2BSPOCList } from './B2BSPOCList';
 import { B2BSPOCWorkloadChart } from './B2BSPOCWorkloadChart';
 import { B2BSPOCTableView } from './B2BSPOCTableView';
-import { tokenUtils } from '@/lib/utils'; // ✅ FIXED: Import existing tokenUtils
+import {
+  fetchSPOCAssignments,
+  fetchSPOCWorkload,
+  createSPOCAssignment,
+  updateSPOCAssignment,
+  deactivateSPOCAssignment
+} from '@/lib/api'; // ✅ Import SPOC API functions
 
 interface SPOCAssignment {
   id: string;
@@ -159,36 +165,21 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
       setLoading(true);
       setError(null);
 
-      const token = tokenUtils.get(); // ✅ FIXED: Use existing tokenUtils
-      console.log('🔍 Loading SPOC assignments with token:', token ? 'Present' : 'Missing');
+      console.log('🔍 Loading SPOC assignments...');
 
-      const response = await fetch('/admin-api/b2b/spoc/assignments', {
-        headers: {
-          'admin-auth-token': token || '',
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await fetchSPOCAssignments();
 
-      console.log('🔍 SPOC assignments response:', response.status, response.statusText);
+      console.log('🔍 SPOC assignments response:', response);
 
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('🔍 SPOC assignments error:', errorData);
-        throw new Error(errorData.message || `HTTP ${response.status}: Failed to load SPOC assignments`);
-      }
-
-      const data = await response.json();
-      console.log('🔍 SPOC assignments data:', data);
-
-      if (data.success) {
-        setAssignments(data.data.assignments || []);
-        setStatistics(data.data.summary || {});
+      if (response.success) {
+        setAssignments(response.data.assignments || []);
+        setStatistics(response.data.summary || {});
       } else {
-        throw new Error(data.message || 'Failed to load SPOC assignments');
+        throw new Error(response.message || 'Failed to load SPOC assignments');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('❌ Error loading assignments:', err);
-      setError(err instanceof Error ? err.message : 'Failed to load assignments');
+      setError(err.message || 'Failed to load assignments');
     } finally {
       setLoading(false);
     }
@@ -196,123 +187,67 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
 
   const loadWorkloadData = async () => {
     try {
-      const token = tokenUtils.get(); // ✅ FIXED: Use existing tokenUtils
-      console.log('🔍 Loading SPOC workload with token:', token ? 'Present' : 'Missing');
+      console.log('🔍 Loading SPOC workload...');
 
-      const response = await fetch('/admin-api/b2b/spoc/workload', {
-        headers: {
-          'admin-auth-token': token || '',
-          'Content-Type': 'application/json'
-        }
-      });
+      const response = await fetchSPOCWorkload();
 
-      console.log('🔍 SPOC workload response:', response.status, response.statusText);
+      console.log('🔍 SPOC workload response:', response);
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('🔍 SPOC workload data:', data);
-
-        if (data.success) {
-          setWorkloadData(data.data.spoc_workloads || []);
-        }
-      } else {
-        const errorData = await response.json().catch(() => ({}));
-        console.error('🔍 SPOC workload error:', errorData);
+      if (response.success) {
+        setWorkloadData(response.data.spoc_workloads || []);
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('❌ Error loading workload data:', err);
     }
   };
 
   const handleAddAssignment = async (assignmentData: Partial<SPOCAssignment>) => {
     try {
-      const token = tokenUtils.get(); // ✅ FIXED: Use existing tokenUtils
-      const response = await fetch('/admin-api/b2b/spoc/assignments', {
-        method: 'POST',
-        headers: {
-          'admin-auth-token': token || '',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(assignmentData)
-      });
+      const response = await createSPOCAssignment(assignmentData);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to create SPOC assignment');
-      }
-
-      const data = await response.json();
-      if (data.success) {
+      if (response.success) {
         setShowAddForm(false);
         await loadAssignments();
         await loadWorkloadData();
       } else {
-        throw new Error(data.message || 'Failed to create SPOC assignment');
+        throw new Error(response.message || 'Failed to create SPOC assignment');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error creating assignment:', err);
-      setError(err instanceof Error ? err.message : 'Failed to create assignment');
+      setError(err.message || 'Failed to create assignment');
     }
   };
 
   const handleEditAssignment = async (assignmentId: string, assignmentData: Partial<SPOCAssignment>) => {
     try {
-      const token = tokenUtils.get(); // ✅ FIXED: Use existing tokenUtils
-      const response = await fetch(`/admin-api/b2b/spoc/assignments/${assignmentId}`, {
-        method: 'PUT',
-        headers: {
-          'admin-auth-token': token || '',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(assignmentData)
-      });
+      const response = await updateSPOCAssignment(assignmentId, assignmentData);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to update SPOC assignment');
-      }
-
-      const data = await response.json();
-      if (data.success) {
+      if (response.success) {
         setEditingAssignment(null);
         await loadAssignments();
         await loadWorkloadData();
       } else {
-        throw new Error(data.message || 'Failed to update SPOC assignment');
+        throw new Error(response.message || 'Failed to update SPOC assignment');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating assignment:', err);
-      setError(err instanceof Error ? err.message : 'Failed to update assignment');
+      setError(err.message || 'Failed to update assignment');
     }
   };
 
   const handleDeactivateAssignment = async (assignmentId: string, reason: string) => {
     try {
-      const token = tokenUtils.get(); // ✅ FIXED: Use existing tokenUtils
-      const response = await fetch(`/admin-api/b2b/spoc/assignments/${assignmentId}`, {
-        method: 'DELETE',
-        headers: {
-          'admin-auth-token': token || '',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({ reason })
-      });
+      const response = await deactivateSPOCAssignment(assignmentId, reason);
 
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to deactivate SPOC assignment');
-      }
-
-      const data = await response.json();
-      if (data.success) {
+      if (response.success) {
         await loadAssignments();
         await loadWorkloadData();
       } else {
-        throw new Error(data.message || 'Failed to deactivate SPOC assignment');
+        throw new Error(response.message || 'Failed to deactivate SPOC assignment');
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deactivating assignment:', err);
-      setError(err instanceof Error ? err.message : 'Failed to deactivate assignment');
+      setError(err.message || 'Failed to deactivate assignment');
     }
   };
 
