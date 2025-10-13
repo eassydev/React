@@ -7,10 +7,13 @@ const nextConfig = {
     ignoreBuildErrors: true,
   },
   async rewrites() {
+    // Use environment variable for backend URL, fallback to localhost for development
+    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:5001';
+
     return [
       {
         source: '/admin-api/:path*',
-        destination: 'http://localhost:5001/admin-api/:path*',
+        destination: `${backendUrl}/admin-api/:path*`,
       },
     ];
   },
