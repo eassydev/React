@@ -11967,3 +11967,189 @@ export const requestSPInvoiceRevision = async (id: string, data: { revision_reas
     throw new Error(error.response?.data?.message || 'Failed to request SP invoice revision');
   }
 };
+
+// ============================================================================
+// SPOC MANAGEMENT API FUNCTIONS
+// ============================================================================
+
+/**
+ * Fetch SPOC assignments with optional filters
+ */
+export const fetchSPOCAssignments = async (params: {
+  client_id?: string;
+  spoc_type?: string;
+  active_only?: boolean;
+  page?: number;
+  limit?: number;
+} = {}) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get('/b2b/spoc/assignments', {
+      params: {
+        page: params.page || 1,
+        limit: params.limit || 20,
+        ...params
+      },
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching SPOC assignments:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch SPOC assignments');
+  }
+};
+
+/**
+ * Fetch SPOC users available for assignment
+ */
+export const fetchSPOCUsers = async () => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get('/b2b/spoc/users', {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching SPOC users:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch SPOC users');
+  }
+};
+
+/**
+ * Fetch SPOC workload statistics
+ */
+export const fetchSPOCWorkload = async (spocUserId?: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const url = spocUserId ? `/b2b/spoc/workload/${spocUserId}` : '/b2b/spoc/workload';
+
+    const response = await apiClient.get(url, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching SPOC workload:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch SPOC workload');
+  }
+};
+
+/**
+ * Create a new SPOC assignment
+ */
+export const createSPOCAssignment = async (assignmentData: any) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post('/b2b/spoc/assignments', assignmentData, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error creating SPOC assignment:', error);
+    throw new Error(error.response?.data?.message || 'Failed to create SPOC assignment');
+  }
+};
+
+/**
+ * Update an existing SPOC assignment
+ */
+export const updateSPOCAssignment = async (assignmentId: string, assignmentData: any) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.put(`/b2b/spoc/assignments/${assignmentId}`, assignmentData, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error updating SPOC assignment:', error);
+    throw new Error(error.response?.data?.message || 'Failed to update SPOC assignment');
+  }
+};
+
+/**
+ * Deactivate a SPOC assignment
+ */
+export const deactivateSPOCAssignment = async (assignmentId: string, reason: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.delete(`/b2b/spoc/assignments/${assignmentId}`, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+      data: { reason }
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error deactivating SPOC assignment:', error);
+    throw new Error(error.response?.data?.message || 'Failed to deactivate SPOC assignment');
+  }
+};
+
+/**
+ * Fetch B2B client details (for SPOC form)
+ */
+export const fetchB2BClientById = async (clientId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get(`/b2b/clients/${clientId}`, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching B2B client:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch B2B client');
+  }
+};

@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { tokenUtils } from '@/lib/utils'; // ✅ FIXED: Import tokenUtils
+import { fetchSPOCUsers, fetchB2BClientById } from '@/lib/api'; // ✅ Import SPOC API functions
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -18,8 +18,8 @@ import {
   Mail,
   Phone,
   Building2,
-  Crown, 
-  Shield, 
+  Crown,
+  Shield,
   Bell,
   Target,
   AlertCircle,
@@ -245,31 +245,20 @@ export const B2BSPOCForm: React.FC<B2BSPOCFormProps> = ({
   const loadAdminUsers = async () => {
     try {
       console.log('🔄 Loading SPOC users...'); // ✅ DEBUG
-      const token = tokenUtils.get(); // ✅ FIXED: Use tokenUtils
-      console.log('🔑 Token:', token ? 'Present' : 'Missing'); // ✅ DEBUG
-      const response = await fetch('/admin-api/b2b/spoc/users', { // ✅ FIXED: Correct SPOC users endpoint
-        headers: {
-          'admin-auth-token': token || '',
-          'Content-Type': 'application/json'
-        }
-      });
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('🔍 SPOC Users API Response:', data); // ✅ DEBUG: Log the response
-        if (data.success) {
-          const users = data.data || [];
-          setAdminUsers(users); // ✅ FIXED: Backend returns data.data directly, not data.data.users
-          console.log('✅ SPOC Users loaded:', users.length); // ✅ DEBUG: Log count
-          console.log('👥 Available SPOC User IDs:', users.map((u: AdminUser) => `${u.full_name}: ${u.id}`)); // ✅ DEBUG: Show user IDs
+      const response = await fetchSPOCUsers();
 
-          // ✅ SIMPLE: No complex matching needed - SPOC user ID is set directly from assignment.spocUser
-          console.log('✅ SPOC users loaded, form should already have correct SPOC user ID from assignment data');
-        }
-      } else {
-        console.error('❌ Failed to load SPOC users:', response.status);
+      console.log('🔍 SPOC Users API Response:', response); // ✅ DEBUG: Log the response
+      if (response.success) {
+        const users = response.data || [];
+        setAdminUsers(users); // ✅ FIXED: Backend returns data.data directly, not data.data.users
+        console.log('✅ SPOC Users loaded:', users.length); // ✅ DEBUG: Log count
+        console.log('👥 Available SPOC User IDs:', users.map((u: AdminUser) => `${u.full_name}: ${u.id}`)); // ✅ DEBUG: Show user IDs
+
+        // ✅ SIMPLE: No complex matching needed - SPOC user ID is set directly from assignment.spocUser
+        console.log('✅ SPOC users loaded, form should already have correct SPOC user ID from assignment data');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading admin users:', error);
     }
   };
@@ -277,27 +266,17 @@ export const B2BSPOCForm: React.FC<B2BSPOCFormProps> = ({
   const loadCustomerData = async (customerId: string) => {
     try {
       console.log('🔄 Loading customer data for ID:', customerId); // ✅ DEBUG
-      const token = tokenUtils.get(); // ✅ FIXED: Use tokenUtils
-      const response = await fetch(`/admin-api/b2b/clients/${customerId}`, { // ✅ FIXED: Correct API endpoint
-        headers: {
-          'admin-auth-token': token || '',
-          'Content-Type': 'application/json'
-        }
-      });
 
-      if (response.ok) {
-        const data = await response.json();
-        console.log('🔍 Customer data response:', data); // ✅ DEBUG
-        if (data.success) {
-          setSelectedCustomer(data.data);
-          console.log('✅ Customer loaded:', data.data?.company_name); // ✅ DEBUG
-        } else {
-          console.error('❌ Failed to load customer:', data.message);
-        }
+      const response = await fetchB2BClientById(customerId);
+
+      console.log('🔍 Customer data response:', response); // ✅ DEBUG
+      if (response.success) {
+        setSelectedCustomer(response.data);
+        console.log('✅ Customer loaded:', response.data?.company_name); // ✅ DEBUG
       } else {
-        console.error('❌ Customer API error:', response.status);
+        console.error('❌ Failed to load customer:', response.message);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error loading customer data:', error);
     }
   };
