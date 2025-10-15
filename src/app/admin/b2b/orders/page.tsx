@@ -3,7 +3,15 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Plus, Search, Eye, Edit, Settings, Download, FileText, Upload, CheckSquare, Square } from 'lucide-react';
-import { fetchB2BOrders, downloadB2BInvoiceSimple, fetchB2BStatusOptions, StatusOption, bulkUpdateB2BOrderStatus } from '@/lib/api';
+import {
+  fetchB2BOrders,
+  downloadB2BInvoiceSimple,
+  fetchB2BStatusOptions,
+  StatusOption,
+  bulkUpdateB2BOrderStatus,
+  checkB2BInvoiceExists,
+  generateB2BOrderInvoice
+} from '@/lib/api';
 import { StatusBadge } from '@/components/b2b/StatusDropdown';
 import { useToast } from '@/hooks/use-toast';
 
@@ -161,84 +169,56 @@ export default function B2BOrdersPage() {
   const handleGenerateInvoice = async (orderId: string, orderNumber: string) => {
     try {
       // ✅ First check if invoice already exists
-      const adminToken = localStorage.getItem('token') || localStorage.getItem('adminToken');
+      const checkResponse = await checkB2BInvoiceExists(orderId);
 
-      const checkResponse = await fetch(`/admin-api/b2b/orders/${orderId}/invoice-check`, {
-        headers: {
-          'admin-auth-token': adminToken || ''
-        }
-      });
-
-      if (checkResponse.ok) {
-        const checkData = await checkResponse.json();
-        if (checkData.data.exists) {
-          toast({
-            title: "Invoice Already Exists",
-            description: `Invoice ${checkData.data.invoice_number} already exists for this order. Redirecting to invoice listing...`,
-            duration: 3000,
-          });
-
-          // Redirect to invoice listing with search query
-          setTimeout(() => {
-            if (checkData.data.redirect_to) {
-              window.location.href = checkData.data.redirect_to;
-            } else {
-              window.location.href = `/admin/b2b/invoices?search=${checkData.data.invoice_number}`;
-            }
-          }, 1500);
-          return;
-        }
-      }
-
-      // ✅ Generate new invoice
-      const response = await fetch(`/admin-api/b2b/orders/${orderId}/generate-invoice`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'admin-auth-token': adminToken || ''
-        },
-        body: JSON.stringify({
-          // ✅ FIXED: Remove hardcoded subtotal - let backend calculate from order
-          payment_terms: 'Net 30 days',
-          notes: `Invoice for order ${orderNumber}`,
-          due_days: 30
-        })
-      });
-
-      if (response.status === 401) {
+      if (checkResponse.success && checkResponse.data.exists) {
         toast({
-          title: "Authentication Error",
-          description: "Please check your login status and try again.",
-          variant: "destructive",
+          title: "Invoice Already Exists",
+          description: `Invoice ${checkResponse.data.invoice_number} already exists for this order. Redirecting to invoice listing...`,
+          duration: 3000,
         });
+
+        // Redirect to invoice listing with search query
+        setTimeout(() => {
+          if (checkResponse.data.redirect_to) {
+            window.location.href = checkResponse.data.redirect_to;
+          } else {
+            window.location.href = `/admin/b2b/invoices?search=${checkResponse.data.invoice_number}`;
+          }
+        }, 1500);
         return;
       }
 
-      if (response.ok) {
-        const data = await response.json();
+      // ✅ Generate new invoice
+      const response = await generateB2BOrderInvoice(orderId, {
+        payment_terms: 'Net 30 days',
+        notes: `Invoice for order ${orderNumber}`,
+        due_days: 30
+      });
 
+      if (response.success) {
         // ✅ Handle PDF generation status
-        const pdfStatus = data.data.pdf_status;
-        const pdfError = data.data.pdf_error;
+        const pdfStatus = response.data.pdf_status;
+        const pdfError = response.data.pdf_error;
 
         // Show appropriate message based on invoice and PDF status
         let title = "Invoice Generated Successfully!";
         let description = "";
         let duration = 3000;
 
-        if (data.data.existing) {
+        if (response.data.existing) {
           title = "Invoice Already Exists";
-          description = `Invoice ${data.data.invoice_number} already exists for this order. Redirecting to invoice listing...`;
+          description = `Invoice ${response.data.invoice_number} already exists for this order. Redirecting to invoice listing...`;
         } else if (pdfStatus === 'success') {
           title = "Invoice Generated Successfully!";
-          description = `Invoice ${data.data.invoice_number} has been generated successfully with PDF. Redirecting to invoice listing...`;
+          description = `Invoice ${response.data.invoice_number} has been generated successfully with PDF. Redirecting to invoice listing...`;
         } else if (pdfStatus === 'failed') {
           title = "Invoice Generated (PDF Failed)";
-          description = `Invoice ${data.data.invoice_number} generated, but PDF generation failed. You can retry PDF generation from the invoice details. Redirecting...`;
+          description = `Invoice ${response.data.invoice_number} generated, but PDF generation failed. You can retry PDF generation from the invoice details. Redirecting...`;
           duration = 5000; // Longer duration for important message
         } else {
           title = "Invoice Generated Successfully!";
-          description = `Invoice ${data.data.invoice_number} has been generated successfully. Redirecting to invoice listing...`;
+          description = `Invoice ${response.data.invoice_number} has been generated successfully. Redirecting to invoice listing...`;
         }
 
         toast({
@@ -258,18 +238,17 @@ export default function B2BOrdersPage() {
 
         // Auto-redirect to invoice listing
         setTimeout(() => {
-          if (data.data.redirect_to) {
-            window.location.href = data.data.redirect_to;
+          if (response.data.redirect_to) {
+            window.location.href = response.data.redirect_to;
           } else {
             window.location.href = '/admin/b2b/invoices';
           }
         }, 2000); // 2 second delay to show the message
 
       } else {
-        const errorData = await response.json();
         toast({
           title: "Error",
-          description: `Failed to generate invoice: ${errorData.message || 'Unknown error'}`,
+          description: `Failed to generate invoice: ${response.message || 'Unknown error'}`,
           variant: "destructive",
         });
       }
@@ -286,16 +265,10 @@ export default function B2BOrdersPage() {
   // ✅ NEW: Quick function to check invoice status for an order
   const checkInvoiceStatus = async (orderId: string) => {
     try {
-      const adminToken = localStorage.getItem('token') || localStorage.getItem('adminToken');
-      const response = await fetch(`/admin-api/b2b/orders/${orderId}/invoice-check`, {
-        headers: {
-          'admin-auth-token': adminToken || ''
-        }
-      });
+      const response = await checkB2BInvoiceExists(orderId);
 
-      if (response.ok) {
-        const data = await response.json();
-        return data.data;
+      if (response.success) {
+        return response.data;
       }
       return { exists: false };
     } catch (error) {

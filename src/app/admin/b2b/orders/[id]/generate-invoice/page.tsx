@@ -11,6 +11,12 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { toast } from '@/hooks/use-toast';
+import {
+  checkB2BInvoiceExists,
+  generateB2BOrderInvoice,
+  regenerateB2BInvoicePDF,
+  fetchB2BOrderById
+} from '@/lib/api';
 
 interface InvoiceItem {
   description: string;
@@ -66,29 +72,22 @@ export default function GenerateInvoicePage() {
 
   const checkExistingInvoice = async () => {
     try {
-      const response = await fetch(`/admin-api/b2b/orders/${orderId}/invoice-check`, {
-        headers: {
-          'admin-auth-token': localStorage.getItem('adminToken') || ''
-        }
-      });
+      const response = await checkB2BInvoiceExists(orderId);
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.data.exists) {
-          setInvoiceGenerated(true);
-          setGeneratedInvoice({
-            invoice_id: data.data.invoice_id,
-            invoice_number: data.data.invoice_number,
-            total_amount: data.data.total_amount,
-            payment_status: data.data.payment_status,
-            download_url: data.data.download_url
-          });
+      if (response.data.exists) {
+        setInvoiceGenerated(true);
+        setGeneratedInvoice({
+          invoice_id: response.data.invoice_id,
+          invoice_number: response.data.invoice_number,
+          total_amount: response.data.total_amount,
+          payment_status: response.data.payment_status,
+          download_url: response.data.download_url
+        });
 
-          toast({
-            title: 'Invoice Already Exists',
-            description: `Invoice ${data.data.invoice_number} already exists for this order`,
-          });
-        }
+        toast({
+          title: 'Invoice Already Exists',
+          description: `Invoice ${response.data.invoice_number} already exists for this order`,
+        });
       }
     } catch (error) {
       console.error('Error checking existing invoice:', error);
@@ -97,15 +96,10 @@ export default function GenerateInvoicePage() {
 
   const fetchOrderDetails = async () => {
     try {
-      const response = await fetch(`/admin-api/b2b/orders/${orderId}`, {
-        headers: {
-          'admin-auth-token': localStorage.getItem('adminToken') || ''
-        }
-      });
+      const response = await fetchB2BOrderById(orderId);
 
-      if (response.ok) {
-        const data = await response.json();
-        const orderData = data.data;
+      if (response.success) {
+        const orderData = response.data;
         setOrder(orderData);
 
         // Initialize invoice data from order
@@ -187,28 +181,21 @@ export default function GenerateInvoicePage() {
 
       const { subtotal } = calculateTotals();
 
-      const response = await fetch(`/admin-api/b2b/orders/${orderId}/generate-invoice`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'admin-auth-token': localStorage.getItem('adminToken') || ''
-        },
-        body: JSON.stringify({
-          subtotal: subtotal,
-          payment_terms: invoiceData.payment_terms,
-          notes: invoiceData.notes,
-          due_days: invoiceData.due_days,
-          invoice_items: invoiceData.invoice_items.map(item => ({
-            description: item.description,
-            quantity: item.quantity,
-            unit_price: item.unit_price,
-            tax_rate: item.tax_rate
-          }))
-        })
+      const response = await generateB2BOrderInvoice(orderId, {
+        subtotal: subtotal,
+        payment_terms: invoiceData.payment_terms,
+        notes: invoiceData.notes,
+        due_days: invoiceData.due_days,
+        invoice_items: invoiceData.invoice_items.map(item => ({
+          description: item.description,
+          quantity: item.quantity,
+          unit_price: item.unit_price,
+          tax_rate: item.tax_rate
+        }))
       });
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.success) {
+        const data = response;
         setGeneratedInvoice(data.data);
         setInvoiceGenerated(true);
 
@@ -297,15 +284,10 @@ export default function GenerateInvoicePage() {
     try {
       setGenerating(true);
 
-      const response = await fetch(`/admin-api/b2b/invoices/${generatedInvoice.invoice_id}/regenerate-pdf`, {
-        method: 'POST',
-        headers: {
-          'admin-auth-token': localStorage.getItem('adminToken') || ''
-        }
-      });
+      const response = await regenerateB2BInvoicePDF(generatedInvoice.invoice_id);
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.success) {
+        const data = response;
 
         if (data.data.pdf_status === 'success') {
           // Update the generated invoice data

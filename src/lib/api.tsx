@@ -12153,3 +12153,90 @@ export const fetchB2BClientById = async (clientId: string) => {
     throw new Error(error.response?.data?.message || 'Failed to fetch B2B client');
   }
 };
+
+// ============================================================================
+// B2B INVOICE GENERATION API FUNCTIONS
+// ============================================================================
+
+/**
+ * Check if invoice exists for a B2B order
+ */
+export const checkB2BInvoiceExists = async (orderId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get(`/b2b/orders/${orderId}/invoice-check`, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error checking invoice existence:', error);
+    throw new Error(error.response?.data?.message || 'Failed to check invoice existence');
+  }
+};
+
+/**
+ * Generate invoice for a B2B order
+ */
+export const generateB2BOrderInvoice = async (orderId: string, invoiceData: {
+  subtotal?: number;
+  payment_terms?: string;
+  notes?: string;
+  due_days?: number;
+  invoice_items?: Array<{
+    description: string;
+    quantity: number;
+    unit_price: number;
+    tax_rate: number;
+  }>;
+}) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post(`/b2b/orders/${orderId}/generate-invoice`, invoiceData, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error generating invoice:', error);
+    throw new Error(error.response?.data?.message || 'Failed to generate invoice');
+  }
+};
+
+/**
+ * Regenerate PDF for a B2B invoice
+ */
+export const regenerateB2BInvoicePDF = async (invoiceId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post(`/b2b/invoices/${invoiceId}/regenerate-pdf`, {}, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error regenerating invoice PDF:', error);
+    throw new Error(error.response?.data?.message || 'Failed to regenerate invoice PDF');
+  }
+};
