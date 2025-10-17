@@ -12335,7 +12335,7 @@ export interface B2BDashboardData {
     by_revenue: Array<{
       id: string;
       company_name: string;
-      revenue: number;
+      total_value: number;
       profit_margin_percentage: string;
     }>;
     by_profit: Array<{
