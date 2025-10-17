@@ -12347,8 +12347,8 @@ export interface B2BDashboardData {
     by_orders: Array<{
       id: string;
       company_name: string;
-      order_count: number;
-      revenue: number;
+      orders: number;
+      total_value: number;
     }>;
   };
 }

@@ -177,7 +177,7 @@ export default function B2BAnalyticsDashboard() {
         <B2BTopCustomersTable
           title="Top Customers by Orders"
           data={data.top_performers.by_orders}
-          metric="order_count"
+          metric="orders"
         />
       </div>
     </div>

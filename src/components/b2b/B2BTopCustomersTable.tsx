@@ -16,16 +16,16 @@ import { useRouter } from 'next/navigation';
 interface TopCustomer {
   id: string;
   company_name: string;
-  revenue?: number;
+  total_value?: number;  // For by_revenue and by_orders
   profit?: number;
-  order_count?: number;
+  orders?: number;  // For by_orders
   profit_margin_percentage?: string;
 }
 
 interface B2BTopCustomersTableProps {
   title: string;
   data: TopCustomer[];
-  metric: 'revenue' | 'profit' | 'order_count';
+  metric: 'revenue' | 'profit' | 'orders';
 }
 
 const formatCurrency = (value: number): string => {
@@ -88,7 +88,7 @@ export default function B2BTopCustomersTable({
                   <TableHead className="text-right">Margin %</TableHead>
                 </>
               )}
-              {metric === 'order_count' && (
+              {metric === 'orders' && (
                 <>
                   <TableHead className="text-right">Orders</TableHead>
                   <TableHead className="text-right">Revenue</TableHead>
@@ -114,7 +114,7 @@ export default function B2BTopCustomersTable({
                 {metric === 'revenue' && (
                   <>
                     <TableCell className="text-right font-semibold">
-                      {formatCurrency(customer.revenue || 0)}
+                      {formatCurrency(customer.total_value || 0)}
                     </TableCell>
                     <TableCell className="text-right">
                       <Badge variant="outline">
@@ -135,13 +135,13 @@ export default function B2BTopCustomersTable({
                     </TableCell>
                   </>
                 )}
-                {metric === 'order_count' && (
+                {metric === 'orders' && (
                   <>
                     <TableCell className="text-right font-semibold">
-                      {customer.order_count || 0}
+                      {customer.orders || 0}
                     </TableCell>
                     <TableCell className="text-right">
-                      {formatCurrency(customer.revenue || 0)}
+                      {formatCurrency(customer.total_value || 0)}
                     </TableCell>
                   </>
                 )}
