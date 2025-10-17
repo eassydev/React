@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Filter, Eye, Edit, Trash2 } from 'lucide-react';
+import { Plus, Search, Filter, Eye, Edit, Trash2, BarChart3 } from 'lucide-react';
 import { fetchB2BCustomers, deleteB2BCustomer } from '@/lib/api';
 
 import { Button } from '@/components/ui/button';
@@ -228,6 +228,16 @@ export default function B2BCustomersPage() {
                             >
                               <Link href={`/admin/b2b/customers/${customer.id}`}>
                                 <Eye className="w-4 h-4" />
+                              </Link>
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              asChild
+                              title={`Analytics for ${customer.company_name}`}
+                            >
+                              <Link href={`/admin/b2b/customers/${customer.id}/analytics`}>
+                                <BarChart3 className="w-4 h-4 text-blue-600" />
                               </Link>
                             </Button>
                             <Button

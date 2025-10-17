@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Plus, Search, Eye, Edit, Settings, Download, FileText, Upload, CheckSquare, Square } from 'lucide-react';
+import { Plus, Search, Eye, Edit, Settings, Download, FileText, Upload, CheckSquare, Square, X } from 'lucide-react';
 import {
   fetchB2BOrders,
   downloadB2BInvoiceSimple,
@@ -10,7 +10,9 @@ import {
   StatusOption,
   bulkUpdateB2BOrderStatus,
   checkB2BInvoiceExists,
-  generateB2BOrderInvoice
+  generateB2BOrderInvoice,
+  getB2BOrderInvoicePath,
+  updateB2BOrderRemarks
 } from '@/lib/api';
 import { StatusBadge } from '@/components/b2b/StatusDropdown';
 import { useToast } from '@/hooks/use-toast';
@@ -68,6 +70,9 @@ interface B2BOrder {
   sp_base_price?: number;
   sp_gst_amount?: number;
   sp_total_amount?: number;
+  // Remarks
+  crm_remarks?: string;
+  ops_remarks?: string;
 }
 
 export default function B2BOrdersPage() {
@@ -92,6 +97,14 @@ export default function B2BOrdersPage() {
   const [bulkPaymentStatus, setBulkPaymentStatus] = useState('no_change');
   const [bulkNotes, setBulkNotes] = useState('');
   const [bulkUpdating, setBulkUpdating] = useState(false);
+
+  // Inline editing state for remarks
+  const [editingRemarks, setEditingRemarks] = useState<{
+    orderId: string;
+    field: 'crm_remarks' | 'ops_remarks';
+  } | null>(null);
+  const [remarksValue, setRemarksValue] = useState('');
+  const [savingRemarks, setSavingRemarks] = useState(false);
 
   const fetchOrders = async () => {
     try {
@@ -131,38 +144,25 @@ export default function B2BOrdersPage() {
 
   const handleDownloadInvoice = async (orderId: string) => {
     try {
-      const adminToken = localStorage.getItem('token') || localStorage.getItem('adminToken');
-
-      if (!adminToken) {
-        alert('Authentication token not found. Please login again.');
-        return;
-      }
-
       // ✅ OPTIMIZED: Use lightweight endpoint that only returns invoice path
-      const response = await fetch(`/admin-api/b2b/orders/${orderId}/invoice-path`, {
-        headers: {
-          'admin-auth-token': adminToken
-        }
-      });
+      const response = await getB2BOrderInvoicePath(orderId);
 
-      if (response.ok) {
-        const invoiceData = await response.json();
-        const invoiceFilePath = invoiceData.data?.invoice_file_path;
+      if (response.success) {
+        const invoiceFilePath = response.data?.invoice_file_path;
 
         if (invoiceFilePath) {
           // ✅ SIMPLE: Just open the direct S3 URL (it's already public-read)
           window.open(invoiceFilePath, '_blank');
-          console.log('Invoice download initiated for:', invoiceData.data.invoice_number);
+          console.log('Invoice download initiated for:', response.data.invoice_number);
         } else {
           alert('Invoice file not found for this order');
         }
       } else {
-        const errorData = await response.json();
-        alert(errorData.message || 'Invoice not found for this order');
+        alert(response.message || 'Invoice not found for this order');
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error downloading invoice:', error);
-      alert('Failed to download invoice. Please try again.');
+      alert(error.message || 'Failed to download invoice. Please try again.');
     }
   };
 
@@ -384,7 +384,64 @@ export default function B2BOrdersPage() {
 
   // Status badge functions removed - now using StatusBadge component
 
+  // Remarks editing handlers
+  const handleEditRemarks = (orderId: string, field: 'crm_remarks' | 'ops_remarks', currentValue: string) => {
+    setEditingRemarks({ orderId, field });
+    setRemarksValue(currentValue || '');
+  };
 
+  const handleCancelEditRemarks = () => {
+    setEditingRemarks(null);
+    setRemarksValue('');
+  };
+
+  const handleSaveRemarks = async () => {
+    if (!editingRemarks) return;
+
+    try {
+      setSavingRemarks(true);
+
+      const payload = {
+        [editingRemarks.field]: remarksValue
+      };
+
+      const response = await updateB2BOrderRemarks(editingRemarks.orderId, payload);
+
+      if (response.success) {
+        // Update the local state
+        setOrders(prevOrders =>
+          prevOrders.map(order =>
+            order.id === editingRemarks.orderId
+              ? { ...order, [editingRemarks.field]: remarksValue }
+              : order
+          )
+        );
+
+        toast({
+          title: "Success",
+          description: "Remarks updated successfully",
+        });
+
+        setEditingRemarks(null);
+        setRemarksValue('');
+      } else {
+        toast({
+          title: "Error",
+          description: response.message || "Failed to update remarks",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error updating remarks:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update remarks",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingRemarks(false);
+    }
+  };
 
 
 
@@ -601,6 +658,8 @@ export default function B2BOrdersPage() {
                       <TableHead>Invoice</TableHead>
                       <TableHead>Service Date</TableHead>
                       <TableHead>Received Date</TableHead>
+                      <TableHead>CRM Remarks</TableHead>
+                      <TableHead>OPS Remarks</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
@@ -701,6 +760,94 @@ export default function B2BOrdersPage() {
                           {order.booking_received_date ?
                             new Date(order.booking_received_date * 1000).toLocaleDateString() :
                             order.created_at ? new Date(order.created_at * 1000).toLocaleDateString() : 'N/A'}
+                        </TableCell>
+                        {/* CRM Remarks - Editable */}
+                        <TableCell className="min-w-[200px]">
+                          {editingRemarks?.orderId === order.id && editingRemarks?.field === 'crm_remarks' ? (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={remarksValue}
+                                onChange={(e) => setRemarksValue(e.target.value)}
+                                className="flex-1 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Enter CRM remarks..."
+                                autoFocus
+                              />
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={handleSaveRemarks}
+                                disabled={savingRemarks}
+                                className="h-7 w-7 p-0"
+                              >
+                                <CheckSquare className="w-4 h-4 text-green-600" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={handleCancelEditRemarks}
+                                disabled={savingRemarks}
+                                className="h-7 w-7 p-0"
+                              >
+                                <X className="w-4 h-4 text-red-600" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div
+                              className="cursor-pointer hover:bg-gray-100 p-2 rounded min-h-[32px] flex items-center"
+                              onClick={() => handleEditRemarks(order.id, 'crm_remarks', order.crm_remarks || '')}
+                            >
+                              {order.crm_remarks ? (
+                                <span className="text-sm">{order.crm_remarks}</span>
+                              ) : (
+                                <span className="text-sm text-gray-400 italic">Click to add...</span>
+                              )}
+                            </div>
+                          )}
+                        </TableCell>
+                        {/* OPS Remarks - Editable */}
+                        <TableCell className="min-w-[200px]">
+                          {editingRemarks?.orderId === order.id && editingRemarks?.field === 'ops_remarks' ? (
+                            <div className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={remarksValue}
+                                onChange={(e) => setRemarksValue(e.target.value)}
+                                className="flex-1 px-2 py-1 text-sm border rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                placeholder="Enter OPS remarks..."
+                                autoFocus
+                              />
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={handleSaveRemarks}
+                                disabled={savingRemarks}
+                                className="h-7 w-7 p-0"
+                              >
+                                <CheckSquare className="w-4 h-4 text-green-600" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={handleCancelEditRemarks}
+                                disabled={savingRemarks}
+                                className="h-7 w-7 p-0"
+                              >
+                                <X className="w-4 h-4 text-red-600" />
+                              </Button>
+                            </div>
+                          ) : (
+                            <div
+                              className="cursor-pointer hover:bg-gray-100 p-2 rounded min-h-[32px] flex items-center"
+                              onClick={() => handleEditRemarks(order.id, 'ops_remarks', order.ops_remarks || '')}
+                            >
+                              {order.ops_remarks ? (
+                                <span className="text-sm">{order.ops_remarks}</span>
+                              ) : (
+                                <span className="text-sm text-gray-400 italic">Click to add...</span>
+                              )}
+                            </div>
+                          )}
                         </TableCell>
                         <TableCell>
                           <DropdownMenu>
