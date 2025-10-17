@@ -6005,6 +6005,33 @@ export const bulkUpdateB2BOrderStatus = async (data: {
   }
 };
 
+// ✅ NEW: Update B2B Order Remarks (CRM/OPS)
+export const updateB2BOrderRemarks = async (
+  orderId: string,
+  data: {
+    crm_remarks?: string;
+    ops_remarks?: string;
+  }
+): Promise<{
+  success: boolean;
+  message: string;
+  data?: {
+    id: string;
+    crm_remarks: string;
+    ops_remarks: string;
+  };
+}> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.patch(`/b2b/orders/${orderId}/remarks`, data, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update order remarks.');
+  }
+};
+
 // ✅ NEW: Search Providers for Assignment
 export const searchProvidersForAssignment = async (
   search: string = '',
@@ -12238,5 +12265,312 @@ export const regenerateB2BInvoicePDF = async (invoiceId: string) => {
   } catch (error: any) {
     console.error('❌ Error regenerating invoice PDF:', error);
     throw new Error(error.response?.data?.message || 'Failed to regenerate invoice PDF');
+  }
+};
+
+/**
+ * Get invoice file path for a B2B order (lightweight endpoint for downloads)
+ */
+export const getB2BOrderInvoicePath = async (orderId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get(`/b2b/orders/${orderId}/invoice-path`, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error getting invoice path:', error);
+    throw new Error(error.response?.data?.message || 'Failed to get invoice path');
+  }
+};
+
+// ========================================
+// B2B ANALYTICS API FUNCTIONS
+// ========================================
+// Version: 1.0.0 - Updated 2025-10-17
+
+/**
+ * B2B Analytics Dashboard Data Interface
+ */
+export interface B2BDashboardData {
+  overall_metrics: {
+    customers: {
+      total: number;
+      active: number;
+      inactive: number;
+    };
+    orders_received: {
+      count: number;
+      total_value: number;
+    };
+    orders_completed: {
+      count: number;
+      total_value: number;
+    };
+    revenue: number;
+    profit: {
+      total: number;
+      avg_margin_percentage: string;
+    };
+    outstanding_orders: {
+      count: number;
+      total_value: number;
+    };
+    payment_collection: {
+      paid: number;
+      pending: number;
+      overdue: number;
+      partial: number;
+    };
+  };
+  top_performers: {
+    by_revenue: Array<{
+      id: string;
+      company_name: string;
+      revenue: number;
+      profit_margin_percentage: string;
+    }>;
+    by_profit: Array<{
+      id: string;
+      company_name: string;
+      profit: number;
+      profit_margin_percentage: string;
+    }>;
+    by_orders: Array<{
+      id: string;
+      company_name: string;
+      order_count: number;
+      revenue: number;
+    }>;
+  };
+}
+
+/**
+ * B2B Customer Analytics Data Interface
+ */
+export interface B2BCustomerAnalyticsData {
+  customer_info: {
+    id: string;
+    company_name: string;
+    contact_person: string;
+    email: string;
+    phone: string;
+    credit_limit: number;
+    credit_days: number;
+    status: string;
+  };
+  core_metrics: {
+    orders_received: {
+      count: number;
+      total_value: number;
+    };
+    orders_completed: {
+      count: number;
+      total_value: number;
+    };
+    revenue_generated: number;
+    profit_generated: number;
+    outstanding_orders: {
+      count: number;
+      total_value: number;
+    };
+    payment_collection: {
+      paid: number;
+      pending: number;
+      overdue: number;
+      partial: number;
+    };
+  };
+  financial_health: {
+    avg_order_value: number;
+    outstanding_invoice_amount: number;
+    profit_margin_percentage: string;
+  };
+  relationship_metrics: {
+    customer_tenure: {
+      months: number;
+      years: number;
+      first_order_date: string;
+    };
+    last_order_date: string | null;
+    total_orders_lifetime: number;
+  };
+  operational_metrics: {
+    order_frequency: {
+      orders_per_month: number;
+      total_months: number;
+      frequency_label: string;
+    };
+    service_mix: {
+      by_category: Array<{
+        id: number;
+        category_name: string;
+        order_count: number;
+        total_value: number;
+      }>;
+      by_subcategory: Array<{
+        id: number;
+        subcategory_name: string;
+        category_name: string;
+        order_count: number;
+        total_value: number;
+      }>;
+      top_category: any;
+      top_subcategory: any;
+    };
+    fulfillment_time: {
+      avg_days: number;
+      avg_hours: number;
+      fastest_days: number;
+      slowest_days: number;
+    };
+    cancellation_rate: {
+      cancelled_count: number;
+      total_count: number;
+      cancellation_rate_percentage: number;
+    };
+  };
+  date_range: {
+    start: string;
+    end: string;
+  } | null;
+  generated_at: string;
+}
+
+/**
+ * B2B Customer Trends Data Interface
+ */
+export interface B2BCustomerTrendsData {
+  customer_info: {
+    id: string;
+    company_name: string;
+  };
+  trends: Array<{
+    month: string;
+    order_count: number;
+    revenue: number;
+    profit: number;
+    completed_count: number;
+    cancelled_count: number;
+    completion_rate: number;
+  }>;
+  summary: {
+    total_revenue: number;
+    total_profit: number;
+    total_orders: number;
+    avg_monthly_revenue: number;
+    avg_monthly_orders: number;
+    revenue_growth_rate_percentage: number;
+    period_months: number;
+  };
+  generated_at: string;
+}
+
+/**
+ * Get B2B Analytics Dashboard
+ * @param startDate - Optional start date for filtering (YYYY-MM-DD)
+ * @param endDate - Optional end date for filtering (YYYY-MM-DD)
+ */
+export const getB2BAnalyticsDashboard = async (
+  startDate?: string,
+  endDate?: string
+): Promise<B2BDashboardData> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    let url = '/b2b/analytics/dashboard';
+
+    if (startDate && endDate) {
+      url += `?start_date=${startDate}&end_date=${endDate}`;
+    }
+
+    const response = await apiClient.get(url, {
+      headers: {
+        'admin-auth-token': token
+      }
+    });
+
+    return response.data.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching B2B analytics dashboard:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch dashboard data');
+  }
+};
+
+/**
+ * Get B2B Customer Analytics
+ * @param customerId - Encrypted customer ID
+ * @param startDate - Optional start date for filtering (YYYY-MM-DD)
+ * @param endDate - Optional end date for filtering (YYYY-MM-DD)
+ */
+export const getB2BCustomerAnalytics = async (
+  customerId: string,
+  startDate?: string,
+  endDate?: string
+): Promise<B2BCustomerAnalyticsData> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    let url = `/b2b/customers/${customerId}/analytics`;
+
+    if (startDate && endDate) {
+      url += `?start_date=${startDate}&end_date=${endDate}`;
+    }
+
+    const response = await apiClient.get(url, {
+      headers: {
+        'admin-auth-token': token
+      }
+    });
+
+    return response.data.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching customer analytics:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch customer analytics');
+  }
+};
+
+/**
+ * Get B2B Customer Trends
+ * @param customerId - Encrypted customer ID
+ * @param months - Number of months to look back (default: 12)
+ */
+export const getB2BCustomerTrends = async (
+  customerId: string,
+  months: number = 12
+): Promise<B2BCustomerTrendsData> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    const response = await apiClient.get(
+      `/b2b/customers/${customerId}/trends?months=${months}`,
+      {
+        headers: {
+          'admin-auth-token': token
+        }
+      }
+    );
+
+    return response.data.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching customer trends:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch customer trends');
   }
 };
