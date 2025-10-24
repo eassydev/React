@@ -6888,6 +6888,83 @@ export const downloadB2BQuotationPDF = async (id: string) => {
   }
 };
 
+// ✅ B2B EXCEL UPLOAD FUNCTIONS
+
+// Download B2B Excel template with mode support
+export const downloadB2BExcelTemplate = async (format: 'xlsx' | 'csv' = 'xlsx', mode: 'create_customers' | 'customer_id' = 'create_customers'): Promise<void> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/b2b/orders/excel-template-enhanced', {
+      headers: { 'admin-auth-token': token || '' },
+      params: { format, mode },
+      responseType: 'blob',
+    });
+
+    const blob = new Blob([response.data]);
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const templateName = mode === 'customer_id' ? 'B2B_Orders_CustomerID_Template' : 'B2B_Orders_Template';
+    link.download = `${templateName}.${format}`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch (error: any) {
+    console.error('Error downloading B2B Excel template:', error);
+    throw new Error(error.response?.data?.message || 'Failed to download template');
+  }
+};
+
+// Preview B2B Excel upload
+export const previewB2BExcelUpload = async (file: File): Promise<any> => {
+  try {
+    const token = getToken();
+    const formData = new FormData();
+    formData.append('excel_file', file);
+
+    const response: AxiosResponse = await apiClient.post('/b2b/orders/excel-preview', formData, {
+      headers: {
+        'admin-auth-token': token || '',
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error previewing B2B Excel upload:', error);
+    throw new Error(error.response?.data?.message || 'Failed to preview file');
+  }
+};
+
+// Import B2B Excel data
+export const importB2BExcelData = async (file: File, options: {
+  skip_invalid?: boolean;
+  create_customers?: boolean;
+  import_mode?: 'create_customers' | 'customer_id';
+} = {}): Promise<any> => {
+  try {
+    const token = getToken();
+    const formData = new FormData();
+    formData.append('excel_file', file);
+    formData.append('skip_invalid', (options.skip_invalid ?? true).toString());
+    formData.append('create_customers', (options.create_customers ?? true).toString());
+    formData.append('import_mode', options.import_mode || 'create_customers');
+
+    const response: AxiosResponse = await apiClient.post('/b2b/orders/excel-import-enhanced', formData, {
+      headers: {
+        'admin-auth-token': token || '',
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error importing B2B Excel data:', error);
+    throw new Error(error.response?.data?.message || 'Failed to import data');
+  }
+};
+
 export const generateUniqueFilename = (prefix: string, extension: string): string => {
   const now = new Date();
   const timestamp = now.toISOString().replace(/[-T:.Z]/g, ''); // Format as YYYYMMDDHHMMSS

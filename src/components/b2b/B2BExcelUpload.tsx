@@ -22,6 +22,7 @@ import {
   History
 } from 'lucide-react';
 import { toast } from '@/hooks/use-toast';
+import { downloadB2BExcelTemplate, previewB2BExcelUpload, importB2BExcelData } from '@/lib/api';
 
 interface ExcelUploadProps {
   onUploadComplete?: (results: any) => void;
@@ -105,27 +106,7 @@ const B2BExcelUpload: React.FC<ExcelUploadProps> = ({ onUploadComplete }) => {
   // ✅ ENHANCED: Template download with mode support
   const downloadTemplate = async (format: 'xlsx' | 'csv' = 'xlsx', mode: 'create_customers' | 'customer_id' = importMode) => {
     try {
-      const response = await fetch(`/admin-api/b2b/orders/excel-template-enhanced?format=${format}&mode=${mode}`, {
-        headers: {
-          'admin-auth-token': localStorage.getItem('token') || '',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to download template');
-      }
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      const templateName = mode === 'customer_id' ? 'B2B_Orders_CustomerID_Template' : 'B2B_Orders_Template';
-      link.download = `${templateName}.${format}`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-
+      await downloadB2BExcelTemplate(format, mode);
       toast({
         title: 'Success',
         description: `${mode === 'customer_id' ? 'Customer ID' : 'Customer Creation'} template downloaded as ${format.toUpperCase()}`,
@@ -151,18 +132,7 @@ const B2BExcelUpload: React.FC<ExcelUploadProps> = ({ onUploadComplete }) => {
 
     try {
       setUploading(true);
-      const formData = new FormData();
-      formData.append('excel_file', selectedFile);
-
-      const response = await fetch('/admin-api/b2b/orders/excel-preview', {
-        method: 'POST',
-        headers: {
-          'admin-auth-token': localStorage.getItem('token') || '',
-        },
-        body: formData,
-      });
-
-      const result = await response.json();
+      const result = await previewB2BExcelUpload(selectedFile);
 
       if (result.success) {
         setPreviewData(result.data);
@@ -198,21 +168,11 @@ const B2BExcelUpload: React.FC<ExcelUploadProps> = ({ onUploadComplete }) => {
 
     try {
       setImporting(true);
-      const formData = new FormData();
-      formData.append('excel_file', selectedFile);
-      formData.append('skip_invalid', skipInvalid.toString());
-      formData.append('create_customers', createCustomers.toString());
-      formData.append('import_mode', importMode);
-
-      const response = await fetch('/admin-api/b2b/orders/excel-import-enhanced', {
-        method: 'POST',
-        headers: {
-          'admin-auth-token': localStorage.getItem('token') || '',
-        },
-        body: formData,
+      const result = await importB2BExcelData(selectedFile, {
+        skip_invalid: skipInvalid,
+        create_customers: createCustomers,
+        import_mode: importMode,
       });
-
-      const result = await response.json();
 
       if (result.success) {
         setImportResults(result.data);
