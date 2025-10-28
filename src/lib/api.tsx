@@ -12651,3 +12651,337 @@ export const getB2BCustomerTrends = async (
     throw new Error(error.response?.data?.message || 'Failed to fetch customer trends');
   }
 };
+
+// ========================================
+// DAILY OPERATIONS DASHBOARD
+// ========================================
+
+/**
+ * TypeScript Interfaces for Daily Operations Dashboard
+ */
+export interface B2BDailyOrder {
+  id: number;
+  order_id: string;
+  customer_name: string;
+  service_category: string;
+  service_subcategory: string;
+  service_date: string;
+  service_time: string | null;
+  service_address: string;
+  status: string;
+  spoc_name: string;
+  provider_name: string | null;
+  final_amount: number;
+  // cancel_reason: string | null;
+  // reschedule_reason: string | null;
+}
+
+export interface OrderMetric {
+  count: number;
+  date: string;
+  orders: B2BDailyOrder[];
+}
+
+export interface DailyOperationsData {
+  ordersCompletedYesterday: OrderMetric;
+  ordersRescheduledYesterday: OrderMetric;
+  ordersScheduledToday: OrderMetric;
+  ordersScheduledTomorrow: OrderMetric;
+  metadata: {
+    role: string;
+    filteredByCustomers: boolean;
+    generatedAt: string;
+  };
+}
+
+/**
+ * Get Daily Operations Dashboard
+ * Fetches all 4 metrics in one call
+ */
+export const getDailyOperationsDashboard = async (): Promise<DailyOperationsData> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    const response = await apiClient.get('/b2b/dashboard/daily-operations', {
+      headers: {
+        'admin-auth-token': token
+      }
+    });
+
+    return response.data.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching daily operations dashboard:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch daily operations dashboard');
+  }
+};
+
+/**
+ * Get Orders Completed Yesterday
+ */
+export const getOrdersCompletedYesterday = async (): Promise<OrderMetric> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    const response = await apiClient.get('/b2b/dashboard/orders-completed-yesterday', {
+      headers: {
+        'admin-auth-token': token
+      }
+    });
+
+    return response.data.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching orders completed yesterday:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch orders completed yesterday');
+  }
+};
+
+/**
+ * Get Orders Rescheduled Yesterday
+ */
+export const getOrdersRescheduledYesterday = async (): Promise<OrderMetric> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    const response = await apiClient.get('/b2b/dashboard/orders-rescheduled-yesterday', {
+      headers: {
+        'admin-auth-token': token
+      }
+    });
+
+    return response.data.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching orders rescheduled yesterday:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch orders rescheduled yesterday');
+  }
+};
+
+/**
+ * Get Orders Scheduled Today
+ */
+export const getOrdersScheduledToday = async (): Promise<OrderMetric> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    const response = await apiClient.get('/b2b/dashboard/orders-scheduled-today', {
+      headers: {
+        'admin-auth-token': token
+      }
+    });
+
+    return response.data.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching orders scheduled today:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch orders scheduled today');
+  }
+};
+
+/**
+ * Get Orders Scheduled Tomorrow
+ */
+export const getOrdersScheduledTomorrow = async (): Promise<OrderMetric> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    const response = await apiClient.get('/b2b/dashboard/orders-scheduled-tomorrow', {
+      headers: {
+        'admin-auth-token': token
+      }
+    });
+
+    return response.data.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching orders scheduled tomorrow:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch orders scheduled tomorrow');
+  }
+};
+
+/**
+ * Send Today's Schedule Emails (Manual Trigger)
+ * Only accessible by super_admin and manager
+ */
+export const sendTodayScheduleEmails = async (): Promise<{ success: boolean; message: string; data: any }> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    const response = await apiClient.post('/b2b/dashboard/send-today-schedule-emails', {}, {
+      headers: {
+        'admin-auth-token': token
+      }
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error sending today\'s schedule emails:', error);
+    throw new Error(error.response?.data?.message || 'Failed to send today\'s schedule emails');
+  }
+};
+
+/**
+ * Send Tomorrow's Schedule Emails (Manual Trigger)
+ * Only accessible by super_admin and manager
+ */
+export const sendTomorrowScheduleEmails = async (): Promise<{ success: boolean; message: string; data: any }> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    const response = await apiClient.post('/b2b/dashboard/send-tomorrow-schedule-emails', {}, {
+      headers: {
+        'admin-auth-token': token
+      }
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error sending tomorrow\'s schedule emails:', error);
+    throw new Error(error.response?.data?.message || 'Failed to send tomorrow\'s schedule emails');
+  }
+};
+
+/**
+ * Export Customer-wise Analytics (Excel)
+ * Downloads Excel file directly
+ */
+export const exportCustomerWiseAnalytics = async (): Promise<void> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    const response = await apiClient.get('/b2b/analytics/export/customer-wise', {
+      headers: {
+        'admin-auth-token': token
+      },
+      responseType: 'blob'
+    });
+
+    // Create download link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `B2B_Customer_Analytics_${new Date().toISOString().split('T')[0]}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error: any) {
+    console.error('❌ Error exporting customer-wise analytics:', error);
+    throw new Error(error.response?.data?.message || 'Failed to export customer-wise analytics');
+  }
+};
+
+/**
+ * Export SPOC-wise Analytics (Excel)
+ * Only accessible by super_admin and manager
+ */
+export const exportSPOCWiseAnalytics = async (): Promise<void> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    const response = await apiClient.get('/b2b/analytics/export/spoc-wise', {
+      headers: {
+        'admin-auth-token': token
+      },
+      responseType: 'blob'
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `B2B_SPOC_Analytics_${new Date().toISOString().split('T')[0]}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error: any) {
+    console.error('❌ Error exporting SPOC-wise analytics:', error);
+    throw new Error(error.response?.data?.message || 'Failed to export SPOC-wise analytics');
+  }
+};
+
+/**
+ * Export SP-wise Analytics (Excel)
+ */
+export const exportSPWiseAnalytics = async (): Promise<void> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    const response = await apiClient.get('/b2b/analytics/export/sp-wise', {
+      headers: {
+        'admin-auth-token': token
+      },
+      responseType: 'blob'
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `B2B_SP_Analytics_${new Date().toISOString().split('T')[0]}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error: any) {
+    console.error('❌ Error exporting SP-wise analytics:', error);
+    throw new Error(error.response?.data?.message || 'Failed to export SP-wise analytics');
+  }
+};
+
+/**
+ * Export Business Trends (Excel)
+ * Only accessible by super_admin and manager
+ */
+export const exportBusinessTrends = async (): Promise<void> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    const response = await apiClient.get('/b2b/analytics/export/business-trends', {
+      headers: {
+        'admin-auth-token': token
+      },
+      responseType: 'blob'
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `B2B_Business_Trends_${new Date().toISOString().split('T')[0]}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error: any) {
+    console.error('❌ Error exporting business trends:', error);
+    throw new Error(error.response?.data?.message || 'Failed to export business trends');
+  }
+};

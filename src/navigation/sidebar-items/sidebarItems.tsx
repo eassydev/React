@@ -275,6 +275,7 @@ export const sidebarItems: SidebarItem[] = [
     title: 'B2B Management',
     icon: Building2,
     children: [
+      { title: 'Daily Operations', route: `${basePath}/b2b/daily-operations` },
       { title: 'Analytics Dashboard', route: `${basePath}/b2b/analytics` },
       { title: 'Customers', route: `${basePath}/b2b/customers` },
       { title: 'Contact Management', route: `${basePath}/b2b/contacts` },
