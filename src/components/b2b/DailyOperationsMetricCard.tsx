@@ -4,9 +4,10 @@ import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, ExternalLink } from 'lucide-react';
 import { OrderMetric } from '@/lib/api';
 import OrderListTable from './OrderListTable';
+import Link from 'next/link';
 
 interface DailyOperationsMetricCardProps {
   title: string;
@@ -14,6 +15,7 @@ interface DailyOperationsMetricCardProps {
   icon?: React.ReactNode;
   badgeColor?: string;
   emptyMessage?: string;
+  dateFilter?: string; // 'yesterday', 'today', 'tomorrow', 'overdue'
 }
 
 export default function DailyOperationsMetricCard({
@@ -21,19 +23,24 @@ export default function DailyOperationsMetricCard({
   metric,
   icon,
   badgeColor = 'bg-blue-500',
-  emptyMessage
+  emptyMessage,
+  dateFilter
 }: DailyOperationsMetricCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
 
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-IN', { 
-      day: '2-digit', 
-      month: 'short', 
+    return date.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
       year: 'numeric',
       weekday: 'short'
     });
   };
+
+  // Show only top 5 orders
+  const displayOrders = metric.orders.slice(0, 5);
+  const hasMoreOrders = metric.count > 5;
 
   return (
     <Card className="hover:shadow-md transition-shadow">
@@ -91,13 +98,23 @@ export default function DailyOperationsMetricCard({
           </Button>
         )}
 
-        {/* Expanded Order List */}
+        {/* Expanded Order List - Show only top 5 */}
         {isExpanded && metric.count > 0 && (
-          <div className="mt-4">
-            <OrderListTable 
-              orders={metric.orders} 
+          <div className="mt-4 space-y-3">
+            <OrderListTable
+              orders={displayOrders}
               emptyMessage={emptyMessage || 'No orders found'}
             />
+
+            {/* View All Button */}
+            {hasMoreOrders && dateFilter && (
+              <Link href={`/admin/b2b/orders?date_filter=${dateFilter}`}>
+                <Button variant="outline" size="sm" className="w-full">
+                  <ExternalLink className="mr-2 h-4 w-4" />
+                  View All {metric.count} Orders
+                </Button>
+              </Link>
+            )}
           </div>
         )}
 

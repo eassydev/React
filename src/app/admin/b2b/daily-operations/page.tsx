@@ -33,8 +33,21 @@ export default function DailyOperationsDashboard() {
 
   // Get user role from localStorage or API
   useEffect(() => {
-    const role = localStorage.getItem('adminRole') || 'spoc';
-    setUserRole(role);
+    try {
+      const adminInfoStr = localStorage.getItem('adminInfo');
+      if (adminInfoStr) {
+        const adminInfo = JSON.parse(adminInfoStr);
+        // Normalize role name: "Super Admin" -> "super_admin", "Manager" -> "manager", "SPOC" -> "spoc"
+        const normalizedRole = adminInfo.role?.toLowerCase().replace(/\s+/g, '_') || 'spoc';
+        setUserRole(normalizedRole);
+        console.log('📊 Daily Operations - User role from localStorage:', normalizedRole);
+      } else {
+        setUserRole('spoc'); // Default fallback
+      }
+    } catch (error) {
+      console.error('Error parsing adminInfo:', error);
+      setUserRole('spoc'); // Default fallback
+    }
   }, []);
 
   const fetchDashboard = async (isAutoRefresh = false) => {
@@ -170,7 +183,7 @@ export default function DailyOperationsDashboard() {
 
       <Separator />
 
-      {/* Metrics Cards */}
+      {/* Metrics Cards - Row 1 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Orders Completed Yesterday */}
         <DailyOperationsMetricCard
@@ -179,6 +192,7 @@ export default function DailyOperationsDashboard() {
           icon={<CheckCircle className="h-5 w-5" />}
           badgeColor="bg-green-500"
           emptyMessage="No orders were completed yesterday"
+          dateFilter="yesterday"
         />
 
         {/* Orders Rescheduled Yesterday */}
@@ -188,6 +202,7 @@ export default function DailyOperationsDashboard() {
           icon={<CalendarClock className="h-5 w-5" />}
           badgeColor="bg-yellow-500"
           emptyMessage="No orders were rescheduled yesterday"
+          dateFilter="yesterday"
         />
 
         {/* Orders Scheduled Today */}
@@ -197,6 +212,7 @@ export default function DailyOperationsDashboard() {
           icon={<Calendar className="h-5 w-5" />}
           badgeColor="bg-blue-500"
           emptyMessage="No orders scheduled for today"
+          dateFilter="today"
         />
 
         {/* Orders Scheduled Tomorrow */}
@@ -206,6 +222,20 @@ export default function DailyOperationsDashboard() {
           icon={<CalendarCheck className="h-5 w-5" />}
           badgeColor="bg-purple-500"
           emptyMessage="No orders scheduled for tomorrow"
+          dateFilter="tomorrow"
+        />
+      </div>
+
+      {/* Metrics Cards - Row 2: Overdue Orders */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        {/* Orders Pending Past Service Date */}
+        <DailyOperationsMetricCard
+          title="Orders Pending (Past Service Date)"
+          metric={data?.ordersPendingPastServiceDate || { count: 0, date: '', orders: [] }}
+          icon={<AlertCircle className="h-5 w-5" />}
+          badgeColor="bg-red-500"
+          emptyMessage="No overdue pending orders"
+          dateFilter="overdue"
         />
       </div>
 

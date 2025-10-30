@@ -86,6 +86,7 @@ export default function B2BOrdersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('');
+  const [dateFilter, setDateFilter] = useState(''); // New: date filter
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -114,7 +115,8 @@ export default function B2BOrdersPage() {
         10,
         statusFilter || 'all',
         paymentStatusFilter || 'all',
-        searchTerm
+        searchTerm,
+        dateFilter || 'all' // Pass date filter
       );
 
       // Ensure we have valid data structure
@@ -277,10 +279,19 @@ export default function B2BOrdersPage() {
     }
   };
 
+  // Read URL query parameters on mount
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const dateFilterParam = urlParams.get('date_filter');
+    if (dateFilterParam) {
+      setDateFilter(dateFilterParam);
+    }
+  }, []);
+
   useEffect(() => {
     fetchOrders();
     loadStatusOptions();
-  }, [currentPage, searchTerm, statusFilter, paymentStatusFilter]);
+  }, [currentPage, searchTerm, statusFilter, paymentStatusFilter, dateFilter]);
 
   const loadStatusOptions = async () => {
     try {
@@ -306,6 +317,11 @@ export default function B2BOrdersPage() {
 
   const handlePaymentStatusFilter = (value: string) => {
     setPaymentStatusFilter(value === 'all' ? '' : value);
+    setCurrentPage(1);
+  };
+
+  const handleDateFilter = (value: string) => {
+    setDateFilter(value === 'all' ? '' : value);
     setCurrentPage(1);
   };
 
@@ -510,6 +526,20 @@ export default function B2BOrdersPage() {
                     <SelectItem value="pending">Pending</SelectItem>
                     <SelectItem value="paid">Paid</SelectItem>
                     <SelectItem value="overdue">Overdue</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="w-full md:w-48">
+                <Select value={dateFilter || 'all'} onValueChange={handleDateFilter}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Service Date" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Dates</SelectItem>
+                    <SelectItem value="yesterday">Yesterday</SelectItem>
+                    <SelectItem value="today">Today</SelectItem>
+                    <SelectItem value="tomorrow">Tomorrow</SelectItem>
+                    <SelectItem value="overdue">Overdue (Past Date)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>

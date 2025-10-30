@@ -5576,7 +5576,7 @@ export const getAllB2BCustomers = async () => {
 };
 
 // B2B Orders
-export const fetchB2BOrders = async (page = 1, limit = 10, status = 'all', paymentStatus = 'all', search = '') => {
+export const fetchB2BOrders = async (page = 1, limit = 10, status = 'all', paymentStatus = 'all', search = '', dateFilter = 'all') => {
   try {
     const token = getToken();
     const params: Record<string, any> = { page, limit };
@@ -5584,6 +5584,7 @@ export const fetchB2BOrders = async (page = 1, limit = 10, status = 'all', payme
     if (status !== 'all') params.status = status;
     if (paymentStatus !== 'all') params.payment_status = paymentStatus;
     if (search.trim()) params.search = search.trim();
+    if (dateFilter !== 'all') params.date_filter = dateFilter;
 
     const response: AxiosResponse = await apiClient.get('/b2b/orders', {
       headers: { 'admin-auth-token': token || '' },
@@ -12665,6 +12666,7 @@ export interface B2BDailyOrder {
   customer_name: string;
   service_category: string;
   service_subcategory: string;
+  service_name: string;
   service_date: string;
   service_time: string | null;
   service_address: string;
@@ -12680,6 +12682,8 @@ export interface OrderMetric {
   count: number;
   date: string;
   orders: B2BDailyOrder[];
+  showing?: number;
+  hasMore?: boolean;
 }
 
 export interface DailyOperationsData {
@@ -12687,9 +12691,11 @@ export interface DailyOperationsData {
   ordersRescheduledYesterday: OrderMetric;
   ordersScheduledToday: OrderMetric;
   ordersScheduledTomorrow: OrderMetric;
+  ordersPendingPastServiceDate: OrderMetric;
   metadata: {
     role: string;
     filteredByCustomers: boolean;
+    maxOrdersPerMetric?: number;
     generatedAt: string;
   };
 }

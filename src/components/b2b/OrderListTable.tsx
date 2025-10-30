@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import {
   Table,
   TableBody,
@@ -11,40 +11,54 @@ import {
 } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { ArrowUpDown, ExternalLink } from 'lucide-react';
+import { ArrowUpDown, ExternalLink, ChevronLeft, ChevronRight } from 'lucide-react';
 import { B2BDailyOrder } from '@/lib/api';
 import { useRouter } from 'next/navigation';
 
 interface OrderListTableProps {
   orders: B2BDailyOrder[];
   emptyMessage?: string;
+  itemsPerPage?: number;
 }
 
-export default function OrderListTable({ orders, emptyMessage = 'No orders found' }: OrderListTableProps) {
+export default function OrderListTable({
+  orders,
+  emptyMessage = 'No orders found',
+  itemsPerPage = 20 // Default to 20 orders per page
+}: OrderListTableProps) {
   const router = useRouter();
   const [sortField, setSortField] = useState<keyof B2BDailyOrder>('order_id');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
+  const [currentPage, setCurrentPage] = useState(1);
 
-  // Sort orders
-  const sortedOrders = [...orders].sort((a, b) => {
-    const aValue = a[sortField];
-    const bValue = b[sortField];
+  // Sort and paginate orders
+  const sortedOrders = useMemo(() => {
+    return [...orders].sort((a, b) => {
+      const aValue = a[sortField];
+      const bValue = b[sortField];
 
-    if (aValue === null || aValue === undefined) return 1;
-    if (bValue === null || bValue === undefined) return -1;
+      if (aValue === null || aValue === undefined) return 1;
+      if (bValue === null || bValue === undefined) return -1;
 
-    if (typeof aValue === 'string' && typeof bValue === 'string') {
-      return sortDirection === 'asc' 
-        ? aValue.localeCompare(bValue)
-        : bValue.localeCompare(aValue);
-    }
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortDirection === 'asc'
+          ? aValue.localeCompare(bValue)
+          : bValue.localeCompare(aValue);
+      }
 
-    if (typeof aValue === 'number' && typeof bValue === 'number') {
-      return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
-    }
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortDirection === 'asc' ? aValue - bValue : bValue - aValue;
+      }
 
-    return 0;
-  });
+      return 0;
+    });
+  }, [orders, sortField, sortDirection]);
+
+  // Pagination calculations
+  const totalPages = Math.ceil(sortedOrders.length / itemsPerPage);
+  const startIndex = (currentPage - 1) * itemsPerPage;
+  const endIndex = startIndex + itemsPerPage;
+  const paginatedOrders = sortedOrders.slice(startIndex, endIndex);
 
   const handleSort = (field: keyof B2BDailyOrder) => {
     if (sortField === field) {
@@ -53,6 +67,11 @@ export default function OrderListTable({ orders, emptyMessage = 'No orders found
       setSortField(field);
       setSortDirection('asc');
     }
+    setCurrentPage(1); // Reset to first page when sorting
+  };
+
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage);
   };
 
   const getStatusBadge = (status: string) => {
@@ -158,7 +177,7 @@ export default function OrderListTable({ orders, emptyMessage = 'No orders found
           </TableRow>
         </TableHeader>
         <TableBody>
-          {sortedOrders.map((order) => (
+          {paginatedOrders.map((order) => (
             <TableRow key={order.id} className="hover:bg-muted/50">
               <TableCell className="font-medium">{order.order_id}</TableCell>
               <TableCell>{order.customer_name}</TableCell>
@@ -166,6 +185,7 @@ export default function OrderListTable({ orders, emptyMessage = 'No orders found
                 <div className="text-sm">
                   <div className="font-medium">{order.service_category}</div>
                   <div className="text-muted-foreground text-xs">{order.service_subcategory}</div>
+                  <div className="text-muted-foreground text-xs">{order.service_name}</div>
                 </div>
               </TableCell>
               <TableCell>{formatDate(order.service_date)}</TableCell>
@@ -194,6 +214,38 @@ export default function OrderListTable({ orders, emptyMessage = 'No orders found
           ))}
         </TableBody>
       </Table>
+
+      {/* Pagination Controls */}
+      {totalPages > 1 && (
+        <div className="flex items-center justify-between px-4 py-3 border-t">
+          <div className="text-sm text-muted-foreground">
+            Showing {startIndex + 1} to {Math.min(endIndex, sortedOrders.length)} of {sortedOrders.length} orders
+          </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage - 1)}
+              disabled={currentPage === 1}
+            >
+              <ChevronLeft className="h-4 w-4 mr-1" />
+              Previous
+            </Button>
+            <div className="text-sm font-medium">
+              Page {currentPage} of {totalPages}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handlePageChange(currentPage + 1)}
+              disabled={currentPage === totalPages}
+            >
+              Next
+              <ChevronRight className="h-4 w-4 ml-1" />
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
