@@ -5576,7 +5576,16 @@ export const getAllB2BCustomers = async () => {
 };
 
 // B2B Orders
-export const fetchB2BOrders = async (page = 1, limit = 10, status = 'all', paymentStatus = 'all', search = '', dateFilter = 'all') => {
+export const fetchB2BOrders = async (
+  page = 1,
+  limit = 10,
+  status = 'all',
+  paymentStatus = 'all',
+  search = '',
+  dateFilter = 'all',
+  dateFrom = '',
+  dateTo = ''
+) => {
   try {
     const token = getToken();
     const params: Record<string, any> = { page, limit };
@@ -5584,7 +5593,15 @@ export const fetchB2BOrders = async (page = 1, limit = 10, status = 'all', payme
     if (status !== 'all') params.status = status;
     if (paymentStatus !== 'all') params.payment_status = paymentStatus;
     if (search.trim()) params.search = search.trim();
-    if (dateFilter !== 'all') params.date_filter = dateFilter;
+
+    // Support both old dateFilter and new date range
+    if (dateFilter !== 'all') {
+      params.date_filter = dateFilter;
+    } else {
+      // Use custom date range if provided
+      if (dateFrom) params.date_from = dateFrom;
+      if (dateTo) params.date_to = dateTo;
+    }
 
     const response: AxiosResponse = await apiClient.get('/b2b/orders', {
       headers: { 'admin-auth-token': token || '' },
@@ -5821,6 +5838,69 @@ export const downloadB2BInvoiceSimple = async (orderId: string) => {
     }
 
     throw new Error(error.response?.data?.message || error.message || 'Failed to download invoice.');
+  }
+};
+
+// ✅ NEW: Export B2B Orders with Filters
+export const exportB2BOrders = async (filters: {
+  date_from?: string;
+  date_to?: string;
+  status?: string;
+  payment_status?: string;
+  invoice_status?: string;
+  customer_id?: string;
+  provider_id?: string;
+  category_id?: string;
+  spoc_id?: string;
+  format?: 'xlsx' | 'csv';
+} = {}): Promise<void> => {
+  try {
+    const token = getToken();
+    const params: Record<string, any> = {};
+
+    // Add filters to params
+    if (filters.date_from) params.date_from = filters.date_from;
+    if (filters.date_to) params.date_to = filters.date_to;
+    if (filters.status) params.status = filters.status;
+    if (filters.payment_status) params.payment_status = filters.payment_status;
+    if (filters.invoice_status) params.invoice_status = filters.invoice_status;
+    if (filters.customer_id) params.customer_id = filters.customer_id;
+    if (filters.provider_id) params.provider_id = filters.provider_id;
+    if (filters.category_id) params.category_id = filters.category_id;
+    if (filters.spoc_id) params.spoc_id = filters.spoc_id;
+    if (filters.format) params.format = filters.format;
+
+    console.log('📊 Exporting B2B orders with filters:', params);
+
+    const response: AxiosResponse = await apiClient.get('/b2b/dashboard/export-orders', {
+      headers: { 'admin-auth-token': token || '' },
+      params,
+      responseType: 'blob', // Important for file download
+    });
+
+    // Determine file extension from format or content-type
+    const format = filters.format || 'xlsx';
+    const extension = format === 'csv' ? 'csv' : 'xlsx';
+
+    // Generate filename with timestamp
+    const timestamp = new Date().toISOString().replace(/[-:]/g, '').split('.')[0];
+    const filename = `B2B_Orders_Export_${timestamp}.${extension}`;
+
+    // Create blob and download
+    const blob = new Blob([response.data]);
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    console.log('✅ B2B orders exported successfully:', filename);
+  } catch (error: any) {
+    console.error('❌ Error exporting B2B orders:', error);
+    throw new Error(error.response?.data?.message || 'Failed to export B2B orders');
   }
 };
 

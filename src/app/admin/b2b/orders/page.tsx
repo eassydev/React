@@ -15,6 +15,7 @@ import {
   updateB2BOrderRemarks
 } from '@/lib/api';
 import { StatusBadge } from '@/components/b2b/StatusDropdown';
+import B2BOrdersExportDialog from '@/components/b2b/B2BOrdersExportDialog';
 import { useToast } from '@/hooks/use-toast';
 
 import { Button } from '@/components/ui/button';
@@ -86,7 +87,9 @@ export default function B2BOrdersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('');
-  const [dateFilter, setDateFilter] = useState(''); // New: date filter
+  const [dateFilter, setDateFilter] = useState(''); // Predefined date filter (today, yesterday, etc.)
+  const [dateFrom, setDateFrom] = useState(''); // Custom date range - from
+  const [dateTo, setDateTo] = useState(''); // Custom date range - to
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -116,7 +119,9 @@ export default function B2BOrdersPage() {
         statusFilter || 'all',
         paymentStatusFilter || 'all',
         searchTerm,
-        dateFilter || 'all' // Pass date filter
+        dateFilter || 'all', // Predefined date filter
+        dateFrom, // Custom date range - from
+        dateTo // Custom date range - to
       );
 
       // Ensure we have valid data structure
@@ -291,7 +296,7 @@ export default function B2BOrdersPage() {
   useEffect(() => {
     fetchOrders();
     loadStatusOptions();
-  }, [currentPage, searchTerm, statusFilter, paymentStatusFilter, dateFilter]);
+  }, [currentPage, searchTerm, statusFilter, paymentStatusFilter, dateFilter, dateFrom, dateTo]);
 
   const loadStatusOptions = async () => {
     try {
@@ -322,6 +327,36 @@ export default function B2BOrdersPage() {
 
   const handleDateFilter = (value: string) => {
     setDateFilter(value === 'all' ? '' : value);
+    // Clear custom date range when using predefined filter
+    if (value !== 'all' && value !== 'custom') {
+      setDateFrom('');
+      setDateTo('');
+    }
+    setCurrentPage(1);
+  };
+
+  const handleDateFromChange = (value: string) => {
+    setDateFrom(value);
+    // Clear predefined filter when using custom date range
+    if (value) {
+      setDateFilter('');
+    }
+    setCurrentPage(1);
+  };
+
+  const handleDateToChange = (value: string) => {
+    setDateTo(value);
+    // Clear predefined filter when using custom date range
+    if (value) {
+      setDateFilter('');
+    }
+    setCurrentPage(1);
+  };
+
+  const handleClearDateFilters = () => {
+    setDateFilter('');
+    setDateFrom('');
+    setDateTo('');
     setCurrentPage(1);
   };
 
@@ -459,8 +494,6 @@ export default function B2BOrdersPage() {
     }
   };
 
-
-
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -471,6 +504,17 @@ export default function B2BOrdersPage() {
             <p className="text-gray-600 mt-1">Manage B2B service orders with editable fields</p>
           </div>
           <div className="flex gap-2">
+            {/* Export Dialog with Advanced Filters */}
+            <B2BOrdersExportDialog
+              currentFilters={{
+                status: statusFilter,
+                payment_status: paymentStatusFilter,
+                search: searchTerm,
+                date_from: dateFrom,
+                date_to: dateTo
+              }}
+            />
+
             <Button asChild variant="outline" className="flex items-center space-x-2">
               <Link href="/admin/b2b/orders/bulk-upload">
                 <Upload className="w-4 h-4 mr-1" />
@@ -489,60 +533,128 @@ export default function B2BOrdersPage() {
         {/* Filters */}
         <Card>
           <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row gap-4">
-              <div className="flex-1">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
-                  <Input
-                    placeholder="Search by order number, company name, or service..."
-                    value={searchTerm}
-                    onChange={(e) => handleSearch(e.target.value)}
-                    className="pl-10"
-                  />
+            <div className="space-y-4">
+              {/* First Row: Search, Status, Payment Status */}
+              <div className="flex flex-col md:flex-row gap-4">
+                <div className="flex-1">
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                    <Input
+                      placeholder="Search by order number, company name, or service..."
+                      value={searchTerm}
+                      onChange={(e) => handleSearch(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="w-full md:w-48">
+                  <Select value={statusFilter || 'all'} onValueChange={handleStatusFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Order Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="confirmed">Confirmed</SelectItem>
+                      <SelectItem value="in_progress">In Progress</SelectItem>
+                      <SelectItem value="completed">Completed</SelectItem>
+                      <SelectItem value="cancelled">Cancelled</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="w-full md:w-48">
+                  <Select value={paymentStatusFilter || 'all'} onValueChange={handlePaymentStatusFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Payment Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Payments</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="paid">Paid</SelectItem>
+                      <SelectItem value="overdue">Overdue</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
-              <div className="w-full md:w-48">
-                <Select value={statusFilter || 'all'} onValueChange={handleStatusFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Order Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="confirmed">Confirmed</SelectItem>
-                    <SelectItem value="in_progress">In Progress</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
-                    <SelectItem value="cancelled">Cancelled</SelectItem>
-                  </SelectContent>
-                </Select>
+
+              {/* Second Row: Date Filters */}
+              <div className="flex flex-col md:flex-row gap-4 items-end">
+                <div className="w-full md:w-48">
+                  <Select value={dateFilter || 'all'} onValueChange={handleDateFilter}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Quick Date Filter" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Dates</SelectItem>
+                      <SelectItem value="yesterday">Yesterday</SelectItem>
+                      <SelectItem value="today">Today</SelectItem>
+                      <SelectItem value="tomorrow">Tomorrow</SelectItem>
+                      <SelectItem value="overdue">Overdue (Past Date)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm text-gray-500">
+                  <span>OR</span>
+                </div>
+
+                <div className="flex-1 flex gap-2 items-end">
+                  <div className="flex-1">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      From Date
+                    </label>
+                    <Input
+                      type="date"
+                      value={dateFrom}
+                      onChange={(e) => handleDateFromChange(e.target.value)}
+                      placeholder="From date"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      To Date
+                    </label>
+                    <Input
+                      type="date"
+                      value={dateTo}
+                      onChange={(e) => handleDateToChange(e.target.value)}
+                      placeholder="To date"
+                    />
+                  </div>
+                  {(dateFrom || dateTo || dateFilter) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleClearDateFilters}
+                      className="whitespace-nowrap"
+                    >
+                      Clear Dates
+                    </Button>
+                  )}
+                </div>
               </div>
-              <div className="w-full md:w-48">
-                <Select value={paymentStatusFilter || 'all'} onValueChange={handlePaymentStatusFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Payment Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Payments</SelectItem>
-                    <SelectItem value="pending">Pending</SelectItem>
-                    <SelectItem value="paid">Paid</SelectItem>
-                    <SelectItem value="overdue">Overdue</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="w-full md:w-48">
-                <Select value={dateFilter || 'all'} onValueChange={handleDateFilter}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Service Date" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Dates</SelectItem>
-                    <SelectItem value="yesterday">Yesterday</SelectItem>
-                    <SelectItem value="today">Today</SelectItem>
-                    <SelectItem value="tomorrow">Tomorrow</SelectItem>
-                    <SelectItem value="overdue">Overdue (Past Date)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+
+              {/* Active Filters Indicator */}
+              {(dateFrom || dateTo || dateFilter) && (
+                <div className="flex items-center gap-2 text-sm">
+                  <span className="text-gray-600">Active date filter:</span>
+                  {dateFilter && (
+                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                      {dateFilter === 'yesterday' && 'Yesterday'}
+                      {dateFilter === 'today' && 'Today'}
+                      {dateFilter === 'tomorrow' && 'Tomorrow'}
+                      {dateFilter === 'overdue' && 'Overdue'}
+                    </span>
+                  )}
+                  {(dateFrom || dateTo) && (
+                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">
+                      {dateFrom && `From: ${dateFrom}`}
+                      {dateFrom && dateTo && ' - '}
+                      {dateTo && `To: ${dateTo}`}
+                    </span>
+                  )}
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
