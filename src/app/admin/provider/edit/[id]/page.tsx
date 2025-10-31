@@ -14,7 +14,17 @@ import {
 } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Save, Loader2, FileImage, Eye, Upload, Check, X, Clock, CreditCard, Plus } from 'lucide-react';
-import { fetchProviderById, updateProvider, Provider, fetchProviderBankDetails, ProviderBankDetail } from '@/lib/api';
+import {
+  fetchProviderById,
+  updateProvider,
+  Provider,
+  fetchProviderBankDetails,
+  ProviderBankDetail,
+  getProviderDocuments,
+  uploadProviderDocuments,
+  updateProviderDocumentStatus,
+  ProviderDocument
+} from '@/lib/api';
 import { useRouter, useParams } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -52,7 +62,7 @@ const EditProviderForm: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [gstError, setGstError] = useState('');
   const [panError, setPanError] = useState('');
-  const [documents, setDocuments] = useState<any[]>([]);
+  const [documents, setDocuments] = useState<ProviderDocument[]>([]);
   const [newAadharFront, setNewAadharFront] = useState<File | null>(null);
   const [newAadharBack, setNewAadharBack] = useState<File | null>(null);
   const [newPanCard, setNewPanCard] = useState<File | null>(null);
@@ -111,15 +121,8 @@ const EditProviderForm: React.FC = () => {
   // Function to fetch provider documents
   const fetchProviderDocuments = async (providerId: string) => {
     try {
-      const response = await fetch(`/admin-api/provider/${providerId}/documents`, {
-        headers: {
-          'admin-auth-token': localStorage.getItem('token') || '',
-        },
-      });
-      if (response.ok) {
-        const data = await response.json();
-        setDocuments(data.documents || []);
-      }
+      const docs = await getProviderDocuments(providerId);
+      setDocuments(docs || []);
     } catch (error) {
       console.error('Error fetching documents:', error);
     }
@@ -128,24 +131,12 @@ const EditProviderForm: React.FC = () => {
   // Function to update document status
   const updateDocumentStatus = async (documentId: string, status: 'approved' | 'rejected') => {
     try {
-      const response = await fetch(`/admin-api/provider/document/${documentId}/status`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'admin-auth-token': localStorage.getItem('token') || '',
-        },
-        body: JSON.stringify({ status }),
+      await updateProviderDocumentStatus(documentId, status);
+      toast({
+        title: 'Success',
+        description: `Document ${status} successfully.`,
       });
-
-      if (response.ok) {
-        toast({
-          title: 'Success',
-          description: `Document ${status} successfully.`,
-        });
-        await fetchProviderDocuments(id as string);
-      } else {
-        throw new Error(`Failed to ${status} document`);
-      }
+      await fetchProviderDocuments(id as string);
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -158,53 +149,55 @@ const EditProviderForm: React.FC = () => {
   // Function to upload new documents
   const uploadDocuments = async () => {
     try {
-      const formData = new FormData();
+      const documents: {
+        adhaarCardFront?: File;
+        adhaarCardBack?: File;
+        panCard?: File;
+        gstCertificate?: File;
+      } = {};
+
+      const documentNumbers: {
+        adhaarCardFront_document_number?: string;
+        adhaarCardBack_document_number?: string;
+        panCard_document_number?: string;
+        gstCertificate_document_number?: string;
+      } = {};
 
       if (newAadharFront) {
-        formData.append('adhaarCardFront', newAadharFront);
-        formData.append('adhaarCardFront_document_number', aadharDocNumber);
+        documents.adhaarCardFront = newAadharFront;
+        documentNumbers.adhaarCardFront_document_number = aadharDocNumber;
       }
       if (newAadharBack) {
-        formData.append('adhaarCardBack', newAadharBack);
-        formData.append('adhaarCardBack_document_number', aadharDocNumber);
+        documents.adhaarCardBack = newAadharBack;
+        documentNumbers.adhaarCardBack_document_number = aadharDocNumber;
       }
       if (newPanCard) {
-        formData.append('panCard', newPanCard);
-        formData.append('panCard_document_number', panDocNumber);
+        documents.panCard = newPanCard;
+        documentNumbers.panCard_document_number = panDocNumber;
       }
       if (newGstCertificate) {
-        formData.append('gstCertificate', newGstCertificate);
-        formData.append('gstCertificate_document_number', gstDocNumber);
+        documents.gstCertificate = newGstCertificate;
+        documentNumbers.gstCertificate_document_number = gstDocNumber;
       }
 
-      const response = await fetch(`/admin-api/provider/${id}/documents`, {
-        method: 'POST',
-        headers: {
-          'admin-auth-token': localStorage.getItem('token') || '',
-        },
-        body: formData,
+      await uploadProviderDocuments(id as string, documents, documentNumbers);
+
+      toast({
+        title: 'Success',
+        description: 'Documents uploaded successfully.',
       });
 
-      if (response.ok) {
-        toast({
-          title: 'Success',
-          description: 'Documents uploaded successfully.',
-        });
+      // Reset file inputs and document numbers
+      setNewAadharFront(null);
+      setNewAadharBack(null);
+      setNewPanCard(null);
+      setNewGstCertificate(null);
+      setAadharDocNumber('');
+      setPanDocNumber('');
+      setGstDocNumber('');
 
-        // Reset file inputs and document numbers
-        setNewAadharFront(null);
-        setNewAadharBack(null);
-        setNewPanCard(null);
-        setNewGstCertificate(null);
-        setAadharDocNumber('');
-        setPanDocNumber('');
-        setGstDocNumber('');
-
-        // Refresh documents
-        await fetchProviderDocuments(id as string);
-      } else {
-        throw new Error('Failed to upload documents');
-      }
+      // Refresh documents
+      await fetchProviderDocuments(id as string);
     } catch (error) {
       toast({
         variant: 'destructive',
@@ -295,6 +288,17 @@ const EditProviderForm: React.FC = () => {
         variant: 'error',
         title: 'Validation Error',
         description: 'First Name and Phone are required.',
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    // Check for GST/PAN validation errors
+    if (gstError || panError) {
+      toast({
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Please fix the GST/PAN number format errors before submitting.',
       });
       setIsSubmitting(false);
       return;
@@ -464,24 +468,30 @@ const EditProviderForm: React.FC = () => {
 
               {/* GST Number */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">GST Number</label>
+                <label className="text-sm font-medium text-gray-700">
+                  GST Number <span className="text-gray-400 font-normal">(Optional)</span>
+                </label>
                 <Input
                   value={gstNumber}
                   onChange={(e) => validateGST(e.target.value)}
-                  placeholder="Enter GST number"
+                  placeholder="Enter GST number (optional)"
                 />
                 {gstError && <p className="text-sm text-red-500">{gstError}</p>}
+                <p className="text-xs text-gray-500">Leave empty if not applicable. GST certificate can be uploaded in Documents section below.</p>
               </div>
 
               {/* PAN Number */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">PAN Number</label>
+                <label className="text-sm font-medium text-gray-700">
+                  PAN Number <span className="text-gray-400 font-normal">(Optional)</span>
+                </label>
                 <Input
                   value={panNumber}
                   onChange={(e) => validatePAN(e.target.value)}
-                  placeholder="Enter PAN number"
+                  placeholder="Enter PAN number (optional)"
                 />
                 {panError && <p className="text-sm text-red-500">{panError}</p>}
+                <p className="text-xs text-gray-500">Leave empty if not applicable. PAN card can be uploaded in Documents section below.</p>
               </div>
 
               {/* Linked Account ID */}

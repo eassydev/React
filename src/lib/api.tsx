@@ -2836,6 +2836,130 @@ export const restoreProvider = async (id: string): Promise<ApiResponse> => {
   }
 };
 
+// ✅ PROVIDER DOCUMENT MANAGEMENT FUNCTIONS
+
+// Interface for provider document
+export interface ProviderDocument {
+  id?: string;
+  provider_id: string;
+  document_type: 'adhaarCardFront' | 'adhaarCardBack' | 'panCard' | 'gstCertificate';
+  document_name?: string;
+  document_number?: string;
+  document_url?: string;
+  status?: 'pending' | 'approved' | 'rejected';
+  uploaded_at?: number;
+  verified_at?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Get provider documents
+export const getProviderDocuments = async (providerId: string): Promise<ProviderDocument[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<{ status: boolean; documents: ProviderDocument[] }> = await apiClient.get(
+      `/provider/${providerId}/documents`,
+      {
+        headers: {
+          'admin-auth-token': token || '',
+        },
+      }
+    );
+
+    if (response.data.status) {
+      return response.data.documents;
+    } else {
+      throw new Error('Failed to fetch provider documents.');
+    }
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch provider documents.');
+  }
+};
+
+// Upload provider documents
+export const uploadProviderDocuments = async (
+  providerId: string,
+  documents: {
+    adhaarCardFront?: File;
+    adhaarCardBack?: File;
+    panCard?: File;
+    gstCertificate?: File;
+  },
+  documentNumbers?: {
+    adhaarCardFront_document_number?: string;
+    adhaarCardBack_document_number?: string;
+    panCard_document_number?: string;
+    gstCertificate_document_number?: string;
+  }
+): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const formData = new FormData();
+
+    // Append files if they exist
+    if (documents.adhaarCardFront) {
+      formData.append('adhaarCardFront', documents.adhaarCardFront);
+    }
+    if (documents.adhaarCardBack) {
+      formData.append('adhaarCardBack', documents.adhaarCardBack);
+    }
+    if (documents.panCard) {
+      formData.append('panCard', documents.panCard);
+    }
+    if (documents.gstCertificate) {
+      formData.append('gstCertificate', documents.gstCertificate);
+    }
+
+    // Append document numbers if provided
+    if (documentNumbers) {
+      Object.entries(documentNumbers).forEach(([key, value]) => {
+        if (value) {
+          formData.append(key, value);
+        }
+      });
+    }
+
+    const response: AxiosResponse<ApiResponse> = await apiClient.post(
+      `/provider/${providerId}/documents`,
+      formData,
+      {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+          'admin-auth-token': token || '',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to upload provider documents.');
+  }
+};
+
+// Update document status (approve/reject)
+export const updateProviderDocumentStatus = async (
+  documentId: string,
+  status: 'approved' | 'rejected' | 'pending'
+): Promise<ApiResponse> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<ApiResponse> = await apiClient.put(
+      `/provider/document/${documentId}/status`,
+      { status },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          'admin-auth-token': token || '',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update document status.');
+  }
+};
+
 // ✅ B2B PROVIDER MANAGEMENT FUNCTIONS
 
 // Update provider type (B2C, B2B, Hybrid)

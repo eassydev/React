@@ -85,6 +85,17 @@ const AddProviderForm: React.FC = () => {
       setIsSubmitting(false);
       return;
     }
+
+    // Check for GST/PAN validation errors
+    if (gstError || panError) {
+      toast({
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Please fix the GST/PAN number format errors before submitting.',
+      });
+      setIsSubmitting(false);
+      return;
+    }
     const validGenders: Array<'male' | 'female' | 'other'> = ['male', 'female', 'other'];
     const newProvider: Provider = {
       first_name: firstName,
@@ -233,24 +244,30 @@ const AddProviderForm: React.FC = () => {
 
               {/* GST Number */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">GST Number</label>
+                <label className="text-sm font-medium text-gray-700">
+                  GST Number <span className="text-gray-400 font-normal">(Optional)</span>
+                </label>
                 <Input
                   value={gstNumber}
                   onChange={(e) => validateGST(e.target.value)}
-                  placeholder="Enter GST number"
+                  placeholder="Enter GST number (optional)"
                 />
                 {gstError && <p className="text-sm text-red-500">{gstError}</p>}
+                <p className="text-xs text-gray-500">Leave empty if not applicable. GST certificate can be uploaded later.</p>
               </div>
 
               {/* PAN Number */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">PAN Number</label>
+                <label className="text-sm font-medium text-gray-700">
+                  PAN Number <span className="text-gray-400 font-normal">(Optional)</span>
+                </label>
                 <Input
                   value={panNumber}
                   onChange={(e) => validatePAN(e.target.value)}
-                  placeholder="Enter PAN number"
+                  placeholder="Enter PAN number (optional)"
                 />
                 {panError && <p className="text-sm text-red-500">{panError}</p>}
+                <p className="text-xs text-gray-500">Leave empty if not applicable. PAN card can be uploaded later.</p>
               </div>
 
               {/* Linked Account ID */}

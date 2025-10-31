@@ -793,7 +793,7 @@ export default function B2BOrdersPage() {
                       <TableHead>Order #</TableHead>
                       <TableHead>Customer</TableHead>
                       <TableHead>Service</TableHead>
-                      <TableHead>Store Info</TableHead>
+                      <TableHead>Store & POC Info</TableHead>
                       <TableHead>Amount</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Payment</TableHead>
@@ -844,10 +844,20 @@ export default function B2BOrdersPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {order.store_name ? (
-                            <div>
-                              <div className="font-medium">{order.store_name}</div>
-                              <div className="text-sm text-gray-500">{order.store_code}</div>
+                          {order.store_name || order.store_code || order.booking_poc_name || order.booking_poc_number ? (
+                            <div className="space-y-1">
+                              {order.store_name && (
+                                <div className="font-medium">{order.store_name}</div>
+                              )}
+                              {order.store_code && (
+                                <div className="text-sm text-gray-500">Code: {order.store_code}</div>
+                              )}
+                              {order.booking_poc_name && (
+                                <div className="text-sm text-blue-600">POC: {order.booking_poc_name}</div>
+                              )}
+                              {order.booking_poc_number && (
+                                <div className="text-sm text-blue-600">📞 {order.booking_poc_number}</div>
+                              )}
                             </div>
                           ) : (
                             <span className="text-gray-400">N/A</span>
