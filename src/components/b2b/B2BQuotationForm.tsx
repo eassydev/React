@@ -44,7 +44,7 @@ const B2BQuotationForm: React.FC<B2BQuotationFormProps> = ({
     initial_amount: quotation?.initial_amount || 0,
     final_amount: quotation?.final_amount || 0,
     quotation_items: quotation?.quotation_items || [],
-    terms_and_conditions: quotation?.terms_and_conditions || 'Payment within 30 days of service completion.',
+    terms_and_conditions: quotation?.terms_and_conditions || 'Payment in advance as mutually agreed by the Parties.',
     validity_days: quotation?.validity_days || 30,
     sp_notes: quotation?.sp_notes || '',
     admin_notes: quotation?.admin_notes || '',
