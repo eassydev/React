@@ -9,8 +9,10 @@ import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Eye, Send, CheckCircle, XCircle, FileText, Search, Filter } from 'lucide-react';
-import { fetchB2BQuotations, sendB2BQuotation, approveB2BQuotation, rejectB2BQuotation, B2BQuotation } from '@/lib/api';
+import { fetchB2BQuotations, sendB2BQuotation, approveB2BQuotation, rejectB2BQuotation, approveSpQuotation, rejectSpQuotation, B2BQuotation } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
+import { SPQuotationApprovalModal } from './SPQuotationApprovalModal';
+import { SPQuotationRejectionModal } from './SPQuotationRejectionModal';
 
 interface B2BQuotationListProps {
   orderId?: string; // Optional: if showing quotations for specific order
@@ -28,15 +30,22 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
-  
+
   // Filters
   const [statusFilter, setStatusFilter] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('created_at');
+  const [created_by_type, setcreated_by_type] = useState('all');
+  const [admin_approval_status, setadmin_approval_status] = useState('all');
   const [sortOrder, setSortOrder] = useState<'ASC' | 'DESC'>('DESC');
 
   // Loading states for actions
   const [actionLoading, setActionLoading] = useState<{ [key: string]: boolean }>({});
+
+  // Modal states
+  const [approvalModalOpen, setApprovalModalOpen] = useState(false);
+  const [rejectionModalOpen, setRejectionModalOpen] = useState(false);
+  const [selectedQuotation, setSelectedQuotation] = useState<B2BQuotation | null>(null);
 
   const fetchQuotations = async () => {
     try {
@@ -48,11 +57,13 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
         search: searchQuery.trim() || undefined,
         sort_by: sortBy,
         sort_order: sortOrder,
+        created_by_type: created_by_type !== 'all' ? created_by_type : undefined,
+        admin_approval_status: admin_approval_status !== 'all' ? admin_approval_status : undefined,
         b2b_booking_id: orderId || undefined
       };
 
       const response = await fetchB2BQuotations(params);
-      
+
       if (response.success) {
         setQuotations(response.data || []);
         setTotalPages(response.pagination?.total_pages || 1);
@@ -71,7 +82,7 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
 
   useEffect(() => {
     fetchQuotations();
-  }, [currentPage, statusFilter, sortBy, sortOrder]);
+  }, [currentPage, statusFilter, sortBy, sortOrder, created_by_type, admin_approval_status]);
 
   const handleSearch = () => {
     setCurrentPage(1);
@@ -81,9 +92,9 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
   const handleSendQuotation = async (quotationId: string, sendVia: 'whatsapp' | 'email' | 'both' = 'both') => {
     try {
       setActionLoading(prev => ({ ...prev, [`send_${quotationId}`]: true }));
-      
+
       const response = await sendB2BQuotation(quotationId, sendVia);
-      
+
       if (response.success) {
         toast({
           title: 'Success',
@@ -102,12 +113,37 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
     }
   };
 
-  const handleApproveQuotation = async (quotationId: string) => {
+  // Open approval modal for SP quotations, direct approve for admin quotations
+  const handleApproveClick = (quotation: B2BQuotation) => {
+    if (quotation.created_by_type === 'provider') {
+      // SP quotation - open modal
+      setSelectedQuotation(quotation);
+      setApprovalModalOpen(true);
+    } else {
+      // Admin quotation - direct approve
+      handleApproveAdminQuotation(quotation);
+    }
+  };
+
+  // Open rejection modal for SP quotations, direct reject for admin quotations
+  const handleRejectClick = (quotation: B2BQuotation) => {
+    if (quotation.created_by_type === 'provider') {
+      // SP quotation - open modal
+      setSelectedQuotation(quotation);
+      setRejectionModalOpen(true);
+    } else {
+      // Admin quotation - direct reject with default reason
+      handleRejectAdminQuotation(quotation, 'Rejected by admin');
+    }
+  };
+
+  // Approve admin quotation (direct, no modal)
+  const handleApproveAdminQuotation = async (quotation: B2BQuotation) => {
     try {
-      setActionLoading(prev => ({ ...prev, [`approve_${quotationId}`]: true }));
-      
-      const response = await approveB2BQuotation(quotationId, 'Approved by admin');
-      
+      setActionLoading(prev => ({ ...prev, [`approve_${quotation.id}`]: true }));
+
+      const response = await approveB2BQuotation(quotation.id!, 'Approved by admin');
+
       if (response.success) {
         toast({
           title: 'Success',
@@ -122,16 +158,17 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
         variant: 'destructive',
       });
     } finally {
-      setActionLoading(prev => ({ ...prev, [`approve_${quotationId}`]: false }));
+      setActionLoading(prev => ({ ...prev, [`approve_${quotation.id}`]: false }));
     }
   };
 
-  const handleRejectQuotation = async (quotationId: string, reason: string) => {
+  // Reject admin quotation (direct, no modal)
+  const handleRejectAdminQuotation = async (quotation: B2BQuotation, reason: string) => {
     try {
-      setActionLoading(prev => ({ ...prev, [`reject_${quotationId}`]: true }));
-      
-      const response = await rejectB2BQuotation(quotationId, reason, 'Rejected by admin');
-      
+      setActionLoading(prev => ({ ...prev, [`reject_${quotation.id}`]: true }));
+
+      const response = await rejectB2BQuotation(quotation.id!, reason, 'Rejected by admin');
+
       if (response.success) {
         toast({
           title: 'Success',
@@ -146,7 +183,61 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
         variant: 'destructive',
       });
     } finally {
-      setActionLoading(prev => ({ ...prev, [`reject_${quotationId}`]: false }));
+      setActionLoading(prev => ({ ...prev, [`reject_${quotation.id}`]: false }));
+    }
+  };
+
+  // Approve SP quotation (called from modal)
+  const handleApproveSPQuotation = async (approvalNotes: string, sendToClient: boolean) => {
+    if (!selectedQuotation) return;
+
+    try {
+      const response = await approveSpQuotation(
+        selectedQuotation.id!,
+        approvalNotes || 'Approved by admin',
+        sendToClient
+      );
+
+      if (response.success) {
+        toast({
+          title: 'Success',
+          description: sendToClient
+            ? 'SP quotation approved and sent to client'
+            : 'SP quotation approved successfully',
+        });
+        fetchQuotations(); // Refresh list
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to approve quotation',
+        variant: 'destructive',
+      });
+      throw error; // Re-throw to let modal handle loading state
+    }
+  };
+
+  // Reject SP quotation (called from modal)
+  const handleRejectSPQuotation = async (rejectionReason: string) => {
+    if (!selectedQuotation) return;
+
+    try {
+      const response = await rejectSpQuotation(selectedQuotation.id!, rejectionReason);
+
+      if (response.success) {
+        toast({
+          title: 'Success',
+          description: 'SP quotation rejected successfully',
+        });
+        fetchQuotations(); // Refresh list
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to reject quotation',
+        variant: 'destructive',
+      });
+      throw error; // Re-throw to let modal handle loading state
     }
   };
 
@@ -161,7 +252,7 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
     };
 
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.draft;
-    
+
     return (
       <Badge className={config.color}>
         {config.label}
@@ -225,6 +316,32 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
             </SelectContent>
           </Select>
 
+          <Select value={created_by_type} onValueChange={setcreated_by_type}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">created by</SelectItem>
+              <SelectItem value="admin">Admin</SelectItem>
+              <SelectItem value="provider">Provider</SelectItem>
+            </SelectContent>
+          </Select>
+
+          <Select value={admin_approval_status} onValueChange={setadmin_approval_status}>
+            <SelectTrigger className="w-40">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All sp admin approvalStatus</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="sent">Sent</SelectItem>
+              <SelectItem value="approved">Approved</SelectItem>
+              <SelectItem value="rejected">Rejected</SelectItem>
+              <SelectItem value="negotiating">Negotiating</SelectItem>
+              <SelectItem value="expired">Expired</SelectItem>
+            </SelectContent>
+          </Select>
+
           <Select value={sortBy} onValueChange={setSortBy}>
             <SelectTrigger className="w-40">
               <SelectValue placeholder="Sort by" />
@@ -269,6 +386,7 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
                   <TableHead>Amount</TableHead>
                   <TableHead>Status</TableHead>
                   <TableHead>Version</TableHead>
+                  <TableHead>Created By</TableHead>
                   <TableHead>Created</TableHead>
                   <TableHead>Actions</TableHead>
                 </TableRow>
@@ -302,6 +420,9 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
                       <Badge variant="outline">v{quotation.version || 1}</Badge>
                     </TableCell>
                     <TableCell>
+                      <Badge variant="outline">{quotation.created_by_type || 'admin'}</Badge>
+                    </TableCell>
+                    <TableCell>
                       {formatDate(quotation.created_at)}
                     </TableCell>
                     <TableCell>
@@ -327,13 +448,13 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
                           </Button>
                         )}
 
-                        {quotation.status === 'sent' && (
+                        {quotation.status === 'sent' && quotation.created_by_type === 'admin' && (
                           <>
                             <Button
                               size="sm"
                               variant="outline"
                               className="text-green-600"
-                              onClick={() => handleApproveQuotation(quotation.id!)}
+                              onClick={() => handleApproveClick(quotation)}
                               disabled={actionLoading[`approve_${quotation.id}`]}
                             >
                               <CheckCircle className="h-4 w-4" />
@@ -342,13 +463,37 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
                               size="sm"
                               variant="outline"
                               className="text-red-600"
-                              onClick={() => handleRejectQuotation(quotation.id!, 'Rejected by admin')}
+                              onClick={() => handleRejectClick(quotation)}
                               disabled={actionLoading[`reject_${quotation.id}`]}
                             >
                               <XCircle className="h-4 w-4" />
                             </Button>
                           </>
                         )}
+                        {quotation.admin_approval_status === 'pending' && quotation.created_by_type === 'provider' && (
+                          <>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-green-600"
+                              onClick={() => handleApproveClick(quotation)}
+                              disabled={actionLoading[`approve_${quotation.id}`]}
+                            >
+                              <CheckCircle className="h-4 w-4" />
+                            </Button>
+                             <Button
+                              size="sm"
+                              variant="outline"
+                              className="text-red-600"
+                              onClick={() => handleRejectClick(quotation)}
+                              disabled={actionLoading[`reject_${quotation.id}`]}
+                            >
+                              <XCircle className="h-4 w-4" />
+                            </Button>
+                            </>
+                            )
+                        }
+
                       </div>
                     </TableCell>
                   </TableRow>
@@ -385,6 +530,28 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
           </>
         )}
       </CardContent>
+
+      {/* SP Quotation Approval Modal */}
+      <SPQuotationApprovalModal
+        open={approvalModalOpen}
+        onClose={() => {
+          setApprovalModalOpen(false);
+          setSelectedQuotation(null);
+        }}
+        onConfirm={handleApproveSPQuotation}
+        quotationNumber={selectedQuotation?.quotation_number}
+      />
+
+      {/* SP Quotation Rejection Modal */}
+      <SPQuotationRejectionModal
+        open={rejectionModalOpen}
+        onClose={() => {
+          setRejectionModalOpen(false);
+          setSelectedQuotation(null);
+        }}
+        onConfirm={handleRejectSPQuotation}
+        quotationNumber={selectedQuotation?.quotation_number}
+      />
     </Card>
   );
 };

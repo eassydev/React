@@ -5607,7 +5607,7 @@ export const logout = async (): Promise<void> => {
     localStorage.removeItem('token');
     // Redirect to login page
     window.location.href = '/auth/login';
-  } catch (error: any) {}
+  } catch (error: any) { }
 };
 
 // ============= B2B API FUNCTIONS =============
@@ -6867,9 +6867,24 @@ export interface B2BQuotation {
   pdf_file_path?: string;
   attachments?: any[];
   created_at?: string;
+  created_by_type?: string;
+  created_by_provider?: {
+    id: string,
+    first_name: string,
+    last_name: string,
+    phone: number,
+    email: string
+  }
+  created_by_admin?: {
+    id: string,
+    full_name: string,
+    username: string,
+    email: string
+  }
   updated_at?: string;
   // ✅ NEW: Helper properties
   is_standalone?: boolean;
+  admin_approval_status ?: string;
 }
 
 // ✅ NEW: Customer selection for standalone quotations
@@ -6942,6 +6957,8 @@ export const fetchB2BQuotations = async (params: {
   b2b_booking_id?: string;
   search?: string;
   sort_by?: string;
+  created_by_type?: string;
+  admin_approval_status?: string;
   sort_order?: 'ASC' | 'DESC';
 } = {}) => {
   try {
@@ -7048,7 +7065,45 @@ export const approveB2BQuotation = async (id: string, adminNotes?: string) => {
   }
 };
 
-// Reject quotation
+
+// Approve SP quotation (provider-created quotation)
+export const approveSpQuotation = async (id: string, approval_notes?: string, send_to_client?: boolean) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post(`/b2b/sp-quotations/${id}/approve`,
+      {
+        approval_notes: approval_notes,
+        send_to_client: send_to_client || false
+      },
+      {
+        headers: { 'admin-auth-token': token || '' },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to approve SP quotation.');
+  }
+};
+
+// Reject SP quotation (provider-created quotation)
+export const rejectSpQuotation = async (id: string, rejectionReason: string) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post(`/b2b/sp-quotations/${id}/reject`,
+      {
+        rejection_reason: rejectionReason
+      },
+      {
+        headers: { 'admin-auth-token': token || '' },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to reject SP quotation.');
+  }
+};
+
+// Reject quotation (admin-created quotation)
 export const rejectB2BQuotation = async (id: string, rejectionReason: string, adminNotes?: string) => {
   try {
     const token = getToken();

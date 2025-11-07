@@ -1,7 +1,7 @@
 'use client';
 
-import React from 'react';
-import { useParams, useRouter } from 'next/navigation';
+import React, { useEffect, useState } from 'react';
+import { useParams, useRouter, usePathname } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { ArrowLeft } from 'lucide-react';
 import B2BQuotationDetail from '@/components/b2b/B2BQuotationDetail';
@@ -9,7 +9,14 @@ import B2BQuotationDetail from '@/components/b2b/B2BQuotationDetail';
 export default function B2BQuotationDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const pathname = usePathname();
   const quotationId = params.id as string;
+  const [refreshKey, setRefreshKey] = useState(0);
+
+  // Force refresh when pathname changes (e.g., coming back from edit page)
+  useEffect(() => {
+    setRefreshKey(prev => prev + 1);
+  }, [pathname]);
 
   const handleBack = () => {
     router.push('/admin/b2b/quotations');
@@ -46,6 +53,7 @@ export default function B2BQuotationDetailPage() {
       </div>
 
       <B2BQuotationDetail
+        key={refreshKey}
         quotationId={quotationId}
         onEdit={handleEdit}
         onClose={handleBack}
