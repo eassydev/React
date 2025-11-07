@@ -2374,10 +2374,12 @@ export const fetchAllUsers = async (
   }
 };
 
-export const fetchAllUsersWithouPagination = async (): Promise<User[]> => {
+export const fetchAllUsersWithouPagination = async (
+  searchTerm?: string
+): Promise<User[]> => {
   try {
     const token = getToken();
-    const response: AxiosResponse<ApiResponse> = await apiClient.get('/user/all', {
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/user/all?search=${searchTerm}`, {
       headers: {
         'admin-auth-token': token || '',
       },
@@ -4954,7 +4956,8 @@ export const createNotification = async (notification: Notification) => {
   formData.append('send_to_all', notification.send_to_all ? '1' : '0');
   if (notification.recipients)
     formData.append('recipients', JSON.stringify(notification.recipients));
-  formData.append('notification_type_id', notification.notification_type_id!.toString());
+  if (notification.notification_type_id)
+    formData.append('notification_type_id', notification.notification_type_id.toString());
 
   // const response = await apiClient.post("/notification", formData);
   const token = getToken();

@@ -76,10 +76,10 @@ const NotificationList = () => {
       cell: (info) => (
         <span
           className={`px-2 py-1 rounded-full text-xs font-medium ${
-            info.getValue() === 'send' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+            info.getValue() === 'sent' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
           }`}
         >
-          {info.getValue() === 'send' ? 'Sent' : 'Failed'}
+          {info.getValue() === 'sent' ? 'Sent' : 'Failed'}
         </span>
       ),
     },
