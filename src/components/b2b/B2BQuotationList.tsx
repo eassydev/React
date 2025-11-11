@@ -398,8 +398,8 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
                       {quotation.quotation_number}
                     </TableCell>
                     <TableCell>
-                      {/* @ts-ignore - booking relationship */}
-                      {quotation.booking?.customer?.company_name || 'N/A'}
+                      {/* @ts-ignore - Support both booking-linked and standalone quotations */}
+                      {quotation.customer?.company_name || quotation.booking?.customer?.company_name || 'N/A'}
                     </TableCell>
                     <TableCell>
                       <div className="space-y-1">
