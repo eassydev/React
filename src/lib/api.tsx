@@ -13127,6 +13127,30 @@ export const sendTomorrowScheduleEmails = async (): Promise<{ success: boolean; 
 };
 
 /**
+ * Send Admin Daily Summary Email (Manual Trigger)
+ * Only accessible by super_admin and manager
+ */
+export const sendAdminDailySummary = async (): Promise<{ success: boolean; message: string; data: any }> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    const response = await apiClient.post('/b2b/dashboard/send-admin-daily-summary', {}, {
+      headers: {
+        'admin-auth-token': token
+      }
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error sending admin daily summary email:', error);
+    throw new Error(error.response?.data?.message || 'Failed to send admin daily summary email');
+  }
+};
+
+/**
  * Export Customer-wise Analytics (Excel)
  * Downloads Excel file directly
  */
