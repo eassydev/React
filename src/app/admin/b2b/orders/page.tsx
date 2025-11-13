@@ -87,9 +87,11 @@ export default function B2BOrdersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('');
-  const [dateFilter, setDateFilter] = useState(''); // Predefined date filter (today, yesterday, etc.)
-  const [dateFrom, setDateFrom] = useState(''); // Custom date range - from
-  const [dateTo, setDateTo] = useState(''); // Custom date range - to
+  const [dateFilter, setDateFilter] = useState(''); // Predefined date filter (today, yesterday, etc.) - SERVICE DATE
+  const [dateFrom, setDateFrom] = useState(''); // Custom date range - from (SERVICE DATE)
+  const [dateTo, setDateTo] = useState(''); // Custom date range - to (SERVICE DATE)
+  const [receivedDateFrom, setReceivedDateFrom] = useState(''); // NEW: Booking received date - from
+  const [receivedDateTo, setReceivedDateTo] = useState(''); // NEW: Booking received date - to
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
@@ -121,7 +123,8 @@ export default function B2BOrdersPage() {
         searchTerm,
         dateFilter || 'all', // Predefined date filter
         dateFrom, // Custom date range - from
-        dateTo // Custom date range - to
+        dateTo, // Custom date range - to
+        dateFilterType // Date filter type (service or received)
       );
 
       // Ensure we have valid data structure
@@ -296,7 +299,7 @@ export default function B2BOrdersPage() {
   useEffect(() => {
     fetchOrders();
     loadStatusOptions();
-  }, [currentPage, searchTerm, statusFilter, paymentStatusFilter, dateFilter, dateFrom, dateTo]);
+  }, [currentPage, searchTerm, statusFilter, paymentStatusFilter, dateFilter, dateFrom, dateTo, dateFilterType]);
 
   const loadStatusOptions = async () => {
     try {
@@ -592,6 +595,7 @@ export default function B2BOrdersPage() {
                       <SelectItem value="overdue">Overdue (Past Date)</SelectItem>
                     </SelectContent>
                   </Select>
+                  <p className="text-xs text-gray-500 mt-1">Service Date</p>
                 </div>
 
                 <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -599,6 +603,20 @@ export default function B2BOrdersPage() {
                 </div>
 
                 <div className="flex-1 flex gap-2 items-end">
+                  <div className="w-40">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Filter By
+                    </label>
+                    <Select value={dateFilterType} onValueChange={(value: 'service' | 'received') => setDateFilterType(value)}>
+                      <SelectTrigger className="h-10">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="service">Service Date</SelectItem>
+                        <SelectItem value="received">Received Date</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
                   <div className="flex-1">
                     <label className="block text-xs font-medium text-gray-700 mb-1">
                       From Date

@@ -42,6 +42,7 @@ export default function B2BOrdersExportDialog({ currentFilters }: B2BOrdersExpor
   // Export filters - initialize with current page filters
   const [dateFrom, setDateFrom] = useState(currentFilters?.date_from || '');
   const [dateTo, setDateTo] = useState(currentFilters?.date_to || '');
+  const [dateFilterType, setDateFilterType] = useState<'service' | 'received'>('received'); // Default to received date
   const [status, setStatus] = useState(currentFilters?.status || 'all');
   const [paymentStatus, setPaymentStatus] = useState(currentFilters?.payment_status || 'all');
   const [invoiceStatus, setInvoiceStatus] = useState('all');
@@ -67,6 +68,7 @@ export default function B2BOrdersExportDialog({ currentFilters }: B2BOrdersExpor
       // Add date filters
       if (dateFrom) filters.date_from = dateFrom;
       if (dateTo) filters.date_to = dateTo;
+      if (dateFrom || dateTo) filters.date_filter_type = dateFilterType; // Add date filter type
 
       // Add status filters
       if (status && status !== 'all') filters.status = status;
@@ -125,11 +127,38 @@ export default function B2BOrdersExportDialog({ currentFilters }: B2BOrdersExpor
         </DialogHeader>
 
         <div className="space-y-4 py-4">
+          {/* Date Filter Type */}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-2">
+              <Calendar className="w-4 h-4" />
+              Date Filter Type
+            </Label>
+            <Select value={dateFilterType} onValueChange={(value: 'service' | 'received') => setDateFilterType(value)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="received">
+                  <div className="flex flex-col items-start">
+                    <span className="font-medium">Booking Received Date</span>
+                    <span className="text-xs text-muted-foreground">When order was created/received</span>
+                  </div>
+                </SelectItem>
+                <SelectItem value="service">
+                  <div className="flex flex-col items-start">
+                    <span className="font-medium">Service Date</span>
+                    <span className="text-xs text-muted-foreground">When service is scheduled</span>
+                  </div>
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
           {/* Date Range */}
           <div className="space-y-2">
             <Label className="flex items-center gap-2">
               <Calendar className="w-4 h-4" />
-              Date Range (Service Date)
+              Date Range
             </Label>
             <div className="grid grid-cols-2 gap-2">
               <div>
@@ -153,6 +182,16 @@ export default function B2BOrdersExportDialog({ currentFilters }: B2BOrdersExpor
                 />
               </div>
             </div>
+            {dateFilterType === 'received' && (
+              <p className="text-xs text-blue-600 mt-1">
+                💡 Filtering by when orders were received (created in system)
+              </p>
+            )}
+            {dateFilterType === 'service' && (
+              <p className="text-xs text-blue-600 mt-1">
+                💡 Filtering by when services are scheduled to be performed
+              </p>
+            )}
           </div>
 
           {/* Order Status */}

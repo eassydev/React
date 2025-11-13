@@ -5711,7 +5711,9 @@ export const fetchB2BOrders = async (
   search = '',
   dateFilter = 'all',
   dateFrom = '',
-  dateTo = ''
+  dateTo = '',
+  receivedDateFrom = '', // NEW: Separate filter for booking received date
+  receivedDateTo = ''    // NEW: Separate filter for booking received date
 ) => {
   try {
     const token = getToken();
@@ -5721,14 +5723,18 @@ export const fetchB2BOrders = async (
     if (paymentStatus !== 'all') params.payment_status = paymentStatus;
     if (search.trim()) params.search = search.trim();
 
-    // Support both old dateFilter and new date range
+    // Support both old dateFilter and new date range (SERVICE DATE)
     if (dateFilter !== 'all') {
       params.date_filter = dateFilter;
     } else {
-      // Use custom date range if provided
+      // Use custom date range if provided (SERVICE DATE)
       if (dateFrom) params.date_from = dateFrom;
       if (dateTo) params.date_to = dateTo;
     }
+
+    // NEW: Separate filter for BOOKING RECEIVED DATE
+    if (receivedDateFrom) params.received_date_from = receivedDateFrom;
+    if (receivedDateTo) params.received_date_to = receivedDateTo;
 
     const response: AxiosResponse = await apiClient.get('/b2b/orders', {
       headers: { 'admin-auth-token': token || '' },
