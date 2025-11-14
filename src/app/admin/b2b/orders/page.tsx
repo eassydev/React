@@ -121,10 +121,11 @@ export default function B2BOrdersPage() {
         statusFilter || 'all',
         paymentStatusFilter || 'all',
         searchTerm,
-        dateFilter || 'all', // Predefined date filter
-        dateFrom, // Custom date range - from
-        dateTo, // Custom date range - to
-        dateFilterType // Date filter type (service or received)
+        dateFilter || 'all', // Predefined date filter (SERVICE DATE)
+        dateFrom, // Custom date range - from (SERVICE DATE)
+        dateTo, // Custom date range - to (SERVICE DATE)
+        receivedDateFrom, // NEW: Booking received date - from
+        receivedDateTo // NEW: Booking received date - to
       );
 
       // Ensure we have valid data structure
@@ -299,7 +300,7 @@ export default function B2BOrdersPage() {
   useEffect(() => {
     fetchOrders();
     loadStatusOptions();
-  }, [currentPage, searchTerm, statusFilter, paymentStatusFilter, dateFilter, dateFrom, dateTo, dateFilterType]);
+  }, [currentPage, searchTerm, statusFilter, paymentStatusFilter, dateFilter, dateFrom, dateTo, receivedDateFrom, receivedDateTo]);
 
   const loadStatusOptions = async () => {
     try {
@@ -360,6 +361,23 @@ export default function B2BOrdersPage() {
     setDateFilter('');
     setDateFrom('');
     setDateTo('');
+    setCurrentPage(1);
+  };
+
+  // NEW: Handlers for booking received date filters
+  const handleReceivedDateFromChange = (value: string) => {
+    setReceivedDateFrom(value);
+    setCurrentPage(1);
+  };
+
+  const handleReceivedDateToChange = (value: string) => {
+    setReceivedDateTo(value);
+    setCurrentPage(1);
+  };
+
+  const handleClearReceivedDateFilters = () => {
+    setReceivedDateFrom('');
+    setReceivedDateTo('');
     setCurrentPage(1);
   };
 
@@ -580,9 +598,12 @@ export default function B2BOrdersPage() {
                 </div>
               </div>
 
-              {/* Second Row: Date Filters */}
+              {/* Second Row: Service Date Filters */}
               <div className="flex flex-col md:flex-row gap-4 items-end">
                 <div className="w-full md:w-48">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Quick Service Date Filter
+                  </label>
                   <Select value={dateFilter || 'all'} onValueChange={handleDateFilter}>
                     <SelectTrigger>
                       <SelectValue placeholder="Quick Date Filter" />
@@ -595,7 +616,6 @@ export default function B2BOrdersPage() {
                       <SelectItem value="overdue">Overdue (Past Date)</SelectItem>
                     </SelectContent>
                   </Select>
-                  <p className="text-xs text-gray-500 mt-1">Service Date</p>
                 </div>
 
                 <div className="flex items-center gap-2 text-sm text-gray-500">
@@ -603,23 +623,9 @@ export default function B2BOrdersPage() {
                 </div>
 
                 <div className="flex-1 flex gap-2 items-end">
-                  <div className="w-40">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Filter By
-                    </label>
-                    <Select value={dateFilterType} onValueChange={(value: 'service' | 'received') => setDateFilterType(value)}>
-                      <SelectTrigger className="h-10">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="service">Service Date</SelectItem>
-                        <SelectItem value="received">Received Date</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
                   <div className="flex-1">
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      From Date
+                      Service Date From
                     </label>
                     <Input
                       type="date"
@@ -630,7 +636,7 @@ export default function B2BOrdersPage() {
                   </div>
                   <div className="flex-1">
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      To Date
+                      Service Date To
                     </label>
                     <Input
                       type="date"
@@ -646,29 +652,85 @@ export default function B2BOrdersPage() {
                       onClick={handleClearDateFilters}
                       className="whitespace-nowrap"
                     >
-                      Clear Dates
+                      Clear
+                    </Button>
+                  )}
+                </div>
+              </div>
+
+              {/* Third Row: Booking Received Date Filters */}
+              <div className="flex flex-col md:flex-row gap-4 items-end">
+                <div className="w-full md:w-48">
+                  <label className="block text-xs font-medium text-gray-700 mb-1">
+                    Booking Received Date
+                  </label>
+                  <p className="text-xs text-gray-500">Filter by when order was created</p>
+                </div>
+
+                <div className="flex items-center gap-2 text-sm text-gray-500 invisible">
+                  <span>OR</span>
+                </div>
+
+                <div className="flex-1 flex gap-2 items-end">
+                  <div className="flex-1">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Received Date From
+                    </label>
+                    <Input
+                      type="date"
+                      value={receivedDateFrom}
+                      onChange={(e) => handleReceivedDateFromChange(e.target.value)}
+                      placeholder="From date"
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <label className="block text-xs font-medium text-gray-700 mb-1">
+                      Received Date To
+                    </label>
+                    <Input
+                      type="date"
+                      value={receivedDateTo}
+                      onChange={(e) => handleReceivedDateToChange(e.target.value)}
+                      placeholder="To date"
+                    />
+                  </div>
+                  {(receivedDateFrom || receivedDateTo) && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleClearReceivedDateFilters}
+                      className="whitespace-nowrap"
+                    >
+                      Clear
                     </Button>
                   )}
                 </div>
               </div>
 
               {/* Active Filters Indicator */}
-              {(dateFrom || dateTo || dateFilter) && (
-                <div className="flex items-center gap-2 text-sm">
-                  <span className="text-gray-600">Active date filter:</span>
+              {(dateFrom || dateTo || dateFilter || receivedDateFrom || receivedDateTo) && (
+                <div className="flex flex-wrap items-center gap-2 text-sm">
+                  <span className="text-gray-600">Active filters:</span>
                   {dateFilter && (
-                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">
-                      {dateFilter === 'yesterday' && 'Yesterday'}
+                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                      Service: {dateFilter === 'yesterday' && 'Yesterday'}
                       {dateFilter === 'today' && 'Today'}
                       {dateFilter === 'tomorrow' && 'Tomorrow'}
                       {dateFilter === 'overdue' && 'Overdue'}
                     </span>
                   )}
                   {(dateFrom || dateTo) && (
-                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded">
-                      {dateFrom && `From: ${dateFrom}`}
-                      {dateFrom && dateTo && ' - '}
-                      {dateTo && `To: ${dateTo}`}
+                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
+                      Service: {dateFrom && `${dateFrom}`}
+                      {dateFrom && dateTo && ' to '}
+                      {dateTo && `${dateTo}`}
+                    </span>
+                  )}
+                  {(receivedDateFrom || receivedDateTo) && (
+                    <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
+                      Received: {receivedDateFrom && `${receivedDateFrom}`}
+                      {receivedDateFrom && receivedDateTo && ' to '}
+                      {receivedDateTo && `${receivedDateTo}`}
                     </span>
                   )}
                 </div>

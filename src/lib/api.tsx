@@ -6812,6 +6812,117 @@ export const getB2BPricingRules = async (scenario?: string) => {
 };
 
 // ✅ ========================================
+// ✅ B2B ADDITIONAL COSTS API - NEW
+// ✅ ========================================
+
+// Additional Cost interfaces
+export interface B2BAdditionalCost {
+  id?: string;
+  b2b_booking_id?: string;
+  b2b_quotation_id?: string;
+  item_name: string;
+  description?: string;
+  quantity: number;
+  unit_price: number;
+  total_amount?: number;
+  status?: 'pending' | 'approved' | 'rejected';
+  notes?: string;
+  approval_notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Get additional costs for order
+export const fetchAdditionalCostsForOrder = async (orderId: string) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/b2b/orders/${orderId}/additional-costs`, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch additional costs for order.');
+  }
+};
+
+// Get additional costs for quotation
+export const fetchAdditionalCostsForQuotation = async (quotationId: string) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/b2b/quotations/${quotationId}/additional-costs`, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch additional costs for quotation.');
+  }
+};
+
+// Add additional cost to order
+export const addAdditionalCostToOrder = async (orderId: string, costData: B2BAdditionalCost) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post(
+      `/b2b/orders/${orderId}/additional-costs`,
+      costData,
+      {
+        headers: { 'admin-auth-token': token || '' },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to add additional cost to order.');
+  }
+};
+
+// Add additional cost to quotation
+export const addAdditionalCostToQuotation = async (quotationId: string, costData: B2BAdditionalCost) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post(
+      `/b2b/quotations/${quotationId}/additional-costs`,
+      costData,
+      {
+        headers: { 'admin-auth-token': token || '' },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to add additional cost to quotation.');
+  }
+};
+
+// Update additional cost
+export const updateAdditionalCost = async (costId: string, costData: Partial<B2BAdditionalCost>) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.put(
+      `/b2b/additional-costs/${costId}`,
+      costData,
+      {
+        headers: { 'admin-auth-token': token || '' },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update additional cost.');
+  }
+};
+
+// Delete additional cost
+export const deleteAdditionalCost = async (costId: string) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.delete(`/b2b/additional-costs/${costId}`, {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete additional cost.');
+  }
+};
+
+// ✅ ========================================
 // ✅ B2B QUOTATION MANAGEMENT API - NEW
 // ✅ ========================================
 
