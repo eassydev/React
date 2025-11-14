@@ -60,7 +60,7 @@ interface B2BOrder {
   service_time?: string;
   booking_received_date?: number; // Unix timestamp (seconds)
   status: 'pending' | 'accepted' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'rejected';
-  payment_status: 'pending' | 'paid' | 'overdue';
+  payment_status: 'pending' | 'partial' | 'paid' | 'overdue';
   provider?: {
     id: string;
     first_name: string;
