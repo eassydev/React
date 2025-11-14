@@ -16,6 +16,7 @@ import {
 } from '@/lib/api';
 import { StatusBadge } from '@/components/b2b/StatusDropdown';
 import B2BOrdersExportDialog from '@/components/b2b/B2BOrdersExportDialog';
+import TemporaryInvoiceModal from '@/components/b2b/TemporaryInvoiceModal';
 import { useToast } from '@/hooks/use-toast';
 
 import { Button } from '@/components/ui/button';
@@ -111,6 +112,33 @@ export default function B2BOrdersPage() {
   } | null>(null);
   const [remarksValue, setRemarksValue] = useState('');
   const [savingRemarks, setSavingRemarks] = useState(false);
+
+  // Temporary invoice modal state
+  const [tempInvoiceModal, setTempInvoiceModal] = useState<{
+    isOpen: boolean;
+    orderId: string;
+    orderNumber: string;
+  }>({
+    isOpen: false,
+    orderId: '',
+    orderNumber: '',
+  });
+
+  const handleOpenTempInvoice = (orderId: string, orderNumber: string) => {
+    setTempInvoiceModal({
+      isOpen: true,
+      orderId,
+      orderNumber,
+    });
+  };
+
+  const handleCloseTempInvoice = () => {
+    setTempInvoiceModal({
+      isOpen: false,
+      orderId: '',
+      orderNumber: '',
+    });
+  };
 
   const fetchOrders = async () => {
     try {
@@ -1118,6 +1146,10 @@ export default function B2BOrdersPage() {
                                   Download Invoice
                                 </DropdownMenuItem>
                               )}
+                              <DropdownMenuItem onClick={() => handleOpenTempInvoice(order.id, order.order_number)}>
+                                <FileText className="w-4 h-4 mr-2" />
+                                Create Temp Invoice
+                              </DropdownMenuItem>
 
                             </DropdownMenuContent>
                           </DropdownMenu>
@@ -1159,6 +1191,14 @@ export default function B2BOrdersPage() {
             </Button>
           </div>
         )}
+
+        {/* Temporary Invoice Modal */}
+        <TemporaryInvoiceModal
+          orderId={tempInvoiceModal.orderId}
+          orderNumber={tempInvoiceModal.orderNumber}
+          isOpen={tempInvoiceModal.isOpen}
+          onClose={handleCloseTempInvoice}
+        />
       </div>
     </div>
   );

@@ -6812,117 +6812,6 @@ export const getB2BPricingRules = async (scenario?: string) => {
 };
 
 // ✅ ========================================
-// ✅ B2B ADDITIONAL COSTS API - NEW
-// ✅ ========================================
-
-// Additional Cost interfaces
-export interface B2BAdditionalCost {
-  id?: string;
-  b2b_booking_id?: string;
-  b2b_quotation_id?: string;
-  item_name: string;
-  description?: string;
-  quantity: number;
-  unit_price: number;
-  total_amount?: number;
-  status?: 'pending' | 'approved' | 'rejected';
-  notes?: string;
-  approval_notes?: string;
-  created_at?: string;
-  updated_at?: string;
-}
-
-// Get additional costs for order
-export const fetchAdditionalCostsForOrder = async (orderId: string) => {
-  try {
-    const token = getToken();
-    const response: AxiosResponse = await apiClient.get(`/b2b/orders/${orderId}/additional-costs`, {
-      headers: { 'admin-auth-token': token || '' },
-    });
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch additional costs for order.');
-  }
-};
-
-// Get additional costs for quotation
-export const fetchAdditionalCostsForQuotation = async (quotationId: string) => {
-  try {
-    const token = getToken();
-    const response: AxiosResponse = await apiClient.get(`/b2b/quotations/${quotationId}/additional-costs`, {
-      headers: { 'admin-auth-token': token || '' },
-    });
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch additional costs for quotation.');
-  }
-};
-
-// Add additional cost to order
-export const addAdditionalCostToOrder = async (orderId: string, costData: B2BAdditionalCost) => {
-  try {
-    const token = getToken();
-    const response: AxiosResponse = await apiClient.post(
-      `/b2b/orders/${orderId}/additional-costs`,
-      costData,
-      {
-        headers: { 'admin-auth-token': token || '' },
-      }
-    );
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to add additional cost to order.');
-  }
-};
-
-// Add additional cost to quotation
-export const addAdditionalCostToQuotation = async (quotationId: string, costData: B2BAdditionalCost) => {
-  try {
-    const token = getToken();
-    const response: AxiosResponse = await apiClient.post(
-      `/b2b/quotations/${quotationId}/additional-costs`,
-      costData,
-      {
-        headers: { 'admin-auth-token': token || '' },
-      }
-    );
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to add additional cost to quotation.');
-  }
-};
-
-// Update additional cost
-export const updateAdditionalCost = async (costId: string, costData: Partial<B2BAdditionalCost>) => {
-  try {
-    const token = getToken();
-    const response: AxiosResponse = await apiClient.put(
-      `/b2b/additional-costs/${costId}`,
-      costData,
-      {
-        headers: { 'admin-auth-token': token || '' },
-      }
-    );
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to update additional cost.');
-  }
-};
-
-// Delete additional cost
-export const deleteAdditionalCost = async (costId: string) => {
-  try {
-    const token = getToken();
-    const response: AxiosResponse = await apiClient.delete(`/b2b/additional-costs/${costId}`, {
-      headers: { 'admin-auth-token': token || '' },
-    });
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to delete additional cost.');
-  }
-};
-
-// ✅ ========================================
 // ✅ B2B QUOTATION MANAGEMENT API - NEW
 // ✅ ========================================
 
@@ -7041,6 +6930,37 @@ export interface CreateQuotationRequest {
   validity_days?: number;
   sp_notes?: string;
   admin_notes?: string;
+}
+
+// ✅ B2B Additional Cost Interface
+export interface B2BAdditionalCost {
+  id?: string;
+  b2b_booking_id?: string | null;
+  b2b_quotation_id?: string | null;
+  item_name: string;
+  description?: string;
+  quantity: number;
+  unit_price: number;
+  total_amount: number;
+  status: 'pending' | 'approved' | 'rejected';
+  notes?: string;
+  added_by?: string;
+  approved_by?: string | null;
+  added_at?: string;
+  approved_at?: string | null;
+  is_active?: number;
+  addedBy?: {
+    id: string;
+    full_name?: string;
+    username?: string;
+    email: string;
+  };
+  approvedBy?: {
+    id: string;
+    full_name?: string;
+    username?: string;
+    email: string;
+  };
 }
 
 // Create new quotation
@@ -7342,6 +7262,154 @@ export const importB2BExcelData = async (file: File, options: {
   } catch (error: any) {
     console.error('Error importing B2B Excel data:', error);
     throw new Error(error.response?.data?.message || 'Failed to import data');
+  }
+};
+
+// ========================================
+// B2B Additional Costs API Functions
+// ========================================
+
+/**
+ * Fetch additional costs for a B2B order
+ */
+export const fetchAdditionalCostsForOrder = async (orderId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get(`/b2b/orders/${orderId}/additional-costs`, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching additional costs for order:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch additional costs');
+  }
+};
+
+/**
+ * Fetch additional costs for a B2B quotation
+ */
+export const fetchAdditionalCostsForQuotation = async (quotationId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get(`/b2b/quotations/${quotationId}/additional-costs`, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching additional costs for quotation:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch additional costs');
+  }
+};
+
+/**
+ * Add additional cost to a B2B order
+ */
+export const addAdditionalCostToOrder = async (orderId: string, costData: Partial<B2BAdditionalCost>) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post(`/b2b/orders/${orderId}/additional-costs`, costData, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error adding additional cost to order:', error);
+    throw new Error(error.response?.data?.message || 'Failed to add additional cost');
+  }
+};
+
+/**
+ * Add additional cost to a B2B quotation
+ */
+export const addAdditionalCostToQuotation = async (quotationId: string, costData: Partial<B2BAdditionalCost>) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post(`/b2b/quotations/${quotationId}/additional-costs`, costData, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error adding additional cost to quotation:', error);
+    throw new Error(error.response?.data?.message || 'Failed to add additional cost');
+  }
+};
+
+/**
+ * Update an additional cost
+ */
+export const updateAdditionalCost = async (costId: string, costData: Partial<B2BAdditionalCost>) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.put(`/b2b/additional-costs/${costId}`, costData, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error updating additional cost:', error);
+    throw new Error(error.response?.data?.message || 'Failed to update additional cost');
+  }
+};
+
+/**
+ * Delete an additional cost
+ */
+export const deleteAdditionalCost = async (costId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.delete(`/b2b/additional-costs/${costId}`, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error deleting additional cost:', error);
+    throw new Error(error.response?.data?.message || 'Failed to delete additional cost');
   }
 };
 
@@ -12698,6 +12766,65 @@ export const generateB2BOrderInvoice = async (orderId: string, invoiceData: {
   } catch (error: any) {
     console.error('❌ Error generating invoice:', error);
     throw new Error(error.response?.data?.message || 'Failed to generate invoice');
+  }
+};
+
+/**
+ * ✅ NEW: Get temporary invoice data for editing (without creating invoice record)
+ */
+export const getTemporaryInvoiceData = async (orderId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get(`/b2b/orders/${orderId}/temporary-invoice-data`, {
+      headers: {
+        'admin-auth-token': token,
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching temporary invoice data:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch temporary invoice data');
+  }
+};
+
+/**
+ * ✅ NEW: Generate and download temporary invoice PDF (without creating invoice record)
+ */
+export const generateTemporaryInvoice = async (orderId: string, invoiceData: any) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post(`/b2b/orders/${orderId}/temporary-invoice`, invoiceData, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+      responseType: 'blob', // Important for PDF download
+    });
+
+    // Create a blob URL and trigger download
+    const blob = new Blob([response.data], { type: 'application/pdf' });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `Temporary-Invoice-${orderId}.pdf`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    return { success: true, message: 'Temporary invoice downloaded successfully' };
+  } catch (error: any) {
+    console.error('❌ Error generating temporary invoice:', error);
+    throw new Error(error.response?.data?.message || 'Failed to generate temporary invoice');
   }
 };
 
