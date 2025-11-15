@@ -53,6 +53,7 @@ interface B2BOrder {
     contact_person: string;
   };
   service_name: string;
+  service_description: string;
   service_address: string;
   custom_price: number;
   service_rate?: number;
@@ -946,6 +947,9 @@ export default function B2BOrdersPage() {
                         <TableCell>
                           <div>
                             <div className="font-medium">{order.service_name}</div>
+                             {order.service_description && (
+                                <div className="text-sm text-gray-500">description: {order.service_description}</div>
+                              )}
                             {order.service_area_sqft && (
                               <div className="text-sm text-gray-500">{order.service_area_sqft} sq ft</div>
                             )}
