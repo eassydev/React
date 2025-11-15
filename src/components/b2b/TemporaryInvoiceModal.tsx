@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   Dialog,
   DialogContent,
@@ -30,6 +31,7 @@ export default function TemporaryInvoiceModal({
   onClose,
 }: TemporaryInvoiceModalProps) {
   const { toast } = useToast();
+  const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [invoiceData, setInvoiceData] = useState<any>(null);
@@ -67,16 +69,35 @@ export default function TemporaryInvoiceModal({
   const handleDownload = async () => {
     try {
       setDownloading(true);
-      await generateTemporaryInvoice(orderId, invoiceData);
-      toast({
-        title: 'Success',
-        description: 'Temporary invoice downloaded successfully',
-      });
-      onClose();
+      const response = await generateTemporaryInvoice(orderId, invoiceData);
+
+      if (response.success) {
+        toast({
+          title: 'Success',
+          description: response.message || 'Invoice created successfully',
+        });
+
+        onClose();
+
+        // ✅ Redirect to invoice listing page with search query
+        if (response.data?.redirect_to) {
+          router.push(response.data.redirect_to);
+        } else if (response.data?.invoice_number) {
+          router.push(`/admin/b2b/invoices?search=${response.data.invoice_number}`);
+        } else {
+          router.push('/admin/b2b/invoices');
+        }
+      } else {
+        toast({
+          title: 'Error',
+          description: response.message || 'Failed to create invoice',
+          variant: 'destructive',
+        });
+      }
     } catch (error: any) {
       toast({
         title: 'Error',
-        description: error.message || 'Failed to generate invoice',
+        description: error.message || 'Failed to create invoice',
         variant: 'destructive',
       });
     } finally {
@@ -309,12 +330,12 @@ export default function TemporaryInvoiceModal({
                 {downloading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Generating...
+                    Creating Invoice...
                   </>
                 ) : (
                   <>
                     <Download className="mr-2 h-4 w-4" />
-                    Download Invoice
+                    Create Invoice
                   </>
                 )}
               </Button>

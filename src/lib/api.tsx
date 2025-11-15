@@ -12793,7 +12793,7 @@ export const getTemporaryInvoiceData = async (orderId: string) => {
 };
 
 /**
- * ✅ NEW: Generate and download temporary invoice PDF (without creating invoice record)
+ * ✅ UPDATED: Create invoice from temporary invoice data (creates actual invoice record)
  */
 export const generateTemporaryInvoice = async (orderId: string, invoiceData: any) => {
   try {
@@ -12807,24 +12807,13 @@ export const generateTemporaryInvoice = async (orderId: string, invoiceData: any
         'admin-auth-token': token,
         'Content-Type': 'application/json',
       },
-      responseType: 'blob', // Important for PDF download
+      // ✅ CHANGED: Now expects JSON response, not PDF blob
     });
 
-    // Create a blob URL and trigger download
-    const blob = new Blob([response.data], { type: 'application/pdf' });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `Temporary-Invoice-${orderId}.pdf`;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
-
-    return { success: true, message: 'Temporary invoice downloaded successfully' };
+    return response.data; // Returns { success, message, data: { invoice_id, invoice_number, ... } }
   } catch (error: any) {
-    console.error('❌ Error generating temporary invoice:', error);
-    throw new Error(error.response?.data?.message || 'Failed to generate temporary invoice');
+    console.error('❌ Error creating invoice from temporary data:', error);
+    throw new Error(error.response?.data?.message || 'Failed to create invoice from temporary data');
   }
 };
 
