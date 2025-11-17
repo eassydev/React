@@ -271,7 +271,7 @@ export default function B2BAnalyticsDashboard() {
         />
         
         <B2BTopCustomersTable
-          title="Top Customers by Profit"
+          title="Top Customers by Margin"
           data={data.top_performers.by_profit}
           metric="profit"
         />
