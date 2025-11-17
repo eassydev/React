@@ -208,14 +208,14 @@ export default function B2BAnalyticsDashboard() {
           subtitle={`${data.overall_metrics.customers.active} active`}
           icon={<Users className="h-4 w-4" />}
         />
-        
+
         <B2BMetricCard
           title="Total Revenue"
           value={formatCurrency(data.overall_metrics.revenue)}
           subtitle={`From ${data.overall_metrics.orders_completed.count} completed orders`}
           icon={<DollarSign className="h-4 w-4" />}
         />
-        
+
         <B2BMetricCard
           title="Gross Margin"
           value={formatCurrency(data.overall_metrics.profit.total)}
@@ -223,16 +223,24 @@ export default function B2BAnalyticsDashboard() {
           icon={<TrendingUp className="h-4 w-4" />}
           valueClassName="text-green-600"
         />
-        
+
         <B2BMetricCard
           title="Orders Received"
           value={data.overall_metrics.orders_received.count}
           subtitle={formatCurrency(data.overall_metrics.orders_received.total_value)}
           icon={<ShoppingCart className="h-4 w-4" />}
         />
+
+
       </div>
 
       {/* Secondary Metrics */}
+      <B2BMetricCard
+        title="Orders Received Amount"
+        value={formatCurrency(data.overall_metrics.orders_received.total_value)}
+        subtitle={"orders recieved amount"}
+        icon={<ShoppingCart className="h-4 w-4" />}
+      />
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <B2BMetricCard
           title="Outstanding Orders"
@@ -240,14 +248,14 @@ export default function B2BAnalyticsDashboard() {
           subtitle={formatCurrency(data.overall_metrics.outstanding_orders.total_value)}
           icon={<Clock className="h-4 w-4" />}
         />
-        
+
         <B2BMetricCard
           title="Completed Orders"
           value={data.overall_metrics.orders_completed.count}
           subtitle={formatCurrency(data.overall_metrics.orders_completed.total_value)}
           icon={<CheckCircle className="h-4 w-4" />}
         />
-        
+
         <B2BMetricCard
           title="Overdue Payments"
           value={formatCurrency(data.overall_metrics.payment_collection.overdue)}
@@ -258,7 +266,7 @@ export default function B2BAnalyticsDashboard() {
       </div>
 
       {/* Payment Collection Chart */}
-      <B2BPaymentCollectionChart 
+      <B2BPaymentCollectionChart
         data={data.overall_metrics.payment_collection}
       />
 
@@ -269,13 +277,13 @@ export default function B2BAnalyticsDashboard() {
           data={data.top_performers.by_revenue}
           metric="revenue"
         />
-        
+
         <B2BTopCustomersTable
           title="Top Customers by Margin"
           data={data.top_performers.by_profit}
           metric="profit"
         />
-        
+
         <B2BTopCustomersTable
           title="Top Customers by Orders"
           data={data.top_performers.by_orders}
