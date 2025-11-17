@@ -65,6 +65,7 @@ interface B2BOrder {
   status: 'pending' | 'accepted' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'rejected';
   payment_status: 'pending' | 'paid' | 'overdue';
   invoice_status?: 'pending' | 'generated' | 'sent' | 'paid';
+  invoice_generated_at?: string;
   service_date?: string;
   booking_received_date?: number; // Unix timestamp (seconds)
   created_at: number; // Unix timestamp (seconds)
@@ -907,6 +908,7 @@ export default function B2BOrdersPage() {
                       <TableHead>Status</TableHead>
                       <TableHead>Payment</TableHead>
                       <TableHead>Invoice</TableHead>
+                      <TableHead>Invoice Date</TableHead>
                       <TableHead>Service Date</TableHead>
                       <TableHead>Received Date</TableHead>
                       <TableHead>CRM Remarks</TableHead>
@@ -1016,6 +1018,9 @@ export default function B2BOrdersPage() {
                               Pending
                             </Badge>
                           )}
+                        </TableCell>
+                        <TableCell>
+                          {order.invoice_generated_at ? new Date(order.invoice_generated_at).toLocaleDateString() : 'TBD'}
                         </TableCell>
                         <TableCell>
                           {order.service_date ? new Date(order.service_date).toLocaleDateString() : 'TBD'}

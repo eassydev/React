@@ -217,7 +217,7 @@ export default function B2BAnalyticsDashboard() {
         />
         
         <B2BMetricCard
-          title="Total Profit"
+          title="Gross Margin"
           value={formatCurrency(data.overall_metrics.profit.total)}
           subtitle={`${data.overall_metrics.profit.avg_margin_percentage}% avg margin`}
           icon={<TrendingUp className="h-4 w-4" />}
