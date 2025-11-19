@@ -42,7 +42,7 @@ export default function B2BOrdersExportDialog({ currentFilters }: B2BOrdersExpor
   // Export filters - initialize with current page filters
   const [dateFrom, setDateFrom] = useState(currentFilters?.date_from || '');
   const [dateTo, setDateTo] = useState(currentFilters?.date_to || '');
-  const [dateFilterType, setDateFilterType] = useState<'service' | 'received'>('service'); // Default to service date
+  const [dateFilterType, setDateFilterType] = useState<'service' | 'received'>('received'); // ✅ CHANGED: Default to booking received date (more commonly used)
   const [status, setStatus] = useState(currentFilters?.status || 'all');
   const [paymentStatus, setPaymentStatus] = useState(currentFilters?.payment_status || 'all');
   const [invoiceStatus, setInvoiceStatus] = useState('all');
@@ -101,6 +101,7 @@ export default function B2BOrdersExportDialog({ currentFilters }: B2BOrdersExpor
   const handleReset = () => {
     setDateFrom('');
     setDateTo('');
+    setDateFilterType('received'); // ✅ ADDED: Reset to default (booking received date)
     setStatus('all');
     setPaymentStatus('all');
     setInvoiceStatus('all');
