@@ -136,6 +136,34 @@ export const B2BContactForm: React.FC<B2BContactFormProps> = ({
     { value: 'Asia/Singapore', label: 'Asia/Singapore (SGT)' }
   ];
 
+  // ✅ FIX: Email notification type labels mapping
+  const emailNotificationLabels = {
+    quotations: {
+      label: 'Quotations',
+      description: 'Receive notifications about quotation requests and updates'
+    },
+    invoices: {
+      label: 'Invoices',
+      description: 'Receive notifications about invoice generation and updates'
+    },
+    order_updates: {
+      label: 'Order Updates',
+      description: 'Receive notifications about order status changes and updates'
+    },
+    payment_reminders: {
+      label: 'Payment Reminders',
+      description: 'Receive notifications about payment due dates and reminders'
+    },
+    service_reports: {
+      label: 'Service Reports',
+      description: 'Receive notifications about service completion reports'
+    },
+    escalations: {
+      label: 'Escalations',
+      description: 'Receive notifications about escalated issues and urgent matters'
+    }
+  };
+
   // Initialize form data when contact prop changes
   useEffect(() => {
     if (contact) {
@@ -451,20 +479,23 @@ export const B2BContactForm: React.FC<B2BContactFormProps> = ({
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {Object.entries(formData.email_notifications).map(([key, value]) => (
-                <div key={key} className="flex items-center justify-between p-4 border rounded-lg">
-                  <div>
-                    <h4 className="font-medium capitalize">{key.replace(/_/g, ' ')}</h4>
-                    <p className="text-sm text-gray-600">
-                      Receive notifications for {key.replace(/_/g, ' ').toLowerCase()}
-                    </p>
+              {Object.entries(formData.email_notifications).map(([key, value]) => {
+                const notificationInfo = emailNotificationLabels[key as keyof typeof emailNotificationLabels];
+                return (
+                  <div key={key} className="flex items-center justify-between p-4 border rounded-lg">
+                    <div>
+                      <h4 className="font-medium">{notificationInfo?.label || key.replace(/_/g, ' ')}</h4>
+                      <p className="text-sm text-gray-600">
+                        {notificationInfo?.description || `Receive notifications for ${key.replace(/_/g, ' ').toLowerCase()}`}
+                      </p>
+                    </div>
+                    <Switch
+                      checked={value}
+                      onCheckedChange={(checked) => handleNotificationChange(key, checked)}
+                    />
                   </div>
-                  <Switch
-                    checked={value}
-                    onCheckedChange={(checked) => handleNotificationChange(key, checked)}
-                  />
-                </div>
-              ))}
+                );
+              })}
             </CardContent>
           </Card>
         </TabsContent>

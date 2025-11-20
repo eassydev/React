@@ -143,6 +143,30 @@ export const B2BSPOCForm: React.FC<B2BSPOCFormProps> = ({
     { value: 'escalation', label: 'Escalation' }
   ];
 
+  // ✅ FIX: Notification type labels mapping
+  const notificationTypeLabels = {
+    new_orders: {
+      label: 'New Orders',
+      description: 'Get notified when new orders are placed by this client'
+    },
+    quotation_requests: {
+      label: 'Quotation Requests',
+      description: 'Get notified when client requests quotations'
+    },
+    payment_issues: {
+      label: 'Payment Issues',
+      description: 'Get notified about payment delays and billing issues'
+    },
+    service_escalations: {
+      label: 'Service Escalations',
+      description: 'Get notified when service issues are escalated'
+    },
+    client_communications: {
+      label: 'Client Communications',
+      description: 'Get notified about general client communications and updates'
+    }
+  };
+
   // Load admin users on component mount
   useEffect(() => {
     console.log('🚀 B2BSPOCForm mounted, loading admin users...'); // ✅ DEBUG
@@ -578,20 +602,23 @@ export const B2BSPOCForm: React.FC<B2BSPOCFormProps> = ({
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
-          {Object.entries(formData.notification_preferences).map(([key, value]) => (
-            <div key={key} className="flex items-center justify-between p-4 border rounded-lg">
-              <div>
-                <h4 className="font-medium capitalize">{key.replace(/_/g, ' ')}</h4>
-                <p className="text-sm text-gray-600">
-                  Receive notifications for {key.replace(/_/g, ' ').toLowerCase()}
-                </p>
+          {Object.entries(formData.notification_preferences).map(([key, value]) => {
+            const notificationInfo = notificationTypeLabels[key as keyof typeof notificationTypeLabels];
+            return (
+              <div key={key} className="flex items-center justify-between p-4 border rounded-lg">
+                <div>
+                  <h4 className="font-medium">{notificationInfo?.label || key.replace(/_/g, ' ')}</h4>
+                  <p className="text-sm text-gray-600">
+                    {notificationInfo?.description || `Receive notifications for ${key.replace(/_/g, ' ').toLowerCase()}`}
+                  </p>
+                </div>
+                <Switch
+                  checked={value}
+                  onCheckedChange={(checked) => handleNotificationChange(key, checked)}
+                />
               </div>
-              <Switch
-                checked={value}
-                onCheckedChange={(checked) => handleNotificationChange(key, checked)}
-              />
-            </div>
-          ))}
+            );
+          })}
         </CardContent>
       </Card>
 
