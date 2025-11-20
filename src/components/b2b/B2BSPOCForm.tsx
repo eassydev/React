@@ -178,10 +178,29 @@ export const B2BSPOCForm: React.FC<B2BSPOCFormProps> = ({
     if (assignment) {
       console.log('🔄 Initializing form with assignment data:', assignment); // ✅ DEBUG
       console.log('👤 Assignment SPOC User Data:', assignment.spocUser); // ✅ DEBUG
+      // ✅ FIX: Parse notification_preferences if it's a JSON string
+      let parsedNotificationPreferences;
+      try {
+        if (typeof assignment.notification_preferences === 'string') {
+          parsedNotificationPreferences = JSON.parse(assignment.notification_preferences);
+        } else {
+          parsedNotificationPreferences = assignment.notification_preferences;
+        }
+      } catch (error) {
+        console.error('Error parsing notification preferences:', error);
+        parsedNotificationPreferences = {
+          new_orders: true,
+          quotation_requests: true,
+          payment_issues: true,
+          service_escalations: true,
+          client_communications: true
+        };
+      }
+
       const newFormData = {
         ...assignment,
-        // Ensure notification preferences are properly initialized
-        notification_preferences: assignment.notification_preferences || {
+        // Ensure notification preferences are properly initialized and parsed
+        notification_preferences: parsedNotificationPreferences || {
           new_orders: true,
           quotation_requests: true,
           payment_issues: true,
