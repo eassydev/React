@@ -329,7 +329,56 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
         [field]: value,
       };
 
-      // Auto-calculate SP pricing when base price changes
+      // ✅ Auto-calculate CLIENT BILLING when relevant fields change
+      if (field === 'custom_price' || field === 'quantity') {
+        const customPrice = parseFloat(field === 'custom_price' ? value : prev.custom_price) || 0;
+        const quantity = parseInt(field === 'quantity' ? value : prev.quantity) || 1;
+        const discountAmount = parseFloat(prev.discount_amount) || 0;
+
+        const totalAmount = Math.round((customPrice * quantity - discountAmount) * 100) / 100;
+        const gstAmount = Math.round((totalAmount * 18) / 100 * 100) / 100; // 18% GST
+        const finalAmount = Math.round((totalAmount + gstAmount) * 100) / 100;
+
+        newData.total_amount = totalAmount.toString();
+        newData.gst_amount = gstAmount.toString();
+        newData.final_amount = finalAmount.toString();
+      }
+
+      // ✅ Auto-calculate when total_amount changes (recalculate GST and final amount)
+      if (field === 'total_amount' && value) {
+        const totalAmount = parseFloat(value) || 0;
+        const gstAmount = Math.round((totalAmount * 18) / 100 * 100) / 100; // 18% GST
+        const finalAmount = Math.round((totalAmount + gstAmount) * 100) / 100;
+
+        newData.gst_amount = gstAmount.toString();
+        newData.final_amount = finalAmount.toString();
+      }
+
+      // ✅ Auto-calculate when gst_amount changes (recalculate final amount only)
+      if (field === 'gst_amount' && value) {
+        const totalAmount = parseFloat(prev.total_amount) || 0;
+        const gstAmount = parseFloat(value) || 0;
+        const finalAmount = Math.round((totalAmount + gstAmount) * 100) / 100;
+
+        newData.final_amount = finalAmount.toString();
+      }
+
+      // ✅ Auto-calculate when discount_amount changes
+      if (field === 'discount_amount') {
+        const customPrice = parseFloat(prev.custom_price) || 0;
+        const quantity = parseInt(prev.quantity) || 1;
+        const discountAmount = parseFloat(value) || 0;
+
+        const totalAmount = Math.round((customPrice * quantity - discountAmount) * 100) / 100;
+        const gstAmount = Math.round((totalAmount * 18) / 100 * 100) / 100; // 18% GST
+        const finalAmount = Math.round((totalAmount + gstAmount) * 100) / 100;
+
+        newData.total_amount = totalAmount.toString();
+        newData.gst_amount = gstAmount.toString();
+        newData.final_amount = finalAmount.toString();
+      }
+
+      // ✅ Auto-calculate SP pricing when base price changes
       if (field === 'sp_base_price' && value) {
         const basePrice = parseFloat(value) || 0;
         const gstAmount = Math.round((basePrice * 18) / 100 * 100) / 100; // 18% GST, rounded to 2 decimals
