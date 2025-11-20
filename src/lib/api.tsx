@@ -13386,8 +13386,13 @@ export const sendAdminDailySummary = async (): Promise<{ success: boolean; messa
 /**
  * Export Customer-wise Analytics (Excel)
  * Downloads Excel file directly
+ * @param filters - Optional filters for date range and filter type
  */
-export const exportCustomerWiseAnalytics = async (): Promise<void> => {
+export const exportCustomerWiseAnalytics = async (filters?: {
+  date_from?: string;
+  date_to?: string;
+  date_filter_type?: 'service' | 'received';
+}): Promise<void> => {
   const token = getToken();
   if (!token) {
     throw new Error('Authentication token not found');
@@ -13398,6 +13403,7 @@ export const exportCustomerWiseAnalytics = async (): Promise<void> => {
       headers: {
         'admin-auth-token': token
       },
+      params: filters,
       responseType: 'blob'
     });
 
@@ -13419,8 +13425,13 @@ export const exportCustomerWiseAnalytics = async (): Promise<void> => {
 /**
  * Export SPOC-wise Analytics (Excel)
  * Only accessible by super_admin and manager
+ * @param filters - Optional filters for date range and filter type
  */
-export const exportSPOCWiseAnalytics = async (): Promise<void> => {
+export const exportSPOCWiseAnalytics = async (filters?: {
+  date_from?: string;
+  date_to?: string;
+  date_filter_type?: 'service' | 'received';
+}): Promise<void> => {
   const token = getToken();
   if (!token) {
     throw new Error('Authentication token not found');
@@ -13431,6 +13442,7 @@ export const exportSPOCWiseAnalytics = async (): Promise<void> => {
       headers: {
         'admin-auth-token': token
       },
+      params: filters,
       responseType: 'blob'
     });
 
@@ -13450,8 +13462,13 @@ export const exportSPOCWiseAnalytics = async (): Promise<void> => {
 
 /**
  * Export SP-wise Analytics (Excel)
+ * @param filters - Optional filters for date range and filter type
  */
-export const exportSPWiseAnalytics = async (): Promise<void> => {
+export const exportSPWiseAnalytics = async (filters?: {
+  date_from?: string;
+  date_to?: string;
+  date_filter_type?: 'service' | 'received';
+}): Promise<void> => {
   const token = getToken();
   if (!token) {
     throw new Error('Authentication token not found');
@@ -13462,6 +13479,7 @@ export const exportSPWiseAnalytics = async (): Promise<void> => {
       headers: {
         'admin-auth-token': token
       },
+      params: filters,
       responseType: 'blob'
     });
 

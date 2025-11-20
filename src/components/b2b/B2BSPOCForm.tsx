@@ -437,7 +437,7 @@ export const B2BSPOCForm: React.FC<B2BSPOCFormProps> = ({
                 <p className="text-sm text-red-500 mt-1">{errors.b2b_customer_id}</p>
               )}
             </div>
-            
+
             {selectedCustomer && (
               <div className="p-4 bg-blue-50 rounded-lg">
                 <h4 className="font-medium text-blue-900">{selectedCustomer.company_name}</h4>

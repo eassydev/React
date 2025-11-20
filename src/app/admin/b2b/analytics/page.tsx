@@ -10,21 +10,18 @@ import {
   AlertCircle,
   Package,
   Clock,
-  CheckCircle,
-  Download
+  CheckCircle
 } from 'lucide-react';
 import B2BMetricCard from '@/components/b2b/B2BMetricCard';
 import B2BPaymentCollectionChart from '@/components/b2b/B2BPaymentCollectionChart';
 import B2BTopCustomersTable from '@/components/b2b/B2BTopCustomersTable';
+import AnalyticsExportPanel from '@/components/b2b/AnalyticsExportPanel';
 import { DateRangePicker } from '@/components/DateRangePicker';
-import { Button } from '@/components/ui/button';
+import { Separator } from '@/components/ui/separator';
 import { toast } from 'sonner';
 import {
   getB2BAnalyticsDashboard,
-  B2BDashboardData,
-  exportSPOCWiseAnalytics,
-  exportSPWiseAnalytics,
-  exportBusinessTrends
+  B2BDashboardData
 } from '@/lib/api';
 
 const formatCurrency = (value: number): string => {
@@ -42,7 +39,6 @@ export default function B2BAnalyticsDashboard() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<B2BDashboardData | null>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
-  const [exporting, setExporting] = useState<string | null>(null);
   const [userRole, setUserRole] = useState<string>('');
 
   const fetchDashboard = async () => {
@@ -59,45 +55,6 @@ export default function B2BAnalyticsDashboard() {
       toast.error(err.message || 'Failed to fetch dashboard data');
     } finally {
       setLoading(false);
-    }
-  };
-
-  const handleExportSPOCWise = async () => {
-    try {
-      setExporting('spoc');
-      await exportSPOCWiseAnalytics();
-      toast.success('SPOC-wise analytics exported successfully');
-    } catch (err: any) {
-      console.error('Export error:', err);
-      toast.error(err.message || 'Failed to export SPOC-wise analytics');
-    } finally {
-      setExporting(null);
-    }
-  };
-
-  const handleExportSPWise = async () => {
-    try {
-      setExporting('sp');
-      await exportSPWiseAnalytics();
-      toast.success('SP-wise analytics exported successfully');
-    } catch (err: any) {
-      console.error('Export error:', err);
-      toast.error(err.message || 'Failed to export SP-wise analytics');
-    } finally {
-      setExporting(null);
-    }
-  };
-
-  const handleExportBusinessTrends = async () => {
-    try {
-      setExporting('trends');
-      await exportBusinessTrends();
-      toast.success('Business trends exported successfully');
-    } catch (err: any) {
-      console.error('Export error:', err);
-      toast.error(err.message || 'Failed to export business trends');
-    } finally {
-      setExporting(null);
     }
   };
 
@@ -120,9 +77,6 @@ export default function B2BAnalyticsDashboard() {
       console.error('Error parsing adminInfo:', error);
     }
   }, []);
-
-  // Check if user is admin or manager (can access SPOC-wise and Business Trends)
-  const isAdminOrManager = userRole === 'super_admin' || userRole === 'manager';
 
   if (loading) {
     return (
@@ -164,42 +118,8 @@ export default function B2BAnalyticsDashboard() {
           />
         </div>
       </div>
-
-      {/* Export Buttons */}
-      <div className="flex items-center gap-2 flex-wrap">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleExportSPOCWise}
-          disabled={exporting === 'spoc' || !isAdminOrManager}
-          className={!isAdminOrManager ? 'opacity-50 cursor-not-allowed' : ''}
-        >
-          <Download className="h-4 w-4 mr-2" />
-          {exporting === 'spoc' ? 'Exporting...' : 'Export SPOC-wise'}
-          {!isAdminOrManager && <span className="ml-2 text-xs text-red-500">(Admin only)</span>}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleExportSPWise}
-          disabled={exporting === 'sp'}
-        >
-          <Download className="h-4 w-4 mr-2" />
-          {exporting === 'sp' ? 'Exporting...' : 'Export SP-wise'}
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={handleExportBusinessTrends}
-          disabled={exporting === 'trends' || !isAdminOrManager}
-          className={!isAdminOrManager ? 'opacity-50 cursor-not-allowed' : ''}
-        >
-          <Download className="h-4 w-4 mr-2" />
-          {exporting === 'trends' ? 'Exporting...' : 'Export Business Trends'}
-          {!isAdminOrManager && <span className="ml-2 text-xs text-red-500">(Admin only)</span>}
-        </Button>
-      </div>
-
+      {/* Analytics Export Panel */}
+      <AnalyticsExportPanel userRole={userRole} />
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <B2BMetricCard
@@ -290,6 +210,8 @@ export default function B2BAnalyticsDashboard() {
           metric="orders"
         />
       </div>
+
+      <Separator />
     </div>
   );
 }
