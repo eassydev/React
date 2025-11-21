@@ -183,7 +183,7 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
       }
     }
   }, [isProviderDialogOpen, order]);
-  
+
   const [formData, setFormData] = useState({
     // Customer & Service Details
     b2b_customer_id: '',
@@ -300,7 +300,14 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
         sp_total_amount: orderData.sp_total_amount?.toString() || '',
 
         // SP Payout Tracking
-        sp_payout_date: formatTimestampForInput(orderData.sp_payout_date),
+        sp_payout_date: (() => {
+          const formatted = formatTimestampForInput(orderData.sp_payout_date);
+          console.log('🔍 Loading sp_payout_date:', {
+            raw: orderData.sp_payout_date,
+            formatted: formatted
+          });
+          return formatted;
+        })(),
         sp_payout_transaction_id: orderData.sp_payout_transaction_id || '',
         sp_payout_status: orderData.sp_payout_status || 'pending',
 
@@ -484,6 +491,31 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
       submitData.sp_base_price = formData.sp_base_price ? parseFloat(formData.sp_base_price) : null;
       submitData.sp_gst_amount = formData.sp_gst_amount ? parseFloat(formData.sp_gst_amount) : null;
       submitData.sp_total_amount = formData.sp_total_amount ? parseFloat(formData.sp_total_amount) : null;
+
+      // ✅ SP Payout Tracking Fields
+      submitData.sp_payout_status = formData.sp_payout_status || 'pending';
+      submitData.sp_payout_transaction_id = formData.sp_payout_transaction_id || null;
+
+      // ✅ Convert sp_payout_date from YYYY-MM-DD to UNIX timestamp (same as booking_received_date)
+      if (formData.sp_payout_date) {
+        const dateObj = new Date(formData.sp_payout_date);
+
+        // Check if date is valid
+        if (isNaN(dateObj.getTime())) {
+          console.error('❌ Invalid date for sp_payout_date:', formData.sp_payout_date);
+          submitData.sp_payout_date = null;
+        } else {
+          const timestamp = Math.floor(dateObj.getTime() / 1000); // Convert to seconds
+          console.log('🔍 Converting sp_payout_date:', {
+            input: formData.sp_payout_date,
+            dateObj: dateObj.toISOString(),
+            timestamp: timestamp
+          });
+          submitData.sp_payout_date = timestamp;
+        }
+      } else {
+        submitData.sp_payout_date = null;
+      }
 
       // ✅ Only include required fields if they have valid values (not empty strings)
       if (formData.b2b_customer_id && formData.b2b_customer_id.trim()) {
