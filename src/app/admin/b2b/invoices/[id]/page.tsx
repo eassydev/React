@@ -6,8 +6,10 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { ArrowLeft, Download, FileText, Calendar, DollarSign, User, Building } from 'lucide-react';
-import { fetchB2BInvoiceById, downloadB2BInvoice } from '@/lib/api';
+import { ArrowLeft, Download, FileText, Calendar, DollarSign, User, Building, RefreshCw } from 'lucide-react';
+import { fetchB2BInvoiceById, downloadB2BInvoice, regenerateB2BInvoicePDF } from '@/lib/api';
+import { AdditionalCostsManager } from '@/components/b2b/AdditionalCostsManager';
+import { useToast } from '@/hooks/use-toast';
 
 interface InvoiceDetails {
   id: string;
@@ -40,10 +42,12 @@ interface InvoiceDetails {
 export default function InvoiceDetailsPage() {
   const params = useParams();
   const router = useRouter();
+  const { toast } = useToast();
   const [invoice, setInvoice] = useState<InvoiceDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [regenerating, setRegenerating] = useState(false);
 
   const invoiceId = params.id as string;
 
@@ -89,6 +93,52 @@ export default function InvoiceDetailsPage() {
     }
   };
 
+  const handleRegeneratePDF = async () => {
+    try {
+      setRegenerating(true);
+      toast({
+        title: "Regenerating PDF",
+        description: "Please wait while we regenerate the invoice PDF with updated additional costs...",
+      });
+
+      const response = await regenerateB2BInvoicePDF(invoiceId);
+
+      if (response.success) {
+        toast({
+          title: "PDF Regenerated Successfully",
+          description: "Invoice PDF has been updated with the latest additional costs",
+        });
+
+        // Refresh invoice data to show updated values
+        await fetchInvoiceDetails();
+      } else {
+        toast({
+          title: "PDF Regeneration Failed",
+          description: response.message || "Failed to regenerate PDF",
+          variant: "destructive",
+        });
+      }
+    } catch (error: any) {
+      console.error('Error regenerating PDF:', error);
+      toast({
+        title: "Error",
+        description: error.message || "Failed to regenerate PDF",
+        variant: "destructive",
+      });
+    } finally {
+      setRegenerating(false);
+    }
+  };
+
+  const handleAdditionalCostsChange = (total: number) => {
+    console.log('Additional costs total changed:', total);
+    // Optionally show a message to user that they should regenerate the PDF
+    toast({
+      title: "Additional Costs Updated",
+      description: "Click 'Regenerate PDF' to update the invoice with the new costs",
+    });
+  };
+
   const getPaymentStatusBadge = (status: string) => {
     const statusConfig = {
       unpaid: { label: 'Unpaid', className: 'bg-red-100 text-red-800' },
@@ -96,7 +146,7 @@ export default function InvoiceDetailsPage() {
       paid: { label: 'Paid', className: 'bg-green-100 text-green-800' },
       overdue: { label: 'Overdue', className: 'bg-red-100 text-red-800' }
     };
-    
+
     const config = statusConfig[status as keyof typeof statusConfig] || statusConfig.unpaid;
     return <Badge className={config.className}>{config.label}</Badge>;
   };
@@ -131,6 +181,12 @@ export default function InvoiceDetailsPage() {
     );
   }
 
+  // Debug logging
+  console.log('📋 Invoice data:', invoice);
+  console.log('📦 Booking ID:', invoice.booking?.id);
+  console.log('🔍 Has booking:', !!invoice.booking);
+
+
   return (
     <div className="container mx-auto p-6 max-w-4xl">
       {/* Header */}
@@ -146,6 +202,14 @@ export default function InvoiceDetailsPage() {
           </div>
         </div>
         <div className="flex space-x-2">
+          <Button
+            onClick={handleRegeneratePDF}
+            variant="outline"
+            disabled={regenerating}
+          >
+            <RefreshCw className={`w-4 h-4 mr-2 ${regenerating ? 'animate-spin' : ''}`} />
+            {regenerating ? 'Regenerating...' : 'Regenerate PDF'}
+          </Button>
           <Button onClick={handleDownload}>
             <Download className="w-4 h-4 mr-2" />
             Download PDF
@@ -284,6 +348,19 @@ export default function InvoiceDetailsPage() {
           </Card>
         </div>
       </div>
+
+      {/* Additional Costs Section - Full Width */}
+      {invoice.booking?.id && (
+        <div className="mt-6">
+          <AdditionalCostsManager
+            entityId={invoice.booking.id}
+            entityType="order"
+            readonly={false}
+            onTotalChange={handleAdditionalCostsChange}
+          />
+        </div>
+      )}
+
     </div>
   );
 }

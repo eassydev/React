@@ -95,6 +95,11 @@ interface B2BOrder {
   sp_base_price?: number;       // SP base price (before GST)
   sp_gst_amount?: number;       // GST on SP payout
   sp_total_amount?: number;     // Total SP payout
+
+  // SP Payout Tracking
+  sp_payout_date?: number;      // Unix timestamp
+  sp_payout_transaction_id?: string;  // Transaction ID or UTR
+  sp_payout_status?: 'pending' | 'processing' | 'paid' | 'failed';
 }
 
 // ✅ UTILITY: Format provider name for display (robust frontend-only solution)
@@ -201,6 +206,11 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
     sp_gst_amount: '',
     sp_total_amount: '',
 
+    // SP Payout Tracking
+    sp_payout_date: '',
+    sp_payout_transaction_id: '',
+    sp_payout_status: 'pending',
+
     // Scheduling
     service_date: '',
     service_time: '',
@@ -288,6 +298,11 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
         sp_base_price: orderData.sp_base_price?.toString() || '',
         sp_gst_amount: orderData.sp_gst_amount?.toString() || '',
         sp_total_amount: orderData.sp_total_amount?.toString() || '',
+
+        // SP Payout Tracking
+        sp_payout_date: formatTimestampForInput(orderData.sp_payout_date),
+        sp_payout_transaction_id: orderData.sp_payout_transaction_id || '',
+        sp_payout_status: orderData.sp_payout_status || 'pending',
 
         // Scheduling - properly formatted for input fields
         service_date: formatDateForInput(orderData.service_date),
@@ -1215,6 +1230,51 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
                   </div>
                 </div>
               )}
+
+              {/* SP Payout Tracking */}
+              <div className="border-t pt-4 mt-4">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">SP Payout Tracking</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="sp_payout_date">Payout Date</Label>
+                    <Input
+                      id="sp_payout_date"
+                      type="date"
+                      value={formData.sp_payout_date}
+                      onChange={(e) => handleInputChange('sp_payout_date', e.target.value)}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Date when SP was paid</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="sp_payout_transaction_id">Transaction ID / UTR</Label>
+                    <Input
+                      id="sp_payout_transaction_id"
+                      type="text"
+                      value={formData.sp_payout_transaction_id}
+                      onChange={(e) => handleInputChange('sp_payout_transaction_id', e.target.value)}
+                      placeholder="Enter transaction ID or UTR number"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Razorpay transfer ID or bank UTR</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="sp_payout_status">Payout Status</Label>
+                    <select
+                      id="sp_payout_status"
+                      value={formData.sp_payout_status}
+                      onChange={(e) => handleInputChange('sp_payout_status', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="processing">Processing</option>
+                      <option value="paid">Paid</option>
+                      <option value="failed">Failed</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">Current payout status</p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 

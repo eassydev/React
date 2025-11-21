@@ -16,6 +16,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Download, Loader2 } from 'lucide-react';
 import { getTemporaryInvoiceData, generateTemporaryInvoice } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
+import { AdditionalCostsManager } from '@/components/b2b/AdditionalCostsManager';
 
 interface TemporaryInvoiceModalProps {
   orderId: string;
@@ -35,6 +36,15 @@ export default function TemporaryInvoiceModal({
   const [loading, setLoading] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [invoiceData, setInvoiceData] = useState<any>(null);
+  const [additionalCostsTotal, setAdditionalCostsTotal] = useState(0);
+
+  const handleAdditionalCostsChange = (total: number) => {
+    setAdditionalCostsTotal(total);
+    console.log('💰 Additional costs total updated:', total);
+
+    // ✅ Don't refetch - causes infinite loop!
+    // The costs are already saved to DB and will be fetched when creating invoice
+  };
 
   useEffect(() => {
     if (isOpen && orderId) {
@@ -69,7 +79,23 @@ export default function TemporaryInvoiceModal({
   const handleDownload = async () => {
     try {
       setDownloading(true);
-      const response = await generateTemporaryInvoice(orderId, invoiceData);
+
+      // ✅ Refetch invoice data to get latest additional costs from DB
+      console.log('🔄 Fetching latest invoice data before creating...');
+      const freshDataResponse = await getTemporaryInvoiceData(orderId);
+      const freshInvoiceData = freshDataResponse.success ? freshDataResponse.data : invoiceData;
+
+      // ✅ Include additional costs in the invoice data
+      const invoicePayload = {
+        ...freshInvoiceData,
+        additional_costs: freshInvoiceData.additional_costs || [],
+        additional_costs_total: freshInvoiceData.additional_costs_total || 0
+      };
+
+      console.log('📄 Creating invoice with payload:', invoicePayload);
+      console.log('💰 Additional costs total:', invoicePayload.additional_costs_total);
+
+      const response = await generateTemporaryInvoice(orderId, invoicePayload);
 
       if (response.success) {
         toast({
@@ -309,6 +335,18 @@ export default function TemporaryInvoiceModal({
                 </div>
               </div>
             </div>
+
+            {/* Additional Costs Section */}
+            {orderId && (
+              <div className="border-t pt-4">
+                <AdditionalCostsManager
+                  entityId={orderId}
+                  entityType="order"
+                  readonly={false}
+                  onTotalChange={handleAdditionalCostsChange}
+                />
+              </div>
+            )}
 
             {/* Notes */}
             <div className="border-t pt-4">

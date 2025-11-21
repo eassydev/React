@@ -231,10 +231,12 @@ export default function B2BOrdersPage() {
       }
 
       // ✅ Generate new invoice
+      // Don't send subtotal - backend will use booking.total_amount or booking.custom_price
       const response = await generateB2BOrderInvoice(orderId, {
         payment_terms: 'Net 30 days',
         notes: `Invoice for order ${orderNumber}`,
         due_days: 30
+        // ✅ subtotal and invoice_items are optional - backend handles them
       });
 
       if (response.success) {
@@ -282,50 +284,25 @@ export default function B2BOrdersPage() {
           if (response.data.redirect_to) {
             window.location.href = response.data.redirect_to;
           } else {
-            window.location.href = '/admin/b2b/invoices';
+            window.location.href = `/admin/b2b/invoices?search=${response.data.invoice_number}`;
           }
-        }, 2000); // 2 second delay to show the message
-
+        }, 1500);
       } else {
         toast({
           title: "Error",
-          description: `Failed to generate invoice: ${response.message || 'Unknown error'}`,
+          description: response.message || "Failed to generate invoice",
           variant: "destructive",
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error generating invoice:', error);
       toast({
         title: "Error",
-        description: "Failed to generate invoice. Please check your connection and try again.",
+        description: error.message || "Failed to generate invoice. Please try again.",
         variant: "destructive",
       });
     }
   };
-
-  // ✅ NEW: Quick function to check invoice status for an order
-  const checkInvoiceStatus = async (orderId: string) => {
-    try {
-      const response = await checkB2BInvoiceExists(orderId);
-
-      if (response.success) {
-        return response.data;
-      }
-      return { exists: false };
-    } catch (error) {
-      console.error('Error checking invoice status:', error);
-      return { exists: false };
-    }
-  };
-
-  // Read URL query parameters on mount
-  useEffect(() => {
-    const urlParams = new URLSearchParams(window.location.search);
-    const dateFilterParam = urlParams.get('date_filter');
-    if (dateFilterParam) {
-      setDateFilter(dateFilterParam);
-    }
-  }, []);
 
   useEffect(() => {
     fetchOrders();
@@ -949,9 +926,9 @@ export default function B2BOrdersPage() {
                         <TableCell>
                           <div>
                             <div className="font-medium">{order.service_name}</div>
-                             {order.service_description && (
-                                <div className="text-sm text-gray-500">description: {order.service_description}</div>
-                              )}
+                            {order.service_description && (
+                              <div className="text-sm text-gray-500">description: {order.service_description}</div>
+                            )}
                             {order.service_area_sqft && (
                               <div className="text-sm text-gray-500">{order.service_area_sqft} sq ft</div>
                             )}
