@@ -80,20 +80,33 @@ export default function TemporaryInvoiceModal({
     try {
       setDownloading(true);
 
-      // ✅ Refetch invoice data to get latest additional costs from DB
-      console.log('🔄 Fetching latest invoice data before creating...');
+      // ✅ Fetch ONLY additional costs from DB (to get latest approved costs)
+      console.log('🔄 Fetching latest additional costs before creating...');
       const freshDataResponse = await getTemporaryInvoiceData(orderId);
-      const freshInvoiceData = freshDataResponse.success ? freshDataResponse.data : invoiceData;
+      const latestAdditionalCosts = freshDataResponse.success
+        ? (freshDataResponse.data.additional_costs || [])
+        : [];
+      const latestAdditionalCostsTotal = freshDataResponse.success
+        ? (freshDataResponse.data.additional_costs_total || 0)
+        : 0;
 
-      // ✅ Include additional costs in the invoice data
+      // ✅ Use edited invoice data from form state + latest additional costs from DB
       const invoicePayload = {
-        ...freshInvoiceData,
-        additional_costs: freshInvoiceData.additional_costs || [],
-        additional_costs_total: freshInvoiceData.additional_costs_total || 0
+        ...invoiceData, // ✅ Use user's edited values from form
+        additional_costs: latestAdditionalCosts, // ✅ Use latest additional costs from DB
+        additional_costs_total: latestAdditionalCostsTotal // ✅ Use latest total from DB
       };
 
       console.log('📄 Creating invoice with payload:', invoicePayload);
       console.log('💰 Additional costs total:', invoicePayload.additional_costs_total);
+      console.log('✏️ User edited fields:', {
+        invoice_number: invoicePayload.invoice_number,
+        invoice_date: invoicePayload.invoice_date,
+        due_date: invoicePayload.due_date,
+        subtotal: invoicePayload.subtotal,
+        tax_amount: invoicePayload.tax_amount,
+        total_amount: invoicePayload.total_amount
+      });
 
       const response = await generateTemporaryInvoice(orderId, invoicePayload);
 
