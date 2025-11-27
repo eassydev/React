@@ -6893,7 +6893,7 @@ export interface B2BQuotation {
   updated_at?: string;
   // ✅ NEW: Helper properties
   is_standalone?: boolean;
-  admin_approval_status ?: string;
+  admin_approval_status?: string;
 }
 
 // ✅ NEW: Customer selection for standalone quotations
@@ -12841,6 +12841,28 @@ export const regenerateB2BInvoicePDF = async (invoiceId: string) => {
   }
 };
 
+
+export const deleteB2BInvoice = async (invoiceId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.delete(`/b2b/invoices/${invoiceId}/delete-invoice`, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error deleting invoice:', error);
+    throw new Error(error.response?.data?.message || 'Failed to delete invoice');
+  }
+};
+
 /**
  * Get invoice file path for a B2B order (lightweight endpoint for downloads)
  */
@@ -13528,3 +13550,62 @@ export const exportBusinessTrends = async (): Promise<void> => {
     throw new Error(error.response?.data?.message || 'Failed to export business trends');
   }
 };
+
+/**
+ * Export Monthly Report (Excel)
+ * Comprehensive monthly breakdown with all order details
+ * @param filters - Optional filters for year, month, and customer
+ */
+export const exportMonthlyReport = async (filters?: {
+  year?: number;
+  month?: number;
+  customer_id?: string;
+  date_from?: string;
+  date_to?: string;
+  date_filter_type?: 'service' | 'received';
+}): Promise<void> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    // Build query parameters
+    const params: any = {};
+    if (filters?.year) params.year = filters.year;
+    if (filters?.month) params.month = filters.month;
+    if (filters?.customer_id) params.customer_id = filters.customer_id;
+    if (filters?.date_from) params.date_from = filters.date_from;
+    if (filters?.date_to) params.date_to = filters.date_to;
+    if (filters?.date_filter_type) params.date_filter_type = filters.date_filter_type;
+
+    const response = await apiClient.get('/b2b/analytics/export/monthly-report', {
+      headers: {
+        'admin-auth-token': token
+      },
+      params,
+      responseType: 'blob'
+    });
+
+    // Generate filename
+    const monthName = filters?.month
+      ? new Date(2000, filters.month - 1).toLocaleString('default', { month: 'long' })
+      : 'All';
+    const yearStr = filters?.year || new Date().getFullYear();
+    const filename = `B2B_Monthly_Report_${monthName}_${yearStr}_${new Date().toISOString().split('T')[0]}.xlsx`;
+
+    // Create download link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', filename);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error: any) {
+    console.error('❌ Error exporting monthly report:', error);
+    throw new Error(error.response?.data?.message || 'Failed to export monthly report');
+  }
+};
+
