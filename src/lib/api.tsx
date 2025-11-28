@@ -13170,6 +13170,9 @@ export const getB2BCustomerTrends = async (
   }
 };
 
+
+
+
 // ========================================
 // DAILY OPERATIONS DASHBOARD
 // ========================================
@@ -13519,51 +13522,23 @@ export const exportSPWiseAnalytics = async (filters?: {
   }
 };
 
-/**
- * Export Business Trends (Excel)
- * Only accessible by super_admin and manager
- */
-export const exportBusinessTrends = async (): Promise<void> => {
-  const token = getToken();
-  if (!token) {
-    throw new Error('Authentication token not found');
-  }
-
-  try {
-    const response = await apiClient.get('/b2b/analytics/export/business-trends', {
-      headers: {
-        'admin-auth-token': token
-      },
-      responseType: 'blob'
-    });
-
-    const url = window.URL.createObjectURL(new Blob([response.data]));
-    const link = document.createElement('a');
-    link.href = url;
-    link.setAttribute('download', `B2B_Business_Trends_${new Date().toISOString().split('T')[0]}.xlsx`);
-    document.body.appendChild(link);
-    link.click();
-    link.remove();
-    window.URL.revokeObjectURL(url);
-  } catch (error: any) {
-    console.error('❌ Error exporting business trends:', error);
-    throw new Error(error.response?.data?.message || 'Failed to export business trends');
-  }
-};
 
 /**
- * Export Monthly Report (Excel)
- * Comprehensive monthly breakdown with all order details
+ * Get Monthly Report - Returns JSON data or downloads Excel based on format parameter
  * @param filters - Optional filters for year, month, and customer
+ * @param format - 'json' for data return, 'excel' for file download (default: 'excel')
  */
-export const exportMonthlyReport = async (filters?: {
-  year?: number;
-  month?: number;
-  customer_id?: string;
-  date_from?: string;
-  date_to?: string;
-  date_filter_type?: 'service' | 'received';
-}): Promise<void> => {
+export const getMonthlyReport = async (
+  filters?: {
+    year?: number;
+    month?: number;
+    customer_id?: string;
+    date_from?: string;
+    date_to?: string;
+    date_filter_type?: 'service' | 'received';
+  },
+  format: 'json' | 'excel' = 'excel'
+): Promise<any> => {
   const token = getToken();
   if (!token) {
     throw new Error('Authentication token not found');
@@ -13579,22 +13554,32 @@ export const exportMonthlyReport = async (filters?: {
     if (filters?.date_to) params.date_to = filters.date_to;
     if (filters?.date_filter_type) params.date_filter_type = filters.date_filter_type;
 
+    // Add format parameter for JSON requests
+    if (format === 'json') {
+      params.format = 'json';
+    }
+
     const response = await apiClient.get('/b2b/analytics/export/monthly-report', {
       headers: {
-        'admin-auth-token': token
+        'admin-auth-token': token,
+        ...(format === 'json' && { 'Accept': 'application/json' })
       },
       params,
-      responseType: 'blob'
+      ...(format === 'excel' && { responseType: 'blob' })
     });
 
-    // Generate filename
+    // If JSON format, return the data
+    if (format === 'json') {
+      return response.data;
+    }
+
+    // If Excel format, trigger download
     const monthName = filters?.month
       ? new Date(2000, filters.month - 1).toLocaleString('default', { month: 'long' })
       : 'All';
     const yearStr = filters?.year || new Date().getFullYear();
     const filename = `B2B_Monthly_Report_${monthName}_${yearStr}_${new Date().toISOString().split('T')[0]}.xlsx`;
 
-    // Create download link
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');
     link.href = url;
@@ -13603,9 +13588,33 @@ export const exportMonthlyReport = async (filters?: {
     link.click();
     link.remove();
     window.URL.revokeObjectURL(url);
+
+    return { success: true, message: 'File downloaded successfully' };
   } catch (error: any) {
-    console.error('❌ Error exporting monthly report:', error);
-    throw new Error(error.response?.data?.message || 'Failed to export monthly report');
+    console.error('❌ Error with monthly report:', error);
+    throw new Error(error.response?.data?.message || `Failed to ${format === 'json' ? 'fetch' : 'download'} monthly report`);
   }
 };
 
+// ✅ Backward compatibility - Keep old function names as aliases
+export const exportMonthlyReport = async (filters?: {
+  year?: number;
+  month?: number;
+  customer_id?: string;
+  date_from?: string;
+  date_to?: string;
+  date_filter_type?: 'service' | 'received';
+}): Promise<void> => {
+  await getMonthlyReport(filters, 'excel');
+};
+
+export const getMonthlyReportData = async (filters?: {
+  year?: number;
+  month?: number;
+  customer_id?: string;
+  date_from?: string;
+  date_to?: string;
+  date_filter_type?: 'service' | 'received';
+}): Promise<any> => {
+  return await getMonthlyReport(filters, 'json');
+};
