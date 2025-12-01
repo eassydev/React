@@ -14,6 +14,7 @@ interface DetailedReportData {
   period_type: string;
   downloads: number;
   registrations: number;
+  b2b_registrations: number;
   orders_received: number;
   gov: number;
   aov: number;
@@ -144,7 +145,9 @@ export default function DetailedReportTable({ className, businessType = 'both' }
                 <TableRow>
                   <TableHead className="min-w-[120px]">Period</TableHead>
                   <TableHead className="text-right">Downloads</TableHead>
-                  <TableHead className="text-right">Registrations</TableHead>
+                  <TableHead className="text-right">
+                    {businessType === 'b2b' ? 'B2B Registrations' : 'Registrations'}
+                  </TableHead>
                   <TableHead className="text-right">Orders Received</TableHead>
                   <TableHead className="text-right">GOV (₹)</TableHead>
                   <TableHead className="text-right">AOV (₹)</TableHead>
@@ -170,7 +173,9 @@ export default function DetailedReportTable({ className, businessType = 'both' }
                       </div>
                     </TableCell>
                     <TableCell className="text-right">{formatNumber(row.downloads)}</TableCell>
-                    <TableCell className="text-right">{formatNumber(row.registrations)}</TableCell>
+                    <TableCell className="text-right">
+                      {formatNumber(businessType === 'b2b' ? row.b2b_registrations : row.registrations)}
+                    </TableCell>
                     <TableCell className="text-right">{formatNumber(row.orders_received)}</TableCell>
                     <TableCell className="text-right">{formatCurrency(row.gov)}</TableCell>
                     <TableCell className="text-right">{formatCurrency(row.aov)}</TableCell>
@@ -194,7 +199,7 @@ export default function DetailedReportTable({ className, businessType = 'both' }
                 ))}
               </TableBody>
             </Table>
-            
+
             {data.length === 0 && !loading && (
               <div className="text-center py-8 text-muted-foreground">
                 No data available. Click refresh to load the report.

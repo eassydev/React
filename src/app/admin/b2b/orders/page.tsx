@@ -1003,9 +1003,10 @@ export default function B2BOrdersPage() {
                           {order.service_date ? new Date(order.service_date).toLocaleDateString() : 'TBD'}
                         </TableCell>
                         <TableCell>
-                          {order.booking_received_date ?
+                          {order.booking_received_date && order.booking_received_date > 0 ?
                             new Date(order.booking_received_date * 1000).toLocaleDateString() :
-                            order.created_at ? new Date(order.created_at * 1000).toLocaleDateString() : 'N/A'}
+                            order.created_at && order.created_at > 0 ?
+                            new Date(order.created_at * 1000).toLocaleDateString() : 'N/A'}
                         </TableCell>
                         {/* CRM Remarks - Editable */}
                         <TableCell className="min-w-[200px]">

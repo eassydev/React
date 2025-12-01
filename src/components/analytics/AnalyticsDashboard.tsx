@@ -5,12 +5,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { DateRangePicker } from '@/components/DateRangePicker';
-import { 
-  TrendingUp, 
-  TrendingDown, 
-  Users, 
-  ShoppingCart, 
-  FileText, 
+import {
+  TrendingUp,
+  TrendingDown,
+  Users,
+  ShoppingCart,
+  FileText,
   CreditCard,
   AlertTriangle,
   Download,
@@ -85,8 +85,11 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
 
   const loadMTDData = async () => {
     try {
-      const data = await fetchMTDAnalytics(businessType);
-      setMtdData(data.data);
+      const response = await fetchMTDAnalytics(businessType);
+      console.log('📊 MTD Response:', response);
+      // The API returns { success, data: { period, business_type, report, generated_at } }
+      // We need the 'report' object which contains the actual metrics
+      setMtdData(response.data.report);
     } catch (error) {
       console.error('Failed to load MTD data:', error);
     }
@@ -94,8 +97,11 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
 
   const loadLTDData = async () => {
     try {
-      const data = await fetchLTDAnalytics(businessType);
-      setLtdData(data.data);
+      const response = await fetchLTDAnalytics(businessType);
+      console.log('📊 LTD Response:', response);
+      // The API returns { success, data: { period, business_type, report, generated_at } }
+      // We need the 'report' object which contains the actual metrics
+      setLtdData(response.data.report);
     } catch (error) {
       console.error('Failed to load LTD data:', error);
     }
@@ -106,9 +112,16 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
 
     try {
       setLoading(true);
-      const startDate = selectedRange.from.toISOString().split('T')[0];
-      const endDate = selectedRange.to.toISOString().split('T')[0];
-      
+      // Format dates in local time to avoid timezone shifts (e.g., Nov 1 becoming Oct 31)
+      const formatDateLocal = (date: Date) => {
+        const offset = date.getTimezoneOffset();
+        const localDate = new Date(date.getTime() - (offset * 60000));
+        return localDate.toISOString().split('T')[0];
+      };
+
+      const startDate = formatDateLocal(selectedRange.from);
+      const endDate = formatDateLocal(selectedRange.to);
+
       const data = await fetchComprehensiveAnalytics(startDate, endDate, period, businessType);
       setComprehensiveData(data);
     } catch (error) {
@@ -141,9 +154,9 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
           </p>
         </div>
         <div className="flex flex-col md:flex-row items-start md:items-center space-y-2 md:space-y-0 md:space-x-2">
-          <DateRangePicker 
-            selectedRange={selectedRange} 
-            onChangeRange={setSelectedRange} 
+          <DateRangePicker
+            selectedRange={selectedRange}
+            onChangeRange={setSelectedRange}
           />
           <Button onClick={handleExport} variant="outline">
             <Download className="w-4 h-4 mr-2" />
@@ -387,7 +400,7 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
 
         <TabsContent value="charts" className="space-y-4">
           {comprehensiveData && (
-            <AnalyticsCharts 
+            <AnalyticsCharts
               data={comprehensiveData.data.report}
               period={period}
             />

@@ -47,24 +47,69 @@ const getToken = (): string | null => {
 export interface AnalyticsReportData {
   period: string;
   period_type: string;
+
+  // App Downloads and Registrations
   downloads: number;
   registrations: number;
-  orders_received_total: number;
-  orders_value_total: number;
-  orders_executed_total: number;
-  executed_value_total: number;
-  invoices_raised_total: number;
-  invoice_value_total: number;
-  collected_total: number;
-  collection_value_total: number;
-  overdue_invoices_total: number;
-  overdue_value_total: number;
-  avg_overdue_days_total: number;
-  avg_order_value_total: number;
+  b2b_registrations: number; // ✅ Added B2B registrations field
+
+  // Orders Received
   orders_received_b2c: number;
-  orders_value_b2c: number;
   orders_received_b2b: number;
+  orders_received_total: number;
+
+  // Order Values
+  orders_value_b2c: number;
   orders_value_b2b: number;
+  orders_value_total: number;
+
+  // Orders Executed (Completed)
+  orders_executed_b2c: number;
+  orders_executed_b2b: number;
+  orders_executed_total: number;
+
+  // Executed Order Values
+  executed_value_b2c: number;
+  executed_value_b2b: number;
+  executed_value_total: number;
+
+  // Invoices Raised
+  invoices_raised_b2c: number;
+  invoices_raised_b2b: number;
+  invoices_raised_total: number;
+
+  // Invoice Values
+  invoice_value_b2c: number;
+  invoice_value_b2b: number;
+  invoice_value_total: number;
+
+  // Collections (Paid Invoices)
+  collected_b2c: number;
+  collected_b2b: number;
+  collected_total: number;
+
+  // Collection Values
+  collection_value_b2c: number;
+  collection_value_b2b: number;
+  collection_value_total: number;
+
+  // Overdue Analysis
+  overdue_invoices_b2c: number;
+  overdue_invoices_b2b: number;
+  overdue_invoices_total: number;
+
+  overdue_value_b2c: number;
+  overdue_value_b2b: number;
+  overdue_value_total: number;
+
+  avg_overdue_days_b2c: number;
+  avg_overdue_days_b2b: number;
+  avg_overdue_days_total: number;
+
+  // Average Order Values
+  avg_order_value_b2c: number;
+  avg_order_value_b2b: number;
+  avg_order_value_total: number;
 }
 
 export interface AnalyticsSummary {
@@ -925,7 +970,7 @@ export interface ServiceVideo {
   is_active?: boolean; // Add the image property
 }
 
-export interface Campaign {
+interface Campaign {
   campaign_name: string;
   provider_id?: string;
   rate_card_id?: string;
@@ -1035,7 +1080,7 @@ export interface CourseQuiz {
 }
 
 // Define the structure of the API response
-export interface ApiResponse {
+interface ApiResponse {
   status: boolean;
   message: string;
   data?: any;
@@ -1048,7 +1093,7 @@ export interface ApiResponse {
   };
 }
 
-export interface ApiPermissionResponse {
+interface ApiPermissionResponse {
   data?: any;
   [key: string]: Permission[]; // Dynamic keys mapping to arrays of Permission
 }
@@ -12105,7 +12150,15 @@ export const fetchComprehensiveAnalytics = async (
  */
 export const fetchMTDAnalytics = async (
   businessType: 'b2b' | 'b2c' | 'both' = 'both'
-): Promise<{ success: boolean; data: AnalyticsReportData; generated_at: string }> => {
+): Promise<{
+  success: boolean;
+  data: {
+    period: string;
+    business_type: string;
+    report: AnalyticsReportData;
+    generated_at: string;
+  }
+}> => {
   try {
     const token = getToken();
     if (!token) {
@@ -12134,7 +12187,15 @@ export const fetchMTDAnalytics = async (
  */
 export const fetchLTDAnalytics = async (
   businessType: 'b2b' | 'b2c' | 'both' = 'both'
-): Promise<{ success: boolean; data: AnalyticsReportData; generated_at: string }> => {
+): Promise<{
+  success: boolean;
+  data: {
+    period: string;
+    business_type: string;
+    report: AnalyticsReportData;
+    generated_at: string;
+  }
+}> => {
   try {
     const token = getToken();
     if (!token) {
@@ -13482,6 +13543,43 @@ export const exportSPOCWiseAnalytics = async (filters?: {
   } catch (error: any) {
     console.error('❌ Error exporting SPOC-wise analytics:', error);
     throw new Error(error.response?.data?.message || 'Failed to export SPOC-wise analytics');
+  }
+};
+
+/**
+ * Export SP-wise Analytics (Excel)
+ * @param filters - Optional filters for date range and filter type
+ */
+export const exportSPWiseAnalytics = async (filters?: {
+  date_from?: string;
+  date_to?: string;
+  date_filter_type?: 'service' | 'received';
+}): Promise<void> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    const response = await apiClient.get('/b2b/analytics/export/sp-wise', {
+      headers: {
+        'admin-auth-token': token
+      },
+      params: filters,
+      responseType: 'blob'
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `B2B_SP_Analytics_${new Date().toISOString().split('T')[0]}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error: any) {
+    console.error('❌ Error exporting SP-wise analytics:', error);
+    throw new Error(error.response?.data?.message || 'Failed to export SP-wise analytics');
   }
 };
 
