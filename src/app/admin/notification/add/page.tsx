@@ -38,8 +38,9 @@ const AddNotificationForm: React.FC = () => {
     subcategory_id: undefined,
     notification_type_id: undefined,
     recipients: [],
-    inner_image: null,
+    image: null,
     outer_image: null,
+    scheduled_at: undefined,
   });
 
   const [categories, setCategories] = useState<any[]>([]);
@@ -154,10 +155,7 @@ const AddNotificationForm: React.FC = () => {
 
   const handleMultiSelect = (selectedOptions: any) => {
     // Immediately update recipients without debounce
-    const selectedRecipients = selectedOptions ? selectedOptions.map((option: any) => ({
-      id: option.value,
-      // name: option.label,
-    })) : [];
+    const selectedRecipients = selectedOptions ? selectedOptions.filter((Boolean) as any).map((option: any) => option.value) : [];
     setNotification({ ...notification, recipients: selectedRecipients });
   };
 
@@ -173,15 +171,6 @@ const AddNotificationForm: React.FC = () => {
       });
       return;
     }
-
-    // if (!notification.notification_type_id) {
-    //   toast({
-    //     title: 'Validation Error',
-    //     description: 'Please select a Notification Type.',
-    //     variant: 'destructive',
-    //   });
-    //   return;
-    // }
 
     if (!notification.send_to_all && (!notification.recipients || notification.recipients.length === 0)) {
       toast({
@@ -321,6 +310,58 @@ const AddNotificationForm: React.FC = () => {
             )}
 
             <div>
+              <label className="block text-sm font-medium">Schedule Date and Time (Optional)</label>
+              <p className="text-xs text-gray-500 mb-1">Select a future date and time (24-hour format)</p>
+              <Input
+                type="datetime-local"
+                min={new Date().toISOString().slice(0, 16)}
+                // value={
+                //   notification.scheduled_at
+                //     ? new Date(notification.scheduled_at).toISOString().slice(0, 16)
+                //     : ''
+                // }
+                onChange={(e) => {
+                  const localDateTime = e.target.value;
+                  if (localDateTime) {
+                    const selectedDate = new Date(localDateTime);
+                    const currentDate = new Date();
+
+                    // Check if selected date is in the past
+                    if (selectedDate < currentDate) {
+                      toast({
+                        title: 'Invalid Date',
+                        description: 'Please select a future date and time.',
+                        variant: 'destructive',
+                      });
+                      return;
+                    }
+
+                    // Convert local datetime to ISO 8601 format (UTC)
+                    const isoDateTime = selectedDate.toISOString();
+                    setNotification({ ...notification, scheduled_at: isoDateTime });
+                  } else {
+                    setNotification({ ...notification, scheduled_at: undefined });
+                  }
+                }}
+                className="w-full"
+                placeholder="Select date and time"
+              />
+              {notification.scheduled_at && (
+                <p className="text-xs text-green-600 mt-1 font-medium">
+                  ✓ Scheduled for: {new Date(notification.scheduled_at).toLocaleString('en-US', {
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                  })}
+                </p>
+              )}
+            </div>
+
+                        <div>
               <label className="block text-sm font-medium">Type</label>
               <Select
                 value={notification.type}
@@ -392,14 +433,21 @@ const AddNotificationForm: React.FC = () => {
             )}
 
             <div>
-              <label className="block text-sm font-medium">Inner Image</label>
-              <Input type="file" name="inner_image" onChange={handleFileChange} />
+              <label className="block text-sm font-medium">Image</label>
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-md">
+                <div className="space-y-1 text-center">
+                  <p className="text-sm text-gray-600">Drag file here to preview</p>
+                  <Input type="file" name="image" accept=".jpg,.jpeg,.png" onChange={handleFileChange} className="mt-2" />
+                  <p className="text-xs text-gray-500">Supports JPG and PNG</p>
+                  <p className="text-xs text-gray-500">Up to 300 KB</p>
+                </div>
+              </div>
             </div>
 
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium">Outer Image</label>
               <Input type="file" name="outer_image" onChange={handleFileChange} />
-            </div>
+            </div> */}
 
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Submitting...' : 'Create Notification'}
