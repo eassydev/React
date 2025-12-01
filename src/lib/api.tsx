@@ -818,10 +818,11 @@ export interface Notification {
   notification_type_id?: string;
   subcategory_id?: string;
   recipients?: { id: number; name: string }[];
-  inner_image?: File | null;
+  image?: File | null;
   outer_image?: File | null;
   is_active: boolean;
   send_to_all: boolean;
+  scheduled_at?: string;
 }
 
 export interface WalletOffer {
@@ -4995,7 +4996,7 @@ export const createNotification = async (notification: Notification) => {
   if (notification.category_id) formData.append('category_id', notification.category_id.toString());
   if (notification.subcategory_id)
     formData.append('subcategory_id', notification.subcategory_id.toString());
-  if (notification.inner_image) formData.append('inner_image', notification.inner_image);
+  if (notification.image) formData.append('image', notification.image);
   if (notification.outer_image) formData.append('outer_image', notification.outer_image);
   formData.append('is_active', notification.is_active ? '1' : '0');
   formData.append('send_to_all', notification.send_to_all ? '1' : '0');
@@ -5003,11 +5004,13 @@ export const createNotification = async (notification: Notification) => {
     formData.append('recipients', JSON.stringify(notification.recipients));
   if (notification.notification_type_id)
     formData.append('notification_type_id', notification.notification_type_id.toString());
+  if (notification.scheduled_at)
+    formData.append('scheduled_at', notification.scheduled_at);
 
   // const response = await apiClient.post("/notification", formData);
   const token = getToken();
 
-  const response: AxiosResponse<ApiResponse> = await apiClient.post('/notification', formData, {
+  const response: AxiosResponse<ApiResponse> = await apiClient.post('/notification/create', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
       'admin-auth-token': token || '',
@@ -5031,6 +5034,57 @@ export const fetchNotifications = async (page = 1, size = 10) => {
     return response.data; // Return the data from the response
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch notifications.');
+  }
+};
+
+// Fetch scheduled notifications
+export const fetchScheduledNotifications = async (page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/notification/schedule', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch scheduled notifications.');
+  }
+};
+
+// Fetch sent notifications
+export const fetchSentNotifications = async (page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/notification/sent', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch sent notifications.');
+  }
+};
+
+// Delete scheduled notification
+export const deleteScheduledNotification = async (batchId: number, is_delete: number) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.put(
+      `/notification/schedule/${batchId}`,
+      { is_delete:  is_delete},
+      {
+        headers: {
+          'admin-auth-token': token || '',
+        },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete scheduled notification.');
   }
 };
 
