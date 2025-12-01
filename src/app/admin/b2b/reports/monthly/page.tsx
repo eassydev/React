@@ -23,13 +23,16 @@ export default function MonthlyReportPage() {
     const fetchReportData = async () => {
         setLoading(true);
         try {
-            const response = await getMonthlyReport(
-                {
-                    year,
-                    month: month !== 'all' ? parseInt(month) : undefined
-                },
-                'json'
-            );
+            const filters = {
+                year,
+                month: month !== 'all' ? parseInt(month) : undefined
+            };
+
+            console.log('🔍 Frontend: Requesting monthly report with:', filters, 'format: json');
+
+            const response = await getMonthlyReport(filters, 'json');
+
+            console.log('📥 Frontend: Received response:', response);
 
             if (response.success) {
                 setReportData(response.data);
@@ -38,7 +41,7 @@ export default function MonthlyReportPage() {
                 toast.error(response.message || 'Failed to load report');
             }
         } catch (error: any) {
-            console.error('Failed to fetch report:', error);
+            console.error('❌ Frontend: Failed to fetch report:', error);
             toast.error(error.message || 'Failed to load report');
         } finally {
             setLoading(false);
