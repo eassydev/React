@@ -997,16 +997,16 @@ export default function B2BOrdersPage() {
                           )}
                         </TableCell>
                         <TableCell>
-                          {order.invoice_generated_at ? new Date(order.invoice_generated_at).toLocaleDateString() : 'TBD'}
+                          {order.invoice_generated_at ? new Date(order.invoice_generated_at).toLocaleDateString('en-IN') : 'TBD'}
                         </TableCell>
                         <TableCell>
-                          {order.service_date ? new Date(order.service_date).toLocaleDateString() : 'TBD'}
+                          {order.service_date ? new Date(order.service_date).toLocaleDateString('en-IN') : 'TBD'}
                         </TableCell>
                         <TableCell>
                           {order.booking_received_date && order.booking_received_date > 0 ?
-                            new Date(order.booking_received_date * 1000).toLocaleDateString() :
+                            new Date(order.booking_received_date * 1000).toLocaleDateString('en-IN') :
                             order.created_at && order.created_at > 0 ?
-                            new Date(order.created_at * 1000).toLocaleDateString() : 'N/A'}
+                            new Date(order.created_at * 1000).toLocaleDateString('en-IN') : 'N/A'}
                         </TableCell>
                         {/* CRM Remarks - Editable */}
                         <TableCell className="min-w-[200px]">

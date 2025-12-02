@@ -104,6 +104,17 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
   const [editingAssignment, setEditingAssignment] = useState<SPOCAssignment | null>(null);
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('table'); // ✅ Default to table view for better scalability
   const [statistics, setStatistics] = useState<any>(null);
+  const [pagination, setPagination] = useState<any>(null);
+
+  // ✅ Filter state for server-side filtering
+  const [filters, setFilters] = useState({
+    search: '',
+    spoc_user_id: undefined as string | undefined,
+    spoc_type: undefined as string | undefined,
+    status: 'active' as 'active' | 'inactive' | 'all',
+    page: 1,
+    limit: 20
+  });
 
   // ✅ Add role detection for UI restrictions
   // ✅ FIXED: Use SPOC hardcoded system instead of database permissions
@@ -154,26 +165,27 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
     { key: 'manager', label: 'Manager', icon: Award, color: 'bg-orange-100 text-orange-800' }
   ];
 
-  // Load data on component mount
+  // Load data on component mount and when filters change
   useEffect(() => {
     loadAssignments();
     loadWorkloadData();
-  }, []);
+  }, [filters]);
 
   const loadAssignments = async () => {
     try {
       setLoading(true);
       setError(null);
 
-      console.log('🔍 Loading SPOC assignments...');
+      console.log('🔍 Loading SPOC assignments with filters:', filters);
 
-      const response = await fetchSPOCAssignments();
+      const response = await fetchSPOCAssignments(filters);
 
       console.log('🔍 SPOC assignments response:', response);
 
       if (response.success) {
         setAssignments(response.data.assignments || []);
         setStatistics(response.data.summary || {});
+        setPagination(response.data.pagination || null);
       } else {
         throw new Error(response.message || 'Failed to load SPOC assignments');
       }
@@ -183,6 +195,14 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
     } finally {
       setLoading(false);
     }
+  };
+
+  // ✅ Handle filter changes from table view
+  const handleFilterChange = (newFilters: Partial<typeof filters>) => {
+    setFilters(prev => ({
+      ...prev,
+      ...newFilters
+    }));
   };
 
   const loadWorkloadData = async () => {
@@ -415,9 +435,11 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
               <B2BSPOCTableView
                 assignments={assignments}
                 loading={loading}
+                pagination={pagination}
                 onEdit={setEditingAssignment}
                 onDelete={handleDeactivateAssignment}
                 onAdd={() => setShowAddForm(true)}
+                onFilterChange={handleFilterChange}
               />
             ) : (
               <B2BSPOCList

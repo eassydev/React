@@ -80,12 +80,35 @@ interface B2BSPOCTableViewProps {
   onAdd: () => void;
 }
 
+interface B2BSPOCTableViewProps {
+  assignments: any[];
+  loading: boolean;
+  pagination?: {
+    current_page: number;
+    total_pages: number;
+    total_records: number;
+    per_page: number;
+  };
+  onEdit: (assignment: any) => void;
+  onDelete: (assignmentId: string) => void;
+  onAdd: () => void;
+  onFilterChange?: (filters: {
+    search?: string;
+    spoc_user_id?: string;
+    spoc_type?: string;
+    status?: string;
+    page?: number;
+  }) => void;
+}
+
 export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
   assignments = [],
   loading = false,
+  pagination,
   onEdit,
   onDelete,
-  onAdd
+  onAdd,
+  onFilterChange
 }) => {
   const [error, setError] = useState<string | null>(null);
 
@@ -93,47 +116,88 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
   const { getRole, isSuperAdmin } = usePermissions();
   const userRole = getRole();
   const canManageSpocs = isSuperAdmin() || userRole === 'super_admin' || userRole === 'manager';
-  
-  // Filters
+
+  // Filters (now controlled by parent via onFilterChange)
   const [searchTerm, setSearchTerm] = useState('');
   const [spocFilter, setSpocFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('active');
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(20);
-
-  // Data is now received as props, no need to fetch
-
-  // Get unique SPOC users for filter dropdown (with safety check)
+  // ✅ Get unique SPOC users for filter dropdown (from current page data)
   const uniqueSpocs = Array.isArray(assignments) ? Array.from(
-    new Set(assignments.map(a => a.spocUser?.username).filter(Boolean))
-  ).map(username => {
-    const spoc = assignments.find(a => a.spocUser?.username === username)?.spocUser;
-    return { username, full_name: spoc?.full_name || username };
+    new Set(assignments.map(a => a.spocUser?.id).filter(Boolean))
+  ).map(id => {
+    const spoc = assignments.find(a => a.spocUser?.id === id)?.spocUser;
+    return { id, username: spoc?.username || '', full_name: spoc?.full_name || '' };
   }) : [];
 
-  // Filter assignments (with safety check)
-  const filteredAssignments = Array.isArray(assignments) ? assignments.filter(assignment => {
-    const matchesSearch =
-      assignment.customer?.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      assignment.spocUser?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      assignment.customer?.contact_person?.toLowerCase().includes(searchTerm.toLowerCase());
+  // ✅ Handle filter changes - notify parent component for server-side filtering
+  const handleSearchChange = (value: string) => {
+    setSearchTerm(value);
+    if (onFilterChange) {
+      onFilterChange({
+        search: value,
+        spoc_user_id: spocFilter !== 'all' ? spocFilter : undefined,
+        spoc_type: typeFilter !== 'all' ? typeFilter : undefined,
+        status: statusFilter,
+        page: 1 // Reset to page 1 on filter change
+      });
+    }
+  };
 
-    const matchesSpoc = spocFilter === 'all' || assignment.spocUser?.username === spocFilter;
-    const matchesType = typeFilter === 'all' || assignment.spoc_type === typeFilter;
-    const matchesStatus = statusFilter === 'all' ||
-      (statusFilter === 'active' && assignment.is_active) ||
-      (statusFilter === 'inactive' && !assignment.is_active);
+  const handleSpocFilterChange = (value: string) => {
+    setSpocFilter(value);
+    if (onFilterChange) {
+      onFilterChange({
+        search: searchTerm || undefined,
+        spoc_user_id: value !== 'all' ? value : undefined,
+        spoc_type: typeFilter !== 'all' ? typeFilter : undefined,
+        status: statusFilter,
+        page: 1
+      });
+    }
+  };
 
-    return matchesSearch && matchesSpoc && matchesType && matchesStatus;
-  }) : [];
+  const handleTypeFilterChange = (value: string) => {
+    setTypeFilter(value);
+    if (onFilterChange) {
+      onFilterChange({
+        search: searchTerm || undefined,
+        spoc_user_id: spocFilter !== 'all' ? spocFilter : undefined,
+        spoc_type: value !== 'all' ? value : undefined,
+        status: statusFilter,
+        page: 1
+      });
+    }
+  };
 
-  // Pagination
-  const totalPages = Math.ceil(filteredAssignments.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedAssignments = filteredAssignments.slice(startIndex, startIndex + itemsPerPage);
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    if (onFilterChange) {
+      onFilterChange({
+        search: searchTerm || undefined,
+        spoc_user_id: spocFilter !== 'all' ? spocFilter : undefined,
+        spoc_type: typeFilter !== 'all' ? typeFilter : undefined,
+        status: value,
+        page: 1
+      });
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    if (onFilterChange) {
+      onFilterChange({
+        search: searchTerm || undefined,
+        spoc_user_id: spocFilter !== 'all' ? spocFilter : undefined,
+        spoc_type: typeFilter !== 'all' ? typeFilter : undefined,
+        status: statusFilter,
+        page: page
+      });
+    }
+  };
+
+  // ✅ Use assignments directly (already filtered by backend)
+  const paginatedAssignments = assignments;
 
   const getSPOCTypeIcon = (type: string) => {
     switch (type) {
@@ -197,7 +261,7 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            SPOC Assignments ({filteredAssignments.length})
+            SPOC Assignments ({pagination?.total_records || assignments.length})
           </CardTitle>
           {/* ✅ Hide "Add Assignment" button for SPOC users */}
           {canManageSpocs && (
@@ -207,7 +271,7 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
             </Button>
           )}
         </div>
-        
+
         {/* Filters */}
         <div className="flex flex-wrap gap-4 mt-4">
           <div className="flex-1 min-w-[200px]">
@@ -216,27 +280,27 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
               <Input
                 placeholder="Search customers, SPOCs, contacts..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-10"
               />
             </div>
           </div>
-          
-          <Select value={spocFilter} onValueChange={setSpocFilter}>
+
+          <Select value={spocFilter} onValueChange={handleSpocFilterChange}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by SPOC" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All SPOCs</SelectItem>
               {uniqueSpocs.map(spoc => (
-                <SelectItem key={spoc.username} value={spoc.username}>
+                <SelectItem key={spoc.id} value={spoc.id}>
                   {spoc.full_name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <Select value={typeFilter} onValueChange={handleTypeFilterChange}>
             <SelectTrigger className="w-[150px]">
               <SelectValue placeholder="Filter by Type" />
             </SelectTrigger>
@@ -251,7 +315,7 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
             </SelectContent>
           </Select>
 
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
             <SelectTrigger className="w-[120px]">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -363,28 +427,28 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
             </Table>
 
             {/* Pagination */}
-            {totalPages > 1 && (
+            {pagination && pagination.total_pages > 1 && (
               <div className="flex items-center justify-between mt-6">
                 <p className="text-sm text-gray-500">
-                  Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredAssignments.length)} of {filteredAssignments.length} assignments
+                  Showing {((pagination.current_page - 1) * pagination.per_page) + 1} to {Math.min(pagination.current_page * pagination.per_page, pagination.total_records)} of {pagination.total_records} assignments
                 </p>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
+                    onClick={() => handlePageChange(pagination.current_page - 1)}
+                    disabled={pagination.current_page === 1}
                   >
                     Previous
                   </Button>
                   <span className="text-sm">
-                    Page {currentPage} of {totalPages}
+                    Page {pagination.current_page} of {pagination.total_pages}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
+                    onClick={() => handlePageChange(pagination.current_page + 1)}
+                    disabled={pagination.current_page === pagination.total_pages}
                   >
                     Next
                   </Button>

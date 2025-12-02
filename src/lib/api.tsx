@@ -12645,7 +12645,9 @@ export const requestSPInvoiceRevision = async (id: string, data: { revision_reas
 export const fetchSPOCAssignments = async (params: {
   client_id?: string;
   spoc_type?: string;
-  active_only?: boolean;
+  spoc_user_id?: string;
+  search?: string;
+  status?: 'active' | 'inactive' | 'all';
   page?: number;
   limit?: number;
 } = {}) => {
@@ -12659,6 +12661,7 @@ export const fetchSPOCAssignments = async (params: {
       params: {
         page: params.page || 1,
         limit: params.limit || 20,
+        status: params.status || 'active',
         ...params
       },
       headers: {
