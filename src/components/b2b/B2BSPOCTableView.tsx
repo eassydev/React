@@ -124,25 +124,51 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
   const [statusFilter, setStatusFilter] = useState('active');
 
   // ✅ Get unique SPOC users for filter dropdown (from current page data)
+  // Note: This only shows SPOCs from current page. For full list, we'd need a separate API call.
   const uniqueSpocs = Array.isArray(assignments) ? Array.from(
     new Set(assignments.map(a => a.spocUser?.id).filter(Boolean))
   ).map(id => {
     const spoc = assignments.find(a => a.spocUser?.id === id)?.spocUser;
-    return { id, username: spoc?.username || '', full_name: spoc?.full_name || '' };
+    return {
+      id: String(id),
+      username: spoc?.username || '',
+      full_name: spoc?.full_name || spoc?.username || 'Unknown'
+    };
   }) : [];
+
+  // ✅ Debounce search to avoid too many API calls
+  const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // ✅ Handle filter changes - notify parent component for server-side filtering
   const handleSearchChange = (value: string) => {
     setSearchTerm(value);
-    if (onFilterChange) {
-      onFilterChange({
-        search: value,
-        spoc_user_id: spocFilter !== 'all' ? spocFilter : undefined,
-        spoc_type: typeFilter !== 'all' ? typeFilter : undefined,
-        status: statusFilter,
-        page: 1 // Reset to page 1 on filter change
-      });
+
+    // Clear existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
     }
+
+    // Debounce search by 500ms
+    searchTimeoutRef.current = setTimeout(() => {
+      if (onFilterChange) {
+        onFilterChange({
+          search: value || undefined,
+          spoc_user_id: spocFilter !== 'all' ? spocFilter : undefined,
+          spoc_type: typeFilter !== 'all' ? typeFilter : undefined,
+          status: statusFilter,
+          page: 1 // Reset to page 1 on filter change
+        });
+      }
+    }, 500);
   };
 
   const handleSpocFilterChange = (value: string) => {
@@ -359,23 +385,23 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
                       <div className="flex items-center gap-2">
                         <Building2 className="w-4 h-4 text-gray-500" />
                         <div>
-                          <p className="font-medium">{assignment.customer.company_name}</p>
-                          <p className="text-sm text-gray-500">{assignment.customer.email}</p>
+                          <p className="font-medium">{assignment.customer?.company_name || 'N/A'}</p>
+                          <p className="text-sm text-gray-500">{assignment.customer?.email || ''}</p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div>
-                        <p className="font-medium">{assignment.customer.contact_person}</p>
-                        <p className="text-sm text-gray-500">{assignment.customer.phone}</p>
+                        <p className="font-medium">{assignment.customer?.contact_person || 'N/A'}</p>
+                        <p className="text-sm text-gray-500">{assignment.customer?.phone || ''}</p>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Users className="w-4 h-4 text-gray-500" />
                         <div>
-                          <p className="font-medium">{assignment.spocUser.full_name}</p>
-                          <p className="text-sm text-gray-500">{assignment.spocUser.email}</p>
+                          <p className="font-medium">{assignment.spocUser?.full_name || assignment.spocUser?.username || 'N/A'}</p>
+                          <p className="text-sm text-gray-500">{assignment.spocUser?.email || ''}</p>
                         </div>
                       </div>
                     </TableCell>
@@ -384,7 +410,7 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {assignment.function_area.map((area) => (
+                        {Array.isArray(assignment.function_area) && assignment.function_area.map((area) => (
                           <Badge key={area} variant="outline" className="text-xs">
                             {area}
                           </Badge>
