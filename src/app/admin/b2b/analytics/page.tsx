@@ -162,7 +162,7 @@ export default function B2BAnalyticsDashboard() {
       </div>
 
       {/* Order Lifecycle Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
         <B2BMetricCard
           title="Orders Received"
           value={data.overall_metrics.orders_received?.count || 0}
@@ -191,6 +191,14 @@ export default function B2BAnalyticsDashboard() {
           value={data.overall_metrics.orders_executed?.count || 0}
           subtitle={formatCurrency(data.overall_metrics.orders_executed?.total_value)}
           icon={<CheckCircle className="h-4 w-4" />}
+        />
+
+        <B2BMetricCard
+          title="Net Executed Value"
+          value={data.overall_metrics.net_executed?.count || 0}
+          subtitle={formatCurrency(data.overall_metrics.net_executed?.total_value)}
+          icon={<CheckCircle className="h-4 w-4" />}
+          valueClassName="text-green-600"
         />
       </div>
 

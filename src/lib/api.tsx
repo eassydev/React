@@ -13048,6 +13048,11 @@ export interface B2BDashboardData {
       count: number;
       total_value: number;
     };
+    // ✅ 4b. Net Executed Value (completed + paid)
+    net_executed: {
+      count: number;
+      total_value: number;
+    };
     // ✅ 5. Pending Orders Value
     pending_orders: {
       count: number;
