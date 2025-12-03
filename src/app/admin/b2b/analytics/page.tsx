@@ -24,15 +24,22 @@ import {
   B2BDashboardData
 } from '@/lib/api';
 
-const formatCurrency = (value: number): string => {
-  if (value >= 10000000) {
-    return `₹${(value / 10000000).toFixed(2)}Cr`;
-  } else if (value >= 100000) {
-    return `₹${(value / 100000).toFixed(2)}L`;
-  } else if (value >= 1000) {
-    return `₹${(value / 1000).toFixed(2)}K`;
+const formatCurrency = (value: number | undefined | null): string => {
+  // Handle undefined, null, or NaN values
+  if (value === undefined || value === null || isNaN(value)) {
+    return '₹0';
   }
-  return `₹${value.toFixed(0)}`;
+
+  const numValue = Number(value);
+
+  if (numValue >= 10000000) {
+    return `₹${(numValue / 10000000).toFixed(2)}Cr`;
+  } else if (numValue >= 100000) {
+    return `₹${(numValue / 100000).toFixed(2)}L`;
+  } else if (numValue >= 1000) {
+    return `₹${(numValue / 1000).toFixed(2)}K`;
+  }
+  return `₹${numValue.toFixed(0)}`;
 };
 
 export default function B2BAnalyticsDashboard() {
@@ -120,74 +127,109 @@ export default function B2BAnalyticsDashboard() {
       </div>
       {/* Analytics Export Panel */}
       <AnalyticsExportPanel userRole={userRole} />
-      {/* Summary Cards */}
+
+      {/* Primary Metrics - Top Row */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <B2BMetricCard
           title="Total Customers"
-          value={data.overall_metrics.customers.total}
-          subtitle={`${data.overall_metrics.customers.active} active`}
+          value={data.overall_metrics.customers?.total || 0}
+          subtitle={`${data.overall_metrics.customers?.active || 0} active`}
           icon={<Users className="h-4 w-4" />}
         />
 
         <B2BMetricCard
-          title="Total Revenue"
-          value={formatCurrency(data.overall_metrics.revenue)}
-          subtitle={`From ${data.overall_metrics.orders_completed.count} completed orders`}
+          title="GOV - B2B"
+          value={formatCurrency(data.overall_metrics.gov_b2b)}
+          subtitle="Gross Order Value"
           icon={<DollarSign className="h-4 w-4" />}
         />
 
         <B2BMetricCard
           title="Gross Margin"
-          value={formatCurrency(data.overall_metrics.profit.total)}
-          subtitle={`${data.overall_metrics.profit.avg_margin_percentage}% avg margin`}
+          value={formatCurrency(data.overall_metrics.gross_margin?.total)}
+          subtitle={`${data.overall_metrics.gross_margin?.avg_percentage || '0'}% avg margin`}
           icon={<TrendingUp className="h-4 w-4" />}
           valueClassName="text-green-600"
         />
 
         <B2BMetricCard
+          title="Collections"
+          value={formatCurrency(data.overall_metrics.collections?.total_value)}
+          subtitle={`${data.overall_metrics.collections?.count || 0} paid invoices`}
+          icon={<CheckCircle className="h-4 w-4" />}
+          valueClassName="text-green-600"
+        />
+      </div>
+
+      {/* Order Lifecycle Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        <B2BMetricCard
           title="Orders Received"
-          value={data.overall_metrics.orders_received.count}
-          subtitle={formatCurrency(data.overall_metrics.orders_received.total_value)}
+          value={data.overall_metrics.orders_received?.count || 0}
+          subtitle={formatCurrency(data.overall_metrics.orders_received?.total_value)}
           icon={<ShoppingCart className="h-4 w-4" />}
         />
 
+        <B2BMetricCard
+          title="Orders Cancelled"
+          value={data.overall_metrics.orders_cancelled?.count || 0}
+          subtitle={formatCurrency(data.overall_metrics.orders_cancelled?.total_value)}
+          icon={<AlertCircle className="h-4 w-4" />}
+          valueClassName="text-red-600"
+          alert={(data.overall_metrics.orders_cancelled?.count || 0) > 0}
+        />
 
+        <B2BMetricCard
+          title="Net Orders"
+          value={data.overall_metrics.net_orders?.count || 0}
+          subtitle={formatCurrency(data.overall_metrics.net_orders?.total_value)}
+          icon={<Package className="h-4 w-4" />}
+        />
+
+        <B2BMetricCard
+          title="Orders Executed"
+          value={data.overall_metrics.orders_executed?.count || 0}
+          subtitle={formatCurrency(data.overall_metrics.orders_executed?.total_value)}
+          icon={<CheckCircle className="h-4 w-4" />}
+        />
       </div>
 
-      {/* Secondary Metrics */}
-      <B2BMetricCard
-        title="Orders Received Amount"
-        value={formatCurrency(data.overall_metrics.orders_received.total_value)}
-        subtitle={"orders recieved amount"}
-        icon={<ShoppingCart className="h-4 w-4" />}
-      />
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      {/* Financial Metrics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <B2BMetricCard
-          title="Outstanding Orders"
-          value={data.overall_metrics.outstanding_orders.count}
-          subtitle={formatCurrency(data.overall_metrics.outstanding_orders.total_value)}
+          title="Pending Orders"
+          value={data.overall_metrics.pending_orders?.count || 0}
+          subtitle={formatCurrency(data.overall_metrics.pending_orders?.total_value)}
           icon={<Clock className="h-4 w-4" />}
         />
 
         <B2BMetricCard
-          title="Completed Orders"
-          value={data.overall_metrics.orders_completed.count}
-          subtitle={formatCurrency(data.overall_metrics.orders_completed.total_value)}
-          icon={<CheckCircle className="h-4 w-4" />}
+          title="Billed Orders"
+          value={data.overall_metrics.billed_orders?.count || 0}
+          subtitle={formatCurrency(data.overall_metrics.billed_orders?.total_value)}
+          icon={<Package className="h-4 w-4" />}
         />
 
         <B2BMetricCard
-          title="Overdue Payments"
-          value={formatCurrency(data.overall_metrics.payment_collection.overdue)}
-          subtitle="Requires immediate attention"
+          title="Outstanding Amount"
+          value={formatCurrency(data.overall_metrics.outstanding_amount)}
+          subtitle="Unpaid + Overdue + Partial"
           icon={<AlertCircle className="h-4 w-4" />}
-          alert={data.overall_metrics.payment_collection.overdue > 0}
+          alert={(data.overall_metrics.outstanding_amount || 0) > 0}
+          valueClassName={(data.overall_metrics.outstanding_amount || 0) > 0 ? "text-orange-600" : ""}
+        />
+
+        <B2BMetricCard
+          title="SP Payout"
+          value={formatCurrency(data.overall_metrics.sp_payout)}
+          subtitle="Paid to service providers"
+          icon={<DollarSign className="h-4 w-4" />}
         />
       </div>
 
       {/* Payment Collection Chart */}
       <B2BPaymentCollectionChart
-        data={data.overall_metrics.payment_collection}
+        data={data.overall_metrics.payment_breakdown || data.overall_metrics.payment_collection || { paid: 0, pending: 0, overdue: 0, partial: 0 }}
       />
 
       {/* Top Performers Tables */}

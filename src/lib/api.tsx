@@ -12340,11 +12340,19 @@ export const fetchDetailedReport = async (
       period_type: string;
       downloads: number;
       registrations: number;
+      b2b_registrations: number;
       orders_received: number;
       gov: number;
+      orders_cancelled: number;
+      cancelled_value: number;
+      net_order_position: number;
+      net_order_value: number;
       aov: number;
       orders_executed: number;
       executed_value: number;
+      money_collected_count: number;
+      money_collected_value: number;
+      sp_payout: number;
       invoices_raised: number;
       invoice_value: number;
       collections: number;
@@ -13018,26 +13026,77 @@ export interface B2BDashboardData {
     customers: {
       total: number;
       active: number;
-      inactive: number;
+      inactive?: number;
     };
+    // ✅ 1. Orders Received Value (all statuses)
     orders_received: {
       count: number;
       total_value: number;
     };
-    orders_completed: {
+    // ✅ 2. Orders Cancelled Value
+    orders_cancelled: {
       count: number;
       total_value: number;
     };
-    revenue: number;
-    profit: {
+    // ✅ 3. Net Order Value (received - cancelled)
+    net_orders: {
+      count: number;
+      total_value: number;
+    };
+    // ✅ 4. Executed Orders Value (completed status)
+    orders_executed: {
+      count: number;
+      total_value: number;
+    };
+    // ✅ 5. Pending Orders Value
+    pending_orders: {
+      count: number;
+      total_value: number;
+    };
+    // ✅ 6. Billed Orders Value (invoice exists but not paid)
+    billed_orders: {
+      count: number;
+      total_value: number;
+    };
+    // ✅ 7. Collections (paid invoices)
+    collections: {
+      count: number;
+      total_value: number;
+    };
+    // ✅ 8. Outstanding Amount
+    outstanding_amount: number;
+    // ✅ 9. SP Payout
+    sp_payout: number;
+    // ✅ 10. Gross Margin
+    gross_margin: {
+      total: number;
+      avg_percentage: string;
+    };
+    // ✅ 11. GOV - B2B (Gross Order Value)
+    gov_b2b: number;
+    // Additional metrics
+    avg_order_value: string;
+    payment_breakdown: {
+      paid: number;
+      pending: number;
+      overdue: number;
+      partial: number;
+    };
+    // Legacy fields (for backward compatibility)
+    orders_completed?: {
+      count: number;
+      total_value: number;
+    };
+    revenue?: number;
+    profit?: {
       total: number;
       avg_margin_percentage: string;
     };
-    outstanding_orders: {
+    outstanding_orders?: {
       count: number;
       total_value: number;
     };
-    payment_collection: {
+    payment_collection?: {
       paid: number;
       pending: number;
       overdue: number;

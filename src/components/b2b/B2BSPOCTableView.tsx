@@ -7,21 +7,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import usePermissions from '@/hooks/usePermissions'; // ✅ Add role detection
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
-import { 
-  Search, 
-  Filter, 
-  Edit, 
-  Trash2, 
-  Plus, 
-  Users, 
+import {
+  Search,
+  Filter,
+  Edit,
+  Trash2,
+  Plus,
+  Users,
   Building2,
   Crown,
   Shield,
@@ -119,6 +119,7 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
 
   // Filters (now controlled by parent via onFilterChange)
   const [searchTerm, setSearchTerm] = useState('');
+  const [inputValue, setInputValue] = useState(''); // ✅ Separate state for input to prevent focus loss
   const [spocFilter, setSpocFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('active');
@@ -149,8 +150,9 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
   }, []);
 
   // ✅ Handle filter changes - notify parent component for server-side filtering
-  const handleSearchChange = (value: string) => {
-    setSearchTerm(value);
+  // ✅ FIX: Use useCallback and separate input state to prevent focus loss
+  const handleSearchChange = React.useCallback((value: string) => {
+    setInputValue(value); // ✅ Update input immediately for responsive UI
 
     // Clear existing timeout
     if (searchTimeoutRef.current) {
@@ -159,6 +161,7 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
 
     // Debounce search by 500ms
     searchTimeoutRef.current = setTimeout(() => {
+      setSearchTerm(value); // Update search term after debounce
       if (onFilterChange) {
         onFilterChange({
           search: value || undefined,
@@ -169,7 +172,7 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
         });
       }
     }, 500);
-  };
+  }, [onFilterChange, spocFilter, typeFilter, statusFilter]);
 
   const handleSpocFilterChange = (value: string) => {
     setSpocFilter(value);
@@ -246,7 +249,7 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
       sales: 'bg-orange-100 text-orange-800',
       manager: 'bg-red-100 text-red-800'
     };
-    
+
     return (
       <Badge className={`${colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800'} capitalize`}>
         {getSPOCTypeIcon(type)}
@@ -305,7 +308,7 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
                 placeholder="Search customers, SPOCs, contacts..."
-                value={searchTerm}
+                value={inputValue}
                 onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-10"
               />
@@ -359,7 +362,7 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
           <div className="text-center py-8 text-gray-500">
             <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>No SPOC assignments found</p>
-            {searchTerm && (
+            {inputValue && (
               <p className="text-sm mt-2">Try adjusting your search or filters</p>
             )}
           </div>

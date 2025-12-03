@@ -56,9 +56,13 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
   // Load dashboard summary on component mount
   useEffect(() => {
     loadDashboardSummary();
+  }, []);
+
+  // Load MTD and LTD data when business type changes
+  useEffect(() => {
     loadMTDData();
     loadLTDData();
-  }, []);
+  }, [businessType]);
 
   // Load comprehensive data when filters change
   useEffect(() => {
@@ -316,16 +320,32 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
                       <span className="font-medium">{formatNumber(mtdData.orders_received_total)}</span>
                     </div>
                     <div className="flex justify-between">
+                      <span>Orders Cancelled:</span>
+                      <span className="font-medium text-red-600">{formatNumber(mtdData.orders_cancelled_total || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Net Order Position:</span>
+                      <span className="font-medium">{formatNumber(mtdData.net_order_position_total || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
                       <span>Orders Executed:</span>
                       <span className="font-medium">{formatNumber(mtdData.orders_executed_total)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Revenue:</span>
-                      <span className="font-medium">{formatCurrency(mtdData.orders_value_total)}</span>
+                      <span>Money Collected:</span>
+                      <span className="font-medium">{formatNumber(mtdData.collected_total || 0)} orders</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Collections:</span>
+                      <span>Collection Value:</span>
                       <span className="font-medium">{formatCurrency(mtdData.collection_value_total)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>SP Payout:</span>
+                      <span className="font-medium">{formatCurrency(mtdData.sp_payout_total || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Revenue (GOV):</span>
+                      <span className="font-medium">{formatCurrency(mtdData.orders_value_total)}</span>
                     </div>
                   </div>
                 </CardContent>
@@ -347,12 +367,32 @@ export default function AnalyticsDashboard({ className }: AnalyticsDashboardProp
                       <span className="font-medium">{formatNumber(ltdData.orders_received_total)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Total Revenue:</span>
-                      <span className="font-medium">{formatCurrency(ltdData.orders_value_total)}</span>
+                      <span>Orders Cancelled:</span>
+                      <span className="font-medium text-red-600">{formatNumber(ltdData.orders_cancelled_total || 0)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span>Total Collections:</span>
+                      <span>Net Order Position:</span>
+                      <span className="font-medium">{formatNumber(ltdData.net_order_position_total || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Orders Executed:</span>
+                      <span className="font-medium">{formatNumber(ltdData.orders_executed_total || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Money Collected:</span>
+                      <span className="font-medium">{formatNumber(ltdData.collected_total || 0)} orders</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Collection Value:</span>
                       <span className="font-medium">{formatCurrency(ltdData.collection_value_total)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>SP Payout:</span>
+                      <span className="font-medium">{formatCurrency(ltdData.sp_payout_total || 0)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span>Total Revenue (GOV):</span>
+                      <span className="font-medium">{formatCurrency(ltdData.orders_value_total)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span>Avg Order Value:</span>
