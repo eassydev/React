@@ -57,6 +57,12 @@ export default function B2BAnalyticsDashboard() {
 
       const dashboardData = await getB2BAnalyticsDashboard(startDate, endDate);
       setData(dashboardData);
+
+      // Log key metrics for debugging
+      console.log('📊 B2B Analytics Dashboard Data:');
+      console.log('Billed Orders:', dashboardData.overall_metrics.billed_orders);
+      console.log('Collections:', dashboardData.overall_metrics.collections);
+      console.log('Outstanding Amount:', dashboardData.overall_metrics.outstanding_amount);
     } catch (err: any) {
       console.error('Dashboard error:', err);
       toast.error(err.message || 'Failed to fetch dashboard data');
@@ -140,6 +146,13 @@ export default function B2BAnalyticsDashboard() {
           />
 
           <B2BMetricCard
+            title="Orders Received"
+            value={data.overall_metrics.orders_received?.count || 0}
+            subtitle={formatCurrency(data.overall_metrics.orders_received?.total_value)}
+            icon={<ShoppingCart className="h-4 w-4" />}
+          />
+
+          <B2BMetricCard
             title="GOV - B2B"
             value={formatCurrency(data.overall_metrics.gov_b2b)}
             subtitle="Gross Order Value"
@@ -153,14 +166,6 @@ export default function B2BAnalyticsDashboard() {
             icon={<TrendingUp className="h-4 w-4" />}
             valueClassName="text-green-600"
           />
-
-          <B2BMetricCard
-            title="Collections"
-            value={formatCurrency(data.overall_metrics.collections?.total_value)}
-            subtitle={`${data.overall_metrics.collections?.count || 0} completed & paid orders`}
-            icon={<CheckCircle className="h-4 w-4" />}
-            valueClassName="text-green-600"
-          />
         </div>
       </div>
 
@@ -168,13 +173,6 @@ export default function B2BAnalyticsDashboard() {
       <div>
         <h2 className="text-lg font-semibold mb-3">Order Lifecycle</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          <B2BMetricCard
-            title="Orders Received"
-            value={data.overall_metrics.orders_received?.count || 0}
-            subtitle={formatCurrency(data.overall_metrics.orders_received?.total_value)}
-            icon={<ShoppingCart className="h-4 w-4" />}
-          />
-
           <B2BMetricCard
             title="Orders Cancelled"
             value={data.overall_metrics.orders_cancelled?.count || 0}
@@ -197,6 +195,14 @@ export default function B2BAnalyticsDashboard() {
             subtitle={formatCurrency(data.overall_metrics.orders_executed?.total_value)}
             icon={<CheckCircle className="h-4 w-4" />}
           />
+
+          <B2BMetricCard
+            title="Collections"
+            value={formatCurrency(data.overall_metrics.collections?.total_value)}
+            subtitle={`${data.overall_metrics.collections?.count || 0} completed & paid orders`}
+            icon={<CheckCircle className="h-4 w-4" />}
+            valueClassName="text-green-600"
+          />
         </div>
       </div>
 
@@ -214,7 +220,7 @@ export default function B2BAnalyticsDashboard() {
           <B2BMetricCard
             title="Billed Orders"
             value={data.overall_metrics.billed_orders?.count || 0}
-            subtitle={formatCurrency(data.overall_metrics.billed_orders?.total_value)}
+            subtitle={`${formatCurrency(data.overall_metrics.billed_orders?.total_value)} invoices raised`}
             icon={<Package className="h-4 w-4" />}
           />
 

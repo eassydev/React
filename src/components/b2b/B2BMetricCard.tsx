@@ -45,10 +45,10 @@ export default function B2BMetricCard({
         )}
       </CardHeader>
       <CardContent>
-        <div className={`text-2xl font-bold ${valueClassName || ''}`}>
+        <div className={`text-3xl font-extrabold text-gray-900 dark:text-gray-100 ${valueClassName || ''}`}>
           {value}
         </div>
-        
+
         {subtitle && (
           <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
         )}
