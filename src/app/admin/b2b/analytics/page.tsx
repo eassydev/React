@@ -128,22 +128,15 @@ export default function B2BAnalyticsDashboard() {
       {/* Analytics Export Panel */}
       <AnalyticsExportPanel userRole={userRole} />
 
-      {/* Primary Metrics - Top Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <B2BMetricCard
-          title="Total Customers"
-          value={data.overall_metrics.customers?.total || 0}
-          subtitle={`${data.overall_metrics.customers?.active || 0} active`}
-          icon={<Users className="h-4 w-4" />}
-        />
-
-        {/* Order Lifecycle Metrics */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      {/* Section 1: Customer & Key Metrics */}
+      <div>
+        <h2 className="text-lg font-semibold mb-3">Customer Overview</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <B2BMetricCard
-            title="Orders Received"
-            value={data.overall_metrics.orders_received?.count || 0}
-            subtitle={formatCurrency(data.overall_metrics.orders_received?.total_value)}
-            icon={<ShoppingCart className="h-4 w-4" />}
+            title="Total Customers"
+            value={data.overall_metrics.customers?.total || 0}
+            subtitle={`${data.overall_metrics.customers?.active || 0} active`}
+            icon={<Users className="h-4 w-4" />}
           />
 
           <B2BMetricCard
@@ -169,93 +162,113 @@ export default function B2BAnalyticsDashboard() {
             valueClassName="text-green-600"
           />
         </div>
-
-
-
-        <B2BMetricCard
-          title="Orders Cancelled"
-          value={data.overall_metrics.orders_cancelled?.count || 0}
-          subtitle={formatCurrency(data.overall_metrics.orders_cancelled?.total_value)}
-          icon={<AlertCircle className="h-4 w-4" />}
-          valueClassName="text-red-600"
-          alert={(data.overall_metrics.orders_cancelled?.count || 0) > 0}
-        />
-
-        <B2BMetricCard
-          title="Net Orders"
-          value={data.overall_metrics.net_orders?.count || 0}
-          subtitle={formatCurrency(data.overall_metrics.net_orders?.total_value)}
-          icon={<Package className="h-4 w-4" />}
-        />
-
-        <B2BMetricCard
-          title="Orders Executed"
-          value={data.overall_metrics.orders_executed?.count || 0}
-          subtitle={formatCurrency(data.overall_metrics.orders_executed?.total_value)}
-          icon={<CheckCircle className="h-4 w-4" />}
-        />
       </div>
 
-      {/* Financial Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <B2BMetricCard
-          title="Pending Orders"
-          value={data.overall_metrics.pending_orders?.count || 0}
-          subtitle={formatCurrency(data.overall_metrics.pending_orders?.total_value)}
-          icon={<Clock className="h-4 w-4" />}
-        />
+      {/* Section 2: Order Lifecycle Metrics */}
+      <div>
+        <h2 className="text-lg font-semibold mb-3">Order Lifecycle</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <B2BMetricCard
+            title="Orders Received"
+            value={data.overall_metrics.orders_received?.count || 0}
+            subtitle={formatCurrency(data.overall_metrics.orders_received?.total_value)}
+            icon={<ShoppingCart className="h-4 w-4" />}
+          />
 
-        <B2BMetricCard
-          title="Billed Orders"
-          value={data.overall_metrics.billed_orders?.count || 0}
-          subtitle={formatCurrency(data.overall_metrics.billed_orders?.total_value)}
-          icon={<Package className="h-4 w-4" />}
-        />
+          <B2BMetricCard
+            title="Orders Cancelled"
+            value={data.overall_metrics.orders_cancelled?.count || 0}
+            subtitle={formatCurrency(data.overall_metrics.orders_cancelled?.total_value)}
+            icon={<AlertCircle className="h-4 w-4" />}
+            valueClassName="text-red-600"
+            alert={(data.overall_metrics.orders_cancelled?.count || 0) > 0}
+          />
 
-        <B2BMetricCard
-          title="Outstanding Amount"
-          value={formatCurrency(data.overall_metrics.outstanding_amount)}
-          subtitle="Unpaid + Overdue + Partial"
-          icon={<AlertCircle className="h-4 w-4" />}
-          alert={(data.overall_metrics.outstanding_amount || 0) > 0}
-          valueClassName={(data.overall_metrics.outstanding_amount || 0) > 0 ? "text-orange-600" : ""}
-        />
+          <B2BMetricCard
+            title="Net Orders"
+            value={data.overall_metrics.net_orders?.count || 0}
+            subtitle={formatCurrency(data.overall_metrics.net_orders?.total_value)}
+            icon={<Package className="h-4 w-4" />}
+          />
 
-        <B2BMetricCard
-          title="SP Payout"
-          value={formatCurrency(data.overall_metrics.sp_payout)}
-          subtitle="Paid to service providers"
-          icon={<DollarSign className="h-4 w-4" />}
-        />
+          <B2BMetricCard
+            title="Orders Executed"
+            value={data.overall_metrics.orders_executed?.count || 0}
+            subtitle={formatCurrency(data.overall_metrics.orders_executed?.total_value)}
+            icon={<CheckCircle className="h-4 w-4" />}
+          />
+        </div>
       </div>
 
-      {/* Payment Collection Chart */}
-      <B2BPaymentCollectionChart
-        data={data.overall_metrics.payment_breakdown || data.overall_metrics.payment_collection || { paid: 0, pending: 0, overdue: 0, partial: 0 }}
-      />
+      {/* Section 3: Financial Metrics */}
+      <div>
+        <h2 className="text-lg font-semibold mb-3">Financial Metrics</h2>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <B2BMetricCard
+            title="Pending Orders"
+            value={data.overall_metrics.pending_orders?.count || 0}
+            subtitle={formatCurrency(data.overall_metrics.pending_orders?.total_value)}
+            icon={<Clock className="h-4 w-4" />}
+          />
 
-      {/* Top Performers Tables */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <B2BTopCustomersTable
-          title="Top Customers by Revenue"
-          data={data.top_performers.by_revenue}
-          metric="revenue"
-        />
+          <B2BMetricCard
+            title="Billed Orders"
+            value={data.overall_metrics.billed_orders?.count || 0}
+            subtitle={formatCurrency(data.overall_metrics.billed_orders?.total_value)}
+            icon={<Package className="h-4 w-4" />}
+          />
 
-        <B2BTopCustomersTable
-          title="Top Customers by Margin"
-          data={data.top_performers.by_profit}
-          metric="profit"
-        />
+          <B2BMetricCard
+            title="Outstanding Amount"
+            value={formatCurrency(data.overall_metrics.outstanding_amount)}
+            subtitle="Unpaid + Overdue + Partial"
+            icon={<AlertCircle className="h-4 w-4" />}
+            alert={(data.overall_metrics.outstanding_amount || 0) > 0}
+            valueClassName={(data.overall_metrics.outstanding_amount || 0) > 0 ? "text-orange-600" : ""}
+          />
 
-        <B2BTopCustomersTable
-          title="Top Customers by Orders"
-          data={data.top_performers.by_orders}
-          metric="orders"
+          <B2BMetricCard
+            title="SP Payout"
+            value={formatCurrency(data.overall_metrics.sp_payout)}
+            subtitle="Paid to service providers"
+            icon={<DollarSign className="h-4 w-4" />}
+          />
+        </div>
+      </div>
+
+      {/* Section 4: Payment Breakdown */}
+      <div>
+        <h2 className="text-lg font-semibold mb-3">Payment Status Breakdown</h2>
+        <B2BPaymentCollectionChart
+          data={data.overall_metrics.payment_breakdown || data.overall_metrics.payment_collection || { paid: 0, pending: 0, overdue: 0, partial: 0 }}
         />
       </div>
 
       <Separator />
+
+      {/* Section 5: Top Performers */}
+      <div>
+        <h2 className="text-lg font-semibold mb-3">Top Performing Customers</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          <B2BTopCustomersTable
+            title="Top Customers by Revenue"
+            data={data.top_performers.by_revenue}
+            metric="revenue"
+          />
+
+          <B2BTopCustomersTable
+            title="Top Customers by Margin"
+            data={data.top_performers.by_profit}
+            metric="profit"
+          />
+
+          <B2BTopCustomersTable
+            title="Top Customers by Orders"
+            data={data.top_performers.by_orders}
+            metric="orders"
+          />
+        </div>
+      </div>
     </div>
   );
 }
