@@ -137,38 +137,40 @@ export default function B2BAnalyticsDashboard() {
           icon={<Users className="h-4 w-4" />}
         />
 
-        <B2BMetricCard
-          title="GOV - B2B"
-          value={formatCurrency(data.overall_metrics.gov_b2b)}
-          subtitle="Gross Order Value"
-          icon={<DollarSign className="h-4 w-4" />}
-        />
+        {/* Order Lifecycle Metrics */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <B2BMetricCard
+            title="Orders Received"
+            value={data.overall_metrics.orders_received?.count || 0}
+            subtitle={formatCurrency(data.overall_metrics.orders_received?.total_value)}
+            icon={<ShoppingCart className="h-4 w-4" />}
+          />
 
-        <B2BMetricCard
-          title="Gross Margin"
-          value={formatCurrency(data.overall_metrics.gross_margin?.total)}
-          subtitle={`${data.overall_metrics.gross_margin?.avg_percentage || '0'}% avg margin`}
-          icon={<TrendingUp className="h-4 w-4" />}
-          valueClassName="text-green-600"
-        />
+          <B2BMetricCard
+            title="GOV - B2B"
+            value={formatCurrency(data.overall_metrics.gov_b2b)}
+            subtitle="Gross Order Value"
+            icon={<DollarSign className="h-4 w-4" />}
+          />
 
-        <B2BMetricCard
-          title="Collections"
-          value={formatCurrency(data.overall_metrics.collections?.total_value)}
-          subtitle={`${data.overall_metrics.collections?.count || 0} paid invoices`}
-          icon={<CheckCircle className="h-4 w-4" />}
-          valueClassName="text-green-600"
-        />
-      </div>
+          <B2BMetricCard
+            title="Gross Margin"
+            value={formatCurrency(data.overall_metrics.gross_margin?.total)}
+            subtitle={`${data.overall_metrics.gross_margin?.avg_percentage || '0'}% avg margin`}
+            icon={<TrendingUp className="h-4 w-4" />}
+            valueClassName="text-green-600"
+          />
 
-      {/* Order Lifecycle Metrics */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-        <B2BMetricCard
-          title="Orders Received"
-          value={data.overall_metrics.orders_received?.count || 0}
-          subtitle={formatCurrency(data.overall_metrics.orders_received?.total_value)}
-          icon={<ShoppingCart className="h-4 w-4" />}
-        />
+          <B2BMetricCard
+            title="Collections"
+            value={formatCurrency(data.overall_metrics.collections?.total_value)}
+            subtitle={`${data.overall_metrics.collections?.count || 0} completed & paid orders`}
+            icon={<CheckCircle className="h-4 w-4" />}
+            valueClassName="text-green-600"
+          />
+        </div>
+
+
 
         <B2BMetricCard
           title="Orders Cancelled"
@@ -191,14 +193,6 @@ export default function B2BAnalyticsDashboard() {
           value={data.overall_metrics.orders_executed?.count || 0}
           subtitle={formatCurrency(data.overall_metrics.orders_executed?.total_value)}
           icon={<CheckCircle className="h-4 w-4" />}
-        />
-
-        <B2BMetricCard
-          title="Net Executed Value"
-          value={data.overall_metrics.net_executed?.count || 0}
-          subtitle={formatCurrency(data.overall_metrics.net_executed?.total_value)}
-          icon={<CheckCircle className="h-4 w-4" />}
-          valueClassName="text-green-600"
         />
       </div>
 

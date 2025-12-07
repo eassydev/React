@@ -13048,22 +13048,17 @@ export interface B2BDashboardData {
       count: number;
       total_value: number;
     };
-    // ✅ 4b. Net Executed Value (completed + paid)
-    net_executed: {
-      count: number;
-      total_value: number;
-    };
-    // ✅ 5. Pending Orders Value
+    // ✅ 5. Pending Orders Value (calculated as Net Order Value - Executed Order Value)
     pending_orders: {
       count: number;
       total_value: number;
     };
-    // ✅ 6. Billed Orders Value (invoice exists but not paid)
+    // ✅ 6. Billed Orders Value (orders for which invoices are raised, regardless of payment status)
     billed_orders: {
       count: number;
       total_value: number;
     };
-    // ✅ 7. Collections (paid invoices)
+    // ✅ 7. Collections (completed AND paid bookings - count from bookings, not invoices)
     collections: {
       count: number;
       total_value: number;
