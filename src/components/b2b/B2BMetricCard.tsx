@@ -34,9 +34,9 @@ export default function B2BMetricCard({
   return (
     <Card className={`${className} ${alert ? 'border-l-4 border-l-red-500' : ''}`}>
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        <CardTitle className="text-sm font-semibold text-gray-700 dark:text-gray-300">{title}</CardTitle>
         {icon && (
-          <div className="text-muted-foreground">
+          <div className="text-gray-600 dark:text-gray-400">
             {icon}
           </div>
         )}
@@ -50,7 +50,7 @@ export default function B2BMetricCard({
         </div>
 
         {subtitle && (
-          <p className="text-xs text-muted-foreground mt-1">{subtitle}</p>
+          <p className="text-sm font-medium text-gray-700 dark:text-gray-300 mt-2">{subtitle}</p>
         )}
         
         {trend && (
