@@ -29,22 +29,38 @@ import { Badge } from '@/components/ui/badge';
 interface B2BInvoice {
   id: string;
   invoice_number: string;
-  booking: {
+  invoice_type: 'standard' | 'consolidated' | 'partial' | 'advance' | 'credit_note'; // ✅ NEW
+  booking?: {
     order_number: string;
     service_name: string;
     customer: {
       company_name: string;
       contact_person: string;
     };
-  };
+  } | null; // ✅ CHANGED: Nullable for consolidated invoices
+  orderLinks?: Array<{ // ✅ NEW: For consolidated invoices
+    booking: {
+      order_number: string;
+      service_name: string;
+      customer: {
+        company_name: string;
+        contact_person: string;
+      };
+    };
+    billed_amount: number;
+  }>;
   invoice_date: string;
   due_date: string;
   subtotal: number;
   tax_amount: number;
   total_amount: number;
+  paid_amount: number; // ✅ NEW
+  outstanding_amount: number; // ✅ NEW
   payment_status: 'unpaid' | 'partial' | 'paid' | 'overdue';
   invoice_file_path?: string;
   created_at: string;
+  billing_period_start?: string; // ✅ NEW: For consolidated invoices
+  billing_period_end?: string; // ✅ NEW: For consolidated invoices
 }
 
 // Component that uses search params - needs to be wrapped in Suspense
@@ -236,6 +252,62 @@ function B2BInvoicesContent() {
     }
   };
 
+  // ✅ NEW: Helper to get invoice type badge
+  const getInvoiceTypeBadge = (type: string) => {
+    const colors: Record<string, string> = {
+      standard: 'bg-blue-100 text-blue-800',
+      consolidated: 'bg-purple-100 text-purple-800',
+      partial: 'bg-orange-100 text-orange-800',
+      advance: 'bg-teal-100 text-teal-800',
+      credit_note: 'bg-red-100 text-red-800',
+    };
+
+    const labels: Record<string, string> = {
+      standard: 'Standard',
+      consolidated: 'Consolidated',
+      partial: 'Partial',
+      advance: 'Advance',
+      credit_note: 'Credit Note',
+    };
+
+    return (
+      <Badge className={colors[type] || 'bg-gray-100 text-gray-800'}>
+        {labels[type] || type}
+      </Badge>
+    );
+  };
+
+  // ✅ NEW: Helper to get customer info from invoice
+  const getCustomerInfo = (invoice: B2BInvoice) => {
+    // For standard/partial invoices, use booking.customer
+    if (invoice.booking?.customer) {
+      return invoice.booking.customer;
+    }
+    // For consolidated invoices, use first order's customer
+    if (invoice.orderLinks && invoice.orderLinks.length > 0) {
+      return invoice.orderLinks[0].booking.customer;
+    }
+    return { company_name: 'N/A', contact_person: '' };
+  };
+
+  // ✅ NEW: Helper to get order info from invoice
+  const getOrderInfo = (invoice: B2BInvoice) => {
+    if (invoice.invoice_type === 'consolidated') {
+      const orderCount = invoice.orderLinks?.length || 0;
+      return `${orderCount} Orders`;
+    }
+    return invoice.booking?.order_number || 'N/A';
+  };
+
+  // ✅ NEW: Helper to get service info from invoice
+  const getServiceInfo = (invoice: B2BInvoice) => {
+    if (invoice.invoice_type === 'consolidated') {
+      const orderCount = invoice.orderLinks?.length || 0;
+      return `Consolidated (${orderCount} services)`;
+    }
+    return invoice.booking?.service_name || 'N/A';
+  };
+
   const getPaymentStatusBadge = (status: string) => {
     const variants: Record<string, string> = {
       unpaid: 'secondary',
@@ -353,31 +425,39 @@ function B2BInvoicesContent() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Invoice #</TableHead>
+                      <TableHead>Type</TableHead> {/* ✅ NEW */}
                       <TableHead>Customer</TableHead>
                       <TableHead>Order #</TableHead>
                       <TableHead>Service</TableHead>
                       <TableHead>Invoice Date</TableHead>
                       <TableHead>Due Date</TableHead>
                       <TableHead>Amount</TableHead>
+                      <TableHead>Paid/Outstanding</TableHead> {/* ✅ NEW */}
                       <TableHead>Payment Status</TableHead>
                       <TableHead>PDF Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {invoices && invoices.length > 0 ? invoices.map((invoice) => (
+                    {invoices && invoices.length > 0 ? invoices.map((invoice) => {
+                      const customer = getCustomerInfo(invoice);
+                      return (
                       <TableRow key={invoice.id}>
                         <TableCell className="font-medium">
                           {invoice.invoice_number}
                         </TableCell>
+                        {/* ✅ NEW: Invoice Type */}
+                        <TableCell>
+                          {getInvoiceTypeBadge(invoice.invoice_type)}
+                        </TableCell>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{invoice.booking.customer.company_name}</div>
-                            <div className="text-sm text-gray-500">{invoice.booking.customer.contact_person}</div>
+                            <div className="font-medium">{customer.company_name}</div>
+                            <div className="text-sm text-gray-500">{customer.contact_person}</div>
                           </div>
                         </TableCell>
-                        <TableCell>{invoice.booking.order_number}</TableCell>
-                        <TableCell>{invoice.booking.service_name}</TableCell>
+                        <TableCell>{getOrderInfo(invoice)}</TableCell>
+                        <TableCell>{getServiceInfo(invoice)}</TableCell>
                         <TableCell>{formatDate(invoice.invoice_date)}</TableCell>
                         <TableCell>
                           <div className={new Date(invoice.due_date) < new Date() && invoice.payment_status !== 'paid' ? 'text-red-600 font-medium' : ''}>
@@ -392,6 +472,17 @@ function B2BInvoicesContent() {
                             </div>
                             <div className="text-sm text-gray-500">
                               Tax: {formatCurrency(invoice.tax_amount || 0)}
+                            </div>
+                          </div>
+                        </TableCell>
+                        {/* ✅ NEW: Paid/Outstanding */}
+                        <TableCell>
+                          <div>
+                            <div className="text-sm text-green-600">
+                              Paid: {formatCurrency(invoice.paid_amount || 0)}
+                            </div>
+                            <div className="text-sm text-orange-600 font-medium">
+                              Due: {formatCurrency(invoice.outstanding_amount || 0)}
                             </div>
                           </div>
                         </TableCell>
@@ -470,9 +561,10 @@ function B2BInvoicesContent() {
                           </div>
                         </TableCell>
                       </TableRow>
-                    )) : (
+                    );
+                    }) : (
                       <TableRow>
-                        <TableCell colSpan={10} className="text-center py-8 text-gray-500">
+                        <TableCell colSpan={12} className="text-center py-8 text-gray-500">
                           {loading ? 'Loading invoices...' : 'No invoices found'}
                         </TableCell>
                       </TableRow>

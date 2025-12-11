@@ -15,7 +15,8 @@ import {
   checkB2BInvoiceExists,
   generateB2BOrderInvoice,
   regenerateB2BInvoicePDF,
-  fetchB2BOrderById
+  fetchB2BOrderById,
+  generateStandardInvoice // ✅ NEW: Use unified finance API
 } from '@/lib/api';
 
 interface InvoiceItem {
@@ -179,68 +180,47 @@ export default function GenerateInvoicePage() {
     try {
       setGenerating(true);
 
-      const { subtotal } = calculateTotals();
+      // ✅ Calculate due date from due_days
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + invoiceData.due_days);
+      const dueDateStr = dueDate.toISOString().split('T')[0];
 
-      const response = await generateB2BOrderInvoice(orderId, {
-        subtotal: subtotal,
-        payment_terms: invoiceData.payment_terms,
-        notes: invoiceData.notes,
-        due_days: invoiceData.due_days,
-        invoice_items: invoiceData.invoice_items.map(item => ({
-          description: item.description,
-          quantity: item.quantity,
-          unit_price: item.unit_price,
-          tax_rate: item.tax_rate
-        }))
-      });
+      // ✅ Use NEW unified finance API (generateStandardInvoice)
+      const response = await generateStandardInvoice(
+        orderId,
+        dueDateStr,
+        invoiceData.notes || `Invoice for ${order?.service_name || 'service'}`
+      );
 
       if (response.success) {
-        const data = response;
-        setGeneratedInvoice(data.data);
+        const data = response.data;
+
+        // ✅ NEW: Adapt response from new finance API
+        setGeneratedInvoice({
+          invoice_number: data.invoice_number,
+          total_amount: data.total_amount,
+          due_date: data.due_date,
+          invoice_id: data.id,
+          pdf_status: data.pdf_url ? 'success' : 'pending',
+          pdf_available: !!data.pdf_url,
+          pdf_url: data.pdf_url,
+          pdf_error: null
+        });
         setInvoiceGenerated(true);
 
-        // ✅ Handle PDF generation status
-        const pdfStatus = data.data.pdf_status;
-        const pdfError = data.data.pdf_error;
-
-        // Show appropriate message based on invoice and PDF status
-        let title = 'Success';
-        let description = '';
-        let variant: 'default' | 'destructive' = 'default';
-
-        if (data.data.existing) {
-          title = 'Invoice Already Exists';
-          description = `Invoice ${data.data.invoice_number} already exists for this order`;
-        } else if (pdfStatus === 'success') {
-          title = 'Invoice Generated Successfully';
-          description = `Invoice ${data.data.invoice_number} generated successfully with PDF`;
-        } else if (pdfStatus === 'failed') {
-          title = 'Invoice Generated (PDF Failed)';
-          description = `Invoice ${data.data.invoice_number} generated, but PDF generation failed: ${pdfError}`;
-          variant = 'default'; // Still success since invoice was created
-        } else {
-          title = 'Invoice Generated';
-          description = `Invoice ${data.data.invoice_number} generated successfully`;
-        }
-
+        // Show success message
         toast({
-          title,
-          description,
-          variant
+          title: 'Invoice Generated Successfully',
+          description: `Invoice ${data.invoice_number} generated successfully with PDF`
         });
 
         // Auto-redirect to invoice listing with search query after a short delay
         setTimeout(() => {
-          if (data.data.redirect_to) {
-            router.push(data.data.redirect_to);
-          } else {
-            router.push(`/admin/b2b/invoices?search=${data.data.invoice_number}`);
-          }
+          router.push(`/admin/b2b/invoices?search=${data.invoice_number}`);
         }, 3000); // 3 second delay to show the message
 
       } else {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to generate invoice');
+        throw new Error(response.message || 'Failed to generate invoice');
       }
     } catch (error: any) {
       toast({
