@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Search, Download, Eye, FileText, Filter, Loader2, RefreshCw, Trash } from 'lucide-react';
+import { Search, Download, Eye, FileText, Filter, Loader2, RefreshCw, Trash, Info } from 'lucide-react';
 import { fetchB2BInvoices, downloadB2BInvoice, regenerateB2BInvoicePDF, deleteB2BInvoice } from '@/lib/api';
 import { toast } from "@/components/ui/use-toast"
 import { Button } from '@/components/ui/button';
@@ -25,6 +25,11 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 interface B2BInvoice {
   id: string;
@@ -473,6 +478,48 @@ function B2BInvoicesContent() {
                             <div className="text-sm text-gray-500">
                               Tax: {formatCurrency(invoice.tax_amount || 0)}
                             </div>
+                            {/* ✅ NEW: Show additional costs if present */}
+                            {invoice.additional_costs_count > 0 && (
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <div className="text-sm text-blue-600 font-medium mt-1 cursor-pointer hover:text-blue-800 flex items-center gap-1">
+                                    <Info className="w-3 h-3" />
+                                    + {invoice.additional_costs_count} additional item{invoice.additional_costs_count > 1 ? 's' : ''} (₹{invoice.additional_costs_total?.toLocaleString() || 0})
+                                  </div>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-80">
+                                  <div className="space-y-2">
+                                    <h4 className="font-semibold text-sm">Additional Costs Included</h4>
+                                    <div className="space-y-2">
+                                      {invoice.additional_costs?.map((cost: any) => (
+                                        <div key={cost.id} className="border-b pb-2 last:border-0">
+                                          <div className="flex justify-between items-start">
+                                            <div className="flex-1">
+                                              <p className="font-medium text-sm">{cost.item_name}</p>
+                                              {cost.description && (
+                                                <p className="text-xs text-gray-500">{cost.description}</p>
+                                              )}
+                                              <p className="text-xs text-gray-600 mt-1">
+                                                Qty: {cost.quantity} × ₹{cost.unit_price?.toLocaleString() || 0}
+                                              </p>
+                                            </div>
+                                            <div className="text-sm font-semibold">
+                                              ₹{cost.total_amount?.toLocaleString() || 0}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    <div className="pt-2 border-t">
+                                      <div className="flex justify-between font-semibold">
+                                        <span>Total Additional:</span>
+                                        <span>₹{invoice.additional_costs_total?.toLocaleString() || 0}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            )}
                           </div>
                         </TableCell>
                         {/* ✅ NEW: Paid/Outstanding */}

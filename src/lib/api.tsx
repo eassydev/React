@@ -7413,19 +7413,24 @@ export const importB2BExcelData = async (file: File, options: {
 
 /**
  * Fetch additional costs for a B2B order
+ * @param orderId - Encrypted order ID
+ * @param onlyUninvoiced - If true, return only costs not yet invoiced (for invoice generation)
  */
-export const fetchAdditionalCostsForOrder = async (orderId: string) => {
+export const fetchAdditionalCostsForOrder = async (orderId: string, onlyUninvoiced: boolean = false) => {
   try {
     const token = getToken();
     if (!token) {
       throw new Error('No authentication token found');
     }
 
+    const params = onlyUninvoiced ? { only_uninvoiced: 'true' } : {};
+
     const response = await apiClient.get(`/b2b/orders/${orderId}/additional-costs`, {
       headers: {
         'admin-auth-token': token,
         'Content-Type': 'application/json',
       },
+      params,
     });
 
     return response.data;

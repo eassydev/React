@@ -116,13 +116,14 @@ export default function GenerateInvoicePage() {
     }
   };
 
-  // ✅ NEW: Load additional costs for selected order
+  // ✅ FIXED: Load only UNINVOICED additional costs for selected order
   const loadAdditionalCosts = async (orderId: string) => {
     try {
-      const response = await fetchAdditionalCostsForOrder(orderId);
-      // Filter only approved and active costs
+      // ✅ Pass onlyUninvoiced=true to get only costs not yet invoiced
+      const response = await fetchAdditionalCostsForOrder(orderId, true);
+      // Filter only approved costs (backend already filters uninvoiced)
       const approvedCosts = (response.data || []).filter(
-        (cost: any) => cost.status === 'approved' && cost.is_active
+        (cost: any) => cost.status === 'approved'
       );
       setSelectedOrderAdditionalCosts(approvedCosts);
     } catch (error: any) {
@@ -654,6 +655,7 @@ export default function GenerateInvoicePage() {
                             {filteredOrders.map((order) => (
                               <SelectItem key={order.id} value={order.id}>
                                 {order.order_number} - {order.service_name} - Remaining: ₹{order.remaining_amount?.toLocaleString() || 0}
+                                {order.uninvoiced_additional_costs > 0 && ` (incl. ₹${order.uninvoiced_additional_costs.toLocaleString()} additional)`}
                               </SelectItem>
                             ))}
                           </SelectContent>
@@ -661,16 +663,38 @@ export default function GenerateInvoicePage() {
                       </div>
 
                       {partialOrderId && (
-                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
-                          <p className="text-sm text-blue-800">
-                            <strong>Remaining Amount:</strong> ₹
-                            {unbilledOrders.find(o => o.id === partialOrderId)?.remaining_amount?.toLocaleString() || 0}
-                          </p>
-                          {selectedOrderAdditionalCosts.length > 0 && (
-                            <p className="text-sm text-green-800">
-                              <strong>Additional Costs Available:</strong> ₹
-                              {selectedOrderAdditionalCosts.reduce((sum, cost) => sum + parseFloat(cost.total_amount || 0), 0).toLocaleString()}
-                              {' '}({selectedOrderAdditionalCosts.length} item{selectedOrderAdditionalCosts.length > 1 ? 's' : ''})
+                        <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-3">
+                          {/* ✅ NEW: Show breakdown of remaining amount */}
+                          {selectedOrderAdditionalCosts.length > 0 ? (
+                            <>
+                              <div className="space-y-2">
+                                <p className="text-sm font-semibold text-blue-900">
+                                  Total Remaining Amount: ₹
+                                  {unbilledOrders.find(o => o.id === partialOrderId)?.remaining_amount?.toLocaleString() || 0}
+                                </p>
+                                <div className="ml-4 space-y-1 text-sm text-blue-800">
+                                  <p>
+                                    ├─ Base Order Amount: ₹
+                                    {(unbilledOrders.find(o => o.id === partialOrderId)?.base_remaining ||
+                                      unbilledOrders.find(o => o.id === partialOrderId)?.remaining_amount || 0).toLocaleString()}
+                                  </p>
+                                  <p>
+                                    └─ Uninvoiced Additional Costs: ₹
+                                    {selectedOrderAdditionalCosts.reduce((sum, cost) => sum + parseFloat(cost.total_amount || 0), 0).toLocaleString()}
+                                    {' '}({selectedOrderAdditionalCosts.length} item{selectedOrderAdditionalCosts.length > 1 ? 's' : ''})
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="pt-2 border-t border-blue-300">
+                                <p className="text-xs text-blue-700">
+                                  💡 <strong>Note:</strong> Use the checkbox below to choose whether to include additional costs in this invoice.
+                                </p>
+                              </div>
+                            </>
+                          ) : (
+                            <p className="text-sm text-blue-800">
+                              <strong>Remaining Amount:</strong> ₹
+                              {unbilledOrders.find(o => o.id === partialOrderId)?.remaining_amount?.toLocaleString() || 0}
                             </p>
                           )}
                         </div>
@@ -730,11 +754,31 @@ export default function GenerateInvoicePage() {
                           onChange={(e) => setPartialAmount(e.target.value)}
                           required
                         />
-                        <p className="text-xs text-gray-500">
-                          {includeAdditionalCosts
-                            ? 'Enter the amount to invoice (can exceed remaining amount if including additional costs)'
-                            : 'Enter the amount to invoice (must not exceed remaining amount)'}
-                        </p>
+                        {/* ✅ NEW: Show max allowed amount based on checkbox */}
+                        {partialOrderId && (
+                          <div className="text-xs space-y-1">
+                            {includeAdditionalCosts && selectedOrderAdditionalCosts.length > 0 ? (
+                              <p className="text-green-700 font-medium">
+                                ✅ Maximum allowed: ₹
+                                {(
+                                  (unbilledOrders.find(o => o.id === partialOrderId)?.base_remaining ||
+                                   unbilledOrders.find(o => o.id === partialOrderId)?.remaining_amount || 0) +
+                                  selectedOrderAdditionalCosts.reduce((sum, cost) => sum + parseFloat(cost.total_amount || 0), 0)
+                                ).toLocaleString()}
+                                {' '}(Base: ₹{(unbilledOrders.find(o => o.id === partialOrderId)?.base_remaining ||
+                                   unbilledOrders.find(o => o.id === partialOrderId)?.remaining_amount || 0).toLocaleString()} + Additional: ₹
+                                {selectedOrderAdditionalCosts.reduce((sum, cost) => sum + parseFloat(cost.total_amount || 0), 0).toLocaleString()})
+                              </p>
+                            ) : (
+                              <p className="text-blue-700 font-medium">
+                                Maximum allowed: ₹
+                                {(unbilledOrders.find(o => o.id === partialOrderId)?.base_remaining ||
+                                  unbilledOrders.find(o => o.id === partialOrderId)?.remaining_amount || 0).toLocaleString()}
+                                {' '}(Base order amount only)
+                              </p>
+                            )}
+                          </div>
+                        )}
                       </div>
 
                       <div className="space-y-2">
