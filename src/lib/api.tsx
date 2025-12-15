@@ -13551,6 +13551,16 @@ export interface B2BDashboardData {
       count: number;
       total_value: number;
     };
+    // ✅ 4.1 WIP Orders
+    wip_orders: {
+      count: number;
+      total_value: number;
+    };
+    // ✅ 4.2 Strict Pending Orders
+    not_started_orders: {
+      count: number;
+      total_value: number;
+    };
     // ✅ 5. Pending Orders Value (calculated as Net Order Value - Executed Order Value)
     pending_orders: {
       count: number;
