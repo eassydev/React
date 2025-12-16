@@ -277,6 +277,7 @@ export const sidebarItems: SidebarItem[] = [
     children: [
       { title: 'Daily Operations', route: `${basePath}/b2b/daily-operations` },
       { title: 'Analytics Dashboard', route: `${basePath}/b2b/analytics` },
+      { title: 'Monthly Report', route: `${basePath}/b2b/reports/monthly` },
       { title: 'Customers', route: `${basePath}/b2b/customers` },
       { title: 'Contact Management', route: `${basePath}/b2b/contacts` },
       { title: 'SPOC Management', route: `${basePath}/b2b/spoc` },

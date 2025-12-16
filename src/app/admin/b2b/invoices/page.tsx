@@ -3,8 +3,8 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Search, Download, Eye, FileText, Filter, Loader2, RefreshCw } from 'lucide-react';
-import { fetchB2BInvoices, downloadB2BInvoice } from '@/lib/api';
+import { Search, Download, Eye, FileText, Filter, Loader2, RefreshCw, Trash } from 'lucide-react';
+import { fetchB2BInvoices, downloadB2BInvoice, regenerateB2BInvoicePDF, deleteB2BInvoice } from '@/lib/api';
 import { toast } from "@/components/ui/use-toast"
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -53,6 +53,7 @@ function B2BInvoicesContent() {
   const [invoices, setInvoices] = useState<B2BInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('');
@@ -162,48 +163,36 @@ function B2BInvoicesContent() {
     }
   };
 
-  // ✅ NEW: Retry PDF generation for failed invoices
+  // ✅ FIXED: Use centralized API function instead of direct fetch
   const handleRetryPDF = async (invoiceId: string) => {
     // ✅ Prevent multiple regeneration requests
     if (regeneratingId === invoiceId) return;
 
     try {
       setRegeneratingId(invoiceId);
-      const adminToken = localStorage.getItem('token') || localStorage.getItem('adminToken');
 
       toast({
         title: "Generating PDF",
         description: "Please wait while we generate your invoice PDF...",
       });
 
-      const response = await fetch(`/admin-api/b2b/invoices/${invoiceId}/regenerate-pdf`, {
-        method: 'POST',
-        headers: {
-          'admin-auth-token': adminToken || ''
-        }
-      });
+      // ✅ Use centralized API function from api.tsx
+      const response = await regenerateB2BInvoicePDF(invoiceId);
 
-      if (response.ok) {
-        const data = await response.json();
+      if (response.success) {
+        toast({
+          title: "PDF Generated Successfully",
+          description: "Invoice PDF has been generated and is now available for download",
+        });
 
-        if (data.success) {
-          toast({
-            title: "PDF Generated Successfully",
-            description: "Invoice PDF has been generated and is now available for download",
-          });
-
-          // Refresh the invoices list to show updated PDF status
-          fetchInvoices();
-        } else {
-          toast({
-            title: "PDF Generation Failed",
-            description: data.message || "Failed to generate PDF",
-            variant: "destructive",
-          });
-        }
+        // Refresh the invoices list to show updated PDF status
+        fetchInvoices();
       } else {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Failed to regenerate PDF');
+        toast({
+          title: "PDF Generation Failed",
+          description: response.message || "Failed to generate PDF",
+          variant: "destructive",
+        });
       }
     } catch (error: any) {
       console.error('Error regenerating PDF:', error);
@@ -214,6 +203,36 @@ function B2BInvoicesContent() {
       });
     } finally {
       setRegeneratingId(null);
+    }
+  };
+
+
+
+  const handleDeleteInvoice = async (invoiceId: string) => {
+    if (deletingId === invoiceId) return;
+    try {
+      setDeletingId(invoiceId);
+      const response = await deleteB2BInvoice(invoiceId);
+      if (response.success) {
+        toast({
+          title: 'Success',
+          description: `${response.message}`,
+          variant: 'default'
+        });
+        fetchInvoices();
+      } else {
+        toast({
+          title: 'Error',
+          description: `Failed to delete invoice ${response.message}`,
+          variant: 'destructive'
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: `Failed to delete invoice ${error}`,
+        variant: 'destructive'
+      });
     }
   };
 
@@ -434,6 +453,20 @@ function B2BInvoicesContent() {
                                 )}
                               </Button>
                             )}
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteInvoice(invoice.id)}
+                              disabled={deletingId === invoice.id}
+                              title={deletingId === invoice.id ? "Deleting..." : "Delete Invoice"}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              {deletingId === invoice.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Trash className="w-4 h-4" />
+                              )}
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>

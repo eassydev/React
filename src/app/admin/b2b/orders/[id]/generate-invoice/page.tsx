@@ -136,19 +136,19 @@ export default function GenerateInvoicePage() {
     const subtotal = invoiceData.invoice_items.reduce((sum, item) => sum + item.total, 0);
     const taxAmount = subtotal * 0.18; // 18% GST
     const totalAmount = subtotal + taxAmount;
-    
+
     return { subtotal, taxAmount, totalAmount };
   };
 
   const updateInvoiceItem = (index: number, field: keyof InvoiceItem, value: any) => {
     const updatedItems = [...invoiceData.invoice_items];
     updatedItems[index] = { ...updatedItems[index], [field]: value };
-    
+
     // Recalculate total for the item
     if (field === 'quantity' || field === 'unit_price') {
       updatedItems[index].total = updatedItems[index].quantity * updatedItems[index].unit_price;
     }
-    
+
     setInvoiceData(prev => ({ ...prev, invoice_items: updatedItems }));
   };
 
@@ -460,7 +460,7 @@ export default function GenerateInvoicePage() {
                     <Badge variant="outline">Unpaid</Badge>
                   </div>
                 </div>
-                
+
                 <div className="flex space-x-2">
                   <Button onClick={downloadInvoice} className="flex items-center">
                     <Download className="h-4 w-4 mr-2" />
@@ -618,7 +618,7 @@ export default function GenerateInvoicePage() {
                   />
                 </div>
               </div>
-              
+
               <div>
                 <Label htmlFor="notes">Notes</Label>
                 <Textarea
@@ -655,9 +655,9 @@ export default function GenerateInvoicePage() {
                   <span>₹{totalAmount.toLocaleString()}</span>
                 </div>
               </div>
-              
-              <Button 
-                onClick={generateInvoice} 
+
+              <Button
+                onClick={generateInvoice}
                 disabled={generating || invoiceData.invoice_items.length === 0}
                 className="w-full mt-4"
               >

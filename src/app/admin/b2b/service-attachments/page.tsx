@@ -14,9 +14,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { 
-  FileImage, 
-  Search, 
+import {
+  FileImage,
+  Search,
   Filter,
   Download,
   Eye,
@@ -36,10 +36,10 @@ export default function ServiceAttachmentsPage() {
   const [totalCount, setTotalCount] = useState(0);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(20);
-  
+
   // Filters
   const [filters, setFilters] = useState({
-    type: '',
+    type: 'all',
     providerId: '',
     customerId: '',
     dateFrom: '',
@@ -59,7 +59,7 @@ export default function ServiceAttachmentsPage() {
         page: currentPage,
         limit: pageSize,
         ...Object.fromEntries(
-          Object.entries(filters).filter(([_, value]) => value !== '')
+          Object.entries(filters).filter(([key, value]) => value !== '' && !(key === 'type' && value === 'all'))
         )
       };
 
@@ -88,7 +88,7 @@ export default function ServiceAttachmentsPage() {
 
   const clearFilters = () => {
     setFilters({
-      type: '',
+      type: 'all',
       providerId: '',
       customerId: '',
       dateFrom: '',
@@ -173,7 +173,7 @@ export default function ServiceAttachmentsPage() {
                 onChange={(e) => handleFilterChange('search', e.target.value)}
               />
             </div>
-            
+
             <div>
               <Label htmlFor="type">Attachment Type</Label>
               <Select value={filters.type} onValueChange={(value) => handleFilterChange('type', value)}>
@@ -181,7 +181,7 @@ export default function ServiceAttachmentsPage() {
                   <SelectValue placeholder="All types" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">All types</SelectItem>
+                  <SelectItem value="all">All types</SelectItem>
                   <SelectItem value="before_image">Before Images</SelectItem>
                   <SelectItem value="after_image">After Images</SelectItem>
                   <SelectItem value="before_video">Before Videos</SelectItem>

@@ -95,6 +95,11 @@ interface B2BOrder {
   sp_base_price?: number;       // SP base price (before GST)
   sp_gst_amount?: number;       // GST on SP payout
   sp_total_amount?: number;     // Total SP payout
+
+  // SP Payout Tracking
+  sp_payout_date?: number;      // Unix timestamp
+  sp_payout_transaction_id?: string;  // Transaction ID or UTR
+  sp_payout_status?: 'pending' | 'processing' | 'paid' | 'failed';
 }
 
 // ✅ UTILITY: Format provider name for display (robust frontend-only solution)
@@ -178,7 +183,7 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
       }
     }
   }, [isProviderDialogOpen, order]);
-  
+
   const [formData, setFormData] = useState({
     // Customer & Service Details
     b2b_customer_id: '',
@@ -200,6 +205,11 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
     sp_base_price: '',
     sp_gst_amount: '',
     sp_total_amount: '',
+
+    // SP Payout Tracking
+    sp_payout_date: '',
+    sp_payout_transaction_id: '',
+    sp_payout_status: 'pending',
 
     // Scheduling
     service_date: '',
@@ -289,6 +299,18 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
         sp_gst_amount: orderData.sp_gst_amount?.toString() || '',
         sp_total_amount: orderData.sp_total_amount?.toString() || '',
 
+        // SP Payout Tracking
+        sp_payout_date: (() => {
+          const formatted = formatTimestampForInput(orderData.sp_payout_date);
+          console.log('🔍 Loading sp_payout_date:', {
+            raw: orderData.sp_payout_date,
+            formatted: formatted
+          });
+          return formatted;
+        })(),
+        sp_payout_transaction_id: orderData.sp_payout_transaction_id || '',
+        sp_payout_status: orderData.sp_payout_status || 'pending',
+
         // Scheduling - properly formatted for input fields
         service_date: formatDateForInput(orderData.service_date),
         service_time: formatTimeForInput(orderData.service_time),
@@ -329,7 +351,56 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
         [field]: value,
       };
 
-      // Auto-calculate SP pricing when base price changes
+      // ✅ Auto-calculate CLIENT BILLING when relevant fields change
+      if (field === 'custom_price' || field === 'quantity') {
+        const customPrice = parseFloat(field === 'custom_price' ? value : prev.custom_price) || 0;
+        const quantity = parseInt(field === 'quantity' ? value : prev.quantity) || 1;
+        const discountAmount = parseFloat(prev.discount_amount) || 0;
+
+        const totalAmount = Math.round((customPrice * quantity - discountAmount) * 100) / 100;
+        const gstAmount = Math.round((totalAmount * 18) / 100 * 100) / 100; // 18% GST
+        const finalAmount = Math.round((totalAmount + gstAmount) * 100) / 100;
+
+        newData.total_amount = totalAmount.toString();
+        newData.gst_amount = gstAmount.toString();
+        newData.final_amount = finalAmount.toString();
+      }
+
+      // ✅ Auto-calculate when total_amount changes (recalculate GST and final amount)
+      if (field === 'total_amount' && value) {
+        const totalAmount = parseFloat(value) || 0;
+        const gstAmount = Math.round((totalAmount * 18) / 100 * 100) / 100; // 18% GST
+        const finalAmount = Math.round((totalAmount + gstAmount) * 100) / 100;
+
+        newData.gst_amount = gstAmount.toString();
+        newData.final_amount = finalAmount.toString();
+      }
+
+      // ✅ Auto-calculate when gst_amount changes (recalculate final amount only)
+      if (field === 'gst_amount' && value) {
+        const totalAmount = parseFloat(prev.total_amount) || 0;
+        const gstAmount = parseFloat(value) || 0;
+        const finalAmount = Math.round((totalAmount + gstAmount) * 100) / 100;
+
+        newData.final_amount = finalAmount.toString();
+      }
+
+      // ✅ Auto-calculate when discount_amount changes
+      if (field === 'discount_amount') {
+        const customPrice = parseFloat(prev.custom_price) || 0;
+        const quantity = parseInt(prev.quantity) || 1;
+        const discountAmount = parseFloat(value) || 0;
+
+        const totalAmount = Math.round((customPrice * quantity - discountAmount) * 100) / 100;
+        const gstAmount = Math.round((totalAmount * 18) / 100 * 100) / 100; // 18% GST
+        const finalAmount = Math.round((totalAmount + gstAmount) * 100) / 100;
+
+        newData.total_amount = totalAmount.toString();
+        newData.gst_amount = gstAmount.toString();
+        newData.final_amount = finalAmount.toString();
+      }
+
+      // ✅ Auto-calculate SP pricing when base price changes
       if (field === 'sp_base_price' && value) {
         const basePrice = parseFloat(value) || 0;
         const gstAmount = Math.round((basePrice * 18) / 100 * 100) / 100; // 18% GST, rounded to 2 decimals
@@ -420,6 +491,31 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
       submitData.sp_base_price = formData.sp_base_price ? parseFloat(formData.sp_base_price) : null;
       submitData.sp_gst_amount = formData.sp_gst_amount ? parseFloat(formData.sp_gst_amount) : null;
       submitData.sp_total_amount = formData.sp_total_amount ? parseFloat(formData.sp_total_amount) : null;
+
+      // ✅ SP Payout Tracking Fields
+      submitData.sp_payout_status = formData.sp_payout_status || 'pending';
+      submitData.sp_payout_transaction_id = formData.sp_payout_transaction_id || null;
+
+      // ✅ Convert sp_payout_date from YYYY-MM-DD to UNIX timestamp (same as booking_received_date)
+      if (formData.sp_payout_date) {
+        const dateObj = new Date(formData.sp_payout_date);
+
+        // Check if date is valid
+        if (isNaN(dateObj.getTime())) {
+          console.error('❌ Invalid date for sp_payout_date:', formData.sp_payout_date);
+          submitData.sp_payout_date = null;
+        } else {
+          const timestamp = Math.floor(dateObj.getTime() / 1000); // Convert to seconds
+          console.log('🔍 Converting sp_payout_date:', {
+            input: formData.sp_payout_date,
+            dateObj: dateObj.toISOString(),
+            timestamp: timestamp
+          });
+          submitData.sp_payout_date = timestamp;
+        }
+      } else {
+        submitData.sp_payout_date = null;
+      }
 
       // ✅ Only include required fields if they have valid values (not empty strings)
       if (formData.b2b_customer_id && formData.b2b_customer_id.trim()) {
@@ -1166,6 +1262,51 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
                   </div>
                 </div>
               )}
+
+              {/* SP Payout Tracking */}
+              <div className="border-t pt-4 mt-4">
+                <h4 className="text-sm font-semibold text-gray-700 mb-3">SP Payout Tracking</h4>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div>
+                    <Label htmlFor="sp_payout_date">Payout Date</Label>
+                    <Input
+                      id="sp_payout_date"
+                      type="date"
+                      value={formData.sp_payout_date}
+                      onChange={(e) => handleInputChange('sp_payout_date', e.target.value)}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Date when SP was paid</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="sp_payout_transaction_id">Transaction ID / UTR</Label>
+                    <Input
+                      id="sp_payout_transaction_id"
+                      type="text"
+                      value={formData.sp_payout_transaction_id}
+                      onChange={(e) => handleInputChange('sp_payout_transaction_id', e.target.value)}
+                      placeholder="Enter transaction ID or UTR number"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Razorpay transfer ID or bank UTR</p>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="sp_payout_status">Payout Status</Label>
+                    <select
+                      id="sp_payout_status"
+                      value={formData.sp_payout_status}
+                      onChange={(e) => handleInputChange('sp_payout_status', e.target.value)}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="pending">Pending</option>
+                      <option value="processing">Processing</option>
+                      <option value="paid">Paid</option>
+                      <option value="failed">Failed</option>
+                    </select>
+                    <p className="text-xs text-gray-500 mt-1">Current payout status</p>
+                  </div>
+                </div>
+              </div>
             </CardContent>
           </Card>
 

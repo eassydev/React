@@ -7,21 +7,21 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import usePermissions from '@/hooks/usePermissions'; // ✅ Add role detection
-import { 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableHead, 
-  TableHeader, 
-  TableRow 
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
 } from '@/components/ui/table';
-import { 
-  Search, 
-  Filter, 
-  Edit, 
-  Trash2, 
-  Plus, 
-  Users, 
+import {
+  Search,
+  Filter,
+  Edit,
+  Trash2,
+  Plus,
+  Users,
   Building2,
   Crown,
   Shield,
@@ -80,12 +80,35 @@ interface B2BSPOCTableViewProps {
   onAdd: () => void;
 }
 
+interface B2BSPOCTableViewProps {
+  assignments: any[];
+  loading: boolean;
+  pagination?: {
+    current_page: number;
+    total_pages: number;
+    total_records: number;
+    per_page: number;
+  };
+  onEdit: (assignment: any) => void;
+  onDelete: (assignmentId: string) => void;
+  onAdd: () => void;
+  onFilterChange?: (filters: {
+    search?: string;
+    spoc_user_id?: string;
+    spoc_type?: string;
+    status?: string;
+    page?: number;
+  }) => void;
+}
+
 export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
   assignments = [],
   loading = false,
+  pagination,
   onEdit,
   onDelete,
-  onAdd
+  onAdd,
+  onFilterChange
 }) => {
   const [error, setError] = useState<string | null>(null);
 
@@ -93,47 +116,117 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
   const { getRole, isSuperAdmin } = usePermissions();
   const userRole = getRole();
   const canManageSpocs = isSuperAdmin() || userRole === 'super_admin' || userRole === 'manager';
-  
-  // Filters
+
+  // Filters (now controlled by parent via onFilterChange)
   const [searchTerm, setSearchTerm] = useState('');
+  const [inputValue, setInputValue] = useState(''); // ✅ Separate state for input to prevent focus loss
   const [spocFilter, setSpocFilter] = useState('all');
   const [typeFilter, setTypeFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('active');
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage] = useState(20);
-
-  // Data is now received as props, no need to fetch
-
-  // Get unique SPOC users for filter dropdown (with safety check)
+  // ✅ Get unique SPOC users for filter dropdown (from current page data)
+  // Note: This only shows SPOCs from current page. For full list, we'd need a separate API call.
   const uniqueSpocs = Array.isArray(assignments) ? Array.from(
-    new Set(assignments.map(a => a.spocUser?.username).filter(Boolean))
-  ).map(username => {
-    const spoc = assignments.find(a => a.spocUser?.username === username)?.spocUser;
-    return { username, full_name: spoc?.full_name || username };
+    new Set(assignments.map(a => a.spocUser?.id).filter(Boolean))
+  ).map(id => {
+    const spoc = assignments.find(a => a.spocUser?.id === id)?.spocUser;
+    return {
+      id: String(id),
+      username: spoc?.username || '',
+      full_name: spoc?.full_name || spoc?.username || 'Unknown'
+    };
   }) : [];
 
-  // Filter assignments (with safety check)
-  const filteredAssignments = Array.isArray(assignments) ? assignments.filter(assignment => {
-    const matchesSearch =
-      assignment.customer?.company_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      assignment.spocUser?.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      assignment.customer?.contact_person?.toLowerCase().includes(searchTerm.toLowerCase());
+  // ✅ Debounce search to avoid too many API calls
+  const searchTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
-    const matchesSpoc = spocFilter === 'all' || assignment.spocUser?.username === spocFilter;
-    const matchesType = typeFilter === 'all' || assignment.spoc_type === typeFilter;
-    const matchesStatus = statusFilter === 'all' ||
-      (statusFilter === 'active' && assignment.is_active) ||
-      (statusFilter === 'inactive' && !assignment.is_active);
+  // Cleanup timeout on unmount
+  React.useEffect(() => {
+    return () => {
+      if (searchTimeoutRef.current) {
+        clearTimeout(searchTimeoutRef.current);
+      }
+    };
+  }, []);
 
-    return matchesSearch && matchesSpoc && matchesType && matchesStatus;
-  }) : [];
+  // ✅ Handle filter changes - notify parent component for server-side filtering
+  // ✅ FIX: Use useCallback and separate input state to prevent focus loss
+  const handleSearchChange = React.useCallback((value: string) => {
+    setInputValue(value); // ✅ Update input immediately for responsive UI
 
-  // Pagination
-  const totalPages = Math.ceil(filteredAssignments.length / itemsPerPage);
-  const startIndex = (currentPage - 1) * itemsPerPage;
-  const paginatedAssignments = filteredAssignments.slice(startIndex, startIndex + itemsPerPage);
+    // Clear existing timeout
+    if (searchTimeoutRef.current) {
+      clearTimeout(searchTimeoutRef.current);
+    }
+
+    // Debounce search by 500ms
+    searchTimeoutRef.current = setTimeout(() => {
+      setSearchTerm(value); // Update search term after debounce
+      if (onFilterChange) {
+        onFilterChange({
+          search: value || undefined,
+          spoc_user_id: spocFilter !== 'all' ? spocFilter : undefined,
+          spoc_type: typeFilter !== 'all' ? typeFilter : undefined,
+          status: statusFilter,
+          page: 1 // Reset to page 1 on filter change
+        });
+      }
+    }, 500);
+  }, [onFilterChange, spocFilter, typeFilter, statusFilter]);
+
+  const handleSpocFilterChange = (value: string) => {
+    setSpocFilter(value);
+    if (onFilterChange) {
+      onFilterChange({
+        search: searchTerm || undefined,
+        spoc_user_id: value !== 'all' ? value : undefined,
+        spoc_type: typeFilter !== 'all' ? typeFilter : undefined,
+        status: statusFilter,
+        page: 1
+      });
+    }
+  };
+
+  const handleTypeFilterChange = (value: string) => {
+    setTypeFilter(value);
+    if (onFilterChange) {
+      onFilterChange({
+        search: searchTerm || undefined,
+        spoc_user_id: spocFilter !== 'all' ? spocFilter : undefined,
+        spoc_type: value !== 'all' ? value : undefined,
+        status: statusFilter,
+        page: 1
+      });
+    }
+  };
+
+  const handleStatusFilterChange = (value: string) => {
+    setStatusFilter(value);
+    if (onFilterChange) {
+      onFilterChange({
+        search: searchTerm || undefined,
+        spoc_user_id: spocFilter !== 'all' ? spocFilter : undefined,
+        spoc_type: typeFilter !== 'all' ? typeFilter : undefined,
+        status: value,
+        page: 1
+      });
+    }
+  };
+
+  const handlePageChange = (page: number) => {
+    if (onFilterChange) {
+      onFilterChange({
+        search: searchTerm || undefined,
+        spoc_user_id: spocFilter !== 'all' ? spocFilter : undefined,
+        spoc_type: typeFilter !== 'all' ? typeFilter : undefined,
+        status: statusFilter,
+        page: page
+      });
+    }
+  };
+
+  // ✅ Use assignments directly (already filtered by backend)
+  const paginatedAssignments = assignments;
 
   const getSPOCTypeIcon = (type: string) => {
     switch (type) {
@@ -156,7 +249,7 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
       sales: 'bg-orange-100 text-orange-800',
       manager: 'bg-red-100 text-red-800'
     };
-    
+
     return (
       <Badge className={`${colors[type as keyof typeof colors] || 'bg-gray-100 text-gray-800'} capitalize`}>
         {getSPOCTypeIcon(type)}
@@ -197,7 +290,7 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
         <div className="flex items-center justify-between">
           <CardTitle className="flex items-center gap-2">
             <Users className="w-5 h-5" />
-            SPOC Assignments ({filteredAssignments.length})
+            SPOC Assignments ({pagination?.total_records || assignments.length})
           </CardTitle>
           {/* ✅ Hide "Add Assignment" button for SPOC users */}
           {canManageSpocs && (
@@ -207,7 +300,7 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
             </Button>
           )}
         </div>
-        
+
         {/* Filters */}
         <div className="flex flex-wrap gap-4 mt-4">
           <div className="flex-1 min-w-[200px]">
@@ -215,28 +308,28 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
               <Input
                 placeholder="Search customers, SPOCs, contacts..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                value={inputValue}
+                onChange={(e) => handleSearchChange(e.target.value)}
                 className="pl-10"
               />
             </div>
           </div>
-          
-          <Select value={spocFilter} onValueChange={setSpocFilter}>
+
+          <Select value={spocFilter} onValueChange={handleSpocFilterChange}>
             <SelectTrigger className="w-[180px]">
               <SelectValue placeholder="Filter by SPOC" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All SPOCs</SelectItem>
               {uniqueSpocs.map(spoc => (
-                <SelectItem key={spoc.username} value={spoc.username}>
+                <SelectItem key={spoc.id} value={spoc.id}>
                   {spoc.full_name}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
-          <Select value={typeFilter} onValueChange={setTypeFilter}>
+          <Select value={typeFilter} onValueChange={handleTypeFilterChange}>
             <SelectTrigger className="w-[150px]">
               <SelectValue placeholder="Filter by Type" />
             </SelectTrigger>
@@ -251,7 +344,7 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
             </SelectContent>
           </Select>
 
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
+          <Select value={statusFilter} onValueChange={handleStatusFilterChange}>
             <SelectTrigger className="w-[120px]">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
@@ -269,7 +362,7 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
           <div className="text-center py-8 text-gray-500">
             <Users className="w-12 h-12 mx-auto mb-4 opacity-50" />
             <p>No SPOC assignments found</p>
-            {searchTerm && (
+            {inputValue && (
               <p className="text-sm mt-2">Try adjusting your search or filters</p>
             )}
           </div>
@@ -295,23 +388,23 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
                       <div className="flex items-center gap-2">
                         <Building2 className="w-4 h-4 text-gray-500" />
                         <div>
-                          <p className="font-medium">{assignment.customer.company_name}</p>
-                          <p className="text-sm text-gray-500">{assignment.customer.email}</p>
+                          <p className="font-medium">{assignment.customer?.company_name || 'N/A'}</p>
+                          <p className="text-sm text-gray-500">{assignment.customer?.email || ''}</p>
                         </div>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div>
-                        <p className="font-medium">{assignment.customer.contact_person}</p>
-                        <p className="text-sm text-gray-500">{assignment.customer.phone}</p>
+                        <p className="font-medium">{assignment.customer?.contact_person || 'N/A'}</p>
+                        <p className="text-sm text-gray-500">{assignment.customer?.phone || ''}</p>
                       </div>
                     </TableCell>
                     <TableCell>
                       <div className="flex items-center gap-2">
                         <Users className="w-4 h-4 text-gray-500" />
                         <div>
-                          <p className="font-medium">{assignment.spocUser.full_name}</p>
-                          <p className="text-sm text-gray-500">{assignment.spocUser.email}</p>
+                          <p className="font-medium">{assignment.spocUser?.full_name || assignment.spocUser?.username || 'N/A'}</p>
+                          <p className="text-sm text-gray-500">{assignment.spocUser?.email || ''}</p>
                         </div>
                       </div>
                     </TableCell>
@@ -320,7 +413,7 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
                     </TableCell>
                     <TableCell>
                       <div className="flex flex-wrap gap-1">
-                        {assignment.function_area.map((area) => (
+                        {Array.isArray(assignment.function_area) && assignment.function_area.map((area) => (
                           <Badge key={area} variant="outline" className="text-xs">
                             {area}
                           </Badge>
@@ -363,28 +456,28 @@ export const B2BSPOCTableView: React.FC<B2BSPOCTableViewProps> = ({
             </Table>
 
             {/* Pagination */}
-            {totalPages > 1 && (
+            {pagination && pagination.total_pages > 1 && (
               <div className="flex items-center justify-between mt-6">
                 <p className="text-sm text-gray-500">
-                  Showing {startIndex + 1} to {Math.min(startIndex + itemsPerPage, filteredAssignments.length)} of {filteredAssignments.length} assignments
+                  Showing {((pagination.current_page - 1) * pagination.per_page) + 1} to {Math.min(pagination.current_page * pagination.per_page, pagination.total_records)} of {pagination.total_records} assignments
                 </p>
                 <div className="flex items-center gap-2">
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    disabled={currentPage === 1}
+                    onClick={() => handlePageChange(pagination.current_page - 1)}
+                    disabled={pagination.current_page === 1}
                   >
                     Previous
                   </Button>
                   <span className="text-sm">
-                    Page {currentPage} of {totalPages}
+                    Page {pagination.current_page} of {pagination.total_pages}
                   </span>
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    disabled={currentPage === totalPages}
+                    onClick={() => handlePageChange(pagination.current_page + 1)}
+                    disabled={pagination.current_page === pagination.total_pages}
                   >
                     Next
                   </Button>

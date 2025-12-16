@@ -49,6 +49,8 @@ export interface AnalyticsReportData {
   period_type: string;
 
   // App Downloads and Registrations
+
+  // App Downloads and Registrations
   downloads: number;
   registrations: number;
   b2b_registrations: number; // ✅ Added B2B registrations field
@@ -4997,6 +4999,7 @@ export const createNotification = async (notification: Notification) => {
   if (notification.subcategory_id)
     formData.append('subcategory_id', notification.subcategory_id.toString());
   if (notification.image) formData.append('image', notification.image);
+  if (notification.image) formData.append('image', notification.image);
   if (notification.outer_image) formData.append('outer_image', notification.outer_image);
   formData.append('is_active', notification.is_active ? '1' : '0');
   formData.append('send_to_all', notification.send_to_all ? '1' : '0');
@@ -5006,10 +5009,15 @@ export const createNotification = async (notification: Notification) => {
     formData.append('notification_type_id', notification.notification_type_id.toString());
   if (notification.scheduled_at)
     formData.append('scheduled_at', notification.scheduled_at);
+  if (notification.notification_type_id)
+    formData.append('notification_type_id', notification.notification_type_id.toString());
+  if (notification.scheduled_at)
+    formData.append('scheduled_at', notification.scheduled_at);
 
   // const response = await apiClient.post("/notification", formData);
   const token = getToken();
 
+  const response: AxiosResponse<ApiResponse> = await apiClient.post('/notification/create', formData, {
   const response: AxiosResponse<ApiResponse> = await apiClient.post('/notification/create', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
@@ -5036,58 +5044,6 @@ export const fetchNotifications = async (page = 1, size = 10) => {
     throw new Error(error.response?.data?.message || 'Failed to fetch notifications.');
   }
 };
-
-// Fetch scheduled notifications
-export const fetchScheduledNotifications = async (page = 1, size = 10) => {
-  try {
-    const token = getToken();
-    const response: AxiosResponse = await apiClient.get('/notification/schedule', {
-      params: { page, size },
-      headers: {
-        'admin-auth-token': token || '',
-      },
-    });
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch scheduled notifications.');
-  }
-};
-
-// Fetch sent notifications
-export const fetchSentNotifications = async (page = 1, size = 10) => {
-  try {
-    const token = getToken();
-    const response: AxiosResponse = await apiClient.get('/notification/sent', {
-      params: { page, size },
-      headers: {
-        'admin-auth-token': token || '',
-      },
-    });
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to fetch sent notifications.');
-  }
-};
-
-// Delete scheduled notification
-export const deleteScheduledNotification = async (batchId: number, is_delete: number) => {
-  try {
-    const token = getToken();
-    const response: AxiosResponse = await apiClient.put(
-      `/notification/schedule/${batchId}`,
-      { is_delete: is_delete },
-      {
-        headers: {
-          'admin-auth-token': token || '',
-        },
-      }
-    );
-    return response.data;
-  } catch (error: any) {
-    throw new Error(error.response?.data?.message || 'Failed to delete scheduled notification.');
-  }
-};
-
 // Fetch all wallet offers with optional pagination
 export const fetchWalletOffers = async (page = 1, size = 10) => {
   try {
@@ -5877,6 +5833,10 @@ export const fetchB2BOrders = async (
       if (receivedDateFrom) queryParams.received_date_from = receivedDateFrom;
       if (receivedDateTo) queryParams.received_date_to = receivedDateTo;
     }
+
+    // NEW: Separate filter for BOOKING RECEIVED DATE
+    if (receivedDateFrom) params.received_date_from = receivedDateFrom;
+    if (receivedDateTo) params.received_date_to = receivedDateTo;
 
     const response: AxiosResponse = await apiClient.get('/b2b/orders', {
       headers: { 'admin-auth-token': token || '' },

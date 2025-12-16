@@ -13,8 +13,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog';
-import { Mail, Send, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
-import { sendTodayScheduleEmails, sendTomorrowScheduleEmails } from '@/lib/api';
+import { Mail, Send, Loader2, CheckCircle, AlertCircle, FileText } from 'lucide-react';
+import { sendTodayScheduleEmails, sendTomorrowScheduleEmails, sendAdminDailySummary } from '@/lib/api';
 import { toast } from 'sonner';
 
 interface EmailTriggerPanelProps {
@@ -24,8 +24,10 @@ interface EmailTriggerPanelProps {
 export default function EmailTriggerPanel({ userRole }: EmailTriggerPanelProps) {
   const [showTodayDialog, setShowTodayDialog] = useState(false);
   const [showTomorrowDialog, setShowTomorrowDialog] = useState(false);
+  const [showAdminSummaryDialog, setShowAdminSummaryDialog] = useState(false);
   const [loadingToday, setLoadingToday] = useState(false);
   const [loadingTomorrow, setLoadingTomorrow] = useState(false);
+  const [loadingAdminSummary, setLoadingAdminSummary] = useState(false);
 
   // Only show for super_admin and manager
   if (userRole !== 'super_admin' && userRole !== 'manager') {
@@ -57,12 +59,12 @@ export default function EmailTriggerPanel({ userRole }: EmailTriggerPanelProps) 
     setLoadingTomorrow(true);
     try {
       const result = await sendTomorrowScheduleEmails();
-      
+
       toast.success('Tomorrow\'s Schedule Emails Sent!', {
         description: `Successfully sent ${result.data?.emailsSent || 0} emails`,
         icon: <CheckCircle className="h-4 w-4" />,
       });
-      
+
       setShowTomorrowDialog(false);
     } catch (error: any) {
       toast.error('Failed to Send Emails', {
@@ -71,6 +73,27 @@ export default function EmailTriggerPanel({ userRole }: EmailTriggerPanelProps) 
       });
     } finally {
       setLoadingTomorrow(false);
+    }
+  };
+
+  const handleSendAdminSummary = async () => {
+    setLoadingAdminSummary(true);
+    try {
+      const result = await sendAdminDailySummary();
+
+      toast.success('Admin Daily Summary Sent!', {
+        description: `Successfully sent to ${result.data?.recipientCount || 0} admin(s)`,
+        icon: <CheckCircle className="h-4 w-4" />,
+      });
+
+      setShowAdminSummaryDialog(false);
+    } catch (error: any) {
+      toast.error('Failed to Send Summary', {
+        description: error.message || 'An error occurred while sending admin summary',
+        icon: <AlertCircle className="h-4 w-4" />,
+      });
+    } finally {
+      setLoadingAdminSummary(false);
     }
   };
 
@@ -87,7 +110,7 @@ export default function EmailTriggerPanel({ userRole }: EmailTriggerPanelProps) 
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {/* Today's Schedule Button */}
             <Button
               onClick={() => setShowTodayDialog(true)}
@@ -125,12 +148,31 @@ export default function EmailTriggerPanel({ userRole }: EmailTriggerPanelProps) 
                 </>
               )}
             </Button>
+
+            {/* Admin Daily Summary Button */}
+            <Button
+              onClick={() => setShowAdminSummaryDialog(true)}
+              disabled={loadingAdminSummary}
+              className="bg-blue-600 hover:bg-blue-700 text-white"
+            >
+              {loadingAdminSummary ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <FileText className="mr-2 h-4 w-4" />
+                  Send Admin Summary
+                </>
+              )}
+            </Button>
           </div>
 
           <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
             <p className="text-xs text-blue-800">
-              <strong>Note:</strong> Emails are automatically sent daily at 7:00 AM (today's schedule) 
-              and 6:00 PM (tomorrow's schedule). Use these buttons only for testing or manual triggers.
+              <strong>Note:</strong> Emails are automatically sent daily at 7:00 AM (today's schedule),
+              6:00 PM (tomorrow's schedule), and 8:00 AM (admin summary). Use these buttons only for testing or manual triggers.
             </p>
           </div>
         </CardContent>
@@ -190,6 +232,37 @@ export default function EmailTriggerPanel({ userRole }: EmailTriggerPanelProps) 
                 </>
               ) : (
                 'Send Emails'
+              )}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Admin Daily Summary Confirmation Dialog */}
+      <AlertDialog open={showAdminSummaryDialog} onOpenChange={setShowAdminSummaryDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Send Admin Daily Summary Email?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will send a comprehensive daily operations summary email to all super admins and managers.
+              The summary includes completed orders, rescheduled orders, today's schedule, tomorrow's schedule,
+              and pending orders. Are you sure you want to proceed?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={loadingAdminSummary}>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleSendAdminSummary}
+              disabled={loadingAdminSummary}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {loadingAdminSummary ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                'Send Summary'
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

@@ -23,6 +23,15 @@ import {
   ThumbsUp,
   ThumbsDown
 } from 'lucide-react';
+import {
+  fetchAdditionalCostsForOrder,
+  fetchAdditionalCostsForQuotation,
+  addAdditionalCostToOrder,
+  addAdditionalCostToQuotation,
+  updateAdditionalCost,
+  deleteAdditionalCost,
+  B2BAdditionalCost
+} from '@/lib/api';
 
 interface AdditionalCost {
   id: string;
@@ -76,26 +85,12 @@ export const AdditionalCostsManager: React.FC<AdditionalCostsManagerProps> = ({
     setLoading(true);
     setError(null);
     try {
-      // Get token from localStorage (check both token and adminToken)
-      const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
-      const endpoint = entityType === 'order'
-        ? `/admin-api/b2b/orders/${entityId}/additional-costs`
-        : `/admin-api/b2b/quotations/${entityId}/additional-costs`;
+      const data = entityType === 'order'
+        ? await fetchAdditionalCostsForOrder(entityId)
+        : await fetchAdditionalCostsForQuotation(entityId);
 
-      const response = await fetch(endpoint, {
-        headers: {
-          'admin-auth-token': token || '',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch additional costs');
-      }
-
-      const data = await response.json();
       setCosts(data.data || []);
-      
+
       // Calculate and notify parent of total
       if (onTotalChange) {
         const total = calculateApprovedTotal(data.data || []);
@@ -128,40 +123,23 @@ export const AdditionalCostsManager: React.FC<AdditionalCostsManagerProps> = ({
   const handleSave = async () => {
     setError(null);
     try {
-      // Get token from localStorage (check both token and adminToken)
-      const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
       const totalAmount = calculateTotal();
-      
-      const payload = {
+
+      const payload: B2BAdditionalCost = {
         ...formData,
         total_amount: totalAmount
       };
 
-      let endpoint, method;
       if (editingId) {
         // Update existing
-        endpoint = `/admin-api/b2b/additional-costs/${editingId}`;
-        method = 'PUT';
+        await updateAdditionalCost(editingId, payload);
       } else {
         // Create new
-        endpoint = entityType === 'order'
-          ? `/admin-api/b2b/orders/${entityId}/additional-costs`
-          : `/admin-api/b2b/quotations/${entityId}/additional-costs`;
-        method = 'POST';
-      }
-
-      const response = await fetch(endpoint, {
-        method,
-        headers: {
-          'admin-auth-token': token || '',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(payload)
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.message || 'Failed to save additional cost');
+        if (entityType === 'order') {
+          await addAdditionalCostToOrder(entityId, payload);
+        } else {
+          await addAdditionalCostToQuotation(entityId, payload);
+        }
       }
 
       // Reset form and refresh
@@ -188,20 +166,7 @@ export const AdditionalCostsManager: React.FC<AdditionalCostsManagerProps> = ({
 
     setError(null);
     try {
-      // Get token from localStorage (check both token and adminToken)
-      const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
-      const response = await fetch(`/admin-api/b2b/additional-costs/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'admin-auth-token': token || '',
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to delete additional cost');
-      }
-
+      await deleteAdditionalCost(id);
       await fetchCosts();
     } catch (err: any) {
       setError(err.message);
@@ -239,25 +204,7 @@ export const AdditionalCostsManager: React.FC<AdditionalCostsManagerProps> = ({
     try {
       setError(null);
 
-      // Get token from localStorage
-      const token = localStorage.getItem('token') || localStorage.getItem('adminToken');
-
-      const endpoint = `/admin-api/b2b/additional-costs/${costId}`;
-
-      const response = await fetch(endpoint, {
-        method: 'PUT',
-        headers: {
-          'admin-auth-token': token || '',
-          'Content-Type': 'application/json'
-        },
-        body: JSON.stringify({
-          status: newStatus
-        })
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to ${newStatus === 'approved' ? 'approve' : 'reject'} additional cost`);
-      }
+      await updateAdditionalCost(costId, { status: newStatus });
 
       // Refresh the list
       await fetchCosts();

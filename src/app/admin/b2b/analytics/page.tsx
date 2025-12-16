@@ -11,10 +11,12 @@ import {
   Package,
   Clock,
   CheckCircle
+  CheckCircle
 } from 'lucide-react';
 import B2BMetricCard from '@/components/b2b/B2BMetricCard';
 import B2BPaymentCollectionChart from '@/components/b2b/B2BPaymentCollectionChart';
 import B2BTopCustomersTable from '@/components/b2b/B2BTopCustomersTable';
+import AnalyticsExportPanel from '@/components/b2b/AnalyticsExportPanel';
 import AnalyticsExportPanel from '@/components/b2b/AnalyticsExportPanel';
 import { DateRangePicker } from '@/components/DateRangePicker';
 import { Separator } from '@/components/ui/separator';

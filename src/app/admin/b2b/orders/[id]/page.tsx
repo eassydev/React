@@ -60,7 +60,7 @@ interface B2BOrder {
   service_time?: string;
   booking_received_date?: number; // Unix timestamp (seconds)
   status: 'pending' | 'accepted' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'rejected';
-  payment_status: 'pending' | 'paid' | 'overdue';
+  payment_status: 'pending' | 'partial' | 'paid' | 'overdue';
   provider?: {
     id: string;
     first_name: string;
@@ -75,6 +75,12 @@ interface B2BOrder {
   sp_base_price?: number;       // SP base price (before GST)
   sp_gst_amount?: number;       // GST on SP payout
   sp_total_amount?: number;     // Total SP payout
+
+  // SP Payout Tracking
+  sp_payout_date?: number;      // Unix timestamp
+  sp_payout_transaction_id?: string;  // Transaction ID or UTR
+  sp_payout_status?: 'pending' | 'processing' | 'paid' | 'failed';
+
   payment_terms?: string;
   notes?: string;
   created_at: number; // Unix timestamp (seconds)
@@ -601,6 +607,48 @@ export default function B2BOrderDetailPage({ params }: { params: { id: string } 
                         </div>
                       )}
                     </div>
+
+                    {/* SP Payout Tracking */}
+                    {(order.sp_payout_date || order.sp_payout_transaction_id || order.sp_payout_status) && (
+                      <div className="border-t border-green-300 pt-3 mt-3">
+                        <h5 className="text-xs font-semibold text-green-700 mb-2">Payout Tracking</h5>
+                        <div className="space-y-1">
+                          {order.sp_payout_status && (
+                            <div className="flex justify-between">
+                              <span className="text-xs text-green-700">Status:</span>
+                              <span className={`text-xs font-medium px-2 py-0.5 rounded ${
+                                order.sp_payout_status === 'paid' ? 'bg-green-200 text-green-800' :
+                                order.sp_payout_status === 'processing' ? 'bg-yellow-200 text-yellow-800' :
+                                order.sp_payout_status === 'failed' ? 'bg-red-200 text-red-800' :
+                                'bg-gray-200 text-gray-800'
+                              }`}>
+                                {order.sp_payout_status.charAt(0).toUpperCase() + order.sp_payout_status.slice(1)}
+                              </span>
+                            </div>
+                          )}
+                          {order.sp_payout_date && (
+                            <div className="flex justify-between">
+                              <span className="text-xs text-green-700">Payout Date:</span>
+                              <span className="text-xs font-medium text-green-900">
+                                {new Date(order.sp_payout_date * 1000).toLocaleDateString('en-IN', {
+                                  year: 'numeric',
+                                  month: 'short',
+                                  day: 'numeric'
+                                })}
+                              </span>
+                            </div>
+                          )}
+                          {order.sp_payout_transaction_id && (
+                            <div className="flex justify-between">
+                              <span className="text-xs text-green-700">Transaction ID:</span>
+                              <span className="text-xs font-medium text-green-900 font-mono">
+                                {order.sp_payout_transaction_id}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
 

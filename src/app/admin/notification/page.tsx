@@ -76,10 +76,10 @@ const NotificationList = () => {
       cell: (info) => (
         <span
           className={`px-2 py-1 rounded-full text-xs font-medium ${
-            info.getValue() === 'send' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
+            info.getValue() === 'sent' ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'
           }`}
         >
-          {info.getValue() === 'send' ? 'Sent' : 'Failed'}
+          {info.getValue() === 'sent' ? 'Sent' : 'Failed'}
         </span>
       ),
     },
@@ -100,12 +100,26 @@ const NotificationList = () => {
       <div className="max-w-12xl mx-auto space-y-6">
         <div className="flex items-center justify-between">
           <h1 className="text-3xl font-bold text-gray-900">Notification List</h1>
-          <Button asChild variant="default" className="flex items-center space-x-2">
-            <Link href="/admin/notification/add">
-              <Plus className="w-4 h-4 mr-1" />
-              <span>Add Notification</span>
-            </Link>
-          </Button>
+          <div className="flex space-x-2">
+            <Button asChild variant="default" className="flex items-center">
+              <Link href="/admin/notification/add">
+                <Plus className="w-4 h-4 mr-1" />
+                <span>Add Notification</span>
+              </Link>
+            </Button>
+            <Button asChild variant="default" className="flex items-center">
+              <Link href="/admin/notification/scheduled">
+                <Plus className="w-4 h-4 mr-1" />
+                <span>Scheduled Notification</span>
+              </Link>
+            </Button>
+            <Button asChild variant="default" className="flex items-center">
+              <Link href="/admin/notification/sent">
+                <Plus className="w-4 h-4 mr-1" />
+                <span>Sent Notification</span>
+              </Link>
+            </Button>
+          </div>
         </div>
 
         <Card className="border-none shadow-xl bg-white/80 backdrop-blur">

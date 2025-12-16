@@ -14,11 +14,19 @@ interface DetailedReportData {
   period_type: string;
   downloads: number;
   registrations: number;
+  b2b_registrations: number;
   orders_received: number;
   gov: number;
+  orders_cancelled: number;
+  cancelled_value: number;
+  net_order_position: number;
+  net_order_value: number;
   aov: number;
   orders_executed: number;
   executed_value: number;
+  money_collected_count: number;
+  money_collected_value: number;
+  sp_payout: number;
   invoices_raised: number;
   invoice_value: number;
   collections: number;
@@ -144,12 +152,21 @@ export default function DetailedReportTable({ className, businessType = 'both' }
                 <TableRow>
                   <TableHead className="min-w-[120px]">Period</TableHead>
                   <TableHead className="text-right">Downloads</TableHead>
-                  <TableHead className="text-right">Registrations</TableHead>
+                  <TableHead className="text-right">
+                    {businessType === 'b2b' ? 'B2B Registrations' : 'Registrations'}
+                  </TableHead>
                   <TableHead className="text-right">Orders Received</TableHead>
                   <TableHead className="text-right">GOV (₹)</TableHead>
+                  <TableHead className="text-right">Orders Cancelled</TableHead>
+                  <TableHead className="text-right">Cancelled Value (₹)</TableHead>
+                  <TableHead className="text-right">Net Order Position</TableHead>
+                  <TableHead className="text-right">Net Order Value (₹)</TableHead>
                   <TableHead className="text-right">AOV (₹)</TableHead>
                   <TableHead className="text-right">Orders Executed</TableHead>
                   <TableHead className="text-right">Executed Value (₹)</TableHead>
+                  <TableHead className="text-right">Money Collected (Count)</TableHead>
+                  <TableHead className="text-right">Money Collected (₹)</TableHead>
+                  <TableHead className="text-right">SP Payout (₹)</TableHead>
                   <TableHead className="text-right">Invoices Raised</TableHead>
                   <TableHead className="text-right">Invoice Value (₹)</TableHead>
                   <TableHead className="text-right">Collections</TableHead>
@@ -170,12 +187,29 @@ export default function DetailedReportTable({ className, businessType = 'both' }
                       </div>
                     </TableCell>
                     <TableCell className="text-right">{formatNumber(row.downloads)}</TableCell>
-                    <TableCell className="text-right">{formatNumber(row.registrations)}</TableCell>
+                    <TableCell className="text-right">
+                      {formatNumber(businessType === 'b2b' ? row.b2b_registrations : row.registrations)}
+                    </TableCell>
                     <TableCell className="text-right">{formatNumber(row.orders_received)}</TableCell>
                     <TableCell className="text-right">{formatCurrency(row.gov)}</TableCell>
+                    <TableCell className="text-right">
+                      <span className={row.orders_cancelled > 0 ? 'text-red-600 font-medium' : ''}>
+                        {formatNumber(row.orders_cancelled || 0)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <span className={row.cancelled_value > 0 ? 'text-red-600 font-medium' : ''}>
+                        {formatCurrency(row.cancelled_value || 0)}
+                      </span>
+                    </TableCell>
+                    <TableCell className="text-right">{formatNumber(row.net_order_position || 0)}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(row.net_order_value || 0)}</TableCell>
                     <TableCell className="text-right">{formatCurrency(row.aov)}</TableCell>
                     <TableCell className="text-right">{formatNumber(row.orders_executed)}</TableCell>
                     <TableCell className="text-right">{formatCurrency(row.executed_value)}</TableCell>
+                    <TableCell className="text-right">{formatNumber(row.money_collected_count || 0)}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(row.money_collected_value || 0)}</TableCell>
+                    <TableCell className="text-right">{formatCurrency(row.sp_payout || 0)}</TableCell>
                     <TableCell className="text-right">{formatNumber(row.invoices_raised)}</TableCell>
                     <TableCell className="text-right">{formatCurrency(row.invoice_value)}</TableCell>
                     <TableCell className="text-right">{formatNumber(row.collections)}</TableCell>
@@ -194,7 +228,7 @@ export default function DetailedReportTable({ className, businessType = 'both' }
                 ))}
               </TableBody>
             </Table>
-            
+
             {data.length === 0 && !loading && (
               <div className="text-center py-8 text-muted-foreground">
                 No data available. Click refresh to load the report.

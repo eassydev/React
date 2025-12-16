@@ -38,8 +38,9 @@ const AddNotificationForm: React.FC = () => {
     subcategory_id: undefined,
     notification_type_id: undefined,
     recipients: [],
-    inner_image: null,
+    image: null,
     outer_image: null,
+    scheduled_at: undefined,
   });
 
   const [categories, setCategories] = useState<any[]>([]);
@@ -47,6 +48,8 @@ const AddNotificationForm: React.FC = () => {
   const [notificationTypes, setNotificationTypes] = useState<any[]>([]);
   const [recipients, setRecipients] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [searchDebounceTimer, setSearchDebounceTimer] = useState<NodeJS.Timeout | null>(null);
+  const [isLoadingRecipients, setIsLoadingRecipients] = useState(false);
   const { toast } = useToast();
   const router = useRouter();
 
@@ -93,27 +96,24 @@ const AddNotificationForm: React.FC = () => {
     }
   }, [notification.category_id, toast]);
 
-  // Fetch Recipients
+  // Reset recipients when send_to_all changes or type changes
   useEffect(() => {
-    const loadRecipients = async () => {
-      if (!notification.send_to_all) {
-        try {
-          let data: any[] = [];
-          if (notification.type === 'provider') {
-            data = await fetchAllProvidersWithoutpagination();
-          } else if (notification.type === 'customer') {
-            data = await fetchAllUsersWithouPagination();
-          }
-          setRecipients(data || []);
-        } catch (error) {
-          toast({ title: 'Error', description: 'Failed to load recipients.' });
-        }
-      } else {
-        setRecipients([]);
+    if (notification.send_to_all) {
+      setRecipients([]);
+    } else {
+      // Load initial recipients with empty search
+      handleSearchRecipients('');
+    }
+  }, [notification.type, notification.send_to_all]);
+
+  // Cleanup search debounce timer on unmount
+  useEffect(() => {
+    return () => {
+      if (searchDebounceTimer) {
+        clearTimeout(searchDebounceTimer);
       }
     };
-    loadRecipients();
-  }, [notification.type, notification.send_to_all, toast]);
+  }, [searchDebounceTimer]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNotification({ ...notification, [e.target.name]: e.target.value });
@@ -124,16 +124,63 @@ const AddNotificationForm: React.FC = () => {
     setNotification({ ...notification, [e.target.name]: file });
   };
 
+  // Handle search input with debounce
+  const handleSearchRecipients = (searchTerm: string) => {
+    // Clear existing search timer
+    if (searchDebounceTimer) {
+      clearTimeout(searchDebounceTimer);
+    }
+
+    setIsLoadingRecipients(true);
+
+    // Set new timer for 2 seconds
+    const timer = setTimeout(async () => {
+      try {
+        let data: any[] = [];
+        if (notification.type === 'provider') {
+          data = await fetchAllProvidersWithoutpagination();
+        } else if (notification.type === 'customer') {
+          data = await fetchAllUsersWithouPagination(searchTerm);
+        }
+        setRecipients(data || []);
+        setIsLoadingRecipients(false);
+      } catch (error) {
+        toast({ title: 'Error', description: 'Failed to load recipients.' });
+        setIsLoadingRecipients(false);
+      }
+    }, 2000);
+
+    setSearchDebounceTimer(timer);
+  };
+
   const handleMultiSelect = (selectedOptions: any) => {
-    const selectedRecipients = selectedOptions.map((option: any) => ({
-      id: option.value,
-      name: option.label,
-    }));
+    // Immediately update recipients without debounce
+    const selectedRecipients = selectedOptions ? selectedOptions.filter((Boolean) as any).map((option: any) => option.value) : [];
     setNotification({ ...notification, recipients: selectedRecipients });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validation
+    if (!notification.title || !notification.message) {
+      toast({
+        title: 'Validation Error',
+        description: 'Title and Message are required.',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    if (!notification.send_to_all && (!notification.recipients || notification.recipients.length === 0)) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please select at least one recipient or enable "Send to All".',
+        variant: 'destructive',
+      });
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -143,6 +190,7 @@ const AddNotificationForm: React.FC = () => {
         title: 'Success',
         description: 'Notification created successfully!',
       });
+      router.push('/admin/notification'); // Redirect after successful update
     } catch (error: any) {
       toast({
         title: 'Error',
@@ -152,8 +200,6 @@ const AddNotificationForm: React.FC = () => {
     } finally {
       setIsSubmitting(false);
     }
-
-    router.push('/admin/notification'); // Redirect after successful update
   };
 
   return (
@@ -197,7 +243,7 @@ const AddNotificationForm: React.FC = () => {
               />
             </div>
 
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium">Notification Type</label>
               <Select
                 onValueChange={(value) =>
@@ -215,7 +261,7 @@ const AddNotificationForm: React.FC = () => {
                   ))}
                 </SelectContent>
               </Select>
-            </div>
+            </div> */}
 
             <div>
               <label className="block text-sm font-medium">Category</label>
@@ -264,6 +310,58 @@ const AddNotificationForm: React.FC = () => {
             )}
 
             <div>
+              <label className="block text-sm font-medium">Schedule Date and Time (Optional)</label>
+              <p className="text-xs text-gray-500 mb-1">Select a future date and time (24-hour format)</p>
+              <Input
+                type="datetime-local"
+                min={new Date().toISOString().slice(0, 16)}
+                // value={
+                //   notification.scheduled_at
+                //     ? new Date(notification.scheduled_at).toISOString().slice(0, 16)
+                //     : ''
+                // }
+                onChange={(e) => {
+                  const localDateTime = e.target.value;
+                  if (localDateTime) {
+                    const selectedDate = new Date(localDateTime);
+                    const currentDate = new Date();
+
+                    // Check if selected date is in the past
+                    if (selectedDate < currentDate) {
+                      toast({
+                        title: 'Invalid Date',
+                        description: 'Please select a future date and time.',
+                        variant: 'destructive',
+                      });
+                      return;
+                    }
+
+                    // Convert local datetime to ISO 8601 format (UTC)
+                    const isoDateTime = selectedDate.toISOString();
+                    setNotification({ ...notification, scheduled_at: isoDateTime });
+                  } else {
+                    setNotification({ ...notification, scheduled_at: undefined });
+                  }
+                }}
+                className="w-full"
+                placeholder="Select date and time"
+              />
+              {notification.scheduled_at && (
+                <p className="text-xs text-green-600 mt-1 font-medium">
+                  ✓ Scheduled for: {new Date(notification.scheduled_at).toLocaleString('en-US', {
+                    weekday: 'short',
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    hour12: true
+                  })}
+                </p>
+              )}
+            </div>
+
+                        <div>
               <label className="block text-sm font-medium">Type</label>
               <Select
                 value={notification.type}
@@ -294,7 +392,7 @@ const AddNotificationForm: React.FC = () => {
               </div>
             </div>
 
-            {!notification.send_to_all && recipients.length > 0 && (
+            {!notification.send_to_all && (
               <div>
                 <label className="block text-sm font-medium">Recipients</label>
                 <ReactSelect
@@ -304,7 +402,24 @@ const AddNotificationForm: React.FC = () => {
                     label: `${recipient.first_name || 'No Name'} ${recipient.last_name || ''} (${recipient.mobile || recipient.phone || 'No Phone'})`,
                   }))}
                   onChange={handleMultiSelect}
+                  onInputChange={(inputValue) => handleSearchRecipients(inputValue)}
+                  isLoading={isLoadingRecipients}
+                  placeholder={
+                    isLoadingRecipients
+                      ? 'Searching recipients...'
+                      : 'Search and select recipients...'
+                  }
                 />
+                {isLoadingRecipients && (
+                  <p className="text-xs text-orange-600 mt-1">
+                    🔍 Searching recipients (will load in 2 seconds)...
+                  </p>
+                )}
+                {!isLoadingRecipients && recipients.length === 0 && (
+                  <p className="text-xs text-gray-500 mt-1">
+                    Type to search for recipients...
+                  </p>
+                )}
               </div>
             )}
 
@@ -318,14 +433,21 @@ const AddNotificationForm: React.FC = () => {
             )}
 
             <div>
-              <label className="block text-sm font-medium">Inner Image</label>
-              <Input type="file" name="inner_image" onChange={handleFileChange} />
+              <label className="block text-sm font-medium">Image</label>
+              <div className="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-dashed border-gray-300 rounded-md">
+                <div className="space-y-1 text-center">
+                  <p className="text-sm text-gray-600">Drag file here to preview</p>
+                  <Input type="file" name="image" accept=".jpg,.jpeg,.png" onChange={handleFileChange} className="mt-2" />
+                  <p className="text-xs text-gray-500">Supports JPG and PNG</p>
+                  <p className="text-xs text-gray-500">Up to 300 KB</p>
+                </div>
+              </div>
             </div>
 
-            <div>
+            {/* <div>
               <label className="block text-sm font-medium">Outer Image</label>
               <Input type="file" name="outer_image" onChange={handleFileChange} />
-            </div>
+            </div> */}
 
             <Button type="submit" disabled={isSubmitting}>
               {isSubmitting ? 'Submitting...' : 'Create Notification'}
