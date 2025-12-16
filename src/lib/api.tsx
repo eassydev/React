@@ -5075,7 +5075,7 @@ export const deleteScheduledNotification = async (batchId: number, is_delete: nu
     const token = getToken();
     const response: AxiosResponse = await apiClient.put(
       `/notification/schedule/${batchId}`,
-      { is_delete:  is_delete},
+      { is_delete: is_delete },
       {
         headers: {
           'admin-auth-token': token || '',
@@ -5715,17 +5715,30 @@ export const logout = async (): Promise<void> => {
 // ============= B2B API FUNCTIONS =============
 
 // B2B Customers
-export const fetchB2BCustomers = async (page = 1, limit = 10, status = 'all', search = '') => {
+export const fetchB2BCustomers = async (params: { page?: number; limit?: number; status?: string; search?: string } | number = {}, limit?: number, status?: string, search?: string) => {
   try {
     const token = getToken();
-    const params: Record<string, any> = { page, limit };
 
-    if (status !== 'all') params.status = status;
-    if (search.trim()) params.search = search.trim();
+    // Support both object-based and positional parameters (backward compatibility)
+    let queryParams: Record<string, any>;
+    if (typeof params === 'object') {
+      // Object-based parameters
+      queryParams = {
+        page: params.page || 1,
+        limit: params.limit || 10
+      };
+      if (params.status && params.status !== 'all') queryParams.status = params.status;
+      if (params.search?.trim()) queryParams.search = params.search.trim();
+    } else {
+      // Positional parameters (legacy)
+      queryParams = { page: params || 1, limit: limit || 10 };
+      if (status && status !== 'all') queryParams.status = status;
+      if (search?.trim()) queryParams.search = search.trim();
+    }
 
     const response: AxiosResponse = await apiClient.get('/b2b/customers', {
       headers: { 'admin-auth-token': token || '' },
-      params,
+      params: queryParams,
     });
     return response.data;
   } catch (error) {
@@ -5803,41 +5816,71 @@ export const getAllB2BCustomers = async () => {
 
 // B2B Orders
 export const fetchB2BOrders = async (
-  page = 1,
-  limit = 10,
-  status = 'all',
-  paymentStatus = 'all',
-  search = '',
-  dateFilter = 'all',
-  dateFrom = '',
-  dateTo = '',
-  receivedDateFrom = '', // NEW: Separate filter for booking received date
-  receivedDateTo = ''    // NEW: Separate filter for booking received date
+  params: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    customerId?: string;
+    paymentStatus?: string;
+    search?: string;
+    dateFilter?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    receivedDateFrom?: string;
+    receivedDateTo?: string;
+  } | number = {},
+  limit?: number,
+  status?: string,
+  paymentStatus?: string,
+  search?: string,
+  dateFilter?: string,
+  dateFrom?: string,
+  dateTo?: string,
+  receivedDateFrom?: string,
+  receivedDateTo?: string
 ) => {
   try {
     const token = getToken();
-    const params: Record<string, any> = { page, limit };
 
-    if (status !== 'all') params.status = status;
-    if (paymentStatus !== 'all') params.payment_status = paymentStatus;
-    if (search.trim()) params.search = search.trim();
-
-    // Support both old dateFilter and new date range (SERVICE DATE)
-    if (dateFilter !== 'all') {
-      params.date_filter = dateFilter;
+    // Support both object-based and positional parameters
+    let queryParams: Record<string, any>;
+    if (typeof params === 'object') {
+      // Object-based parameters
+      queryParams = {
+        page: params.page || 1,
+        limit: params.limit || 10
+      };
+      if (params.status && params.status !== 'all') queryParams.status = params.status;
+      if (params.customerId) queryParams.customerId = params.customerId;
+      if (params.paymentStatus && params.paymentStatus !== 'all') queryParams.payment_status = params.paymentStatus;
+      if (params.search?.trim()) queryParams.search = params.search.trim();
+      if (params.dateFilter && params.dateFilter !== 'all') {
+        queryParams.date_filter = params.dateFilter;
+      } else {
+        if (params.dateFrom) queryParams.date_from = params.dateFrom;
+        if (params.dateTo) queryParams.date_to = params.dateTo;
+      }
+      if (params.receivedDateFrom) queryParams.received_date_from = params.receivedDateFrom;
+      if (params.receivedDateTo) queryParams.received_date_to = params.receivedDateTo;
     } else {
-      // Use custom date range if provided (SERVICE DATE)
-      if (dateFrom) params.date_from = dateFrom;
-      if (dateTo) params.date_to = dateTo;
+      // Positional parameters (legacy)
+      queryParams = { page: params || 1, limit: limit || 10 };
+      if (status && status !== 'all') queryParams.status = status;
+      if (paymentStatus && paymentStatus !== 'all') queryParams.payment_status = paymentStatus;
+      if (search?.trim()) queryParams.search = search.trim();
+      if (dateFilter && dateFilter !== 'all') {
+        queryParams.date_filter = dateFilter;
+      } else {
+        if (dateFrom) queryParams.date_from = dateFrom;
+        if (dateTo) queryParams.date_to = dateTo;
+      }
+      if (receivedDateFrom) queryParams.received_date_from = receivedDateFrom;
+      if (receivedDateTo) queryParams.received_date_to = receivedDateTo;
     }
-
-    // NEW: Separate filter for BOOKING RECEIVED DATE
-    if (receivedDateFrom) params.received_date_from = receivedDateFrom;
-    if (receivedDateTo) params.received_date_to = receivedDateTo;
 
     const response: AxiosResponse = await apiClient.get('/b2b/orders', {
       headers: { 'admin-auth-token': token || '' },
-      params,
+      params: queryParams,
     });
     return response.data;
   } catch (error) {
@@ -7370,19 +7413,24 @@ export const importB2BExcelData = async (file: File, options: {
 
 /**
  * Fetch additional costs for a B2B order
+ * @param orderId - Encrypted order ID
+ * @param onlyUninvoiced - If true, return only costs not yet invoiced (for invoice generation)
  */
-export const fetchAdditionalCostsForOrder = async (orderId: string) => {
+export const fetchAdditionalCostsForOrder = async (orderId: string, onlyUninvoiced: boolean = false) => {
   try {
     const token = getToken();
     if (!token) {
       throw new Error('No authentication token found');
     }
 
+    const params = onlyUninvoiced ? { only_uninvoiced: 'true' } : {};
+
     const response = await apiClient.get(`/b2b/orders/${orderId}/additional-costs`, {
       headers: {
         'admin-auth-token': token,
         'Content-Type': 'application/json',
       },
+      params,
     });
 
     return response.data;
@@ -13014,6 +13062,461 @@ export const getB2BOrderInvoicePath = async (orderId: string) => {
 };
 
 // ========================================
+// B2B FINANCE API FUNCTIONS
+// ========================================
+// Version: 1.0.0 - Created 2024-12-08
+
+/**
+ * B2B Finance Interfaces
+ */
+export interface B2BPayment {
+  id: string;
+  b2b_customer_id: string;
+  b2b_booking_id?: string;
+  amount: number;
+  allocated_amount: number;
+  unallocated_amount: number;
+  payment_date: string;
+  payment_mode: 'bank_transfer' | 'upi' | 'cash' | 'card' | 'other';
+  transaction_ref?: string;
+  bank_statement_path?: string;
+  bank_statement_uploaded_at?: string;
+  verification_status: 'pending' | 'verified' | 'rejected';
+  verified_by?: string;
+  verified_at?: string;
+  verification_notes?: string;
+  notes?: string;
+  customer?: any;
+  booking?: any;
+  allocations?: B2BPaymentAllocation[];
+  created_at: string;
+}
+
+export interface B2BPaymentAllocation {
+  id: string;
+  b2b_payment_id: string;
+  b2b_invoice_id: string;
+  allocated_amount: number;
+  allocation_date: string;
+  notes?: string;
+  invoice?: any;
+  payment?: any;
+}
+
+export interface B2BFinanceDashboard {
+  pending_verification: number;
+  unallocated_payments: {
+    count: number;
+    payments: B2BPayment[];
+  };
+  overdue_invoices: number;
+  total_outstanding: number;
+}
+
+export interface B2BCustomerFinanceSummary {
+  unbilled_orders: {
+    count: number;
+    total_amount: number;
+    orders: any[];
+  };
+  outstanding_invoices: {
+    count: number;
+    total_amount: number;
+    invoices: any[];
+  };
+  summary: {
+    total_receivable: number;
+  };
+}
+
+/**
+ * Record a new B2B payment
+ */
+export const recordB2BPayment = async (formData: FormData) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post('/b2b/finance/payments', formData, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error recording payment:', error);
+    throw new Error(error.response?.data?.message || 'Failed to record payment');
+  }
+};
+
+/**
+ * Get all B2B payments with filters
+ */
+export const fetchB2BPayments = async (params?: {
+  customerId?: string;
+  verificationStatus?: string;
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get('/b2b/finance/payments', {
+      headers: {
+        'admin-auth-token': token,
+      },
+      params,
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching payments:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch payments');
+  }
+};
+
+/**
+ * Get B2B payment by ID
+ */
+export const fetchB2BPaymentById = async (paymentId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get(`/b2b/finance/payments/${paymentId}`, {
+      headers: {
+        'admin-auth-token': token,
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching payment:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch payment');
+  }
+};
+
+/**
+ * Verify a B2B payment
+ */
+export const verifyB2BPayment = async (paymentId: string, verificationNotes?: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.put(
+      `/b2b/finance/payments/${paymentId}/verify`,
+      { verificationNotes },
+      {
+        headers: {
+          'admin-auth-token': token,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error verifying payment:', error);
+    throw new Error(error.response?.data?.message || 'Failed to verify payment');
+  }
+};
+
+/**
+ * Reject a B2B payment
+ */
+export const rejectB2BPayment = async (paymentId: string, verificationNotes: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.put(
+      `/b2b/finance/payments/${paymentId}/reject`,
+      { verificationNotes },
+      {
+        headers: {
+          'admin-auth-token': token,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error rejecting payment:', error);
+    throw new Error(error.response?.data?.message || 'Failed to reject payment');
+  }
+};
+
+/**
+ * Allocate payment to invoices
+ */
+export const allocateB2BPayment = async (
+  paymentId: string,
+  allocations: Array<{ invoiceId: string; amount: number; notes?: string }>
+) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post(
+      `/b2b/finance/payments/${paymentId}/allocate`,
+      { allocations },
+      {
+        headers: {
+          'admin-auth-token': token,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error allocating payment:', error);
+    throw new Error(error.response?.data?.message || 'Failed to allocate payment');
+  }
+};
+
+/**
+ * Get unbilled orders for a customer
+ */
+export const fetchUnbilledOrders = async (customerId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get('/b2b/finance/unbilled-orders', {
+      headers: {
+        'admin-auth-token': token,
+      },
+      params: { customerId },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching unbilled orders:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch unbilled orders');
+  }
+};
+
+/**
+ * Get outstanding invoices for a customer
+ */
+export const fetchOutstandingInvoices = async (customerId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get('/b2b/finance/outstanding-invoices', {
+      headers: {
+        'admin-auth-token': token,
+      },
+      params: { customerId },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching outstanding invoices:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch outstanding invoices');
+  }
+};
+
+/**
+ * Get customer statement
+ */
+export const fetchCustomerStatement = async (
+  customerId: string,
+  startDate?: string, // ✅ FIX: Make optional
+  endDate?: string    // ✅ FIX: Make optional
+) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    // ✅ FIX: Only include dates in params if they're provided
+    const params: any = { customerId };
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+
+    const response = await apiClient.get('/b2b/finance/customer-statement', {
+      headers: {
+        'admin-auth-token': token,
+      },
+      params,
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching customer statement:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch customer statement');
+  }
+};
+
+/**
+ * Get customer finance summary
+ */
+export const fetchCustomerFinanceSummary = async (customerId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get('/b2b/finance/customer-summary', {
+      headers: {
+        'admin-auth-token': token,
+      },
+      params: { customerId },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching customer finance summary:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch customer finance summary');
+  }
+};
+
+/**
+ * Get finance dashboard data
+ */
+export const fetchFinanceDashboard = async (startDate?: string, endDate?: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get('/b2b/finance/dashboard', {
+      headers: {
+        'admin-auth-token': token,
+      },
+      params: { startDate, endDate },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching finance dashboard:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch finance dashboard');
+  }
+};
+
+/**
+ * Generate standard invoice
+ */
+export const generateStandardInvoice = async (bookingId: string, dueDate?: string, notes?: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post(
+      '/b2b/finance/invoices/standard',
+      { bookingId, dueDate, notes },
+      {
+        headers: {
+          'admin-auth-token': token,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error generating standard invoice:', error);
+    throw new Error(error.response?.data?.message || 'Failed to generate invoice');
+  }
+};
+
+/**
+ * Generate consolidated invoice
+ */
+export const generateConsolidatedInvoice = async (data: {
+  bookingIds: string[];
+  customerId: string;
+  periodStart: string;
+  periodEnd: string;
+  dueDate?: string;
+  notes?: string;
+}) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post('/b2b/finance/invoices/consolidated', data, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error generating consolidated invoice:', error);
+    throw new Error(error.response?.data?.message || 'Failed to generate consolidated invoice');
+  }
+};
+
+/**
+ * Generate partial invoice
+ */
+export const generatePartialInvoice = async (
+  bookingId: string,
+  amount: number,
+  dueDate?: string,
+  notes?: string,
+  includeAdditionalCosts?: boolean // ✅ NEW: Optional parameter for additional costs
+) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post(
+      '/b2b/finance/invoices/partial',
+      { bookingId, amount, dueDate, notes, includeAdditionalCosts }, // ✅ NEW: Include in request
+      {
+        headers: {
+          'admin-auth-token': token,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error generating partial invoice:', error);
+    throw new Error(error.response?.data?.message || 'Failed to generate partial invoice');
+  }
+};
+
+// ========================================
 // B2B ANALYTICS API FUNCTIONS
 // ========================================
 // Version: 1.0.0 - Updated 2025-10-17
@@ -13045,6 +13548,16 @@ export interface B2BDashboardData {
     };
     // ✅ 4. Executed Orders Value (completed status)
     orders_executed: {
+      count: number;
+      total_value: number;
+    };
+    // ✅ 4.1 WIP Orders
+    wip_orders: {
+      count: number;
+      total_value: number;
+    };
+    // ✅ 4.2 Strict Pending Orders
+    not_started_orders: {
       count: number;
       total_value: number;
     };
