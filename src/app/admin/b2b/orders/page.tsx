@@ -5,17 +5,17 @@ import Link from 'next/link';
 import { Plus, Search, Eye, Edit, Settings, Download, FileText, Upload, CheckSquare, Square, X } from 'lucide-react';
 import {
   fetchB2BOrders,
+  downloadB2BInvoiceSimple,
   fetchB2BStatusOptions,
   StatusOption,
   bulkUpdateB2BOrderStatus,
   checkB2BInvoiceExists,
-  generateStandardInvoice, // ✅ NEW: Use unified finance API
+  generateB2BOrderInvoice,
   getB2BOrderInvoicePath,
   updateB2BOrderRemarks
 } from '@/lib/api';
 import { StatusBadge } from '@/components/b2b/StatusDropdown';
 import B2BOrdersExportDialog from '@/components/b2b/B2BOrdersExportDialog';
-import TemporaryInvoiceModal from '@/components/b2b/TemporaryInvoiceModal';
 import TemporaryInvoiceModal from '@/components/b2b/TemporaryInvoiceModal';
 import { useToast } from '@/hooks/use-toast';
 
@@ -54,7 +54,6 @@ interface B2BOrder {
   };
   service_name: string;
   service_description: string;
-  service_description: string;
   service_address: string;
   custom_price: number;
   service_rate?: number;
@@ -66,7 +65,6 @@ interface B2BOrder {
   status: 'pending' | 'accepted' | 'confirmed' | 'in_progress' | 'completed' | 'cancelled' | 'rejected';
   payment_status: 'pending' | 'paid' | 'overdue';
   invoice_status?: 'pending' | 'generated' | 'sent' | 'paid';
-  invoice_generated_at?: string;
   invoice_generated_at?: string;
   service_date?: string;
   booking_received_date?: number; // Unix timestamp (seconds)
@@ -92,11 +90,6 @@ export default function B2BOrdersPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [paymentStatusFilter, setPaymentStatusFilter] = useState('');
-  const [dateFilter, setDateFilter] = useState(''); // Predefined date filter (today, yesterday, etc.) - SERVICE DATE
-  const [dateFrom, setDateFrom] = useState(''); // Custom date range - from (SERVICE DATE)
-  const [dateTo, setDateTo] = useState(''); // Custom date range - to (SERVICE DATE)
-  const [receivedDateFrom, setReceivedDateFrom] = useState(''); // NEW: Booking received date - from
-  const [receivedDateTo, setReceivedDateTo] = useState(''); // NEW: Booking received date - to
   const [dateFilter, setDateFilter] = useState(''); // Predefined date filter (today, yesterday, etc.) - SERVICE DATE
   const [dateFrom, setDateFrom] = useState(''); // Custom date range - from (SERVICE DATE)
   const [dateTo, setDateTo] = useState(''); // Custom date range - to (SERVICE DATE)
@@ -149,33 +142,6 @@ export default function B2BOrdersPage() {
     });
   };
 
-  // Temporary invoice modal state
-  const [tempInvoiceModal, setTempInvoiceModal] = useState<{
-    isOpen: boolean;
-    orderId: string;
-    orderNumber: string;
-  }>({
-    isOpen: false,
-    orderId: '',
-    orderNumber: '',
-  });
-
-  const handleOpenTempInvoice = (orderId: string, orderNumber: string) => {
-    setTempInvoiceModal({
-      isOpen: true,
-      orderId,
-      orderNumber,
-    });
-  };
-
-  const handleCloseTempInvoice = () => {
-    setTempInvoiceModal({
-      isOpen: false,
-      orderId: '',
-      orderNumber: '',
-    });
-  };
-
   const fetchOrders = async () => {
     try {
       setLoading(true);
@@ -185,11 +151,6 @@ export default function B2BOrdersPage() {
         statusFilter || 'all',
         paymentStatusFilter || 'all',
         searchTerm,
-        dateFilter || 'all', // Predefined date filter (SERVICE DATE)
-        dateFrom, // Custom date range - from (SERVICE DATE)
-        dateTo, // Custom date range - to (SERVICE DATE)
-        receivedDateFrom, // NEW: Booking received date - from
-        receivedDateTo // NEW: Booking received date - to
         dateFilter || 'all', // Predefined date filter (SERVICE DATE)
         dateFrom, // Custom date range - from (SERVICE DATE)
         dateTo, // Custom date range - to (SERVICE DATE)
@@ -269,16 +230,6 @@ export default function B2BOrdersPage() {
         return;
       }
 
-      // ✅ Generate new invoice using unified finance API
-      const dueDate = new Date();
-      dueDate.setDate(dueDate.getDate() + 30); // 30 days from now
-      const dueDateStr = dueDate.toISOString().split('T')[0];
-
-      const response = await generateStandardInvoice(
-        orderId,
-        dueDateStr,
-        `Invoice for order ${orderNumber}`
-      );
       // ✅ Generate new invoice
       // Don't send subtotal - backend will use booking.total_amount or booking.custom_price
       const response = await generateB2BOrderInvoice(orderId, {
@@ -289,20 +240,28 @@ export default function B2BOrdersPage() {
       });
 
       if (response.success) {
-        const data = response.data;
+        // ✅ Handle PDF generation status
+        const pdfStatus = response.data.pdf_status;
+        const pdfError = response.data.pdf_error;
 
-        // Show success message
+        // Show appropriate message based on invoice and PDF status
         let title = "Invoice Generated Successfully!";
-        let description = `Invoice ${data.invoice_number} has been generated with PDF`;
+        let description = "";
         let duration = 3000;
 
-        // ✅ NEW: Simplified - new API always generates PDF
-        if (data.existing) {
+        if (response.data.existing) {
           title = "Invoice Already Exists";
-          description = `Invoice ${data.invoice_number} already exists for this order. Redirecting to invoice listing...`;
+          description = `Invoice ${response.data.invoice_number} already exists for this order. Redirecting to invoice listing...`;
+        } else if (pdfStatus === 'success') {
+          title = "Invoice Generated Successfully!";
+          description = `Invoice ${response.data.invoice_number} has been generated successfully with PDF. Redirecting to invoice listing...`;
+        } else if (pdfStatus === 'failed') {
+          title = "Invoice Generated (PDF Failed)";
+          description = `Invoice ${response.data.invoice_number} generated, but PDF generation failed. You can retry PDF generation from the invoice details. Redirecting...`;
+          duration = 5000; // Longer duration for important message
         } else {
           title = "Invoice Generated Successfully!";
-          description = `Invoice ${data.invoice_number} has been generated with PDF. Redirecting to invoice listing...`;
+          description = `Invoice ${response.data.invoice_number} has been generated successfully. Redirecting to invoice listing...`;
         }
 
         toast({
@@ -332,16 +291,13 @@ export default function B2BOrdersPage() {
         toast({
           title: "Error",
           description: response.message || "Failed to generate invoice",
-          description: response.message || "Failed to generate invoice",
           variant: "destructive",
         });
       }
     } catch (error: any) {
-    } catch (error: any) {
       console.error('Error generating invoice:', error);
       toast({
         title: "Error",
-        description: error.message || "Failed to generate invoice. Please try again.",
         description: error.message || "Failed to generate invoice. Please try again.",
         variant: "destructive",
       });
@@ -351,7 +307,6 @@ export default function B2BOrdersPage() {
   useEffect(() => {
     fetchOrders();
     loadStatusOptions();
-  }, [currentPage, searchTerm, statusFilter, paymentStatusFilter, dateFilter, dateFrom, dateTo, receivedDateFrom, receivedDateTo]);
   }, [currentPage, searchTerm, statusFilter, paymentStatusFilter, dateFilter, dateFrom, dateTo, receivedDateFrom, receivedDateTo]);
 
   const loadStatusOptions = async () => {
@@ -413,23 +368,6 @@ export default function B2BOrdersPage() {
     setDateFilter('');
     setDateFrom('');
     setDateTo('');
-    setCurrentPage(1);
-  };
-
-  // NEW: Handlers for booking received date filters
-  const handleReceivedDateFromChange = (value: string) => {
-    setReceivedDateFrom(value);
-    setCurrentPage(1);
-  };
-
-  const handleReceivedDateToChange = (value: string) => {
-    setReceivedDateTo(value);
-    setCurrentPage(1);
-  };
-
-  const handleClearReceivedDateFilters = () => {
-    setReceivedDateFrom('');
-    setReceivedDateTo('');
     setCurrentPage(1);
   };
 
@@ -631,7 +569,6 @@ export default function B2BOrdersPage() {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                     <Input
                       placeholder="Search by order number, company name,service or description..."
-                      placeholder="Search by order number, company name,service or description..."
                       value={searchTerm}
                       onChange={(e) => handleSearch(e.target.value)}
                       className="pl-10"
@@ -669,12 +606,8 @@ export default function B2BOrdersPage() {
               </div>
 
               {/* Second Row: Service Date Filters */}
-              {/* Second Row: Service Date Filters */}
               <div className="flex flex-col md:flex-row gap-4 items-end">
                 <div className="w-full md:w-48">
-                  <label className="block text-xs font-medium text-gray-700 mb-1">
-                    Quick Service Date Filter
-                  </label>
                   <label className="block text-xs font-medium text-gray-700 mb-1">
                     Quick Service Date Filter
                   </label>
@@ -700,7 +633,6 @@ export default function B2BOrdersPage() {
                   <div className="flex-1">
                     <label className="block text-xs font-medium text-gray-700 mb-1">
                       Service Date From
-                      Service Date From
                     </label>
                     <Input
                       type="date"
@@ -711,7 +643,6 @@ export default function B2BOrdersPage() {
                   </div>
                   <div className="flex-1">
                     <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Service Date To
                       Service Date To
                     </label>
                     <Input
@@ -778,56 +709,6 @@ export default function B2BOrdersPage() {
                       className="whitespace-nowrap"
                     >
                       Clear
-                      Clear
-                    </Button>
-                  )}
-                </div>
-              </div>
-
-              {/* Third Row: Booking Received Date Filters */}
-              <div className="flex flex-col md:flex-row gap-4 items-end">
-                <div className="w-full md:w-48">
-                  <label className="block text-xs font-medium text-gray-700 mb-1">
-                    Booking Received Date
-                  </label>
-                  <p className="text-xs text-gray-500">Filter by when order was created</p>
-                </div>
-
-                <div className="flex items-center gap-2 text-sm text-gray-500 invisible">
-                  <span>OR</span>
-                </div>
-
-                <div className="flex-1 flex gap-2 items-end">
-                  <div className="flex-1">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Received Date From
-                    </label>
-                    <Input
-                      type="date"
-                      value={receivedDateFrom}
-                      onChange={(e) => handleReceivedDateFromChange(e.target.value)}
-                      placeholder="From date"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <label className="block text-xs font-medium text-gray-700 mb-1">
-                      Received Date To
-                    </label>
-                    <Input
-                      type="date"
-                      value={receivedDateTo}
-                      onChange={(e) => handleReceivedDateToChange(e.target.value)}
-                      placeholder="To date"
-                    />
-                  </div>
-                  {(receivedDateFrom || receivedDateTo) && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleClearReceivedDateFilters}
-                      className="whitespace-nowrap"
-                    >
-                      Clear
                     </Button>
                   )}
                 </div>
@@ -837,12 +718,7 @@ export default function B2BOrdersPage() {
               {(dateFrom || dateTo || dateFilter || receivedDateFrom || receivedDateTo) && (
                 <div className="flex flex-wrap items-center gap-2 text-sm">
                   <span className="text-gray-600">Active filters:</span>
-              {(dateFrom || dateTo || dateFilter || receivedDateFrom || receivedDateTo) && (
-                <div className="flex flex-wrap items-center gap-2 text-sm">
-                  <span className="text-gray-600">Active filters:</span>
                   {dateFilter && (
-                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                      Service: {dateFilter === 'yesterday' && 'Yesterday'}
                     <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
                       Service: {dateFilter === 'yesterday' && 'Yesterday'}
                       {dateFilter === 'today' && 'Today'}
@@ -851,17 +727,6 @@ export default function B2BOrdersPage() {
                     </span>
                   )}
                   {(dateFrom || dateTo) && (
-                    <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
-                      Service: {dateFrom && `${dateFrom}`}
-                      {dateFrom && dateTo && ' to '}
-                      {dateTo && `${dateTo}`}
-                    </span>
-                  )}
-                  {(receivedDateFrom || receivedDateTo) && (
-                    <span className="px-2 py-1 bg-green-100 text-green-700 rounded text-xs">
-                      Received: {receivedDateFrom && `${receivedDateFrom}`}
-                      {receivedDateFrom && receivedDateTo && ' to '}
-                      {receivedDateTo && `${receivedDateTo}`}
                     <span className="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs">
                       Service: {dateFrom && `${dateFrom}`}
                       {dateFrom && dateTo && ' to '}
@@ -1021,7 +886,6 @@ export default function B2BOrdersPage() {
                       <TableHead>Payment</TableHead>
                       <TableHead>Invoice</TableHead>
                       <TableHead>Invoice Date</TableHead>
-                      <TableHead>Invoice Date</TableHead>
                       <TableHead>Service Date</TableHead>
                       <TableHead>Received Date</TableHead>
                       <TableHead>CRM Remarks</TableHead>
@@ -1062,9 +926,6 @@ export default function B2BOrdersPage() {
                         <TableCell>
                           <div>
                             <div className="font-medium">{order.service_name}</div>
-                            {order.service_description && (
-                              <div className="text-sm text-gray-500">description: {order.service_description}</div>
-                            )}
                             {order.service_description && (
                               <div className="text-sm text-gray-500">description: {order.service_description}</div>
                             )}
