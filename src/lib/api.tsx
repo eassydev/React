@@ -47,24 +47,69 @@ const getToken = (): string | null => {
 export interface AnalyticsReportData {
   period: string;
   period_type: string;
+
+  // App Downloads and Registrations
   downloads: number;
   registrations: number;
-  orders_received_total: number;
-  orders_value_total: number;
-  orders_executed_total: number;
-  executed_value_total: number;
-  invoices_raised_total: number;
-  invoice_value_total: number;
-  collected_total: number;
-  collection_value_total: number;
-  overdue_invoices_total: number;
-  overdue_value_total: number;
-  avg_overdue_days_total: number;
-  avg_order_value_total: number;
+  b2b_registrations: number; // ✅ Added B2B registrations field
+
+  // Orders Received
   orders_received_b2c: number;
-  orders_value_b2c: number;
   orders_received_b2b: number;
+  orders_received_total: number;
+
+  // Order Values
+  orders_value_b2c: number;
   orders_value_b2b: number;
+  orders_value_total: number;
+
+  // Orders Executed (Completed)
+  orders_executed_b2c: number;
+  orders_executed_b2b: number;
+  orders_executed_total: number;
+
+  // Executed Order Values
+  executed_value_b2c: number;
+  executed_value_b2b: number;
+  executed_value_total: number;
+
+  // Invoices Raised
+  invoices_raised_b2c: number;
+  invoices_raised_b2b: number;
+  invoices_raised_total: number;
+
+  // Invoice Values
+  invoice_value_b2c: number;
+  invoice_value_b2b: number;
+  invoice_value_total: number;
+
+  // Collections (Paid Invoices)
+  collected_b2c: number;
+  collected_b2b: number;
+  collected_total: number;
+
+  // Collection Values
+  collection_value_b2c: number;
+  collection_value_b2b: number;
+  collection_value_total: number;
+
+  // Overdue Analysis
+  overdue_invoices_b2c: number;
+  overdue_invoices_b2b: number;
+  overdue_invoices_total: number;
+
+  overdue_value_b2c: number;
+  overdue_value_b2b: number;
+  overdue_value_total: number;
+
+  avg_overdue_days_b2c: number;
+  avg_overdue_days_b2b: number;
+  avg_overdue_days_total: number;
+
+  // Average Order Values
+  avg_order_value_b2c: number;
+  avg_order_value_b2b: number;
+  avg_order_value_total: number;
 }
 
 export interface AnalyticsSummary {
@@ -773,10 +818,11 @@ export interface Notification {
   notification_type_id?: string;
   subcategory_id?: string;
   recipients?: { id: number; name: string }[];
-  inner_image?: File | null;
+  image?: File | null;
   outer_image?: File | null;
   is_active: boolean;
   send_to_all: boolean;
+  scheduled_at?: string;
 }
 
 export interface WalletOffer {
@@ -2374,10 +2420,12 @@ export const fetchAllUsers = async (
   }
 };
 
-export const fetchAllUsersWithouPagination = async (): Promise<User[]> => {
+export const fetchAllUsersWithouPagination = async (
+  searchTerm?: string
+): Promise<User[]> => {
   try {
     const token = getToken();
-    const response: AxiosResponse<ApiResponse> = await apiClient.get('/user/all', {
+    const response: AxiosResponse<ApiResponse> = await apiClient.get(`/user/all?search=${searchTerm}`, {
       headers: {
         'admin-auth-token': token || '',
       },
@@ -4948,18 +4996,21 @@ export const createNotification = async (notification: Notification) => {
   if (notification.category_id) formData.append('category_id', notification.category_id.toString());
   if (notification.subcategory_id)
     formData.append('subcategory_id', notification.subcategory_id.toString());
-  if (notification.inner_image) formData.append('inner_image', notification.inner_image);
+  if (notification.image) formData.append('image', notification.image);
   if (notification.outer_image) formData.append('outer_image', notification.outer_image);
   formData.append('is_active', notification.is_active ? '1' : '0');
   formData.append('send_to_all', notification.send_to_all ? '1' : '0');
   if (notification.recipients)
     formData.append('recipients', JSON.stringify(notification.recipients));
-  formData.append('notification_type_id', notification.notification_type_id!.toString());
+  if (notification.notification_type_id)
+    formData.append('notification_type_id', notification.notification_type_id.toString());
+  if (notification.scheduled_at)
+    formData.append('scheduled_at', notification.scheduled_at);
 
   // const response = await apiClient.post("/notification", formData);
   const token = getToken();
 
-  const response: AxiosResponse<ApiResponse> = await apiClient.post('/notification', formData, {
+  const response: AxiosResponse<ApiResponse> = await apiClient.post('/notification/create', formData, {
     headers: {
       'Content-Type': 'multipart/form-data',
       'admin-auth-token': token || '',
@@ -4983,6 +5034,57 @@ export const fetchNotifications = async (page = 1, size = 10) => {
     return response.data; // Return the data from the response
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to fetch notifications.');
+  }
+};
+
+// Fetch scheduled notifications
+export const fetchScheduledNotifications = async (page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/notification/schedule', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch scheduled notifications.');
+  }
+};
+
+// Fetch sent notifications
+export const fetchSentNotifications = async (page = 1, size = 10) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/notification/sent', {
+      params: { page, size },
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch sent notifications.');
+  }
+};
+
+// Delete scheduled notification
+export const deleteScheduledNotification = async (batchId: number, is_delete: number) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.put(
+      `/notification/schedule/${batchId}`,
+      { is_delete: is_delete },
+      {
+        headers: {
+          'admin-auth-token': token || '',
+        },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete scheduled notification.');
   }
 };
 
@@ -5607,23 +5709,36 @@ export const logout = async (): Promise<void> => {
     localStorage.removeItem('token');
     // Redirect to login page
     window.location.href = '/auth/login';
-  } catch (error: any) {}
+  } catch (error: any) { }
 };
 
 // ============= B2B API FUNCTIONS =============
 
 // B2B Customers
-export const fetchB2BCustomers = async (page = 1, limit = 10, status = 'all', search = '') => {
+export const fetchB2BCustomers = async (params: { page?: number; limit?: number; status?: string; search?: string } | number = {}, limit?: number, status?: string, search?: string) => {
   try {
     const token = getToken();
-    const params: Record<string, any> = { page, limit };
 
-    if (status !== 'all') params.status = status;
-    if (search.trim()) params.search = search.trim();
+    // Support both object-based and positional parameters (backward compatibility)
+    let queryParams: Record<string, any>;
+    if (typeof params === 'object') {
+      // Object-based parameters
+      queryParams = {
+        page: params.page || 1,
+        limit: params.limit || 10
+      };
+      if (params.status && params.status !== 'all') queryParams.status = params.status;
+      if (params.search?.trim()) queryParams.search = params.search.trim();
+    } else {
+      // Positional parameters (legacy)
+      queryParams = { page: params || 1, limit: limit || 10 };
+      if (status && status !== 'all') queryParams.status = status;
+      if (search?.trim()) queryParams.search = search.trim();
+    }
 
     const response: AxiosResponse = await apiClient.get('/b2b/customers', {
       headers: { 'admin-auth-token': token || '' },
-      params,
+      params: queryParams,
     });
     return response.data;
   } catch (error) {
@@ -5701,35 +5816,71 @@ export const getAllB2BCustomers = async () => {
 
 // B2B Orders
 export const fetchB2BOrders = async (
-  page = 1,
-  limit = 10,
-  status = 'all',
-  paymentStatus = 'all',
-  search = '',
-  dateFilter = 'all',
-  dateFrom = '',
-  dateTo = ''
+  params: {
+    page?: number;
+    limit?: number;
+    status?: string;
+    customerId?: string;
+    paymentStatus?: string;
+    search?: string;
+    dateFilter?: string;
+    dateFrom?: string;
+    dateTo?: string;
+    receivedDateFrom?: string;
+    receivedDateTo?: string;
+  } | number = {},
+  limit?: number,
+  status?: string,
+  paymentStatus?: string,
+  search?: string,
+  dateFilter?: string,
+  dateFrom?: string,
+  dateTo?: string,
+  receivedDateFrom?: string,
+  receivedDateTo?: string
 ) => {
   try {
     const token = getToken();
-    const params: Record<string, any> = { page, limit };
 
-    if (status !== 'all') params.status = status;
-    if (paymentStatus !== 'all') params.payment_status = paymentStatus;
-    if (search.trim()) params.search = search.trim();
-
-    // Support both old dateFilter and new date range
-    if (dateFilter !== 'all') {
-      params.date_filter = dateFilter;
+    // Support both object-based and positional parameters
+    let queryParams: Record<string, any>;
+    if (typeof params === 'object') {
+      // Object-based parameters
+      queryParams = {
+        page: params.page || 1,
+        limit: params.limit || 10
+      };
+      if (params.status && params.status !== 'all') queryParams.status = params.status;
+      if (params.customerId) queryParams.customerId = params.customerId;
+      if (params.paymentStatus && params.paymentStatus !== 'all') queryParams.payment_status = params.paymentStatus;
+      if (params.search?.trim()) queryParams.search = params.search.trim();
+      if (params.dateFilter && params.dateFilter !== 'all') {
+        queryParams.date_filter = params.dateFilter;
+      } else {
+        if (params.dateFrom) queryParams.date_from = params.dateFrom;
+        if (params.dateTo) queryParams.date_to = params.dateTo;
+      }
+      if (params.receivedDateFrom) queryParams.received_date_from = params.receivedDateFrom;
+      if (params.receivedDateTo) queryParams.received_date_to = params.receivedDateTo;
     } else {
-      // Use custom date range if provided
-      if (dateFrom) params.date_from = dateFrom;
-      if (dateTo) params.date_to = dateTo;
+      // Positional parameters (legacy)
+      queryParams = { page: params || 1, limit: limit || 10 };
+      if (status && status !== 'all') queryParams.status = status;
+      if (paymentStatus && paymentStatus !== 'all') queryParams.payment_status = paymentStatus;
+      if (search?.trim()) queryParams.search = search.trim();
+      if (dateFilter && dateFilter !== 'all') {
+        queryParams.date_filter = dateFilter;
+      } else {
+        if (dateFrom) queryParams.date_from = dateFrom;
+        if (dateTo) queryParams.date_to = dateTo;
+      }
+      if (receivedDateFrom) queryParams.received_date_from = receivedDateFrom;
+      if (receivedDateTo) queryParams.received_date_to = receivedDateTo;
     }
 
     const response: AxiosResponse = await apiClient.get('/b2b/orders', {
       headers: { 'admin-auth-token': token || '' },
-      params,
+      params: queryParams,
     });
     return response.data;
   } catch (error) {
@@ -6867,9 +7018,24 @@ export interface B2BQuotation {
   pdf_file_path?: string;
   attachments?: any[];
   created_at?: string;
+  created_by_type?: string;
+  created_by_provider?: {
+    id: string,
+    first_name: string,
+    last_name: string,
+    phone: number,
+    email: string
+  }
+  created_by_admin?: {
+    id: string,
+    full_name: string,
+    username: string,
+    email: string
+  }
   updated_at?: string;
   // ✅ NEW: Helper properties
   is_standalone?: boolean;
+  admin_approval_status?: string;
 }
 
 // ✅ NEW: Customer selection for standalone quotations
@@ -6908,6 +7074,37 @@ export interface CreateQuotationRequest {
   admin_notes?: string;
 }
 
+// ✅ B2B Additional Cost Interface
+export interface B2BAdditionalCost {
+  id?: string;
+  b2b_booking_id?: string | null;
+  b2b_quotation_id?: string | null;
+  item_name: string;
+  description?: string;
+  quantity: number;
+  unit_price: number;
+  total_amount: number;
+  status: 'pending' | 'approved' | 'rejected';
+  notes?: string;
+  added_by?: string;
+  approved_by?: string | null;
+  added_at?: string;
+  approved_at?: string | null;
+  is_active?: number;
+  addedBy?: {
+    id: string;
+    full_name?: string;
+    username?: string;
+    email: string;
+  };
+  approvedBy?: {
+    id: string;
+    full_name?: string;
+    username?: string;
+    email: string;
+  };
+}
+
 // Create new quotation
 export const createB2BQuotation = async (quotationData: Partial<B2BQuotation>) => {
   try {
@@ -6942,6 +7139,8 @@ export const fetchB2BQuotations = async (params: {
   b2b_booking_id?: string;
   search?: string;
   sort_by?: string;
+  created_by_type?: string;
+  admin_approval_status?: string;
   sort_order?: 'ASC' | 'DESC';
 } = {}) => {
   try {
@@ -7048,7 +7247,45 @@ export const approveB2BQuotation = async (id: string, adminNotes?: string) => {
   }
 };
 
-// Reject quotation
+
+// Approve SP quotation (provider-created quotation)
+export const approveSpQuotation = async (id: string, approval_notes?: string, send_to_client?: boolean) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post(`/b2b/sp-quotations/${id}/approve`,
+      {
+        approval_notes: approval_notes,
+        send_to_client: send_to_client || false
+      },
+      {
+        headers: { 'admin-auth-token': token || '' },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to approve SP quotation.');
+  }
+};
+
+// Reject SP quotation (provider-created quotation)
+export const rejectSpQuotation = async (id: string, rejectionReason: string) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post(`/b2b/sp-quotations/${id}/reject`,
+      {
+        rejection_reason: rejectionReason
+      },
+      {
+        headers: { 'admin-auth-token': token || '' },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to reject SP quotation.');
+  }
+};
+
+// Reject quotation (admin-created quotation)
 export const rejectB2BQuotation = async (id: string, rejectionReason: string, adminNotes?: string) => {
   try {
     const token = getToken();
@@ -7167,6 +7404,159 @@ export const importB2BExcelData = async (file: File, options: {
   } catch (error: any) {
     console.error('Error importing B2B Excel data:', error);
     throw new Error(error.response?.data?.message || 'Failed to import data');
+  }
+};
+
+// ========================================
+// B2B Additional Costs API Functions
+// ========================================
+
+/**
+ * Fetch additional costs for a B2B order
+ * @param orderId - Encrypted order ID
+ * @param onlyUninvoiced - If true, return only costs not yet invoiced (for invoice generation)
+ */
+export const fetchAdditionalCostsForOrder = async (orderId: string, onlyUninvoiced: boolean = false) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const params = onlyUninvoiced ? { only_uninvoiced: 'true' } : {};
+
+    const response = await apiClient.get(`/b2b/orders/${orderId}/additional-costs`, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+      params,
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching additional costs for order:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch additional costs');
+  }
+};
+
+/**
+ * Fetch additional costs for a B2B quotation
+ */
+export const fetchAdditionalCostsForQuotation = async (quotationId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get(`/b2b/quotations/${quotationId}/additional-costs`, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching additional costs for quotation:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch additional costs');
+  }
+};
+
+/**
+ * Add additional cost to a B2B order
+ */
+export const addAdditionalCostToOrder = async (orderId: string, costData: Partial<B2BAdditionalCost>) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post(`/b2b/orders/${orderId}/additional-costs`, costData, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error adding additional cost to order:', error);
+    throw new Error(error.response?.data?.message || 'Failed to add additional cost');
+  }
+};
+
+/**
+ * Add additional cost to a B2B quotation
+ */
+export const addAdditionalCostToQuotation = async (quotationId: string, costData: Partial<B2BAdditionalCost>) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post(`/b2b/quotations/${quotationId}/additional-costs`, costData, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error adding additional cost to quotation:', error);
+    throw new Error(error.response?.data?.message || 'Failed to add additional cost');
+  }
+};
+
+/**
+ * Update an additional cost
+ */
+export const updateAdditionalCost = async (costId: string, costData: Partial<B2BAdditionalCost>) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.put(`/b2b/additional-costs/${costId}`, costData, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error updating additional cost:', error);
+    throw new Error(error.response?.data?.message || 'Failed to update additional cost');
+  }
+};
+
+/**
+ * Delete an additional cost
+ */
+export const deleteAdditionalCost = async (costId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.delete(`/b2b/additional-costs/${costId}`, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error deleting additional cost:', error);
+    throw new Error(error.response?.data?.message || 'Failed to delete additional cost');
   }
 };
 
@@ -11862,7 +12252,15 @@ export const fetchComprehensiveAnalytics = async (
  */
 export const fetchMTDAnalytics = async (
   businessType: 'b2b' | 'b2c' | 'both' = 'both'
-): Promise<{ success: boolean; data: AnalyticsReportData; generated_at: string }> => {
+): Promise<{
+  success: boolean;
+  data: {
+    period: string;
+    business_type: string;
+    report: AnalyticsReportData;
+    generated_at: string;
+  }
+}> => {
   try {
     const token = getToken();
     if (!token) {
@@ -11891,7 +12289,15 @@ export const fetchMTDAnalytics = async (
  */
 export const fetchLTDAnalytics = async (
   businessType: 'b2b' | 'b2c' | 'both' = 'both'
-): Promise<{ success: boolean; data: AnalyticsReportData; generated_at: string }> => {
+): Promise<{
+  success: boolean;
+  data: {
+    period: string;
+    business_type: string;
+    report: AnalyticsReportData;
+    generated_at: string;
+  }
+}> => {
   try {
     const token = getToken();
     if (!token) {
@@ -11982,11 +12388,19 @@ export const fetchDetailedReport = async (
       period_type: string;
       downloads: number;
       registrations: number;
+      b2b_registrations: number;
       orders_received: number;
       gov: number;
+      orders_cancelled: number;
+      cancelled_value: number;
+      net_order_position: number;
+      net_order_value: number;
       aov: number;
       orders_executed: number;
       executed_value: number;
+      money_collected_count: number;
+      money_collected_value: number;
+      sp_payout: number;
       invoices_raised: number;
       invoice_value: number;
       collections: number;
@@ -12287,7 +12701,9 @@ export const requestSPInvoiceRevision = async (id: string, data: { revision_reas
 export const fetchSPOCAssignments = async (params: {
   client_id?: string;
   spoc_type?: string;
-  active_only?: boolean;
+  spoc_user_id?: string;
+  search?: string;
+  status?: 'active' | 'inactive' | 'all';
   page?: number;
   limit?: number;
 } = {}) => {
@@ -12301,6 +12717,7 @@ export const fetchSPOCAssignments = async (params: {
       params: {
         page: params.page || 1,
         limit: params.limit || 20,
+        status: params.status || 'active',
         ...params
       },
       headers: {
@@ -12527,6 +12944,54 @@ export const generateB2BOrderInvoice = async (orderId: string, invoiceData: {
 };
 
 /**
+ * ✅ NEW: Get temporary invoice data for editing (without creating invoice record)
+ */
+export const getTemporaryInvoiceData = async (orderId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get(`/b2b/orders/${orderId}/temporary-invoice-data`, {
+      headers: {
+        'admin-auth-token': token,
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error fetching temporary invoice data:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch temporary invoice data');
+  }
+};
+
+/**
+ * ✅ UPDATED: Create invoice from temporary invoice data (creates actual invoice record)
+ */
+export const generateTemporaryInvoice = async (orderId: string, invoiceData: any) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post(`/b2b/orders/${orderId}/temporary-invoice`, invoiceData, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+      // ✅ CHANGED: Now expects JSON response, not PDF blob
+    });
+
+    return response.data; // Returns { success, message, data: { invoice_id, invoice_number, ... } }
+  } catch (error: any) {
+    console.error('❌ Error creating invoice from temporary data:', error);
+    throw new Error(error.response?.data?.message || 'Failed to create invoice from temporary data');
+  }
+};
+
+/**
  * Regenerate PDF for a B2B invoice
  */
 export const regenerateB2BInvoicePDF = async (invoiceId: string) => {
@@ -12547,6 +13012,28 @@ export const regenerateB2BInvoicePDF = async (invoiceId: string) => {
   } catch (error: any) {
     console.error('❌ Error regenerating invoice PDF:', error);
     throw new Error(error.response?.data?.message || 'Failed to regenerate invoice PDF');
+  }
+};
+
+
+export const deleteB2BInvoice = async (invoiceId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.delete(`/b2b/invoices/${invoiceId}/delete-invoice`, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error deleting invoice:', error);
+    throw new Error(error.response?.data?.message || 'Failed to delete invoice');
   }
 };
 
@@ -12575,6 +13062,461 @@ export const getB2BOrderInvoicePath = async (orderId: string) => {
 };
 
 // ========================================
+// B2B FINANCE API FUNCTIONS
+// ========================================
+// Version: 1.0.0 - Created 2024-12-08
+
+/**
+ * B2B Finance Interfaces
+ */
+export interface B2BPayment {
+  id: string;
+  b2b_customer_id: string;
+  b2b_booking_id?: string;
+  amount: number;
+  allocated_amount: number;
+  unallocated_amount: number;
+  payment_date: string;
+  payment_mode: 'bank_transfer' | 'upi' | 'cash' | 'card' | 'other';
+  transaction_ref?: string;
+  bank_statement_path?: string;
+  bank_statement_uploaded_at?: string;
+  verification_status: 'pending' | 'verified' | 'rejected';
+  verified_by?: string;
+  verified_at?: string;
+  verification_notes?: string;
+  notes?: string;
+  customer?: any;
+  booking?: any;
+  allocations?: B2BPaymentAllocation[];
+  created_at: string;
+}
+
+export interface B2BPaymentAllocation {
+  id: string;
+  b2b_payment_id: string;
+  b2b_invoice_id: string;
+  allocated_amount: number;
+  allocation_date: string;
+  notes?: string;
+  invoice?: any;
+  payment?: any;
+}
+
+export interface B2BFinanceDashboard {
+  pending_verification: number;
+  unallocated_payments: {
+    count: number;
+    payments: B2BPayment[];
+  };
+  overdue_invoices: number;
+  total_outstanding: number;
+}
+
+export interface B2BCustomerFinanceSummary {
+  unbilled_orders: {
+    count: number;
+    total_amount: number;
+    orders: any[];
+  };
+  outstanding_invoices: {
+    count: number;
+    total_amount: number;
+    invoices: any[];
+  };
+  summary: {
+    total_receivable: number;
+  };
+}
+
+/**
+ * Record a new B2B payment
+ */
+export const recordB2BPayment = async (formData: FormData) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post('/b2b/finance/payments', formData, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error recording payment:', error);
+    throw new Error(error.response?.data?.message || 'Failed to record payment');
+  }
+};
+
+/**
+ * Get all B2B payments with filters
+ */
+export const fetchB2BPayments = async (params?: {
+  customerId?: string;
+  verificationStatus?: string;
+  startDate?: string;
+  endDate?: string;
+  page?: number;
+  limit?: number;
+}) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get('/b2b/finance/payments', {
+      headers: {
+        'admin-auth-token': token,
+      },
+      params,
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching payments:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch payments');
+  }
+};
+
+/**
+ * Get B2B payment by ID
+ */
+export const fetchB2BPaymentById = async (paymentId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get(`/b2b/finance/payments/${paymentId}`, {
+      headers: {
+        'admin-auth-token': token,
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching payment:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch payment');
+  }
+};
+
+/**
+ * Verify a B2B payment
+ */
+export const verifyB2BPayment = async (paymentId: string, verificationNotes?: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.put(
+      `/b2b/finance/payments/${paymentId}/verify`,
+      { verificationNotes },
+      {
+        headers: {
+          'admin-auth-token': token,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error verifying payment:', error);
+    throw new Error(error.response?.data?.message || 'Failed to verify payment');
+  }
+};
+
+/**
+ * Reject a B2B payment
+ */
+export const rejectB2BPayment = async (paymentId: string, verificationNotes: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.put(
+      `/b2b/finance/payments/${paymentId}/reject`,
+      { verificationNotes },
+      {
+        headers: {
+          'admin-auth-token': token,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error rejecting payment:', error);
+    throw new Error(error.response?.data?.message || 'Failed to reject payment');
+  }
+};
+
+/**
+ * Allocate payment to invoices
+ */
+export const allocateB2BPayment = async (
+  paymentId: string,
+  allocations: Array<{ invoiceId: string; amount: number; notes?: string }>
+) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post(
+      `/b2b/finance/payments/${paymentId}/allocate`,
+      { allocations },
+      {
+        headers: {
+          'admin-auth-token': token,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error allocating payment:', error);
+    throw new Error(error.response?.data?.message || 'Failed to allocate payment');
+  }
+};
+
+/**
+ * Get unbilled orders for a customer
+ */
+export const fetchUnbilledOrders = async (customerId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get('/b2b/finance/unbilled-orders', {
+      headers: {
+        'admin-auth-token': token,
+      },
+      params: { customerId },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching unbilled orders:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch unbilled orders');
+  }
+};
+
+/**
+ * Get outstanding invoices for a customer
+ */
+export const fetchOutstandingInvoices = async (customerId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get('/b2b/finance/outstanding-invoices', {
+      headers: {
+        'admin-auth-token': token,
+      },
+      params: { customerId },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching outstanding invoices:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch outstanding invoices');
+  }
+};
+
+/**
+ * Get customer statement
+ */
+export const fetchCustomerStatement = async (
+  customerId: string,
+  startDate?: string, // ✅ FIX: Make optional
+  endDate?: string    // ✅ FIX: Make optional
+) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    // ✅ FIX: Only include dates in params if they're provided
+    const params: any = { customerId };
+    if (startDate) params.startDate = startDate;
+    if (endDate) params.endDate = endDate;
+
+    const response = await apiClient.get('/b2b/finance/customer-statement', {
+      headers: {
+        'admin-auth-token': token,
+      },
+      params,
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching customer statement:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch customer statement');
+  }
+};
+
+/**
+ * Get customer finance summary
+ */
+export const fetchCustomerFinanceSummary = async (customerId: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get('/b2b/finance/customer-summary', {
+      headers: {
+        'admin-auth-token': token,
+      },
+      params: { customerId },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching customer finance summary:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch customer finance summary');
+  }
+};
+
+/**
+ * Get finance dashboard data
+ */
+export const fetchFinanceDashboard = async (startDate?: string, endDate?: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get('/b2b/finance/dashboard', {
+      headers: {
+        'admin-auth-token': token,
+      },
+      params: { startDate, endDate },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching finance dashboard:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch finance dashboard');
+  }
+};
+
+/**
+ * Generate standard invoice
+ */
+export const generateStandardInvoice = async (bookingId: string, dueDate?: string, notes?: string) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post(
+      '/b2b/finance/invoices/standard',
+      { bookingId, dueDate, notes },
+      {
+        headers: {
+          'admin-auth-token': token,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error generating standard invoice:', error);
+    throw new Error(error.response?.data?.message || 'Failed to generate invoice');
+  }
+};
+
+/**
+ * Generate consolidated invoice
+ */
+export const generateConsolidatedInvoice = async (data: {
+  bookingIds: string[];
+  customerId: string;
+  periodStart: string;
+  periodEnd: string;
+  dueDate?: string;
+  notes?: string;
+}) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post('/b2b/finance/invoices/consolidated', data, {
+      headers: {
+        'admin-auth-token': token,
+        'Content-Type': 'application/json',
+      },
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error generating consolidated invoice:', error);
+    throw new Error(error.response?.data?.message || 'Failed to generate consolidated invoice');
+  }
+};
+
+/**
+ * Generate partial invoice
+ */
+export const generatePartialInvoice = async (
+  bookingId: string,
+  amount: number,
+  dueDate?: string,
+  notes?: string,
+  includeAdditionalCosts?: boolean // ✅ NEW: Optional parameter for additional costs
+) => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.post(
+      '/b2b/finance/invoices/partial',
+      { bookingId, amount, dueDate, notes, includeAdditionalCosts }, // ✅ NEW: Include in request
+      {
+        headers: {
+          'admin-auth-token': token,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return response.data;
+  } catch (error: any) {
+    console.error('Error generating partial invoice:', error);
+    throw new Error(error.response?.data?.message || 'Failed to generate partial invoice');
+  }
+};
+
+// ========================================
 // B2B ANALYTICS API FUNCTIONS
 // ========================================
 // Version: 1.0.0 - Updated 2025-10-17
@@ -12587,26 +13529,87 @@ export interface B2BDashboardData {
     customers: {
       total: number;
       active: number;
-      inactive: number;
+      inactive?: number;
     };
+    // ✅ 1. Orders Received Value (all statuses)
     orders_received: {
       count: number;
       total_value: number;
     };
-    orders_completed: {
+    // ✅ 2. Orders Cancelled Value
+    orders_cancelled: {
       count: number;
       total_value: number;
     };
-    revenue: number;
-    profit: {
+    // ✅ 3. Net Order Value (received - cancelled)
+    net_orders: {
+      count: number;
+      total_value: number;
+    };
+    // ✅ 4. Executed Orders Value (completed status)
+    orders_executed: {
+      count: number;
+      total_value: number;
+    };
+    // ✅ 4.1 WIP Orders
+    wip_orders: {
+      count: number;
+      total_value: number;
+    };
+    // ✅ 4.2 Strict Pending Orders
+    not_started_orders: {
+      count: number;
+      total_value: number;
+    };
+    // ✅ 5. Pending Orders Value (calculated as Net Order Value - Executed Order Value)
+    pending_orders: {
+      count: number;
+      total_value: number;
+    };
+    // ✅ 6. Billed Orders Value (orders for which invoices are raised, regardless of payment status)
+    billed_orders: {
+      count: number;
+      total_value: number;
+    };
+    // ✅ 7. Collections (completed AND paid bookings - count from bookings, not invoices)
+    collections: {
+      count: number;
+      total_value: number;
+    };
+    // ✅ 8. Outstanding Amount
+    outstanding_amount: number;
+    // ✅ 9. SP Payout
+    sp_payout: number;
+    // ✅ 10. Gross Margin
+    gross_margin: {
+      total: number;
+      avg_percentage: string;
+    };
+    // ✅ 11. GOV - B2B (Gross Order Value)
+    gov_b2b: number;
+    // Additional metrics
+    avg_order_value: string;
+    payment_breakdown: {
+      paid: number;
+      pending: number;
+      overdue: number;
+      partial: number;
+    };
+    // Legacy fields (for backward compatibility)
+    orders_completed?: {
+      count: number;
+      total_value: number;
+    };
+    revenue?: number;
+    profit?: {
       total: number;
       avg_margin_percentage: string;
     };
-    outstanding_orders: {
+    outstanding_orders?: {
       count: number;
       total_value: number;
     };
-    payment_collection: {
+    payment_collection?: {
       paid: number;
       pending: number;
       overdue: number;
@@ -12857,6 +13860,9 @@ export const getB2BCustomerTrends = async (
   }
 };
 
+
+
+
 // ========================================
 // DAILY OPERATIONS DASHBOARD
 // ========================================
@@ -13069,10 +14075,39 @@ export const sendTomorrowScheduleEmails = async (): Promise<{ success: boolean; 
 };
 
 /**
+ * Send Admin Daily Summary Email (Manual Trigger)
+ * Only accessible by super_admin and manager
+ */
+export const sendAdminDailySummary = async (): Promise<{ success: boolean; message: string; data: any }> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    const response = await apiClient.post('/b2b/dashboard/send-admin-daily-summary', {}, {
+      headers: {
+        'admin-auth-token': token
+      }
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error sending admin daily summary email:', error);
+    throw new Error(error.response?.data?.message || 'Failed to send admin daily summary email');
+  }
+};
+
+/**
  * Export Customer-wise Analytics (Excel)
  * Downloads Excel file directly
+ * @param filters - Optional filters for date range and filter type
  */
-export const exportCustomerWiseAnalytics = async (): Promise<void> => {
+export const exportCustomerWiseAnalytics = async (filters?: {
+  date_from?: string;
+  date_to?: string;
+  date_filter_type?: 'service' | 'received';
+}): Promise<void> => {
   const token = getToken();
   if (!token) {
     throw new Error('Authentication token not found');
@@ -13083,6 +14118,7 @@ export const exportCustomerWiseAnalytics = async (): Promise<void> => {
       headers: {
         'admin-auth-token': token
       },
+      params: filters,
       responseType: 'blob'
     });
 
@@ -13104,8 +14140,13 @@ export const exportCustomerWiseAnalytics = async (): Promise<void> => {
 /**
  * Export SPOC-wise Analytics (Excel)
  * Only accessible by super_admin and manager
+ * @param filters - Optional filters for date range and filter type
  */
-export const exportSPOCWiseAnalytics = async (): Promise<void> => {
+export const exportSPOCWiseAnalytics = async (filters?: {
+  date_from?: string;
+  date_to?: string;
+  date_filter_type?: 'service' | 'received';
+}): Promise<void> => {
   const token = getToken();
   if (!token) {
     throw new Error('Authentication token not found');
@@ -13116,6 +14157,7 @@ export const exportSPOCWiseAnalytics = async (): Promise<void> => {
       headers: {
         'admin-auth-token': token
       },
+      params: filters,
       responseType: 'blob'
     });
 
@@ -13135,8 +14177,13 @@ export const exportSPOCWiseAnalytics = async (): Promise<void> => {
 
 /**
  * Export SP-wise Analytics (Excel)
+ * @param filters - Optional filters for date range and filter type
  */
-export const exportSPWiseAnalytics = async (): Promise<void> => {
+export const exportSPWiseAnalytics = async (filters?: {
+  date_from?: string;
+  date_to?: string;
+  date_filter_type?: 'service' | 'received';
+}): Promise<void> => {
   const token = getToken();
   if (!token) {
     throw new Error('Authentication token not found');
@@ -13147,6 +14194,7 @@ export const exportSPWiseAnalytics = async (): Promise<void> => {
       headers: {
         'admin-auth-token': token
       },
+      params: filters,
       responseType: 'blob'
     });
 
@@ -13165,33 +14213,106 @@ export const exportSPWiseAnalytics = async (): Promise<void> => {
 };
 
 /**
- * Export Business Trends (Excel)
- * Only accessible by super_admin and manager
+ * Get Monthly Report - Returns JSON data or downloads Excel based on format parameter
+ * @param filters - Optional filters for year, month, and customer
+ * @param format - 'json' for data return, 'excel' for file download (default: 'excel')
  */
-export const exportBusinessTrends = async (): Promise<void> => {
+export const getMonthlyReport = async (
+  filters?: {
+    year?: number;
+    month?: number;
+    customer_id?: string;
+    date_from?: string;
+    date_to?: string;
+    date_filter_type?: 'service' | 'received';
+  },
+  format: 'json' | 'excel' = 'excel'
+): Promise<any> => {
   const token = getToken();
   if (!token) {
     throw new Error('Authentication token not found');
   }
 
   try {
-    const response = await apiClient.get('/b2b/analytics/export/business-trends', {
+    console.log('🔧 API: getMonthlyReport called with format:', format, 'filters:', filters);
+
+    // Build query parameters
+    const params: any = {};
+    if (filters?.year) params.year = filters.year;
+    if (filters?.month) params.month = filters.month;
+    if (filters?.customer_id) params.customer_id = filters.customer_id;
+    if (filters?.date_from) params.date_from = filters.date_from;
+    if (filters?.date_to) params.date_to = filters.date_to;
+    if (filters?.date_filter_type) params.date_filter_type = filters.date_filter_type;
+
+    // Add format parameter for JSON requests
+    if (format === 'json') {
+      params.format = 'json';
+    }
+
+    console.log('📤 API: Sending request with params:', params, 'format:', format);
+
+    const response = await apiClient.get('/b2b/analytics/export/monthly-report', {
       headers: {
-        'admin-auth-token': token
+        'admin-auth-token': token,
+        ...(format === 'json' && { 'Accept': 'application/json' })
       },
-      responseType: 'blob'
+      params,
+      ...(format === 'excel' && { responseType: 'blob' })
     });
+
+    console.log('📥 API: Received response, format:', format, 'response type:', typeof response.data);
+
+    // If JSON format, return the data
+    if (format === 'json') {
+      console.log('✅ API: Returning JSON data:', response.data);
+      return response.data;
+    }
+
+    // If Excel format, trigger download
+    console.log('📥 API: Downloading Excel file');
+    const monthName = filters?.month
+      ? new Date(2000, filters.month - 1).toLocaleString('default', { month: 'long' })
+      : 'All';
+    const yearStr = filters?.year || new Date().getFullYear();
+    const filename = `B2B_Monthly_Report_${monthName}_${yearStr}_${new Date().toISOString().split('T')[0]}.xlsx`;
 
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `B2B_Business_Trends_${new Date().toISOString().split('T')[0]}.xlsx`);
+    link.setAttribute('download', filename);
     document.body.appendChild(link);
     link.click();
     link.remove();
     window.URL.revokeObjectURL(url);
+
+    return { success: true, message: 'File downloaded successfully' };
   } catch (error: any) {
-    console.error('❌ Error exporting business trends:', error);
-    throw new Error(error.response?.data?.message || 'Failed to export business trends');
+    console.error('❌ API Error with monthly report:', error);
+    console.error('❌ API Error response:', error.response);
+    throw new Error(error.response?.data?.message || `Failed to ${format === 'json' ? 'fetch' : 'download'} monthly report`);
   }
+};
+
+// ✅ Backward compatibility - Keep old function names as aliases
+export const exportMonthlyReport = async (filters?: {
+  year?: number;
+  month?: number;
+  customer_id?: string;
+  date_from?: string;
+  date_to?: string;
+  date_filter_type?: 'service' | 'received';
+}): Promise<void> => {
+  await getMonthlyReport(filters, 'excel');
+};
+
+export const getMonthlyReportData = async (filters?: {
+  year?: number;
+  month?: number;
+  customer_id?: string;
+  date_from?: string;
+  date_to?: string;
+  date_filter_type?: 'service' | 'received';
+}): Promise<any> => {
+  return await getMonthlyReport(filters, 'json');
 };
