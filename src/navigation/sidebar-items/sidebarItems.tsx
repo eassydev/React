@@ -291,6 +291,18 @@ export const sidebarItems: SidebarItem[] = [
     ],
   },
   {
+    title: 'B2B Finance',
+    icon: CreditCard,
+    children: [
+      { title: 'Finance Dashboard', route: `${basePath}/b2b/finance/dashboard` },
+      { title: 'Record Payment', route: `${basePath}/b2b/finance/payments/record` },
+      { title: 'Payment Verification', route: `${basePath}/b2b/finance/payments/verify` },
+      { title: 'All Payments', route: `${basePath}/b2b/finance/payments` },
+      { title: 'Generate Invoice', route: `${basePath}/b2b/finance/invoices/generate` },
+      { title: 'Customer Statements', route: `${basePath}/b2b/finance/statements` },
+    ],
+  },
+  {
     title: 'Woloo',
     icon: Building2,
     children: [

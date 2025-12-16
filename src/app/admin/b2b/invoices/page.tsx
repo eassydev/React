@@ -25,26 +25,47 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
 
 interface B2BInvoice {
   id: string;
   invoice_number: string;
-  booking: {
+  invoice_type: 'standard' | 'consolidated' | 'partial' | 'advance' | 'credit_note'; // ✅ NEW
+  booking?: {
     order_number: string;
     service_name: string;
     customer: {
       company_name: string;
       contact_person: string;
     };
-  };
+  } | null; // ✅ CHANGED: Nullable for consolidated invoices
+  orderLinks?: Array<{ // ✅ NEW: For consolidated invoices
+    booking: {
+      order_number: string;
+      service_name: string;
+      customer: {
+        company_name: string;
+        contact_person: string;
+      };
+    };
+    billed_amount: number;
+  }>;
   invoice_date: string;
   due_date: string;
   subtotal: number;
   tax_amount: number;
   total_amount: number;
+  paid_amount: number; // ✅ NEW
+  outstanding_amount: number; // ✅ NEW
   payment_status: 'unpaid' | 'partial' | 'paid' | 'overdue';
   invoice_file_path?: string;
   created_at: string;
+  billing_period_start?: string; // ✅ NEW: For consolidated invoices
+  billing_period_end?: string; // ✅ NEW: For consolidated invoices
 }
 
 // Component that uses search params - needs to be wrapped in Suspense
@@ -53,6 +74,7 @@ function B2BInvoicesContent() {
   const [invoices, setInvoices] = useState<B2BInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -164,6 +186,7 @@ function B2BInvoicesContent() {
   };
 
   // ✅ FIXED: Use centralized API function instead of direct fetch
+  // ✅ FIXED: Use centralized API function instead of direct fetch
   const handleRetryPDF = async (invoiceId: string) => {
     // ✅ Prevent multiple regeneration requests
     if (regeneratingId === invoiceId) return;
@@ -178,13 +201,28 @@ function B2BInvoicesContent() {
 
       // ✅ Use centralized API function from api.tsx
       const response = await regenerateB2BInvoicePDF(invoiceId);
+      // ✅ Use centralized API function from api.tsx
+      const response = await regenerateB2BInvoicePDF(invoiceId);
 
       if (response.success) {
         toast({
           title: "PDF Generated Successfully",
           description: "Invoice PDF has been generated and is now available for download",
         });
+      if (response.success) {
+        toast({
+          title: "PDF Generated Successfully",
+          description: "Invoice PDF has been generated and is now available for download",
+        });
 
+        // Refresh the invoices list to show updated PDF status
+        fetchInvoices();
+      } else {
+        toast({
+          title: "PDF Generation Failed",
+          description: response.message || "Failed to generate PDF",
+          variant: "destructive",
+        });
         // Refresh the invoices list to show updated PDF status
         fetchInvoices();
       } else {
@@ -353,31 +391,39 @@ function B2BInvoicesContent() {
                   <TableHeader>
                     <TableRow>
                       <TableHead>Invoice #</TableHead>
+                      <TableHead>Type</TableHead> {/* ✅ NEW */}
                       <TableHead>Customer</TableHead>
                       <TableHead>Order #</TableHead>
                       <TableHead>Service</TableHead>
                       <TableHead>Invoice Date</TableHead>
                       <TableHead>Due Date</TableHead>
                       <TableHead>Amount</TableHead>
+                      <TableHead>Paid/Outstanding</TableHead> {/* ✅ NEW */}
                       <TableHead>Payment Status</TableHead>
                       <TableHead>PDF Status</TableHead>
                       <TableHead>Actions</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {invoices && invoices.length > 0 ? invoices.map((invoice) => (
+                    {invoices && invoices.length > 0 ? invoices.map((invoice) => {
+                      const customer = getCustomerInfo(invoice);
+                      return (
                       <TableRow key={invoice.id}>
                         <TableCell className="font-medium">
                           {invoice.invoice_number}
                         </TableCell>
+                        {/* ✅ NEW: Invoice Type */}
+                        <TableCell>
+                          {getInvoiceTypeBadge(invoice.invoice_type)}
+                        </TableCell>
                         <TableCell>
                           <div>
-                            <div className="font-medium">{invoice.booking.customer.company_name}</div>
-                            <div className="text-sm text-gray-500">{invoice.booking.customer.contact_person}</div>
+                            <div className="font-medium">{customer.company_name}</div>
+                            <div className="text-sm text-gray-500">{customer.contact_person}</div>
                           </div>
                         </TableCell>
-                        <TableCell>{invoice.booking.order_number}</TableCell>
-                        <TableCell>{invoice.booking.service_name}</TableCell>
+                        <TableCell>{getOrderInfo(invoice)}</TableCell>
+                        <TableCell>{getServiceInfo(invoice)}</TableCell>
                         <TableCell>{formatDate(invoice.invoice_date)}</TableCell>
                         <TableCell>
                           <div className={new Date(invoice.due_date) < new Date() && invoice.payment_status !== 'paid' ? 'text-red-600 font-medium' : ''}>
@@ -392,6 +438,59 @@ function B2BInvoicesContent() {
                             </div>
                             <div className="text-sm text-gray-500">
                               Tax: {formatCurrency(invoice.tax_amount || 0)}
+                            </div>
+                            {/* ✅ NEW: Show additional costs if present */}
+                            {invoice.additional_costs_count > 0 && (
+                              <Popover>
+                                <PopoverTrigger asChild>
+                                  <div className="text-sm text-blue-600 font-medium mt-1 cursor-pointer hover:text-blue-800 flex items-center gap-1">
+                                    <Info className="w-3 h-3" />
+                                    + {invoice.additional_costs_count} additional item{invoice.additional_costs_count > 1 ? 's' : ''} (₹{invoice.additional_costs_total?.toLocaleString() || 0})
+                                  </div>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-80">
+                                  <div className="space-y-2">
+                                    <h4 className="font-semibold text-sm">Additional Costs Included</h4>
+                                    <div className="space-y-2">
+                                      {invoice.additional_costs?.map((cost: any) => (
+                                        <div key={cost.id} className="border-b pb-2 last:border-0">
+                                          <div className="flex justify-between items-start">
+                                            <div className="flex-1">
+                                              <p className="font-medium text-sm">{cost.item_name}</p>
+                                              {cost.description && (
+                                                <p className="text-xs text-gray-500">{cost.description}</p>
+                                              )}
+                                              <p className="text-xs text-gray-600 mt-1">
+                                                Qty: {cost.quantity} × ₹{cost.unit_price?.toLocaleString() || 0}
+                                              </p>
+                                            </div>
+                                            <div className="text-sm font-semibold">
+                                              ₹{cost.total_amount?.toLocaleString() || 0}
+                                            </div>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                    <div className="pt-2 border-t">
+                                      <div className="flex justify-between font-semibold">
+                                        <span>Total Additional:</span>
+                                        <span>₹{invoice.additional_costs_total?.toLocaleString() || 0}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </PopoverContent>
+                              </Popover>
+                            )}
+                          </div>
+                        </TableCell>
+                        {/* ✅ NEW: Paid/Outstanding */}
+                        <TableCell>
+                          <div>
+                            <div className="text-sm text-green-600">
+                              Paid: {formatCurrency(invoice.paid_amount || 0)}
+                            </div>
+                            <div className="text-sm text-orange-600 font-medium">
+                              Due: {formatCurrency(invoice.outstanding_amount || 0)}
                             </div>
                           </div>
                         </TableCell>
@@ -467,12 +566,27 @@ function B2BInvoicesContent() {
                                 <Trash className="w-4 h-4" />
                               )}
                             </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteInvoice(invoice.id)}
+                              disabled={deletingId === invoice.id}
+                              title={deletingId === invoice.id ? "Deleting..." : "Delete Invoice"}
+                              className="text-red-600 hover:text-red-700"
+                            >
+                              {deletingId === invoice.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Trash className="w-4 h-4" />
+                              )}
+                            </Button>
                           </div>
                         </TableCell>
                       </TableRow>
-                    )) : (
+                    );
+                    }) : (
                       <TableRow>
-                        <TableCell colSpan={10} className="text-center py-8 text-gray-500">
+                        <TableCell colSpan={12} className="text-center py-8 text-gray-500">
                           {loading ? 'Loading invoices...' : 'No invoices found'}
                         </TableCell>
                       </TableRow>
