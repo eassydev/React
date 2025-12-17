@@ -521,11 +521,12 @@ const B2BQuotationForm: React.FC<B2BQuotationFormProps> = ({
                       />
                     </TableCell>
                     <TableCell>
-                      <Input
+                      <Textarea
                         value={item.description || ''}
                         onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                        placeholder="Description (optional)"
-                        className="min-w-40"
+                        placeholder="Description (supports bullet points with - or numbered lists with 1. 2. etc.)"
+                        className="min-w-40 min-h-20"
+                        rows={3}
                       />
                     </TableCell>
                     <TableCell>
