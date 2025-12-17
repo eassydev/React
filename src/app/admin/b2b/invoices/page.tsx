@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Search, Download, Eye, FileText, Filter, Loader2, RefreshCw, Trash } from 'lucide-react';
+import { Search, Download, Eye, FileText, Filter, Loader2, RefreshCw, Trash, Info } from 'lucide-react';
 import { fetchB2BInvoices, downloadB2BInvoice, regenerateB2BInvoicePDF, deleteB2BInvoice } from '@/lib/api';
 import { toast } from "@/components/ui/use-toast"
 import { Button } from '@/components/ui/button';
@@ -74,7 +74,6 @@ function B2BInvoicesContent() {
   const [invoices, setInvoices] = useState<B2BInvoice[]>([]);
   const [loading, setLoading] = useState(true);
   const [regeneratingId, setRegeneratingId] = useState<string | null>(null);
-  const [deletingId, setDeletingId] = useState<string | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -186,7 +185,6 @@ function B2BInvoicesContent() {
   };
 
   // ✅ FIXED: Use centralized API function instead of direct fetch
-  // ✅ FIXED: Use centralized API function instead of direct fetch
   const handleRetryPDF = async (invoiceId: string) => {
     // ✅ Prevent multiple regeneration requests
     if (regeneratingId === invoiceId) return;
@@ -201,28 +199,13 @@ function B2BInvoicesContent() {
 
       // ✅ Use centralized API function from api.tsx
       const response = await regenerateB2BInvoicePDF(invoiceId);
-      // ✅ Use centralized API function from api.tsx
-      const response = await regenerateB2BInvoicePDF(invoiceId);
 
       if (response.success) {
         toast({
           title: "PDF Generated Successfully",
           description: "Invoice PDF has been generated and is now available for download",
         });
-      if (response.success) {
-        toast({
-          title: "PDF Generated Successfully",
-          description: "Invoice PDF has been generated and is now available for download",
-        });
 
-        // Refresh the invoices list to show updated PDF status
-        fetchInvoices();
-      } else {
-        toast({
-          title: "PDF Generation Failed",
-          description: response.message || "Failed to generate PDF",
-          variant: "destructive",
-        });
         // Refresh the invoices list to show updated PDF status
         fetchInvoices();
       } else {
@@ -272,6 +255,62 @@ function B2BInvoicesContent() {
         variant: 'destructive'
       });
     }
+  };
+
+  // ✅ NEW: Helper to get invoice type badge
+  const getInvoiceTypeBadge = (type: string) => {
+    const colors: Record<string, string> = {
+      standard: 'bg-blue-100 text-blue-800',
+      consolidated: 'bg-purple-100 text-purple-800',
+      partial: 'bg-orange-100 text-orange-800',
+      advance: 'bg-teal-100 text-teal-800',
+      credit_note: 'bg-red-100 text-red-800',
+    };
+
+    const labels: Record<string, string> = {
+      standard: 'Standard',
+      consolidated: 'Consolidated',
+      partial: 'Partial',
+      advance: 'Advance',
+      credit_note: 'Credit Note',
+    };
+
+    return (
+      <Badge className={colors[type] || 'bg-gray-100 text-gray-800'}>
+        {labels[type] || type}
+      </Badge>
+    );
+  };
+
+  // ✅ NEW: Helper to get customer info from invoice
+  const getCustomerInfo = (invoice: B2BInvoice) => {
+    // For standard/partial invoices, use booking.customer
+    if (invoice.booking?.customer) {
+      return invoice.booking.customer;
+    }
+    // For consolidated invoices, use first order's customer
+    if (invoice.orderLinks && invoice.orderLinks.length > 0) {
+      return invoice.orderLinks[0].booking.customer;
+    }
+    return { company_name: 'N/A', contact_person: '' };
+  };
+
+  // ✅ NEW: Helper to get order info from invoice
+  const getOrderInfo = (invoice: B2BInvoice) => {
+    if (invoice.invoice_type === 'consolidated') {
+      const orderCount = invoice.orderLinks?.length || 0;
+      return `${orderCount} Orders`;
+    }
+    return invoice.booking?.order_number || 'N/A';
+  };
+
+  // ✅ NEW: Helper to get service info from invoice
+  const getServiceInfo = (invoice: B2BInvoice) => {
+    if (invoice.invoice_type === 'consolidated') {
+      const orderCount = invoice.orderLinks?.length || 0;
+      return `Consolidated (${orderCount} services)`;
+    }
+    return invoice.booking?.service_name || 'N/A';
   };
 
   const getPaymentStatusBadge = (status: string) => {
@@ -552,20 +591,6 @@ function B2BInvoicesContent() {
                                 )}
                               </Button>
                             )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteInvoice(invoice.id)}
-                              disabled={deletingId === invoice.id}
-                              title={deletingId === invoice.id ? "Deleting..." : "Delete Invoice"}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              {deletingId === invoice.id ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <Trash className="w-4 h-4" />
-                              )}
-                            </Button>
                             <Button
                               variant="ghost"
                               size="sm"
