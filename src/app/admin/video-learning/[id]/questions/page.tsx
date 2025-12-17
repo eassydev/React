@@ -66,18 +66,17 @@ const VideoQuestionsPage: React.FC = () => {
       // Fetch video details
       const videoResponse = await fetchLearningVideoById(videoId);
       const videoData = videoResponse.data;
-      console.log(videoData)
+
+      
 
       // Fetch questions for this video
       try {
-        const questionsResponse = await fetchVideoQuestions(videoId);
-        console.log(videoData)
-        const questions = questionsResponse.data || [];
+        // const questionsResponse = await fetchVideoQuestions(videoId);
+        // const questions = questionsResponse.data || [];
 
         // Fetch answers for each question
         const questionsWithAnswers = await Promise.all(
-          questions.map(async (question: VideoQuestion) => {
-            console.log(question.id)
+          videoData?.map(async (question: VideoQuestion) => {
             try {
               const answersResponse = await fetchQuestionAnswers(question.id!);
               return { ...question, answers: answersResponse.data || [] };
@@ -86,6 +85,7 @@ const VideoQuestionsPage: React.FC = () => {
             }
           })
         );
+        console.log(questionsWithAnswers,"pavan")
 
         setVideo({ ...videoData, questions: questionsWithAnswers });
       } catch {
