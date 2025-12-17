@@ -26,6 +26,7 @@ import {
   BarChart3,
   TrendingUp,
   CheckSquare,
+  BookOpen,
 } from 'lucide-react';
 
 export interface NavItem {
@@ -318,6 +319,12 @@ export const sidebarItems: SidebarItem[] = [
     icon: FileText,
     route: `${basePath}/seo-content`,
   },
+  {
+    title: 'Provider Learning',
+    icon: BookOpen,
+    route: `${basePath}/video-learning`,
+  },
+  // Additional sidebar items can be added here
   // {
   //   title: "Auth",
   //   icon: Receipt,
