@@ -6973,6 +6973,7 @@ export interface B2BQuotation {
   b2b_customer_id: string; // ✅ NEW: Required for all quotations
   service_name: string; // ✅ NEW: Service name for standalone quotations
   service_description?: string; // ✅ NEW: Service description for standalone quotations
+  site_address?: string; // ✅ NEW: Site address where service will be performed
   quotation_type: 'booking_linked' | 'standalone'; // ✅ NEW: Quotation type
   initial_amount: number;
   negotiated_amount?: number;
