@@ -5,12 +5,11 @@ import Link from 'next/link';
 import { Plus, Search, Eye, Edit, Settings, Download, FileText, Upload, CheckSquare, Square, X } from 'lucide-react';
 import {
   fetchB2BOrders,
-  downloadB2BInvoiceSimple,
   fetchB2BStatusOptions,
   StatusOption,
   bulkUpdateB2BOrderStatus,
   checkB2BInvoiceExists,
-  generateB2BOrderInvoice,
+  generateStandardInvoice, // ✅ NEW: Use unified finance API
   getB2BOrderInvoicePath,
   updateB2BOrderRemarks
 } from '@/lib/api';
@@ -230,38 +229,32 @@ export default function B2BOrdersPage() {
         return;
       }
 
-      // ✅ Generate new invoice
-      // Don't send subtotal - backend will use booking.total_amount or booking.custom_price
-      const response = await generateB2BOrderInvoice(orderId, {
-        payment_terms: 'Net 30 days',
-        notes: `Invoice for order ${orderNumber}`,
-        due_days: 30
-        // ✅ subtotal and invoice_items are optional - backend handles them
-      });
+      // ✅ Generate new invoice using unified finance API
+      const dueDate = new Date();
+      dueDate.setDate(dueDate.getDate() + 30); // 30 days from now
+      const dueDateStr = dueDate.toISOString().split('T')[0];
+
+      const response = await generateStandardInvoice(
+        orderId,
+        dueDateStr,
+        `Invoice for order ${orderNumber}`
+      );
 
       if (response.success) {
-        // ✅ Handle PDF generation status
-        const pdfStatus = response.data.pdf_status;
-        const pdfError = response.data.pdf_error;
+        const data = response.data;
 
-        // Show appropriate message based on invoice and PDF status
+        // Show success message
         let title = "Invoice Generated Successfully!";
-        let description = "";
+        let description = `Invoice ${data.invoice_number} has been generated with PDF`;
         let duration = 3000;
 
-        if (response.data.existing) {
+        // ✅ NEW: Simplified - new API always generates PDF
+        if (data.existing) {
           title = "Invoice Already Exists";
-          description = `Invoice ${response.data.invoice_number} already exists for this order. Redirecting to invoice listing...`;
-        } else if (pdfStatus === 'success') {
-          title = "Invoice Generated Successfully!";
-          description = `Invoice ${response.data.invoice_number} has been generated successfully with PDF. Redirecting to invoice listing...`;
-        } else if (pdfStatus === 'failed') {
-          title = "Invoice Generated (PDF Failed)";
-          description = `Invoice ${response.data.invoice_number} generated, but PDF generation failed. You can retry PDF generation from the invoice details. Redirecting...`;
-          duration = 5000; // Longer duration for important message
+          description = `Invoice ${data.invoice_number} already exists for this order. Redirecting to invoice listing...`;
         } else {
           title = "Invoice Generated Successfully!";
-          description = `Invoice ${response.data.invoice_number} has been generated successfully. Redirecting to invoice listing...`;
+          description = `Invoice ${data.invoice_number} has been generated with PDF. Redirecting to invoice listing...`;
         }
 
         toast({
@@ -281,11 +274,7 @@ export default function B2BOrdersPage() {
 
         // Auto-redirect to invoice listing
         setTimeout(() => {
-          if (response.data.redirect_to) {
-            window.location.href = response.data.redirect_to;
-          } else {
-            window.location.href = `/admin/b2b/invoices?search=${response.data.invoice_number}`;
-          }
+          window.location.href = `/admin/b2b/invoices?search=${data.invoice_number}`;
         }, 1500);
       } else {
         toast({
