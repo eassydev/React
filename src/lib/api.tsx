@@ -6973,6 +6973,7 @@ export interface B2BQuotation {
   b2b_customer_id: string; // ✅ NEW: Required for all quotations
   service_name: string; // ✅ NEW: Service name for standalone quotations
   service_description?: string; // ✅ NEW: Service description for standalone quotations
+  site_address?: string; // ✅ NEW: Site address where service will be performed
   quotation_type: 'booking_linked' | 'standalone'; // ✅ NEW: Quotation type
   initial_amount: number;
   negotiated_amount?: number;
@@ -10220,6 +10221,291 @@ export const deleteServiceVideo = async (id: string): Promise<any> => {
     throw new Error(error.response?.data?.message || 'Failed to delete service video.');
   }
 };
+
+// ==================== Video Learning APIs ====================
+
+// Interface for Learning Video
+export interface LearningVideo {
+  id?: string | number;
+  category_id: string | number;
+  subcategory_id: string | number;
+  title: string;
+  video_url?: string;
+  sequence_number: string | number;
+  is_active: boolean;
+  module: string | number;
+  created_at?: string;
+}
+
+// Interface for Video Question
+export interface VideoQuestion {
+  id?: number;
+  video_id: string | number;
+  question_text: string;
+  is_active: boolean;
+  created_at?: string;
+}
+
+// Interface for Video Answer
+export interface VideoAnswer {
+  id?: number;
+  video_question_id: number;
+  answer_text: string;
+  is_correct: boolean;
+  is_active: boolean;
+  created_at?: string;
+}
+
+// Fetch module videos by category and subcategory
+export const fetchModuleVideos = async (categoryId: string, subcategoryId: string) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post('/videos/modulewise',
+      { category_id: categoryId, subcategory_id: subcategoryId },
+      {
+        headers: {
+          'admin-auth-token': token || '',
+        },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch module videos.');
+  }
+};
+
+// Fetch all videos in a module by ID (POST)
+export const fetchModuleVideosById = async (categoryId: string, subcategoryId: string, moduleId: string) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.post('/videos/modulewise-via-id',
+      { category_id: categoryId, subcategory_id: subcategoryId, module_id: moduleId },
+      {
+        headers: {
+          'admin-auth-token': token || '',
+        },
+      }
+    );
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch module videos.');
+  }
+};
+
+// Fetch a learning video by ID
+export const fetchLearningVideoById = async (id: string) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/videos/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch learning video.');
+  }
+};
+
+// Fetch questions for a video
+export const fetchVideoQuestions = async (videoId: string) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/videos/${videoId}/questions`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch video questions.');
+  }
+};
+
+// Fetch answers for a question
+export const fetchQuestionAnswers = async (questionId: number) => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get(`/videos/question/${questionId}/answers`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to fetch question answers.');
+  }
+};
+
+// Create a new learning video
+export const createLearningVideo = async (
+  videoData: Omit<LearningVideo, 'id' | 'video_url' | 'created_at'>,
+  videoFile: File
+): Promise<any> => {
+  try {
+    const token = getToken();
+    const formData = new FormData();
+
+    formData.append('category_id', videoData.category_id.toString());
+    formData.append('subcategory_id', videoData.subcategory_id.toString());
+    formData.append('title', videoData.title);
+    formData.append('sequence_number', videoData.sequence_number.toString());
+    formData.append('is_active', videoData.is_active.toString());
+    formData.append('module', videoData.module.toString());
+    formData.append('video_file', videoFile);
+
+    const response = await apiClient.post('/videos', formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create learning video.');
+  }
+};
+
+// Update a learning video
+export const updateLearningVideo = async (
+  id: string | number,
+  videoData: Partial<LearningVideo>,
+  videoFile?: File
+): Promise<any> => {
+  try {
+    const token = getToken();
+    const formData = new FormData();
+
+    if (videoData.category_id) formData.append('category_id', videoData.category_id.toString());
+    if (videoData.subcategory_id) formData.append('subcategory_id', videoData.subcategory_id.toString());
+    if (videoData.title) formData.append('title', videoData.title);
+    if (videoData.sequence_number) formData.append('sequence_number', videoData.sequence_number.toString());
+    if (videoData.is_active !== undefined) formData.append('is_active', videoData.is_active.toString());
+    if (videoData.module) formData.append('module', videoData.module.toString());
+    if (videoFile) formData.append('video_file', videoFile);
+
+    const response = await apiClient.put(`/video/${id}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update learning video.');
+  }
+};
+
+// Delete a learning video
+export const deleteLearningVideo = async (id: string | number): Promise<any> => {
+  try {
+    const token = getToken();
+    const response = await apiClient.delete(`/video/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete learning video.');
+  }
+};
+
+// Create a video question
+export const createVideoQuestion = async (questionData: Omit<VideoQuestion, 'id' | 'created_at'>): Promise<any> => {
+  try {
+    const token = getToken();
+    const response = await apiClient.post('/videos/question', questionData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create video question.');
+  }
+};
+
+// Update a video question
+export const updateVideoQuestion = async (id: number, questionData: Partial<VideoQuestion>): Promise<any> => {
+  try {
+    const token = getToken();
+    const response = await apiClient.put(`/videos/question/${id}`, questionData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update video question.');
+  }
+};
+
+// Delete a video question
+export const deleteVideoQuestion = async (id: number): Promise<any> => {
+  try {
+    const token = getToken();
+    const response = await apiClient.delete(`/videos/question/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete video question.');
+  }
+};
+
+// Create a video answer
+export const createVideoAnswer = async (answerData: Omit<VideoAnswer, 'id' | 'created_at'>): Promise<any> => {
+  try {
+    const token = getToken();
+    const response = await apiClient.post('/videos/answer', answerData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to create video answer.');
+  }
+};
+
+// Update a video answer
+export const updateVideoAnswer = async (id: number, answerData: Partial<VideoAnswer>): Promise<any> => {
+  try {
+    const token = getToken();
+    const response = await apiClient.put(`/videos/answer/${id}`, answerData, {
+      headers: {
+        'Content-Type': 'application/json',
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to update video answer.');
+  }
+};
+
+// Delete a video answer
+export const deleteVideoAnswer = async (id: number): Promise<any> => {
+  try {
+    const token = getToken();
+    const response = await apiClient.delete(`/videos/answer/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+    return response.data;
+  } catch (error: any) {
+    throw new Error(error.response?.data?.message || 'Failed to delete video answer.');
+  }
+};
+
+// ==================== End Video Learning APIs ====================
 
 // **Create a new Ratecard BOGO**
 export const createRatecardBogo = async (ratecardBogo: RatecardBogo): Promise<ApiResponse> => {
@@ -14209,6 +14495,39 @@ export const exportSPWiseAnalytics = async (filters?: {
   } catch (error: any) {
     console.error('❌ Error exporting SP-wise analytics:', error);
     throw new Error(error.response?.data?.message || 'Failed to export SP-wise analytics');
+  }
+};
+
+/**
+ * Export Business Trends Analytics (Excel)
+ * Last 90 days daily breakdown with trends
+ * Only accessible by super_admin and manager
+ */
+export const exportBusinessTrends = async (): Promise<void> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    const response = await apiClient.get('/b2b/analytics/export/business-trends', {
+      headers: {
+        'admin-auth-token': token
+      },
+      responseType: 'blob'
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `B2B_Business_Trends_${new Date().toISOString().split('T')[0]}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error: any) {
+    console.error('❌ Error exporting business trends:', error);
+    throw new Error(error.response?.data?.message || 'Failed to export business trends');
   }
 };
 

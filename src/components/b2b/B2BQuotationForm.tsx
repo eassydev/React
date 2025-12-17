@@ -41,6 +41,7 @@ const B2BQuotationForm: React.FC<B2BQuotationFormProps> = ({
     b2b_customer_id: quotation?.b2b_customer_id || '',
     service_name: quotation?.service_name || '', // ✅ NEW: Required for standalone quotations
     service_description: quotation?.service_description || '', // ✅ NEW: Optional description
+    site_address: quotation?.site_address || '', // ✅ NEW: Site address field
     initial_amount: quotation?.initial_amount || 0,
     final_amount: quotation?.final_amount || 0,
     quotation_items: quotation?.quotation_items || [],
@@ -460,6 +461,21 @@ const B2BQuotationForm: React.FC<B2BQuotationFormProps> = ({
               </>
             )}
 
+            {/* Site Address - Available for all quotations */}
+            <div className="md:col-span-2">
+              <Label htmlFor="site_address">Site Address</Label>
+              <Textarea
+                id="site_address"
+                value={formData.site_address}
+                onChange={(e) => setFormData(prev => ({ ...prev, site_address: e.target.value }))}
+                placeholder="Enter the complete site address where service will be performed..."
+                rows={3}
+              />
+              <p className="text-xs text-gray-500 mt-1">
+                This address will appear on the quotation PDF
+              </p>
+            </div>
+
             <div>
               <Label htmlFor="validity_days">Validity (Days)</Label>
               <Input
@@ -505,11 +521,12 @@ const B2BQuotationForm: React.FC<B2BQuotationFormProps> = ({
                       />
                     </TableCell>
                     <TableCell>
-                      <Input
+                      <Textarea
                         value={item.description || ''}
                         onChange={(e) => handleItemChange(index, 'description', e.target.value)}
-                        placeholder="Description (optional)"
-                        className="min-w-40"
+                        placeholder="Description (supports bullet points with - or numbered lists with 1. 2. etc.)"
+                        className="min-w-40 min-h-20"
+                        rows={3}
                       />
                     </TableCell>
                     <TableCell>
