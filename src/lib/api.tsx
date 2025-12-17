@@ -14498,6 +14498,39 @@ export const exportSPWiseAnalytics = async (filters?: {
 };
 
 /**
+ * Export Business Trends Analytics (Excel)
+ * Last 90 days daily breakdown with trends
+ * Only accessible by super_admin and manager
+ */
+export const exportBusinessTrends = async (): Promise<void> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    const response = await apiClient.get('/b2b/analytics/export/business-trends', {
+      headers: {
+        'admin-auth-token': token
+      },
+      responseType: 'blob'
+    });
+
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `B2B_Business_Trends_${new Date().toISOString().split('T')[0]}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    window.URL.revokeObjectURL(url);
+  } catch (error: any) {
+    console.error('❌ Error exporting business trends:', error);
+    throw new Error(error.response?.data?.message || 'Failed to export business trends');
+  }
+};
+
+/**
  * Get Monthly Report - Returns JSON data or downloads Excel based on format parameter
  * @param filters - Optional filters for year, month, and customer
  * @param format - 'json' for data return, 'excel' for file download (default: 'excel')
