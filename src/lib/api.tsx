@@ -1528,7 +1528,7 @@ export const fetchSubcategories = async (
 
 // Function to fetch categories with attributes
 export const fetchSubCategoriesByCategoryId = async (
-  categoryId: string
+  categoryId: string 
 ): Promise<Subcategory[]> => {
   try {
     const token = getToken();
@@ -10384,7 +10384,7 @@ export const updateLearningVideo = async (
     if (videoData.module) formData.append('module', videoData.module.toString());
     if (videoFile) formData.append('video_file', videoFile);
 
-    const response = await apiClient.put(`/video/${id}`, formData, {
+    const response = await apiClient.put(`/videos/${id}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         'admin-auth-token': token || '',
@@ -10400,7 +10400,7 @@ export const updateLearningVideo = async (
 export const deleteLearningVideo = async (id: string | number): Promise<any> => {
   try {
     const token = getToken();
-    const response = await apiClient.delete(`/video/${id}`, {
+    const response = await apiClient.delete(`/videos/${id}`, {
       headers: {
         'admin-auth-token': token || '',
       },

@@ -38,7 +38,14 @@ const EditLearningVideo: React.FC = () => {
   const [videoFile, setVideoFile] = useState<File | null>(null);
   const [currentVideoUrl, setCurrentVideoUrl] = useState<string>('');
 
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    category_id: string;
+    subcategory_id: string;
+    title: string;
+    sequence_number: string | number;
+    module:  string | number;
+    is_active: boolean;
+  }>({
     category_id: '',
     subcategory_id: '',
     title: '',
@@ -196,6 +203,7 @@ const EditLearningVideo: React.FC = () => {
                   <label className="text-sm font-medium text-gray-700">Module *</label>
                   <Input
                     type="text"
+                    readOnly
                     value={formData.module}
                     onChange={(e) => setFormData({ ...formData, module: e.target.value })}
                     placeholder="Enter module ID"
@@ -205,6 +213,7 @@ const EditLearningVideo: React.FC = () => {
                   <label className="text-sm font-medium text-gray-700">Sequence Number *</label>
                   <Input
                     type="text"
+                    readOnly
                     value={formData.sequence_number}
                     onChange={(e) => setFormData({ ...formData, sequence_number: e.target.value })}
                     placeholder="Enter sequence number"
