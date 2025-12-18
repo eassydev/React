@@ -43,7 +43,8 @@ const EditLearningVideo: React.FC = () => {
     subcategory_id: string;
     title: string;
     sequence_number: string | number;
-    module:  string | number;
+    module: string | number;
+    provider_type: 'b2b' | 'b2c' | 'hybrid';
     is_active: boolean;
   }>({
     category_id: '',
@@ -51,6 +52,7 @@ const EditLearningVideo: React.FC = () => {
     title: '',
     sequence_number: 1,
     module: 1,
+    provider_type: 'b2b',
     is_active: true,
   });
 
@@ -70,6 +72,7 @@ const EditLearningVideo: React.FC = () => {
           title: video.title || '',
           sequence_number: video.sequence_number || 1,
           module: video.module || 1,
+          provider_type: video.provider_type || 'b2b',
           is_active: video.is_active ?? true,
         });
         setCurrentVideoUrl(video.video_url || '');
@@ -123,6 +126,7 @@ const EditLearningVideo: React.FC = () => {
           title: formData.title,
           sequence_number: formData.sequence_number,
           module: formData.module,
+          provider_type: formData.provider_type,
           is_active: formData.is_active,
         },
         videoFile || undefined
@@ -195,6 +199,21 @@ const EditLearningVideo: React.FC = () => {
                     </SelectContent>
                   </Select>
                 </div>
+              </div>
+
+              {/* Provider Type */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Provider Type *</label>
+                <Select value={formData.provider_type} onValueChange={(val: 'b2b' | 'b2c' | 'hybrid') => setFormData({ ...formData, provider_type: val })}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Provider Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="b2b">B2B</SelectItem>
+                    <SelectItem value="b2c">B2C</SelectItem>
+                    <SelectItem value="hybrid">Hybrid</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Module & Sequence */}
