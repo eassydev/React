@@ -2641,7 +2641,8 @@ export const fetchAllProviders = async (
   page = 1,
   size = 10,
   status: string = 'all',
-  search?: string
+  search?: string,
+  provider_type?: string
 ) => {
   try {
     const token = getToken(); // Retrieve the token
@@ -2661,9 +2662,14 @@ export const fetchAllProviders = async (
       params.search = search.trim();
     }
 
+    // Include provider_type filter if provided
+    if (provider_type && provider_type.trim() !== '') {
+      params.provider_type = provider_type.trim();
+    }
+
     // Make API call
     const response: AxiosResponse = await apiClient.get('/provider', {
-      params, // Query params (page, size, status)
+      params, // Query params (page, size, status, provider_type)
       headers: {
         'admin-auth-token': token || '', // Add the token to the request headers
       },
