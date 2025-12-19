@@ -46,9 +46,9 @@ const ProviderList = () => {
   const [searchTerm, setSearchTerm] = useState('');
 
   // Fetch providers from the backend with pagination
-  const fetchProvidersData = async (page = 1, size = 50, status = 'all', search = '') => {
+  const fetchProvidersData = async (page = 1, size = 50, status = 'all', search = '', providerType = '') => {
     try {
-      const { data, meta } = await fetchAllProviders(page, size, filterStatus, search);
+      const { data, meta } = await fetchAllProviders(page, size, filterStatus, search, providerType);
       setProviders(data);
       setTotalPages(meta.totalPages);
       setTotalItems(meta.totalItems);
@@ -59,8 +59,8 @@ const ProviderList = () => {
   };
 
   useEffect(() => {
-    fetchProvidersData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm);
-  }, [pagination.pageIndex, pagination.pageSize, filterStatus, searchTerm]);
+    fetchProvidersData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm, filterProviderType);
+  }, [pagination.pageIndex, pagination.pageSize, filterStatus, searchTerm, filterProviderType]);
 
   const handleProviderDelete = async (provider: any) => {
     try {

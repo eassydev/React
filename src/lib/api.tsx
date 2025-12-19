@@ -2641,7 +2641,8 @@ export const fetchAllProviders = async (
   page = 1,
   size = 10,
   status: string = 'all',
-  search?: string
+  search?: string,
+  provider_type?: string
 ) => {
   try {
     const token = getToken(); // Retrieve the token
@@ -2661,9 +2662,14 @@ export const fetchAllProviders = async (
       params.search = search.trim();
     }
 
+    // Include provider_type filter if provided
+    if (provider_type && provider_type.trim() !== '') {
+      params.provider_type = provider_type.trim();
+    }
+
     // Make API call
     const response: AxiosResponse = await apiClient.get('/provider', {
-      params, // Query params (page, size, status)
+      params, // Query params (page, size, status, provider_type)
       headers: {
         'admin-auth-token': token || '', // Add the token to the request headers
       },
@@ -13715,7 +13721,7 @@ export const fetchFinanceDashboard = async (startDate?: string, endDate?: string
 /**
  * Generate standard invoice
  */
-export const generateStandardInvoice = async (bookingId: string, dueDate?: string, notes?: string) => {
+export const generateStandardInvoice = async (bookingId: string, dueDate?: string, notes?: string, invoiceNumber?: string) => {
   try {
     const token = getToken();
     if (!token) {
@@ -13724,7 +13730,7 @@ export const generateStandardInvoice = async (bookingId: string, dueDate?: strin
 
     const response = await apiClient.post(
       '/b2b/finance/invoices/standard',
-      { bookingId, dueDate, notes },
+      { bookingId, dueDate, notes, invoiceNumber },
       {
         headers: {
           'admin-auth-token': token,
@@ -13750,6 +13756,7 @@ export const generateConsolidatedInvoice = async (data: {
   periodEnd: string;
   dueDate?: string;
   notes?: string;
+  invoiceNumber?: string;  // ✅ NEW: Custom invoice number
 }) => {
   try {
     const token = getToken();
@@ -13779,7 +13786,8 @@ export const generatePartialInvoice = async (
   amount: number,
   dueDate?: string,
   notes?: string,
-  includeAdditionalCosts?: boolean // ✅ NEW: Optional parameter for additional costs
+  includeAdditionalCosts?: boolean, // ✅ NEW: Optional parameter for additional costs
+  invoiceNumber?: string  // ✅ NEW: Custom invoice number
 ) => {
   try {
     const token = getToken();
@@ -13789,7 +13797,7 @@ export const generatePartialInvoice = async (
 
     const response = await apiClient.post(
       '/b2b/finance/invoices/partial',
-      { bookingId, amount, dueDate, notes, includeAdditionalCosts }, // ✅ NEW: Include in request
+      { bookingId, amount, dueDate, notes, includeAdditionalCosts, invoiceNumber }, // ✅ NEW: Include invoice number in request
       {
         headers: {
           'admin-auth-token': token,

@@ -44,6 +44,7 @@ export default function GenerateInvoicePage() {
   const [selectedCustomer, setSelectedCustomer] = useState('');
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
+  const [customInvoiceNumber, setCustomInvoiceNumber] = useState(''); // ✅ NEW: Custom invoice number
 
   // Standard invoice
   const [standardOrderId, setStandardOrderId] = useState('');
@@ -153,7 +154,7 @@ export default function GenerateInvoicePage() {
 
     try {
       setLoading(true);
-      await generateStandardInvoice(standardOrderId, dueDate, notes);
+      await generateStandardInvoice(standardOrderId, dueDate, notes, customInvoiceNumber || undefined);
 
       toast({
         title: 'Success',
@@ -191,6 +192,7 @@ export default function GenerateInvoicePage() {
         periodEnd,
         dueDate,
         notes,
+        invoiceNumber: customInvoiceNumber || undefined,  // ✅ NEW: Pass custom invoice number
       });
 
       toast({
@@ -254,8 +256,8 @@ export default function GenerateInvoicePage() {
 
     try {
       setLoading(true);
-      // ✅ NEW: Pass includeAdditionalCosts to API
-      await generatePartialInvoice(partialOrderId, amount, dueDate, notes, includeAdditionalCosts);
+      // ✅ NEW: Pass includeAdditionalCosts and custom invoice number to API
+      await generatePartialInvoice(partialOrderId, amount, dueDate, notes, includeAdditionalCosts, customInvoiceNumber || undefined);
 
       toast({
         title: 'Success',
@@ -430,6 +432,22 @@ export default function GenerateInvoicePage() {
                       </div>
 
                       <div className="space-y-2">
+                        <Label htmlFor="custom-invoice-number">
+                          Custom Invoice Number (Optional)
+                        </Label>
+                        <Input
+                          id="custom-invoice-number"
+                          type="text"
+                          placeholder="e.g., Inst/246/2025-26 (leave empty for auto-generation)"
+                          value={customInvoiceNumber}
+                          onChange={(e) => setCustomInvoiceNumber(e.target.value)}
+                        />
+                        <p className="text-xs text-gray-500">
+                          Leave empty to auto-generate in format: Inst/[number]/[FY]
+                        </p>
+                      </div>
+
+                      <div className="space-y-2">
                         <Label htmlFor="standard-due-date">
                           Due Date <span className="text-red-500">*</span>
                         </Label>
@@ -542,6 +560,22 @@ export default function GenerateInvoicePage() {
                             Selected {selectedOrders.length} orders - Total: ₹{getSelectedOrdersTotal().toLocaleString()}
                           </p>
                         )}
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="consolidated-invoice-number">
+                          Custom Invoice Number (Optional)
+                        </Label>
+                        <Input
+                          id="consolidated-invoice-number"
+                          type="text"
+                          placeholder="e.g., Inst/246/2025-26 (leave empty for auto-generation)"
+                          value={customInvoiceNumber}
+                          onChange={(e) => setCustomInvoiceNumber(e.target.value)}
+                        />
+                        <p className="text-xs text-gray-500">
+                          Leave empty to auto-generate in format: Inst/[number]/[FY]
+                        </p>
                       </div>
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -660,6 +694,22 @@ export default function GenerateInvoicePage() {
                             ))}
                           </SelectContent>
                         </Select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label htmlFor="partial-invoice-number">
+                          Custom Invoice Number (Optional)
+                        </Label>
+                        <Input
+                          id="partial-invoice-number"
+                          type="text"
+                          placeholder="e.g., Inst/246/2025-26 (leave empty for auto-generation)"
+                          value={customInvoiceNumber}
+                          onChange={(e) => setCustomInvoiceNumber(e.target.value)}
+                        />
+                        <p className="text-xs text-gray-500">
+                          Leave empty to auto-generate in format: Inst/[number]/[FY]
+                        </p>
                       </div>
 
                       {partialOrderId && (
