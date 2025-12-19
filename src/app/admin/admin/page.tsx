@@ -229,7 +229,7 @@ const AdminList = () => {
             </div>
           </CardHeader>
 
-          <CardContent className="overflow-x-auto">
+          <CardContent className="overflow-x-auto ">
             <Table>
               <TableHeader>
                 {adminTable.getHeaderGroups().map((headerGroup) => (
@@ -245,7 +245,7 @@ const AdminList = () => {
                 ))}
               </TableHeader>
 
-              <TableBody>
+              <TableBody >
                 {adminTable.getRowModel().rows.length ? (
                   adminTable.getRowModel().rows.map((row) => (
                     <TableRow key={row.id}>

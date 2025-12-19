@@ -1528,7 +1528,7 @@ export const fetchSubcategories = async (
 
 // Function to fetch categories with attributes
 export const fetchSubCategoriesByCategoryId = async (
-  categoryId: string
+  categoryId: string 
 ): Promise<Subcategory[]> => {
   try {
     const token = getToken();
@@ -10234,6 +10234,7 @@ export interface LearningVideo {
   sequence_number: string | number;
   is_active: boolean;
   module: string | number;
+  provider_type?: 'b2b' | 'b2c' | 'hybrid';
   created_at?: string;
 }
 
@@ -10256,12 +10257,12 @@ export interface VideoAnswer {
   created_at?: string;
 }
 
-// Fetch module videos by category and subcategory
-export const fetchModuleVideos = async (categoryId: string, subcategoryId: string) => {
+// Fetch module videos by category, subcategory and provider type
+export const fetchModuleVideos = async (categoryId: string, subcategoryId: string, providerType: 'b2b' | 'b2c' | 'hybrid') => {
   try {
     const token = getToken();
     const response: AxiosResponse = await apiClient.post('/videos/modulewise',
-      { category_id: categoryId, subcategory_id: subcategoryId },
+      { category_id: categoryId, subcategory_id: subcategoryId, provider_type: providerType },
       {
         headers: {
           'admin-auth-token': token || '',
@@ -10353,6 +10354,7 @@ export const createLearningVideo = async (
     formData.append('is_active', videoData.is_active.toString());
     formData.append('module', videoData.module.toString());
     formData.append('video_file', videoFile);
+    formData.append('provider_type', videoData.provider_type?.toString() ?? '');
 
     const response = await apiClient.post('/videos', formData, {
       headers: {
@@ -10383,8 +10385,9 @@ export const updateLearningVideo = async (
     if (videoData.is_active !== undefined) formData.append('is_active', videoData.is_active.toString());
     if (videoData.module) formData.append('module', videoData.module.toString());
     if (videoFile) formData.append('video_file', videoFile);
+    if (videoData.provider_type) formData.append('provider_type', videoData.provider_type.toString());
 
-    const response = await apiClient.put(`/video/${id}`, formData, {
+    const response = await apiClient.put(`/videos/${id}`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         'admin-auth-token': token || '',
@@ -10400,7 +10403,7 @@ export const updateLearningVideo = async (
 export const deleteLearningVideo = async (id: string | number): Promise<any> => {
   try {
     const token = getToken();
-    const response = await apiClient.delete(`/video/${id}`, {
+    const response = await apiClient.delete(`/videos/${id}`, {
       headers: {
         'admin-auth-token': token || '',
       },

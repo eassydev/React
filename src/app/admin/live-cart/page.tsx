@@ -296,7 +296,7 @@ const CartList = () => {
                 ))}
               </TableHeader>
 
-              <TableBody>
+              <TableBody >
                 {cartTable.getRowModel().rows.length ? (
                   cartTable.getRowModel().rows.map((row) => (
                     <TableRow key={row.id}>
