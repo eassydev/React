@@ -47,6 +47,7 @@ const VideoLearningList = () => {
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [selectedCategory, setSelectedCategory] = useState<string>('');
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('');
+  const [providerType, setProviderType] = useState<'b2b' | 'hybrid' | 'b2c'>('b2b');
   const [moduleVideos, setModuleVideos] = useState<ModuleVideo[]>([]);
   const [expandedModule, setExpandedModule] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -87,17 +88,17 @@ const VideoLearningList = () => {
     }
   }, [selectedCategory]);
 
-  // Fetch module videos when category and subcategory are selected
+  // Fetch module videos when category, subcategory and provider type are selected
   useEffect(() => {
-    if (selectedCategory && selectedSubcategory) {
+    if (selectedCategory && selectedSubcategory && providerType) {
       fetchModuleVideosList();
     }
-  }, [selectedCategory, selectedSubcategory]);
+  }, [selectedCategory, selectedSubcategory, providerType]);
 
   const fetchModuleVideosList = async () => {
     setLoading(true);
     try {
-      const response = await fetchModuleVideos(selectedCategory, selectedSubcategory);
+      const response = await fetchModuleVideos(selectedCategory, selectedSubcategory, providerType);
       // Handle both success response with data and status: false response
       if (response.status === false || !response.data) {
         setModuleVideos([]);
@@ -154,14 +155,14 @@ const VideoLearningList = () => {
           </Link>
         </div>
 
-        {/* Category & Subcategory Selection */}
+        {/* Category, Subcategory & Provider Type Selection */}
         <Card className="border-none shadow-lg">
           <CardHeader>
-            <CardTitle>Select Category & Subcategory</CardTitle>
-            <CardDescription>Choose category and subcategory to view module videos</CardDescription>
+            <CardTitle>Select Category, Subcategory & Provider Type</CardTitle>
+            <CardDescription>Choose category, subcategory and provider type to view module videos</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium">Category</label>
                 <Select value={selectedCategory} onValueChange={setSelectedCategory}>
@@ -185,6 +186,19 @@ const VideoLearningList = () => {
                     {subcategories.map((sub) => (
                       <SelectItem key={sub.id} value={sub.id!.toString()}>{sub.name}</SelectItem>
                     ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Provider Type</label>
+                <Select value={providerType} onValueChange={(value: 'b2b' | 'b2c' | 'hybrid') => setProviderType(value)}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select Provider Type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="b2b">B2B</SelectItem>
+                    <SelectItem value="b2c">B2C</SelectItem>
+                    <SelectItem value="hybrid">Hybrid</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
