@@ -13721,7 +13721,7 @@ export const fetchFinanceDashboard = async (startDate?: string, endDate?: string
 /**
  * Generate standard invoice
  */
-export const generateStandardInvoice = async (bookingId: string, dueDate?: string, notes?: string) => {
+export const generateStandardInvoice = async (bookingId: string, dueDate?: string, notes?: string, invoiceNumber?: string) => {
   try {
     const token = getToken();
     if (!token) {
@@ -13730,7 +13730,7 @@ export const generateStandardInvoice = async (bookingId: string, dueDate?: strin
 
     const response = await apiClient.post(
       '/b2b/finance/invoices/standard',
-      { bookingId, dueDate, notes },
+      { bookingId, dueDate, notes, invoiceNumber },
       {
         headers: {
           'admin-auth-token': token,
@@ -13756,6 +13756,7 @@ export const generateConsolidatedInvoice = async (data: {
   periodEnd: string;
   dueDate?: string;
   notes?: string;
+  invoiceNumber?: string;  // ✅ NEW: Custom invoice number
 }) => {
   try {
     const token = getToken();
@@ -13785,7 +13786,8 @@ export const generatePartialInvoice = async (
   amount: number,
   dueDate?: string,
   notes?: string,
-  includeAdditionalCosts?: boolean // ✅ NEW: Optional parameter for additional costs
+  includeAdditionalCosts?: boolean, // ✅ NEW: Optional parameter for additional costs
+  invoiceNumber?: string  // ✅ NEW: Custom invoice number
 ) => {
   try {
     const token = getToken();
@@ -13795,7 +13797,7 @@ export const generatePartialInvoice = async (
 
     const response = await apiClient.post(
       '/b2b/finance/invoices/partial',
-      { bookingId, amount, dueDate, notes, includeAdditionalCosts }, // ✅ NEW: Include in request
+      { bookingId, amount, dueDate, notes, includeAdditionalCosts, invoiceNumber }, // ✅ NEW: Include invoice number in request
       {
         headers: {
           'admin-auth-token': token,
