@@ -13853,10 +13853,7 @@ export interface B2BDashboardData {
         total_value: number;
       };
       sp_payout: number;
-      gross_margin: {
-        total: number;
-        avg_percentage: string;
-      };
+      gross_margin: null;  // Don't calculate gross margin for WIP orders
     };
     // ✅ 4.2 Strict Pending Orders
     not_started_orders: {
