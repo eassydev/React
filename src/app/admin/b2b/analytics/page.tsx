@@ -229,7 +229,7 @@ export default function B2BAnalyticsDashboard() {
           {data.overall_metrics.wip_orders && (
             <div>
               <h2 className="text-lg font-semibold mb-3">WIP Orders (Work In Progress)</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 <B2BMetricCard
                   title="WIP Orders"
                   value={data.overall_metrics.wip_orders.count || 0}
@@ -258,14 +258,6 @@ export default function B2BAnalyticsDashboard() {
                   value={formatCurrency(data.overall_metrics.wip_orders.sp_payout || 0)}
                   subtitle="Provider payments for WIP"
                   icon={<DollarSign className="h-4 w-4" />}
-                />
-
-                <B2BMetricCard
-                  title="WIP Gross Margin"
-                  value={formatCurrency(data.overall_metrics.wip_orders.gross_margin?.total || 0)}
-                  subtitle={`${data.overall_metrics.wip_orders.gross_margin?.avg_percentage || '0'}% avg margin`}
-                  icon={<TrendingUp className="h-4 w-4" />}
-                  valueClassName="text-green-600"
                 />
               </div>
             </div>
@@ -378,8 +370,8 @@ export default function B2BAnalyticsDashboard() {
                   <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.billed_orders?.total_value)}</TableCell>
                   <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.collections?.total_value)}</TableCell>
                   <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.sp_payout)}</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.gross_margin?.total)}</TableCell>
-                  <TableCell>{data.overall_metrics.wip_orders?.gross_margin?.avg_percentage || '0'}%</TableCell>
+                  <TableCell>-</TableCell>
+                  <TableCell>-</TableCell>
                 </TableRow>
 
                 {/* Pending Orders */}
@@ -408,9 +400,18 @@ export default function B2BAnalyticsDashboard() {
                 <TableRow className="bg-gray-50 font-bold border-t-2">
                   <TableCell>Total Orders Received</TableCell>
                   <TableCell>{formatCurrency(data.overall_metrics.orders_received?.total_value)}</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.billed_orders?.total_value)}</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.collections?.total_value)}</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.sp_payout)}</TableCell>
+                  <TableCell>{formatCurrency(
+                    (data.overall_metrics.billed_orders?.total_value || 0) +
+                    (data.overall_metrics.wip_orders?.billed_orders?.total_value || 0)
+                  )}</TableCell>
+                  <TableCell>{formatCurrency(
+                    (data.overall_metrics.collections?.total_value || 0) +
+                    (data.overall_metrics.wip_orders?.collections?.total_value || 0)
+                  )}</TableCell>
+                  <TableCell>{formatCurrency(
+                    (data.overall_metrics.sp_payout || 0) +
+                    (data.overall_metrics.wip_orders?.sp_payout || 0)
+                  )}</TableCell>
                   <TableCell>{formatCurrency(data.overall_metrics.gross_margin?.total)}</TableCell>
                   <TableCell>{data.overall_metrics.gross_margin?.avg_percentage}%</TableCell>
                 </TableRow>
