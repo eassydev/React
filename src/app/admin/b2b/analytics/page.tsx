@@ -73,6 +73,7 @@ export default function B2BAnalyticsDashboard() {
       console.log('Billed Orders:', dashboardData.overall_metrics.billed_orders);
       console.log('Collections:', dashboardData.overall_metrics.collections);
       console.log('Outstanding Amount:', dashboardData.overall_metrics.outstanding_amount);
+      console.log('WIP Orders:', dashboardData.overall_metrics.wip_orders);
     } catch (err: any) {
       console.error('Dashboard error:', err);
       toast.error(err.message || 'Failed to fetch dashboard data');
@@ -224,6 +225,52 @@ export default function B2BAnalyticsDashboard() {
             </div>
           </div>
 
+          {/* Section 2.5: WIP Orders (Work In Progress) */}
+          {data.overall_metrics.wip_orders && (
+            <div>
+              <h2 className="text-lg font-semibold mb-3">WIP Orders (Work In Progress)</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+                <B2BMetricCard
+                  title="WIP Orders"
+                  value={data.overall_metrics.wip_orders.count || 0}
+                  subtitle={formatCurrency(data.overall_metrics.wip_orders.total_value)}
+                  icon={<Clock className="h-4 w-4" />}
+                  valueClassName="text-blue-600"
+                />
+
+                <B2BMetricCard
+                  title="WIP Billed"
+                  value={data.overall_metrics.wip_orders.billed_orders?.count || 0}
+                  subtitle={formatCurrency(data.overall_metrics.wip_orders.billed_orders?.total_value || 0)}
+                  icon={<Package className="h-4 w-4" />}
+                />
+
+                <B2BMetricCard
+                  title="WIP Collections"
+                  value={formatCurrency(data.overall_metrics.wip_orders.collections?.total_value || 0)}
+                  subtitle={`${data.overall_metrics.wip_orders.collections?.count || 0} paid WIP orders`}
+                  icon={<CheckCircle className="h-4 w-4" />}
+                  valueClassName="text-green-600"
+                />
+
+                <B2BMetricCard
+                  title="WIP SP Payout"
+                  value={formatCurrency(data.overall_metrics.wip_orders.sp_payout || 0)}
+                  subtitle="Provider payments for WIP"
+                  icon={<DollarSign className="h-4 w-4" />}
+                />
+
+                <B2BMetricCard
+                  title="WIP Gross Margin"
+                  value={formatCurrency(data.overall_metrics.wip_orders.gross_margin?.total || 0)}
+                  subtitle={`${data.overall_metrics.wip_orders.gross_margin?.avg_percentage || '0'}% avg margin`}
+                  icon={<TrendingUp className="h-4 w-4" />}
+                  valueClassName="text-green-600"
+                />
+              </div>
+            </div>
+          )}
+
           {/* Section 3: Financial Metrics */}
           <div>
             <h2 className="text-lg font-semibold mb-3">Financial Metrics</h2>
@@ -328,11 +375,11 @@ export default function B2BAnalyticsDashboard() {
                 <TableRow>
                   <TableCell className="font-medium">Work in Progress Orders</TableCell>
                   <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.total_value)}</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
+                  <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.billed_orders?.total_value)}</TableCell>
+                  <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.collections?.total_value)}</TableCell>
+                  <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.sp_payout)}</TableCell>
+                  <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.gross_margin?.total)}</TableCell>
+                  <TableCell>{data.overall_metrics.wip_orders?.gross_margin?.avg_percentage || '0'}%</TableCell>
                 </TableRow>
 
                 {/* Pending Orders */}

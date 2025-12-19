@@ -13844,6 +13844,19 @@ export interface B2BDashboardData {
     wip_orders: {
       count: number;
       total_value: number;
+      billed_orders: {
+        count: number;
+        total_value: number;
+      };
+      collections: {
+        count: number;
+        total_value: number;
+      };
+      sp_payout: number;
+      gross_margin: {
+        total: number;
+        avg_percentage: string;
+      };
     };
     // ✅ 4.2 Strict Pending Orders
     not_started_orders: {
