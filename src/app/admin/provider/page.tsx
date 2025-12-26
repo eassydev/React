@@ -103,7 +103,7 @@ const ProviderList = () => {
     const printableContent = providers
       .map(
         (item) =>
-          `<tr><td>${item.id}</td><td>${item.first_name}</td><td>${item.is_active}</td></tr>`
+          `<tr><td>${item.id}</td><td>${item.full_name}</td><td>${item.is_active}</td></tr>`
       )
       .join('');
     const newWindow = window.open('', '_blank');
@@ -142,8 +142,8 @@ const ProviderList = () => {
 
   const providerColumns: ColumnDef<any>[] = [
     { accessorKey: 'sampleid', header: 'ID' },
-    { accessorKey: 'first_name', header: 'First Name' },
-    { accessorKey: 'last_name', header: 'Last Name' },
+    { accessorKey: 'full_name', header: 'Full Name' },
+    // { accessorKey: 'last_name', header: 'Last Name' },
     { accessorKey: 'email', header: 'Email' },
     { accessorKey: 'phone', header: 'Phone' },
     {
