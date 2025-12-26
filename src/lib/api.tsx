@@ -419,8 +419,8 @@ export interface Donation {
 // Define the structure of the Provider object
 export interface Provider {
   id?: string;
-  first_name: string;
-  last_name: string;
+  full_name: string;
+  // last_name: string;
   gender?: 'male' | 'female' | 'other';
   email: string;
   phone: string;
@@ -441,6 +441,7 @@ export interface Provider {
   // ✅ B2B PROVIDER FIELDS
   provider_type?: 'b2c' | 'b2b' | 'hybrid';
   b2b_approved?: number; // 0 = not approved, 1 = approved
+  country_code?: string; // Country code for the phone number
 }
 
 // Define the structure of the Bank object
@@ -2774,8 +2775,8 @@ export const createProvider = async (provider: Provider): Promise<ApiResponse> =
   const formData = new FormData();
 
   // Append individual fields to the FormData object
-  formData.append('first_name', provider.first_name);
-  formData.append('last_name', provider.last_name);
+  formData.append('full_name', provider.full_name);
+  formData.append('country_code', provider.country_code || '+91');
   formData.append('gender', provider.gender || '');
   formData.append('email', provider.email);
   formData.append('phone', provider.phone);

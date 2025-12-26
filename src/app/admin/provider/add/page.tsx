@@ -18,7 +18,7 @@ import { createProvider, Provider } from '@/lib/api';
 import { useRouter, useParams } from 'next/navigation';
 
 const AddProviderForm: React.FC = () => {
-  const [firstName, setFirstName] = useState<string>('');
+  const [fullName, setFullName] = useState<string>('');
   const [lastName, setLastName] = useState<string>('');
   const [gender, setGender] = useState<string>('male');
   const [email, setEmail] = useState<string>('');
@@ -31,6 +31,7 @@ const AddProviderForm: React.FC = () => {
   const [isActive, setIsActive] = useState<boolean>(true);
   const [rating, setRating] = useState<string>('0.0');
   const [commission, setCommission] = useState<string>('0.0');
+  const [countryCode, setCountryCode] = useState<string>('+91');
   // ✅ B2B PROVIDER FIELDS
   const [providerType, setProviderType] = useState<'b2c' | 'b2b' | 'hybrid'>('b2c');
   const [b2bApproved, setB2bApproved] = useState<boolean>(false);
@@ -76,11 +77,21 @@ const AddProviderForm: React.FC = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    if (!firstName || !phone) {
+    if (!fullName || !phone) {
       toast({
         variant: 'error',
         title: 'Validation Error',
-        description: 'First Name and Phone are required.',
+        description: 'Full Name and Phone are required.',
+      });
+      setIsSubmitting(false);
+      return;
+    }
+
+    if(!phone.match(/^[0-9]{10}$/)) {
+      toast({
+        variant: 'error',
+        title: 'Validation Error',
+        description: 'Please enter a valid 10 digit phone number.',
       });
       setIsSubmitting(false);
       return;
@@ -98,8 +109,8 @@ const AddProviderForm: React.FC = () => {
     }
     const validGenders: Array<'male' | 'female' | 'other'> = ['male', 'female', 'other'];
     const newProvider: Provider = {
-      first_name: firstName,
-      last_name: lastName,
+      full_name: fullName,
+      // last_name: lastName,
       gender: validGenders.includes(gender as any)
         ? (gender as 'male' | 'female' | 'other')
         : undefined,
@@ -120,6 +131,7 @@ const AddProviderForm: React.FC = () => {
       // ✅ B2B PROVIDER FIELDS
       provider_type: providerType,
       b2b_approved: b2bApproved ? 1 : 0,
+      country_code: countryCode,
     };
 
     try {
@@ -167,24 +179,24 @@ const AddProviderForm: React.FC = () => {
             <form onSubmit={onSubmit} className="space-y-6">
               {/* First Name */}
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">First Name</label>
+                <label className="text-sm font-medium text-gray-700">Full Name</label>
                 <Input
-                  value={firstName}
-                  onChange={(e) => setFirstName(e.target.value)}
+                  value={fullName}
+                  onChange={(e) => setFullName(e.target.value)}
                   placeholder="Enter first name"
                   required
                 />
               </div>
 
               {/* Last Name */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Last Name</label>
-                <Input
-                  value={lastName}
-                  onChange={(e) => setLastName(e.target.value)}
-                  placeholder="Enter last name"
-                />
-              </div>
+              {/* <div className="space-y-2"> */}
+                {/* <label className="text-sm font-medium text-gray-700">Last Name</label> */}
+                {/* <Input */}
+                  {/* value={lastName} */}
+                  {/* onChange={(e) => setLastName(e.target.value)} */}
+                  {/* placeholder="Enter last name" */}
+                {/* /> */}
+              {/* </div> */}
 
               {/* Gender */}
               <div className="space-y-2">
@@ -208,6 +220,16 @@ const AddProviderForm: React.FC = () => {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="Enter email"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">country code</label>
+                <Input
+                  type="text"
+                  value="+91"
+                  onChange={(e) => setCountryCode(e.target.value)}
+                  disabled
                 />
               </div>
 
