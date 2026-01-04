@@ -20,6 +20,13 @@ import { DateRangePicker } from '@/components/DateRangePicker';
 import { Separator } from '@/components/ui/separator';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCaption,
@@ -34,22 +41,20 @@ import {
   B2BDashboardData
 } from '@/lib/api';
 
+// ✅ UPDATED: Format currency in Lacs (no "L" suffix, convert Crores to Lacs)
 const formatCurrency = (value: number | undefined | null): string => {
   // Handle undefined, null, or NaN values
   if (value === undefined || value === null || isNaN(value)) {
-    return '₹0';
+    return '₹0.00';
   }
 
   const numValue = Number(value);
 
-  if (numValue >= 10000000) {
-    return `₹${(numValue / 10000000).toFixed(2)}Cr`;
-  } else if (numValue >= 100000) {
-    return `₹${(numValue / 100000).toFixed(2)}L`;
-  } else if (numValue >= 1000) {
-    return `₹${(numValue / 1000).toFixed(2)}K`;
-  }
-  return `₹${numValue.toFixed(0)}`;
+  // Convert to Lacs (1 Lac = 100,000)
+  // 1 Crore = 100 Lacs, so 1.18 Cr = 118.00 Lacs
+  const lacs = numValue / 100000;
+
+  return `₹${lacs.toFixed(2)}`;
 };
 
 export default function B2BAnalyticsDashboard() {
@@ -57,13 +62,28 @@ export default function B2BAnalyticsDashboard() {
   const [data, setData] = useState<B2BDashboardData | null>(null);
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [userRole, setUserRole] = useState<string>('');
+  const [selectedMonth, setSelectedMonth] = useState<string>('all'); // 'all' or 'YYYY-MM' format
 
   const fetchDashboard = async () => {
     setLoading(true);
 
     try {
-      const startDate = dateRange?.from?.toISOString().split('T')[0];
-      const endDate = dateRange?.to?.toISOString().split('T')[0];
+      let startDate: string | undefined;
+      let endDate: string | undefined;
+
+      // ✅ Month filter takes precedence over date range
+      if (selectedMonth !== 'all') {
+        // Parse YYYY-MM format
+        const [year, month] = selectedMonth.split('-');
+        const firstDay = new Date(parseInt(year), parseInt(month) - 1, 1);
+        const lastDay = new Date(parseInt(year), parseInt(month), 0);
+
+        startDate = firstDay.toISOString().split('T')[0];
+        endDate = lastDay.toISOString().split('T')[0];
+      } else if (dateRange?.from && dateRange?.to) {
+        startDate = dateRange.from.toISOString().split('T')[0];
+        endDate = dateRange.to.toISOString().split('T')[0];
+      }
 
       const dashboardData = await getB2BAnalyticsDashboard(startDate, endDate);
       setData(dashboardData);
@@ -84,7 +104,7 @@ export default function B2BAnalyticsDashboard() {
 
   useEffect(() => {
     fetchDashboard();
-  }, [dateRange]);
+  }, [dateRange, selectedMonth]);
 
   // Get user role from localStorage or API response
   useEffect(() => {
@@ -124,6 +144,28 @@ export default function B2BAnalyticsDashboard() {
     );
   }
 
+  // ✅ Generate month options (last 12 months)
+  const generateMonthOptions = () => {
+    const months = [];
+    const today = new Date();
+
+    for (let i = 0; i < 12; i++) {
+      const date = new Date(today.getFullYear(), today.getMonth() - i, 1);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const monthName = date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+      months.push({
+        value: `${year}-${month}`,
+        label: monthName
+      });
+    }
+
+    return months;
+  };
+
+  const monthOptions = generateMonthOptions();
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       {/* Header */}
@@ -136,6 +178,21 @@ export default function B2BAnalyticsDashboard() {
         </div>
 
         <div className="flex items-center gap-2">
+          {/* ✅ Month Filter Dropdown */}
+          <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+            <SelectTrigger className="w-[200px]">
+              <SelectValue placeholder="Select Month" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Time</SelectItem>
+              {monthOptions.map((month) => (
+                <SelectItem key={month.value} value={month.value}>
+                  {month.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <DateRangePicker
             selectedRange={dateRange}
             onChangeRange={setDateRange}
@@ -337,67 +394,24 @@ export default function B2BAnalyticsDashboard() {
         <TabsContent value="sheet" className="mt-6">
           <div className="rounded-md border bg-white shadow-sm overflow-hidden">
             <div className="p-4 bg-gray-50 border-b">
-              <h3 className="font-semibold text-lg">Dashboard Sheet View (Rs Lacs)</h3>
+              <h3 className="font-semibold text-lg">Dashboard Sheet View (₹ Lacs)</h3>
+              <p className="text-sm text-muted-foreground mt-1">All amounts are displayed in Lacs (1 Lac = ₹1,00,000)</p>
             </div>
             <Table>
               <TableHeader>
                 <TableRow className="bg-gray-100">
                   <TableHead className="w-[200px] font-bold">Category</TableHead>
-                  <TableHead className="font-bold">Orders Received</TableHead>
-                  <TableHead className="font-bold">Orders Billed</TableHead>
-                  <TableHead className="font-bold">Collections Amount</TableHead>
-                  <TableHead className="font-bold">SP Payment</TableHead>
-                  <TableHead className="font-bold">Gross Margin</TableHead>
+                  <TableHead className="font-bold">Orders Received (Lacs)</TableHead>
+                  <TableHead className="font-bold">Orders Billed (Lacs)</TableHead>
+                  <TableHead className="font-bold">Collections Amount (Lacs)</TableHead>
+                  <TableHead className="font-bold">SP Payment (Lacs)</TableHead>
+                  <TableHead className="font-bold">Gross Margin (Lacs)</TableHead>
                   <TableHead className="font-bold">GM %</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {/* Completed Orders */}
-                <TableRow>
-                  <TableCell className="font-medium">Completed Orders</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.orders_executed?.total_value)}</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.billed_orders?.total_value)}</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.collections?.total_value)}</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.sp_payout)}</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.gross_margin?.total)}</TableCell>
-                  <TableCell>{data.overall_metrics.gross_margin?.avg_percentage}%</TableCell>
-                </TableRow>
-
-                {/* Work in Progress Orders */}
-                <TableRow>
-                  <TableCell className="font-medium">Work in Progress Orders</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.total_value)}</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.billed_orders?.total_value)}</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.collections?.total_value)}</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.sp_payout)}</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                </TableRow>
-
-                {/* Pending Orders */}
-                <TableRow>
-                  <TableCell className="font-medium">Pending Orders</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.not_started_orders?.total_value)}</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                </TableRow>
-
-                {/* Cancelled Orders */}
-                <TableRow>
-                  <TableCell className="font-medium">Cancelled Orders</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.orders_cancelled?.total_value)}</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                  <TableCell>-</TableCell>
-                </TableRow>
-
-                {/* Total Orders Received */}
-                <TableRow className="bg-gray-50 font-bold border-t-2">
+                {/* ✅ REORDERED: Row 1 - Total Orders Received */}
+                <TableRow className="bg-blue-50 font-bold border-t-2">
                   <TableCell>Total Orders Received</TableCell>
                   <TableCell>{formatCurrency(data.overall_metrics.orders_received?.total_value)}</TableCell>
                   <TableCell>{formatCurrency(
@@ -414,6 +428,50 @@ export default function B2BAnalyticsDashboard() {
                   )}</TableCell>
                   <TableCell>{formatCurrency(data.overall_metrics.gross_margin?.total)}</TableCell>
                   <TableCell>{data.overall_metrics.gross_margin?.avg_percentage}%</TableCell>
+                </TableRow>
+
+                {/* ✅ REORDERED: Row 2 - Cancelled Orders */}
+                <TableRow>
+                  <TableCell className="font-medium">Cancelled Orders</TableCell>
+                  <TableCell>{formatCurrency(data.overall_metrics.orders_cancelled?.total_value)}</TableCell>
+                  <TableCell>-</TableCell>
+                  <TableCell>-</TableCell>
+                  <TableCell>-</TableCell>
+                  <TableCell>-</TableCell>
+                  <TableCell>-</TableCell>
+                </TableRow>
+
+                {/* ✅ REORDERED: Row 3 - Completed Orders */}
+                <TableRow>
+                  <TableCell className="font-medium">Completed Orders</TableCell>
+                  <TableCell>{formatCurrency(data.overall_metrics.orders_executed?.total_value)}</TableCell>
+                  <TableCell>{formatCurrency(data.overall_metrics.billed_orders?.total_value)}</TableCell>
+                  <TableCell>{formatCurrency(data.overall_metrics.collections?.total_value)}</TableCell>
+                  <TableCell>{formatCurrency(data.overall_metrics.sp_payout)}</TableCell>
+                  <TableCell>{formatCurrency(data.overall_metrics.gross_margin?.total)}</TableCell>
+                  <TableCell>{data.overall_metrics.gross_margin?.avg_percentage}%</TableCell>
+                </TableRow>
+
+                {/* ✅ REORDERED: Row 4 - Work in Progress Orders */}
+                <TableRow>
+                  <TableCell className="font-medium">Work In Progress Orders</TableCell>
+                  <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.total_value)}</TableCell>
+                  <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.billed_orders?.total_value)}</TableCell>
+                  <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.collections?.total_value)}</TableCell>
+                  <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.sp_payout)}</TableCell>
+                  <TableCell>-</TableCell>
+                  <TableCell>-</TableCell>
+                </TableRow>
+
+                {/* ✅ REORDERED: Row 5 - Pending Orders */}
+                <TableRow>
+                  <TableCell className="font-medium">Pending Orders</TableCell>
+                  <TableCell>{formatCurrency(data.overall_metrics.not_started_orders?.total_value)}</TableCell>
+                  <TableCell>-</TableCell>
+                  <TableCell>-</TableCell>
+                  <TableCell>-</TableCell>
+                  <TableCell>-</TableCell>
+                  <TableCell>-</TableCell>
                 </TableRow>
               </TableBody>
             </Table>
