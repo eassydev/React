@@ -140,11 +140,17 @@ export default function AllocatePaymentPage() {
   };
 
   const getTotalAllocated = () => {
-    return invoices.reduce((sum, inv) => sum + inv.allocatedAmount, 0);
+    const total = invoices.reduce((sum, inv) => sum + inv.allocatedAmount, 0);
+    return parseFloat(total.toFixed(2)); // Round to 2 decimal places
   };
 
   const getRemainingAmount = () => {
-    return (payment?.unallocated_amount || 0) - getTotalAllocated();
+    const remaining = (payment?.unallocated_amount || 0) - getTotalAllocated();
+    return parseFloat(remaining.toFixed(2)); // Round to 2 decimal places
+  };
+
+  const formatCurrency = (amount: number) => {
+    return amount.toFixed(2);
   };
 
   const validateAllocations = () => {
@@ -300,19 +306,19 @@ export default function AllocatePaymentPage() {
               <div>
                 <span className="text-sm text-gray-500">Total Amount</span>
                 <div className="font-semibold text-gray-900 mt-1">
-                  ₹{(payment?.amount || 0).toLocaleString()}
+                  ₹{formatCurrency(payment?.amount || 0)}
                 </div>
               </div>
               <div>
                 <span className="text-sm text-gray-500">Already Allocated</span>
                 <div className="font-medium text-gray-900 mt-1">
-                  ₹{(payment?.allocated_amount || 0).toLocaleString()}
+                  ₹{formatCurrency(payment?.allocated_amount || 0)}
                 </div>
               </div>
               <div>
                 <span className="text-sm text-gray-500">Unallocated Amount</span>
                 <div className="font-semibold text-blue-600 mt-1">
-                  ₹{(payment?.unallocated_amount || 0).toLocaleString()}
+                  ₹{formatCurrency(payment?.unallocated_amount || 0)}
                 </div>
               </div>
             </div>
@@ -326,19 +332,19 @@ export default function AllocatePaymentPage() {
               <div>
                 <span className="text-sm text-gray-500">Available to Allocate</span>
                 <div className="text-2xl font-bold text-gray-900">
-                  ₹{(payment?.unallocated_amount || 0).toLocaleString()}
+                  ₹{formatCurrency(payment?.unallocated_amount || 0)}
                 </div>
               </div>
               <div>
                 <span className="text-sm text-gray-500">Allocating Now</span>
                 <div className="text-2xl font-bold text-blue-600">
-                  ₹{totalAllocated.toLocaleString()}
+                  ₹{formatCurrency(totalAllocated)}
                 </div>
               </div>
               <div>
                 <span className="text-sm text-gray-500">Remaining</span>
                 <div className={`text-2xl font-bold ${remainingAmount < 0 ? 'text-red-600' : 'text-green-600'}`}>
-                  ₹{remainingAmount.toLocaleString()}
+                  ₹{formatCurrency(remainingAmount)}
                 </div>
               </div>
             </div>
@@ -385,10 +391,10 @@ export default function AllocatePaymentPage() {
                           {invoice.invoiceNumber}
                         </TableCell>
                         <TableCell>
-                          ₹{invoice.totalAmount.toLocaleString()}
+                          ₹{formatCurrency(invoice.totalAmount)}
                         </TableCell>
                         <TableCell className="font-semibold text-orange-600">
-                          ₹{invoice.outstandingAmount.toLocaleString()}
+                          ₹{formatCurrency(invoice.outstandingAmount)}
                         </TableCell>
                         <TableCell>
                           <Input
