@@ -149,8 +149,9 @@ export default function AllocatePaymentPage() {
     return parseFloat(remaining.toFixed(2)); // Round to 2 decimal places
   };
 
-  const formatCurrency = (amount: number) => {
-    return amount.toFixed(2);
+  const formatCurrency = (amount: number | undefined | null) => {
+    const numAmount = Number(amount) || 0;
+    return numAmount.toFixed(2);
   };
 
   const validateAllocations = () => {
@@ -306,19 +307,19 @@ export default function AllocatePaymentPage() {
               <div>
                 <span className="text-sm text-gray-500">Total Amount</span>
                 <div className="font-semibold text-gray-900 mt-1">
-                  ₹{formatCurrency(payment?.amount || 0)}
+                  ₹{formatCurrency(payment?.amount)}
                 </div>
               </div>
               <div>
                 <span className="text-sm text-gray-500">Already Allocated</span>
                 <div className="font-medium text-gray-900 mt-1">
-                  ₹{formatCurrency(payment?.allocated_amount || 0)}
+                  ₹{formatCurrency(payment?.allocated_amount)}
                 </div>
               </div>
               <div>
                 <span className="text-sm text-gray-500">Unallocated Amount</span>
                 <div className="font-semibold text-blue-600 mt-1">
-                  ₹{formatCurrency(payment?.unallocated_amount || 0)}
+                  ₹{formatCurrency(payment?.unallocated_amount)}
                 </div>
               </div>
             </div>
@@ -332,7 +333,7 @@ export default function AllocatePaymentPage() {
               <div>
                 <span className="text-sm text-gray-500">Available to Allocate</span>
                 <div className="text-2xl font-bold text-gray-900">
-                  ₹{formatCurrency(payment?.unallocated_amount || 0)}
+                  ₹{formatCurrency(payment?.unallocated_amount)}
                 </div>
               </div>
               <div>
