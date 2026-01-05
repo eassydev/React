@@ -38,30 +38,56 @@ interface InvoiceAllocation {
 export default function AllocatePaymentPage() {
   const router = useRouter();
   const params = useParams();
-  const paymentId = params.id as string;
   const { toast } = useToast();
 
   const [payment, setPayment] = useState<B2BPayment | null>(null);
   const [invoices, setInvoices] = useState<InvoiceAllocation[]>([]);
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+  const [paymentId, setPaymentId] = useState<string>('');
 
   useEffect(() => {
-    loadData();
+    if (params?.id) {
+      const id = Array.isArray(params.id) ? params.id[0] : params.id;
+      setPaymentId(id);
+    }
+  }, [params]);
+
+  useEffect(() => {
+    if (paymentId) {
+      loadData();
+    }
   }, [paymentId]);
 
   const loadData = async () => {
     try {
       setLoading(true);
 
+      if (!paymentId) {
+        console.error('No payment ID provided');
+        return;
+      }
+
+      console.log('Loading payment data for ID:', paymentId);
+
       // Load payment details
       const paymentResponse = await fetchB2BPaymentById(paymentId);
+      console.log('Payment response:', paymentResponse);
+
       const paymentData = paymentResponse.data;
+
+      if (!paymentData) {
+        throw new Error('Payment data not found');
+      }
+
       setPayment(paymentData);
 
       // Load outstanding invoices for the customer
       if (paymentData.b2b_customer_id) {
+        console.log('Loading invoices for customer:', paymentData.b2b_customer_id);
         const invoicesResponse = await fetchOutstandingInvoices(paymentData.b2b_customer_id);
+        console.log('Invoices response:', invoicesResponse);
+
         const invoicesData = invoicesResponse.data || [];
 
         // Transform to allocation format
@@ -77,6 +103,7 @@ export default function AllocatePaymentPage() {
         setInvoices(allocations);
       }
     } catch (error: any) {
+      console.error('Error loading data:', error);
       toast({
         title: 'Error',
         description: error.message || 'Failed to load data',
@@ -122,8 +149,9 @@ export default function AllocatePaymentPage() {
     return parseFloat(remaining.toFixed(2)); // Round to 2 decimal places
   };
 
-  const formatCurrency = (amount: number) => {
-    return amount.toFixed(2);
+  const formatCurrency = (amount: number | undefined | null) => {
+    const numAmount = Number(amount) || 0;
+    return numAmount.toFixed(2);
   };
 
   const validateAllocations = () => {
@@ -196,7 +224,7 @@ export default function AllocatePaymentPage() {
     }
   };
 
-  if (loading) {
+  if (!paymentId || loading) {
     return (
       <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
         <div className="max-w-5xl mx-auto">
@@ -261,37 +289,37 @@ export default function AllocatePaymentPage() {
               <div>
                 <span className="text-sm text-gray-500">Customer</span>
                 <div className="font-semibold text-gray-900 mt-1">
-                  {payment.customer?.company_name || 'Unknown'}
+                  {payment?.customer?.company_name || 'Unknown'}
                 </div>
               </div>
               <div>
                 <span className="text-sm text-gray-500">Payment Date</span>
                 <div className="font-medium text-gray-900 mt-1">
-                  {new Date(payment.payment_date).toLocaleDateString()}
+                  {payment?.payment_date ? new Date(payment.payment_date).toLocaleDateString() : 'N/A'}
                 </div>
               </div>
               <div>
                 <span className="text-sm text-gray-500">Payment Mode</span>
                 <div className="font-medium text-gray-900 mt-1 capitalize">
-                  {payment.payment_mode.replace('_', ' ')}
+                  {payment?.payment_mode ? payment.payment_mode.replace('_', ' ') : 'N/A'}
                 </div>
               </div>
               <div>
                 <span className="text-sm text-gray-500">Total Amount</span>
                 <div className="font-semibold text-gray-900 mt-1">
-                  ₹{formatCurrency(payment.amount)}
+                  ₹{formatCurrency(payment?.amount)}
                 </div>
               </div>
               <div>
                 <span className="text-sm text-gray-500">Already Allocated</span>
                 <div className="font-medium text-gray-900 mt-1">
-                  ₹{formatCurrency(payment.allocated_amount)}
+                  ₹{formatCurrency(payment?.allocated_amount)}
                 </div>
               </div>
               <div>
                 <span className="text-sm text-gray-500">Unallocated Amount</span>
                 <div className="font-semibold text-blue-600 mt-1">
-                  ₹{formatCurrency(payment.unallocated_amount)}
+                  ₹{formatCurrency(payment?.unallocated_amount)}
                 </div>
               </div>
             </div>
@@ -305,7 +333,7 @@ export default function AllocatePaymentPage() {
               <div>
                 <span className="text-sm text-gray-500">Available to Allocate</span>
                 <div className="text-2xl font-bold text-gray-900">
-                  ₹{formatCurrency(payment.unallocated_amount)}
+                  ₹{formatCurrency(payment?.unallocated_amount)}
                 </div>
               </div>
               <div>
