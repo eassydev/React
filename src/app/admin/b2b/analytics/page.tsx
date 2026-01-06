@@ -10,7 +10,8 @@ import {
   AlertCircle,
   Package,
   Clock,
-  CheckCircle
+  CheckCircle,
+  Calendar
 } from 'lucide-react';
 import B2BMetricCard from '@/components/b2b/B2BMetricCard';
 import B2BPaymentCollectionChart from '@/components/b2b/B2BPaymentCollectionChart';
@@ -18,6 +19,8 @@ import B2BTopCustomersTable from '@/components/b2b/B2BTopCustomersTable';
 import AnalyticsExportPanel from '@/components/b2b/AnalyticsExportPanel';
 import { DateRangePicker } from '@/components/DateRangePicker';
 import { Separator } from '@/components/ui/separator';
+import { Checkbox } from '@/components/ui/checkbox';
+import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
@@ -63,6 +66,7 @@ export default function B2BAnalyticsDashboard() {
   const [dateRange, setDateRange] = useState<DateRange | undefined>();
   const [userRole, setUserRole] = useState<string>('');
   const [selectedMonth, setSelectedMonth] = useState<string>('all'); // 'all' or 'YYYY-MM' format
+  const [useReceivedDate, setUseReceivedDate] = useState<boolean>(false); // Toggle for booking_received_date
 
   const fetchDashboard = async () => {
     setLoading(true);
@@ -85,7 +89,7 @@ export default function B2BAnalyticsDashboard() {
         endDate = dateRange.to.toISOString().split('T')[0];
       }
 
-      const dashboardData = await getB2BAnalyticsDashboard(startDate, endDate);
+      const dashboardData = await getB2BAnalyticsDashboard(startDate, endDate, useReceivedDate ? 'received' : 'created');
       setData(dashboardData);
 
       // Log key metrics for debugging
@@ -104,7 +108,7 @@ export default function B2BAnalyticsDashboard() {
 
   useEffect(() => {
     fetchDashboard();
-  }, [dateRange, selectedMonth]);
+  }, [dateRange, selectedMonth, useReceivedDate]);
 
   // Get user role from localStorage or API response
   useEffect(() => {
@@ -394,8 +398,23 @@ export default function B2BAnalyticsDashboard() {
         <TabsContent value="sheet" className="mt-6">
           <div className="rounded-md border bg-white shadow-sm overflow-hidden">
             <div className="p-4 bg-gray-50 border-b">
-              <h3 className="font-semibold text-lg">Dashboard Sheet View (₹ Lacs)</h3>
-              <p className="text-sm text-muted-foreground mt-1">All amounts are displayed in Lacs (1 Lac = ₹1,00,000)</p>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-semibold text-lg">Dashboard Sheet View (₹ Lacs)</h3>
+                  <p className="text-sm text-muted-foreground mt-1">All amounts are displayed in Lacs (1 Lac = ₹1,00,000)</p>
+                </div>
+                <div className="flex items-center gap-2 bg-white px-3 py-2 rounded-md border">
+                  <Checkbox
+                    id="useReceivedDate"
+                    checked={useReceivedDate}
+                    onCheckedChange={(checked) => setUseReceivedDate(checked === true)}
+                  />
+                  <Label htmlFor="useReceivedDate" className="text-sm font-medium cursor-pointer flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    Calculate by Order Received Date
+                  </Label>
+                </div>
+              </div>
             </div>
             <Table>
               <TableHeader>

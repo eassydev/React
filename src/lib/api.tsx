@@ -1529,7 +1529,7 @@ export const fetchSubcategories = async (
 
 // Function to fetch categories with attributes
 export const fetchSubCategoriesByCategoryId = async (
-  categoryId: string 
+  categoryId: string
 ): Promise<Subcategory[]> => {
   try {
     const token = getToken();
@@ -14074,7 +14074,8 @@ export interface B2BCustomerTrendsData {
  */
 export const getB2BAnalyticsDashboard = async (
   startDate?: string,
-  endDate?: string
+  endDate?: string,
+  dateField?: 'created' | 'received'
 ): Promise<B2BDashboardData> => {
   const token = getToken();
   if (!token) {
@@ -14083,9 +14084,19 @@ export const getB2BAnalyticsDashboard = async (
 
   try {
     let url = '/b2b/analytics/dashboard';
+    const params: string[] = [];
 
     if (startDate && endDate) {
-      url += `?start_date=${startDate}&end_date=${endDate}`;
+      params.push(`start_date=${startDate}`);
+      params.push(`end_date=${endDate}`);
+    }
+
+    if (dateField) {
+      params.push(`date_field=${dateField}`);
+    }
+
+    if (params.length > 0) {
+      url += `?${params.join('&')}`;
     }
 
     const response = await apiClient.get(url, {
