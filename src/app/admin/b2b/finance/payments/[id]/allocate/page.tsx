@@ -17,11 +17,11 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { ArrowLeft, DollarSign, FileText, Loader2, AlertCircle } from 'lucide-react';
-import { 
-  fetchB2BPaymentById, 
-  fetchOutstandingInvoices, 
+import {
+  fetchB2BPaymentById,
+  fetchOutstandingInvoices,
   allocateB2BPayment,
-  B2BPayment 
+  B2BPayment
 } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
@@ -129,29 +129,40 @@ export default function AllocatePaymentPage() {
     setInvoices(prev =>
       prev.map(inv =>
         inv.invoiceId === invoiceId
-          ? { 
-              ...inv, 
-              selected: checked,
-              allocatedAmount: checked ? inv.outstandingAmount : 0
-            }
+          ? {
+            ...inv,
+            selected: checked,
+            allocatedAmount: checked ? inv.outstandingAmount : 0
+          }
           : inv
       )
     );
   };
 
   const getTotalAllocated = () => {
-    const total = invoices.reduce((sum, inv) => sum + inv.allocatedAmount, 0);
-    return parseFloat(total.toFixed(2)); // Round to 2 decimal places
+    const total = invoices.reduce((sum, inv) => {
+      const amount = Number(inv.allocatedAmount) || 0;
+      return sum + amount;
+    }, 0);
+    // Ensure total is a valid number before calling toFixed
+    const safeTotal = Number.isFinite(total) ? total : 0;
+    return parseFloat(safeTotal.toFixed(2)); // Round to 2 decimal places
   };
 
   const getRemainingAmount = () => {
-    const remaining = (payment?.unallocated_amount || 0) - getTotalAllocated();
-    return parseFloat(remaining.toFixed(2)); // Round to 2 decimal places
+    const unallocated = Number(payment?.unallocated_amount) || 0;
+    const allocated = getTotalAllocated();
+    const remaining = unallocated - allocated;
+    // Ensure remaining is a valid number before calling toFixed
+    const safeRemaining = Number.isFinite(remaining) ? remaining : 0;
+    return parseFloat(safeRemaining.toFixed(2)); // Round to 2 decimal places
   };
 
   const formatCurrency = (amount: number | undefined | null) => {
-    const numAmount = Number(amount) || 0;
-    return numAmount.toFixed(2);
+    const numAmount = Number(amount);
+    // Handle NaN, undefined, null, and non-finite numbers
+    const safeAmount = Number.isFinite(numAmount) ? numAmount : 0;
+    return safeAmount.toFixed(2);
   };
 
   const validateAllocations = () => {
@@ -383,7 +394,7 @@ export default function AllocatePaymentPage() {
                         <TableCell>
                           <Checkbox
                             checked={invoice.selected}
-                            onCheckedChange={(checked) => 
+                            onCheckedChange={(checked) =>
                               handleSelectInvoice(invoice.invoiceId, checked as boolean)
                             }
                           />
@@ -404,7 +415,7 @@ export default function AllocatePaymentPage() {
                             min="0"
                             max={invoice.outstandingAmount}
                             value={invoice.allocatedAmount || ''}
-                            onChange={(e) => 
+                            onChange={(e) =>
                               handleAllocationChange(invoice.invoiceId, e.target.value)
                             }
                             placeholder="0.00"
@@ -425,8 +436,8 @@ export default function AllocatePaymentPage() {
           <Button variant="outline" onClick={() => router.back()}>
             Cancel
           </Button>
-          <Button 
-            onClick={handleSubmit} 
+          <Button
+            onClick={handleSubmit}
             disabled={submitting || totalAllocated === 0 || remainingAmount < 0}
           >
             {submitting ? (
