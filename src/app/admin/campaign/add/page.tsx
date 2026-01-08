@@ -196,10 +196,25 @@ const CampaignForm: React.FC = () => {
 
     try {
       const response = await createCampaign(campaignData);
-      toast({ variant: 'success', title: 'Success', description: response.message });
-      //router.push("/admin/campaigns");
+      console.log('Campaign created response:', response);
+
+      toast({
+        variant: 'success',
+        title: 'Success',
+        description: response.message || 'Campaign created successfully'
+      });
+
+      // Redirect to campaign list after successful creation
+      setTimeout(() => {
+        router.push("/admin/campaign");
+      }, 1500);
     } catch (e: any) {
-      toast({ variant: 'error', title: 'Error', description: `${e.message}` });
+      console.error('Campaign creation error:', e);
+      toast({
+        variant: 'error',
+        title: 'Error',
+        description: e.message || 'Failed to create campaign'
+      });
     } finally {
       setIsSubmitting(false);
     }
