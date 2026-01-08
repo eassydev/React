@@ -125,7 +125,11 @@ export const sidebarItems: SidebarItem[] = [
   {
     title: 'Package',
     icon: ListCheckIcon,
-    route: `${basePath}/package`,
+    // route: `${basePath}/package`,
+    children: [
+      { title: 'Category Package', route: `${basePath}/category-package` },
+      { title: 'Packages', route: `${basePath}/package` },
+    ],
   },
   {
     title: 'Country',

@@ -386,6 +386,9 @@ export interface Package {
   addon_category_ids?: string[]; // Array of addon category IDs
   addons?: Addon[]; // Detailed rate card information
   rateCards?: RateCard[]; // Detailed rate card information
+  serial_quantity?: number | null; // NEW: Number of serial numbers required
+  model_quantity?: number | null; // NEW: Number of model numbers required
+  category_package_id?: string | null; // NEW: Category package ID
 }
 
 export interface Page {
@@ -2038,6 +2041,19 @@ export const createPackage = async (pkg: Package): Promise<ApiResponse> => {
   formData.append('renewal_options', pkg.renewal_options ? '1' : '0');
   formData.append('is_active', pkg.is_active ? '1' : '0');
 
+  // NEW: Add serial and model quantities
+  if (pkg.serial_quantity !== null && pkg.serial_quantity !== undefined) {
+    formData.append('serial_quantity', pkg.serial_quantity.toString());
+  }
+  if (pkg.model_quantity !== null && pkg.model_quantity !== undefined) {
+    formData.append('model_quantity', pkg.model_quantity.toString());
+  }
+
+  // NEW: Add package_id (category package)
+  if (pkg.category_package_id) {
+    formData.append('category_package_id', pkg.category_package_id);
+  }
+
   // Add image if available
   if (pkg.image) {
     formData.append('image', pkg.image);
@@ -2086,6 +2102,19 @@ export const updatePackage = async (id: string, pkg: Package): Promise<ApiRespon
 
   formData.append('renewal_options', pkg.renewal_options ? '1' : '0');
   formData.append('is_active', pkg.is_active ? '1' : '0');
+
+  // NEW: Add serial and model quantities
+  if (pkg.serial_quantity !== null && pkg.serial_quantity !== undefined) {
+    formData.append('serial_quantity', pkg.serial_quantity.toString());
+  }
+  if (pkg.model_quantity !== null && pkg.model_quantity !== undefined) {
+    formData.append('model_quantity', pkg.model_quantity.toString());
+  }
+
+  // NEW: Add category_package_id (category package)
+  if (pkg.category_package_id) {
+    formData.append('category_package_id', pkg.category_package_id);
+  }
 
   // Add image if available
   if (pkg.image) {
@@ -2189,6 +2218,166 @@ export const deletePackage = async (id: string): Promise<ApiResponse> => {
     return response.data;
   } catch (error: any) {
     throw new Error(error.response?.data?.message || 'Failed to delete package.');
+  }
+};
+
+// NEW: Function to fetch category packages for dropdown
+export const fetchCategoryPackagesDropdown = async (): Promise<any[]> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<any> = await apiClient.get('/package/category/packages/dropdown', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    // Handle both 'success' and 'status' fields
+    if (response.data.success || response.data.status) {
+      return response.data.data || [];
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch category packages.');
+    }
+  } catch (error: any) {
+    console.error('Error fetching category packages:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch category packages.');
+  }
+};
+
+// NEW: Function to fetch all category packages with pagination
+export const fetchAllCategoryPackages = async (
+  page: number = 1,
+  pageSize: number = 10,
+  packageType?: string
+): Promise<{ data: any[]; pagination: any }> => {
+  try {
+    const token = getToken();
+    const params: any = {
+      page,
+      limit: pageSize,
+    };
+
+    if (packageType) {
+      params.package_type = packageType;
+    }
+
+    const response: AxiosResponse<any> = await apiClient.get('/package/category/packages', {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+      params,
+    });
+
+    if (response.data.success || response.data.status) {
+      return {
+        data: response.data.data || [],
+        pagination: response.data.pagination || {
+          current_page: 1,
+          total_pages: 1,
+          total_items: 0,
+          items_per_page: pageSize,
+        },
+      };
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch category packages.');
+    }
+  } catch (error: any) {
+    console.error('Error fetching category packages:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch category packages.');
+  }
+};
+
+// NEW: Function to create a category package
+export const createCategoryPackage = async (formData: FormData): Promise<any> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<any> = await apiClient.post('/package/category-package', formData, {
+      headers: {
+        'admin-auth-token': token || '',
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    if (response.data.success || response.data.status) {
+      return response.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to create category package.');
+    }
+  } catch (error: any) {
+    console.error('Error creating category package:', error);
+    throw new Error(error.response?.data?.message || 'Failed to create category package.');
+  }
+};
+
+// NEW: Function to get a single category package by ID
+export const getCategoryPackageById = async (id: string): Promise<any> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<any> = await apiClient.get(`/package/category-package/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.success || response.data.status) {
+      return response.data.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to fetch category package.');
+    }
+  } catch (error: any) {
+    console.error('Error fetching category package:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch category package.');
+  }
+};
+
+// NEW: Function to update a category package
+export const updateCategoryPackage = async (id: string, data: any): Promise<any> => {
+  try {
+    const token = getToken();
+    const formData = new FormData();
+
+    // Append fields to FormData
+    if (data.name) formData.append('name', data.name);
+    if (data.description) formData.append('description', data.description);
+    if (data.package_type) formData.append('package_type', data.package_type);
+    if (data.is_active !== undefined) formData.append('is_active', data.is_active ? '1' : '0');
+    if (data.image) formData.append('image', data.image);
+
+    const response: AxiosResponse<any> = await apiClient.put(`/package/category-package/${id}`, formData, {
+      headers: {
+        'admin-auth-token': token || '',
+        'Content-Type': 'multipart/form-data',
+      },
+    });
+
+    if (response.data.success || response.data.status) {
+      return response.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to update category package.');
+    }
+  } catch (error: any) {
+    console.error('Error updating category package:', error);
+    throw new Error(error.response?.data?.message || 'Failed to update category package.');
+  }
+};
+
+// NEW: Function to delete a category package
+export const deleteCategoryPackage = async (id: string): Promise<any> => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse<any> = await apiClient.delete(`/package/category-package/${id}`, {
+      headers: {
+        'admin-auth-token': token || '',
+      },
+    });
+
+    if (response.data.success || response.data.status) {
+      return response.data;
+    } else {
+      throw new Error(response.data.message || 'Failed to delete category package.');
+    }
+  } catch (error: any) {
+    console.error('Error deleting category package:', error);
+    throw new Error(error.response?.data?.message || 'Failed to delete category package.');
   }
 };
 

@@ -29,6 +29,7 @@ import {
   Provider,
   fetchProviders,
   fetchRateCardsByProvider,
+  fetchCategoryPackagesDropdown,
 } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -79,9 +80,15 @@ const PackageCreateForm: React.FC = () => {
   const [isAddonDropdownOpen, setIsAddonDropdownOpen] = useState<boolean>(false); // **[Added state for Addon dropdown toggle]**
   const [discountError, setDiscountError] = useState<string | null>(null); // State for error message
   const [selectedProviderName, setSelectedProviderName] = useState<string>('Select an option');
-  const { toast } = useToast();
+  const { toast} = useToast();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchTerm, setSearchTerm] = useState('');
+
+  // NEW: State for serial quantity, model quantity, and category package
+  const [serialQuantity, setSerialQuantity] = useState<number | null>(null);
+  const [modelQuantity, setModelQuantity] = useState<number | null>(null);
+  const [categoryPackageId, setCategoryPackageId] = useState<string>('');
+  const [categoryPackages, setCategoryPackages] = useState<any[]>([]);
 
   const filteredRateCards = rateCards.filter((rateCard) => {
     const text = `${rateCard.category?.name || ''} | ${rateCard.subcategory?.name || ''} | ${
@@ -126,8 +133,12 @@ const PackageCreateForm: React.FC = () => {
         const categoryResponse = await fetchAllCategories();
         setCategories(categoryResponse || []);
         await loadProviders();
+
+        // NEW: Fetch category packages
+        const categoryPackagesResponse = await fetchCategoryPackagesDropdown();
+        setCategoryPackages(categoryPackagesResponse || []);
       } catch (error) {
-        console.log(error);
+        console.error('Error loading initial data:', error);
         toast({
           variant: 'error',
           title: 'Error',
@@ -171,11 +182,11 @@ const PackageCreateForm: React.FC = () => {
     setIsSubmitting(true);
 
     // Validate required fields
-    if (!packageName || !discountType || !discountValue) {
+    if (!packageName || !discountType || !discountValue || !categoryPackageId) {
       toast({
         variant: 'error',
         title: 'Validation Error',
-        description: 'Please fill all the required fields.',
+        description: 'Please fill all the required fields including Category Package.',
       });
       setIsSubmitting(false);
       return;
@@ -197,6 +208,9 @@ const PackageCreateForm: React.FC = () => {
       rate_card_ids: selectedRateCards,
       addon_category_ids: selectedCategories, // Include addon category selections
       no_of_service: noService,
+      serial_quantity: serialQuantity, // NEW: Serial quantity
+      model_quantity: modelQuantity, // NEW: Model quantity
+      category_package_id: categoryPackageId, // NEW: Category package ID (mandatory)
     };
 
     try {
@@ -318,6 +332,69 @@ const PackageCreateForm: React.FC = () => {
                     <SelectItem value="amc">AMC</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* NEW: Serial and Model Quantity Fields */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Serial Quantity
+                    <span className="text-xs text-gray-500 ml-2">(Optional)</span>
+                  </label>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="Enter serial quantity"
+                    value={serialQuantity || ''}
+                    onChange={(e) => setSerialQuantity(e.target.value ? parseInt(e.target.value) : null)}
+                    className="h-11"
+                  />
+                  <p className="text-xs text-gray-500">Number of serial numbers required for this package</p>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">
+                    Model Quantity
+                    <span className="text-xs text-gray-500 ml-2">(Optional)</span>
+                  </label>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="Enter model quantity"
+                    value={modelQuantity || ''}
+                    onChange={(e) => setModelQuantity(e.target.value ? parseInt(e.target.value) : null)}
+                    className="h-11"
+                  />
+                  <p className="text-xs text-gray-500">Number of model numbers required for this package</p>
+                </div>
+              </div>
+
+              {/* NEW: Category Package Selector */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">
+                  Category Package
+                  <span className="text-red-500 ml-1">*</span>
+                </label>
+                <Select value={categoryPackageId} onValueChange={setCategoryPackageId} required>
+                  <SelectTrigger className="bg-white border-gray-200">
+                    <SelectValue placeholder="Select category package" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {categoryPackages.length > 0 ? (
+                      categoryPackages.map((pkg: any) => (
+                        <SelectItem key={pkg.id} value={pkg.id}>
+                          {pkg.name}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="p-2 text-sm text-gray-500">No category packages available</div>
+                    )}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-gray-500">
+                  Link this package to a category package group
+                  {categoryPackages.length > 0 && ` (${categoryPackages.length} available)`}
+                </p>
               </div>
 
               <div className="space-y-2 w-full">

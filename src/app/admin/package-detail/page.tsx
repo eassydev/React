@@ -81,7 +81,17 @@ const PackageList = () => {
       cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
     },
     { accessorKey: 'name', header: 'Name' },
+    {
+      accessorKey: 'categoryPackage',
+      header: 'Category',
+      cell: ({ row }) => {
+        const categoryPackage = row.original.categoryPackage;
+        return categoryPackage?.name || 'N/A';
+      },
+    },
     { accessorKey: 'package_type', header: 'Package Type' },
+    { accessorKey: 'serial_quantity', header: 'Serial Qty' },
+    { accessorKey: 'model_quantity', header: 'Model Qty' },
     { accessorKey: 'discount_type', header: 'Discount Type' },
     { accessorKey: 'discount_value', header: 'Discount Value' },
     { accessorKey: 'final_price', header: 'Final Price' },

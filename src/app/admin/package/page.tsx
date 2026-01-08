@@ -18,7 +18,7 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table';
-import { ChevronLeft, ChevronRight, Edit, Trash2, Plus } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit, Trash2, Plus, FolderTree } from 'lucide-react';
 import { fetchPackages, deletePackage } from '@/lib/api'; // Fetch and delete package functions
 import Link from 'next/link';
 import {
@@ -85,7 +85,17 @@ const PackageList = () => {
       cell: (info) => info.row.index + 1, // Calculate the serial number dynamically
     },
     { accessorKey: 'name', header: 'Name' },
+    {
+      accessorKey: 'categoryPackage',
+      header: 'Category',
+      cell: ({ row }) => {
+        const categoryPackage = row.original.categoryPackage;
+        return categoryPackage?.name || 'N/A';
+      },
+    },
     { accessorKey: 'package_type', header: 'Package Type' },
+    { accessorKey: 'serial_quantity', header: 'Serial Qty' },
+    { accessorKey: 'model_quantity', header: 'Model Qty' },
     { accessorKey: 'discount_type', header: 'Discount Type' },
     { accessorKey: 'discount_value', header: 'Discount Value' },
     { accessorKey: 'final_price', header: 'Final Price' },
@@ -162,6 +172,13 @@ const PackageList = () => {
               <option value="0">Deactivated</option>
               <option value="2">Deleted</option>
             </select>
+
+            <Link href="/admin/category-package">
+              <Button variant="outline">
+                <FolderTree className="w-4 h-4 mr-2" />
+                Category Packages
+              </Button>
+            </Link>
 
             <Link href="/admin/package/add">
               <Button>
