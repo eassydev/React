@@ -168,6 +168,15 @@ const CampaignList = () => {
       cell: ({ row }: { row: any }) => {
         const url = row.getValue('dub_url') as string;
 
+        // If URL is null or empty, show a message
+        if (!url || url === 'null' || url.trim() === '') {
+          return (
+            <span className="text-xs text-gray-500 italic">
+              URL not generated
+            </span>
+          );
+        }
+
         const fallbackCopyTextToClipboard = (text: string) => {
           const textArea = document.createElement('textarea');
           textArea.value = text;
@@ -222,16 +231,27 @@ const CampaignList = () => {
         };
 
         return (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleCopy}
-            title="Copy Firebase URL"
-            aria-label="Copy Firebase URL"
-          >
-            <Copy className="w-4 h-4 mr-1" />
-            Copy
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleCopy}
+              title="Copy Campaign URL"
+              aria-label="Copy Campaign URL"
+            >
+              <Copy className="w-4 h-4 mr-1" />
+              Copy
+            </Button>
+            <a
+              href={url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-xs text-blue-600 hover:underline truncate max-w-[100px]"
+              title={url}
+            >
+              View
+            </a>
+          </div>
         );
       },
     },
