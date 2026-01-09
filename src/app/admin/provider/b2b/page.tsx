@@ -18,10 +18,12 @@ import {
   TableRow,
   TableCell,
 } from '@/components/ui/table';
-import { ChevronLeft, ChevronRight, Edit, Building2, Filter, CreditCard } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Edit, Building2, Filter, CreditCard, Search } from 'lucide-react';
 import { fetchB2BProviders, updateProviderType, updateProviderActiveStatus, Provider } from '@/lib/api';
 import Link from 'next/link';
 import { useToast } from '@/hooks/use-toast';
+import { Input } from '@/components/ui/input';
+import { useDebounce } from 'use-debounce';
 import { Switch } from '@/components/ui/switch';
 import {
   Select,
@@ -42,6 +44,9 @@ const B2BProvidersPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState<boolean>(true);
   const [providerTypeFilter, setProviderTypeFilter] = useState<string>('all');
   const [b2bApprovedFilter, setB2bApprovedFilter] = useState<string>('all');
+  const [searchQuery, setSearchQuery] = useState<string>('');
+  // Debounce the search term
+  const [debouncedSearch] = useDebounce(searchQuery, 700);
   const { toast } = useToast();
 
   const fetchProviders = async () => {
@@ -51,7 +56,8 @@ const B2BProvidersPage: React.FC = () => {
         pagination.pageIndex + 1,
         pagination.pageSize,
         providerTypeFilter,
-        b2bApprovedFilter
+        b2bApprovedFilter,
+        debouncedSearch
       );
       setProviders(response.providers);
       setTotalPages(response.totalPages);
@@ -69,7 +75,7 @@ const B2BProvidersPage: React.FC = () => {
 
   useEffect(() => {
     fetchProviders();
-  }, [pagination.pageIndex, pagination.pageSize, providerTypeFilter, b2bApprovedFilter]);
+  }, [pagination.pageIndex, pagination.pageSize, providerTypeFilter, b2bApprovedFilter, debouncedSearch]);
 
   const handleProviderTypeUpdate = async (providerId: string, newType: 'b2c' | 'b2b' | 'hybrid') => {
     try {
@@ -175,6 +181,7 @@ const B2BProvidersPage: React.FC = () => {
     },
     { accessorKey: 'email', header: 'Email' },
     { accessorKey: 'phone', header: 'Phone' },
+    { accessorKey: 'otp', header: 'OTP' },
     {
       accessorKey: 'provider_type',
       header: 'Provider Type',
@@ -323,6 +330,20 @@ const B2BProvidersPage: React.FC = () => {
                     <SelectItem value="0">Pending</SelectItem>
                   </SelectContent>
                 </Select>
+              </div>
+
+              {/* Search Input */}
+              <div className="flex flex-col space-y-2 flex-grow">
+                <label className="text-sm font-medium">Search</label>
+                <div className="relative">
+                  <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+                  <Input
+                    placeholder="Search by name, email or phone"
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-8 w-full md:w-80"
+                  />
+                </div>
               </div>
             </div>
           </CardContent>

@@ -146,6 +146,7 @@ const ProviderList = () => {
     // { accessorKey: 'last_name', header: 'Last Name' },
     { accessorKey: 'email', header: 'Email' },
     { accessorKey: 'phone', header: 'Phone' },
+    { accessorKey: 'otp', header: 'OTP' },
     {
       accessorKey: 'account_approved',
       header: 'Approved',
@@ -323,7 +324,7 @@ const ProviderList = () => {
               try {
                 await updateProviderType(row.original.id, newType, 0);
                 // Refresh the providers list
-                fetchProviders();
+                fetchProvidersData(pagination.pageIndex + 1, pagination.pageSize, filterStatus, searchTerm, filterProviderType);
                 toast({
                   title: 'Success',
                   description: `Provider converted to ${newType.toUpperCase()} successfully.`,
