@@ -423,7 +423,8 @@ export interface Donation {
 export interface Provider {
   id?: string;
   full_name: string;
-  // last_name: string;
+  first_name?: string;
+  last_name?: string;
   gender?: 'male' | 'female' | 'other';
   email: string;
   phone: string;
@@ -445,6 +446,7 @@ export interface Provider {
   provider_type?: 'b2c' | 'b2b' | 'hybrid';
   b2b_approved?: number; // 0 = not approved, 1 = approved
   country_code?: string; // Country code for the phone number
+  otp?: string; // OTP for verification
 }
 
 // Define the structure of the Bank object
@@ -3009,8 +3011,8 @@ export const updateProvider = async (id: string, provider: Provider): Promise<Ap
   const formData = new FormData();
 
   // Append individual fields to the FormData object
-  formData.append('first_name', provider.first_name);
-  formData.append('last_name', provider.last_name);
+  if (provider.first_name) formData.append('first_name', provider.first_name);
+  if (provider.last_name) formData.append('last_name', provider.last_name);
   formData.append('gender', provider.gender || '');
   formData.append('email', provider.email);
   formData.append('phone', provider.phone);
@@ -3262,12 +3264,13 @@ export const fetchB2BProviders = async (
   page: number = 1,
   size: number = 10,
   provider_type: string = 'all',
-  b2b_approved: string = 'all'
+  b2b_approved: string = 'all',
+  search: string = ''
 ): Promise<{ providers: Provider[]; totalPages: number; totalProviders: number }> => {
   try {
     const token = getToken();
     const response: AxiosResponse<ApiResponse> = await apiClient.get('/provider/b2b/list', {
-      params: { page, size, provider_type, b2b_approved },
+      params: { page, size, provider_type, b2b_approved, search },
       headers: {
         'admin-auth-token': token || '',
       },
