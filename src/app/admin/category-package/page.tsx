@@ -42,6 +42,7 @@ interface CategoryPackage {
   image?: string;
   package_type: 'regular' | 'amc';
   is_active: number;
+  weight?: number;
   packages_count?: number;
   created_at?: number;
   updated_at?: number;
@@ -152,6 +153,11 @@ const CategoryPackageList: React.FC = () => {
           </span>
         );
       },
+    },
+    {
+      accessorKey: 'weight',
+      header: 'Weight',
+      size: 80,
     },
     {
       accessorKey: 'packages_count',

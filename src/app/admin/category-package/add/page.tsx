@@ -33,6 +33,7 @@ const CategoryPackageAdd: React.FC = () => {
   const [description, setDescription] = useState<string>('');
   const [packageType, setPackageType] = useState<string>('regular');
   const [isActive, setIsActive] = useState<boolean>(true);
+  const [weight, setWeight] = useState<number>(0);
   const [categoryImage, setCategoryImage] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
 
@@ -68,6 +69,7 @@ const CategoryPackageAdd: React.FC = () => {
       formData.append('description', description);
       formData.append('package_type', packageType);
       formData.append('is_active', isActive ? '1' : '0');
+      formData.append('weight', weight.toString());
       if (categoryImage) formData.append('image', categoryImage);
       await createCategoryPackage(formData);
 
@@ -138,6 +140,20 @@ const CategoryPackageAdd: React.FC = () => {
                   rows={4}
                 />
               </div>
+
+              {/* Weight Field */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Weight</label>
+                <Input
+                  type="number"
+                  placeholder="Enter weight (default 0)"
+                  value={weight}
+                  onChange={(e) => setWeight(parseInt(e.target.value) || 0)}
+                  className="h-11"
+                  min={0}
+                />
+              </div>
+
 
               {/* Category Image Field */}
               <div className="space-y-2">

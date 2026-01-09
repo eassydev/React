@@ -2340,6 +2340,7 @@ export const updateCategoryPackage = async (id: string, data: any): Promise<any>
     if (data.description) formData.append('description', data.description);
     if (data.package_type) formData.append('package_type', data.package_type);
     if (data.is_active !== undefined) formData.append('is_active', data.is_active ? '1' : '0');
+    if (data.weight !== undefined) formData.append('weight', data.weight.toString());
     if (data.image) formData.append('image', data.image);
 
     const response: AxiosResponse<any> = await apiClient.put(`/package/category-package/${id}`, formData, {

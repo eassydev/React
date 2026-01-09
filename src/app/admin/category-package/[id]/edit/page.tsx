@@ -19,6 +19,7 @@ interface CategoryPackage {
   image?: string;
   package_type: 'regular' | 'amc';
   is_active: number;
+  weight?: number;
 }
 
 const EditCategoryPackage: React.FC = () => {
@@ -33,6 +34,7 @@ const EditCategoryPackage: React.FC = () => {
   const [description, setDescription] = useState<string>('');
   const [packageType, setPackageType] = useState<'regular' | 'amc'>('regular');
   const [isActive, setIsActive] = useState<boolean>(true);
+  const [weight, setWeight] = useState<number>(0);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string>('');
   const [existingImage, setExistingImage] = useState<string>('');
@@ -53,6 +55,7 @@ const EditCategoryPackage: React.FC = () => {
       setDescription(data.description || '');
       setPackageType(data.package_type);
       setIsActive(data.is_active === 1);
+      setWeight(data.weight || 0);
       setExistingImage(data.image || '');
     } catch (error: any) {
       toast({
@@ -98,6 +101,7 @@ const EditCategoryPackage: React.FC = () => {
         description,
         package_type: packageType,
         is_active: isActive,
+        weight: weight,
       };
 
       if (imageFile) {
@@ -173,6 +177,18 @@ const EditCategoryPackage: React.FC = () => {
                   onChange={(e) => setDescription(e.target.value)}
                   placeholder="Enter description"
                   rows={4}
+                />
+              </div>
+
+              {/* Weight */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Weight</label>
+                <Input
+                  type="number"
+                  value={weight}
+                  onChange={(e) => setWeight(parseInt(e.target.value) || 0)}
+                  placeholder="Enter weight"
+                  min={0}
                 />
               </div>
 
