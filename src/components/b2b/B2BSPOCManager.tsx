@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Progress } from '@/components/ui/progress';
+import { toast } from '@/components/ui/use-toast';
 import {
   Users,
   Plus,
@@ -223,35 +224,61 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
 
   const handleAddAssignment = async (assignmentData: Partial<SPOCAssignment>) => {
     try {
+      console.log('🚀 Creating SPOC assignment with data:', assignmentData);
       const response = await createSPOCAssignment(assignmentData);
+      console.log('📦 SPOC assignment response:', response);
 
       if (response.success) {
         setShowAddForm(false);
+        setError(null);
+        toast({
+          title: 'Success',
+          description: 'SPOC assignment created successfully',
+        });
         await loadAssignments();
         await loadWorkloadData();
       } else {
         throw new Error(response.message || 'Failed to create SPOC assignment');
       }
     } catch (err: any) {
-      console.error('Error creating assignment:', err);
-      setError(err.message || 'Failed to create assignment');
+      console.error('❌ Error creating assignment:', err);
+      const errorMessage = err.message || 'Failed to create assignment';
+      setError(errorMessage);
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     }
   };
 
   const handleEditAssignment = async (assignmentId: string, assignmentData: Partial<SPOCAssignment>) => {
     try {
+      console.log('🔄 Updating SPOC assignment:', assignmentId, assignmentData);
       const response = await updateSPOCAssignment(assignmentId, assignmentData);
+      console.log('📦 SPOC update response:', response);
 
       if (response.success) {
         setEditingAssignment(null);
+        setError(null);
+        toast({
+          title: 'Success',
+          description: 'SPOC assignment updated successfully',
+        });
         await loadAssignments();
         await loadWorkloadData();
       } else {
         throw new Error(response.message || 'Failed to update SPOC assignment');
       }
     } catch (err: any) {
-      console.error('Error updating assignment:', err);
-      setError(err.message || 'Failed to update assignment');
+      console.error('❌ Error updating assignment:', err);
+      const errorMessage = err.message || 'Failed to update assignment';
+      setError(errorMessage);
+      toast({
+        title: 'Error',
+        description: errorMessage,
+        variant: 'destructive',
+      });
     }
   };
 
@@ -370,7 +397,7 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
                 <div>
                   <p className="text-sm text-gray-600">Avg. Workload</p>
                   <p className="text-2xl font-bold text-orange-600">
-                    {workloadData.length > 0 
+                    {workloadData.length > 0
                       ? Math.round(workloadData.reduce((sum, spoc) => sum + spoc.total_assignments, 0) / workloadData.length)
                       : 0
                     }
@@ -456,68 +483,68 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
         <TabsContent value="workload" className="mt-6">
           {canManageSpocs ? (
             <div className="space-y-6">
-            {/* Workload Overview Cards */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-              {workloadData.map((spoc) => (
-                <Card key={spoc.spoc_user.id}>
-                  <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                      <div>
-                        <CardTitle className="text-lg">{spoc.spoc_user.full_name || spoc.spoc_user.username}</CardTitle>
-                        <p className="text-sm text-gray-600">{spoc.spoc_user.email}</p>
+              {/* Workload Overview Cards */}
+              <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+                {workloadData.map((spoc) => (
+                  <Card key={spoc.spoc_user.id}>
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle className="text-lg">{spoc.spoc_user.full_name || spoc.spoc_user.username}</CardTitle>
+                          <p className="text-sm text-gray-600">{spoc.spoc_user.email}</p>
+                        </div>
+                        <Badge className={getWorkloadColor(spoc.total_assignments)}>
+                          {spoc.total_assignments} clients
+                        </Badge>
                       </div>
-                      <Badge className={getWorkloadColor(spoc.total_assignments)}>
-                        {spoc.total_assignments} clients
-                      </Badge>
-                    </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-3">
+                        <div>
+                          <div className="flex justify-between text-sm mb-1">
+                            <span>Workload</span>
+                            <span className={getWorkloadColor(spoc.total_assignments)}>
+                              {spoc.total_assignments}/20
+                            </span>
+                          </div>
+                          <Progress
+                            value={getWorkloadProgress(spoc.total_assignments)}
+                            className="h-2"
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <h4 className="text-sm font-medium">Assignment Types:</h4>
+                          <div className="flex flex-wrap gap-1">
+                            {Object.entries(spoc.assignments_by_type).map(([type, count]) => {
+                              const spocType = spocTypes.find(st => st.key === type);
+                              return (
+                                <Badge key={type} variant="outline" className="text-xs">
+                                  {spocType && <spocType.icon className="w-3 h-3 mr-1" />}
+                                  {type}: {count}
+                                </Badge>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+
+              {/* Workload Chart */}
+              {workloadData.length > 0 && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Workload Distribution</CardTitle>
                   </CardHeader>
                   <CardContent>
-                    <div className="space-y-3">
-                      <div>
-                        <div className="flex justify-between text-sm mb-1">
-                          <span>Workload</span>
-                          <span className={getWorkloadColor(spoc.total_assignments)}>
-                            {spoc.total_assignments}/20
-                          </span>
-                        </div>
-                        <Progress 
-                          value={getWorkloadProgress(spoc.total_assignments)} 
-                          className="h-2"
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <h4 className="text-sm font-medium">Assignment Types:</h4>
-                        <div className="flex flex-wrap gap-1">
-                          {Object.entries(spoc.assignments_by_type).map(([type, count]) => {
-                            const spocType = spocTypes.find(st => st.key === type);
-                            return (
-                              <Badge key={type} variant="outline" className="text-xs">
-                                {spocType && <spocType.icon className="w-3 h-3 mr-1" />}
-                                {type}: {count}
-                              </Badge>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    </div>
+                    <B2BSPOCWorkloadChart data={workloadData} />
                   </CardContent>
                 </Card>
-              ))}
+              )}
             </div>
-
-            {/* Workload Chart */}
-            {workloadData.length > 0 && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Workload Distribution</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <B2BSPOCWorkloadChart data={workloadData} />
-                </CardContent>
-              </Card>
-            )}
-          </div>
           ) : (
             <div className="flex flex-col items-center justify-center py-12 text-center">
               <AlertCircle className="h-16 w-16 text-red-500 mb-4" />
@@ -550,19 +577,19 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
                       .filter(a => a.client_satisfaction_score)
                       .slice(0, 5)
                       .map((assignment) => (
-                      <div key={assignment.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div>
-                          <p className="font-medium">{assignment.spocUser?.full_name || assignment.spocUser?.username || 'Unknown SPOC'}</p>
-                          <p className="text-sm text-gray-600">{assignment.customer?.company_name || 'Unknown Client'}</p>
-                        </div>
-                        <div className="text-right">
-                          <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 text-yellow-500 fill-current" />
-                            <span className="font-medium">{formatSatisfactionScore(assignment.client_satisfaction_score)}</span>
+                        <div key={assignment.id} className="flex items-center justify-between p-3 border rounded-lg">
+                          <div>
+                            <p className="font-medium">{assignment.spocUser?.full_name || assignment.spocUser?.username || 'Unknown SPOC'}</p>
+                            <p className="text-sm text-gray-600">{assignment.customer?.company_name || 'Unknown Client'}</p>
                           </div>
-                          <p className="text-xs text-gray-500">Client Rating</p>
+                          <div className="text-right">
+                            <div className="flex items-center gap-1">
+                              <Star className="w-4 h-4 text-yellow-500 fill-current" />
+                              <span className="font-medium">{formatSatisfactionScore(assignment.client_satisfaction_score)}</span>
+                            </div>
+                            <p className="text-xs text-gray-500">Client Rating</p>
+                          </div>
                         </div>
-                      </div>
                       ))
                   ) : (
                     <div className="text-center py-8 text-gray-500">
@@ -591,18 +618,18 @@ export const B2BSPOCManager: React.FC<B2BSPOCManagerProps> = ({ onClose }) => {
                       .sort((a, b) => new Date(b.last_interaction_date).getTime() - new Date(a.last_interaction_date).getTime())
                       .slice(0, 5)
                       .map((assignment) => (
-                      <div key={assignment.id} className="flex items-center gap-3 p-3 border rounded-lg">
-                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                        <div className="flex-1">
-                          <p className="font-medium">{assignment.spocUser?.full_name || assignment.spocUser?.username || 'Unknown SPOC'}</p>
-                          <p className="text-sm text-gray-600">
-                            Interacted with {assignment.customer?.company_name || 'Unknown Client'}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {assignment.last_interaction_date ? new Date(assignment.last_interaction_date).toLocaleDateString() : 'No date'}
-                          </p>
+                        <div key={assignment.id} className="flex items-center gap-3 p-3 border rounded-lg">
+                          <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                          <div className="flex-1">
+                            <p className="font-medium">{assignment.spocUser?.full_name || assignment.spocUser?.username || 'Unknown SPOC'}</p>
+                            <p className="text-sm text-gray-600">
+                              Interacted with {assignment.customer?.company_name || 'Unknown Client'}
+                            </p>
+                            <p className="text-xs text-gray-500">
+                              {assignment.last_interaction_date ? new Date(assignment.last_interaction_date).toLocaleDateString() : 'No date'}
+                            </p>
+                          </div>
                         </div>
-                      </div>
                       ))
                   ) : (
                     <div className="text-center py-8 text-gray-500">
