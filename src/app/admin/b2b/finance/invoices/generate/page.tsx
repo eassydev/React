@@ -154,9 +154,22 @@ export default function GenerateInvoicePage() {
       return;
     }
 
+    // Validate invoice date for old/future types
+    if (invoiceDateType !== 'current' && !invoiceDate) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please select an invoice date',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Determine the final invoice date
+    const finalInvoiceDate = invoiceDateType === 'current' ? new Date().toISOString().split('T')[0] : invoiceDate;
+
     try {
       setLoading(true);
-      await generateStandardInvoice(standardOrderId, dueDate, notes, customInvoiceNumber || undefined);
+      await generateStandardInvoice(standardOrderId, dueDate, notes, customInvoiceNumber || undefined, finalInvoiceDate);
 
       toast({
         title: 'Success',
