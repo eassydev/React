@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import { useToast } from '@/components/ui/use-toast';
 import { fetchSPOCUsers, fetchB2BClientById } from '@/lib/api'; // ✅ Import SPOC API functions
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -93,6 +94,7 @@ export const B2BSPOCForm: React.FC<B2BSPOCFormProps> = ({
   onSubmit,
   onCancel
 }) => {
+  const { toast } = useToast();
   const [formData, setFormData] = useState<SPOCAssignment>({
     b2b_customer_id: '',
     spoc_user_id: '',
@@ -401,6 +403,11 @@ export const B2BSPOCForm: React.FC<B2BSPOCFormProps> = ({
     e.preventDefault();
 
     if (!validateForm()) {
+      toast({
+        title: "Validation Failed",
+        description: "Please fill in all required fields marked with *",
+        variant: "destructive"
+      });
       return;
     }
 
