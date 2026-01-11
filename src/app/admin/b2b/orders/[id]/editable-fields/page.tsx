@@ -228,6 +228,11 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
     payment_terms: '',
     notes: '',
     custom_fields: {} as Record<string, any>,
+
+    // Client Payment Tracking (quick-entry fields)
+    payment_amount: '',
+    client_payment_received_date: '',
+    payment_reference_number: '',
   });
 
   useEffect(() => {
@@ -335,6 +340,11 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
         payment_terms: orderData.customer?.payment_terms || orderData.payment_terms || 'Net 30 days',
         notes: orderData.notes || '',
         custom_fields: orderData.custom_fields || {},
+
+        // Client Payment Tracking
+        payment_amount: orderData.payment_amount?.toString() || '',
+        client_payment_received_date: formatDateForInput(orderData.client_payment_received_date),
+        payment_reference_number: orderData.payment_reference_number || '',
       });
     } catch (error: any) {
       console.error('Error fetching order:', error);
@@ -527,6 +537,11 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
       if (formData.subcategory_id && formData.subcategory_id.trim()) {
         submitData.subcategory_id = formData.subcategory_id;
       }
+
+      // ✅ NEW: Client Payment Tracking Fields
+      submitData.payment_amount = formData.payment_amount ? parseFloat(formData.payment_amount) : null;
+      submitData.client_payment_received_date = formData.client_payment_received_date || null;
+      submitData.payment_reference_number = formData.payment_reference_number || null;
 
       console.log('🔍 Submitting data:', submitData); // Debug log
       await updateB2BOrderEditableFields(params.id, submitData);
@@ -1305,6 +1320,61 @@ export default function EditableFieldsPage({ params }: { params: { id: string } 
                     </select>
                     <p className="text-xs text-gray-500 mt-1">Current payout status</p>
                   </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* ✅ NEW: Client Payment Tracking */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center">
+                  <Building className="h-5 w-5 mr-2" />
+                  Client Payment Tracking
+                </div>
+                <span className="text-sm bg-green-100 text-green-700 px-3 py-1 rounded font-normal">Quick Entry</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Track payments received from client for this order. For detailed payment allocation, use the Finance module.
+              </p>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div>
+                  <Label htmlFor="payment_amount">Payment Amount (₹)</Label>
+                  <Input
+                    id="payment_amount"
+                    type="number"
+                    step="0.01"
+                    value={formData.payment_amount}
+                    onChange={(e) => handleInputChange('payment_amount', e.target.value)}
+                    placeholder="0.00"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Amount received from client</p>
+                </div>
+
+                <div>
+                  <Label htmlFor="client_payment_received_date">Payment Received Date</Label>
+                  <Input
+                    id="client_payment_received_date"
+                    type="date"
+                    value={formData.client_payment_received_date}
+                    onChange={(e) => handleInputChange('client_payment_received_date', e.target.value)}
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Date when payment was received</p>
+                </div>
+
+                <div>
+                  <Label htmlFor="payment_reference_number">Payment Reference / UTR</Label>
+                  <Input
+                    id="payment_reference_number"
+                    type="text"
+                    value={formData.payment_reference_number}
+                    onChange={(e) => handleInputChange('payment_reference_number', e.target.value)}
+                    placeholder="Enter UTR or reference number"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Bank UTR or payment reference</p>
                 </div>
               </div>
             </CardContent>

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
-import { Search, Download, Eye, FileText, Filter, Loader2, RefreshCw, Trash, Info } from 'lucide-react';
+import { Search, Download, Eye, FileText, Filter, Loader2, RefreshCw, Trash, Info, FileSpreadsheet } from 'lucide-react';
 import { fetchB2BInvoices, downloadB2BInvoice, regenerateB2BInvoicePDF, deleteB2BInvoice } from '@/lib/api';
 import { toast } from "@/components/ui/use-toast"
 import { Button } from '@/components/ui/button';
@@ -83,6 +83,7 @@ function B2BInvoicesContent() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [totalRecords, setTotalRecords] = useState(0);
+  const [exporting, setExporting] = useState(false);
 
   // ✅ Initialize search term from URL parameter on component mount
   useEffect(() => {
@@ -257,6 +258,61 @@ function B2BInvoicesContent() {
     }
   };
 
+  // ✅ NEW: Handle export to CSV/XLSX
+  const handleExport = async (format: 'csv' | 'xlsx') => {
+    try {
+      setExporting(true);
+
+      // Build query params based on current filters
+      const params = new URLSearchParams();
+      params.append('format', format);
+      if (searchTerm) params.append('search', searchTerm);
+      if (paymentStatusFilter) params.append('paymentStatus', paymentStatusFilter);
+      if (dateFromFilter) params.append('startDate', dateFromFilter);
+      if (dateToFilter) params.append('endDate', dateToFilter);
+
+      // Get auth token
+      const token = localStorage.getItem('adminToken');
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.eassylife.in';
+
+      const response = await fetch(`${API_BASE_URL}/admin-api/b2b/invoices/export?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'admin-auth-token': token || '',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+
+      // Download the file
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `invoices_export.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Export Successful",
+        description: `Invoices exported to ${format.toUpperCase()} file`,
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export invoices. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   // ✅ NEW: Helper to get invoice type badge
   const getInvoiceTypeBadge = (type: string) => {
     const colors: Record<string, string> = {
@@ -355,6 +411,26 @@ function B2BInvoicesContent() {
             <h1 className="text-3xl font-bold text-gray-900">B2B Invoices</h1>
             <p className="text-gray-600 mt-1">Manage B2B invoices and payments</p>
           </div>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('csv')}
+              disabled={exporting}
+            >
+              {exporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 mr-2" />}
+              Export CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('xlsx')}
+              disabled={exporting}
+            >
+              {exporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 mr-2" />}
+              Export Excel
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -447,135 +523,145 @@ function B2BInvoicesContent() {
                     {invoices && invoices.length > 0 ? invoices.map((invoice) => {
                       const customer = getCustomerInfo(invoice);
                       return (
-                      <TableRow key={invoice.id}>
-                        <TableCell className="font-medium">
-                          {invoice.invoice_number}
-                        </TableCell>
-                        {/* ✅ NEW: Invoice Type */}
-                        <TableCell>
-                          {getInvoiceTypeBadge(invoice.invoice_type)}
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{customer.company_name}</div>
-                            <div className="text-sm text-gray-500">{customer.contact_person}</div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{getOrderInfo(invoice)}</TableCell>
-                        <TableCell>{getServiceInfo(invoice)}</TableCell>
-                        <TableCell>{formatDate(invoice.invoice_date)}</TableCell>
-                        <TableCell>
-                          <div className={new Date(invoice.due_date) < new Date() && invoice.payment_status !== 'paid' ? 'text-red-600 font-medium' : ''}>
-                            {formatDate(invoice.due_date)}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div>
-                            <div className="font-medium">{formatCurrency(invoice.total_amount || 0)}</div>
-                            <div className="text-sm text-gray-500">
-                              Subtotal: {formatCurrency(invoice.subtotal || 0)}
+                        <TableRow key={invoice.id}>
+                          <TableCell className="font-medium">
+                            {invoice.invoice_number}
+                          </TableCell>
+                          {/* ✅ NEW: Invoice Type */}
+                          <TableCell>
+                            {getInvoiceTypeBadge(invoice.invoice_type)}
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{customer.company_name}</div>
+                              <div className="text-sm text-gray-500">{customer.contact_person}</div>
                             </div>
-                            <div className="text-sm text-gray-500">
-                              Tax: {formatCurrency(invoice.tax_amount || 0)}
+                          </TableCell>
+                          <TableCell>{getOrderInfo(invoice)}</TableCell>
+                          <TableCell>{getServiceInfo(invoice)}</TableCell>
+                          <TableCell>{formatDate(invoice.invoice_date)}</TableCell>
+                          <TableCell>
+                            <div className={new Date(invoice.due_date) < new Date() && invoice.payment_status !== 'paid' ? 'text-red-600 font-medium' : ''}>
+                              {formatDate(invoice.due_date)}
                             </div>
-                            {/* ✅ NEW: Show additional costs if present */}
-                            {invoice.additional_costs_count > 0 && (
-                              <Popover>
-                                <PopoverTrigger asChild>
-                                  <div className="text-sm text-blue-600 font-medium mt-1 cursor-pointer hover:text-blue-800 flex items-center gap-1">
-                                    <Info className="w-3 h-3" />
-                                    + {invoice.additional_costs_count} additional item{invoice.additional_costs_count > 1 ? 's' : ''} (₹{invoice.additional_costs_total?.toLocaleString() || 0})
-                                  </div>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-80">
-                                  <div className="space-y-2">
-                                    <h4 className="font-semibold text-sm">Additional Costs Included</h4>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="font-medium">{formatCurrency(invoice.total_amount || 0)}</div>
+                              <div className="text-sm text-gray-500">
+                                Subtotal: {formatCurrency(invoice.subtotal || 0)}
+                              </div>
+                              <div className="text-sm text-gray-500">
+                                Tax: {formatCurrency(invoice.tax_amount || 0)}
+                              </div>
+                              {/* ✅ NEW: Show additional costs if present */}
+                              {invoice.additional_costs_count > 0 && (
+                                <Popover>
+                                  <PopoverTrigger asChild>
+                                    <div className="text-sm text-blue-600 font-medium mt-1 cursor-pointer hover:text-blue-800 flex items-center gap-1">
+                                      <Info className="w-3 h-3" />
+                                      + {invoice.additional_costs_count} additional item{invoice.additional_costs_count > 1 ? 's' : ''} (₹{invoice.additional_costs_total?.toLocaleString() || 0})
+                                    </div>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-80">
                                     <div className="space-y-2">
-                                      {invoice.additional_costs?.map((cost: any) => (
-                                        <div key={cost.id} className="border-b pb-2 last:border-0">
-                                          <div className="flex justify-between items-start">
-                                            <div className="flex-1">
-                                              <p className="font-medium text-sm">{cost.item_name}</p>
-                                              {cost.description && (
-                                                <p className="text-xs text-gray-500">{cost.description}</p>
-                                              )}
-                                              <p className="text-xs text-gray-600 mt-1">
-                                                Qty: {cost.quantity} × ₹{cost.unit_price?.toLocaleString() || 0}
-                                              </p>
-                                            </div>
-                                            <div className="text-sm font-semibold">
-                                              ₹{cost.total_amount?.toLocaleString() || 0}
+                                      <h4 className="font-semibold text-sm">Additional Costs Included</h4>
+                                      <div className="space-y-2">
+                                        {invoice.additional_costs?.map((cost: any) => (
+                                          <div key={cost.id} className="border-b pb-2 last:border-0">
+                                            <div className="flex justify-between items-start">
+                                              <div className="flex-1">
+                                                <p className="font-medium text-sm">{cost.item_name}</p>
+                                                {cost.description && (
+                                                  <p className="text-xs text-gray-500">{cost.description}</p>
+                                                )}
+                                                <p className="text-xs text-gray-600 mt-1">
+                                                  Qty: {cost.quantity} × ₹{cost.unit_price?.toLocaleString() || 0}
+                                                </p>
+                                              </div>
+                                              <div className="text-sm font-semibold">
+                                                ₹{cost.total_amount?.toLocaleString() || 0}
+                                              </div>
                                             </div>
                                           </div>
+                                        ))}
+                                      </div>
+                                      <div className="pt-2 border-t">
+                                        <div className="flex justify-between font-semibold">
+                                          <span>Total Additional:</span>
+                                          <span>₹{invoice.additional_costs_total?.toLocaleString() || 0}</span>
                                         </div>
-                                      ))}
-                                    </div>
-                                    <div className="pt-2 border-t">
-                                      <div className="flex justify-between font-semibold">
-                                        <span>Total Additional:</span>
-                                        <span>₹{invoice.additional_costs_total?.toLocaleString() || 0}</span>
                                       </div>
                                     </div>
-                                  </div>
-                                </PopoverContent>
-                              </Popover>
-                            )}
-                          </div>
-                        </TableCell>
-                        {/* ✅ NEW: Paid/Outstanding */}
-                        <TableCell>
-                          <div>
-                            <div className="text-sm text-green-600">
-                              Paid: {formatCurrency(invoice.paid_amount || 0)}
+                                  </PopoverContent>
+                                </Popover>
+                              )}
                             </div>
-                            <div className="text-sm text-orange-600 font-medium">
-                              Due: {formatCurrency(invoice.outstanding_amount || 0)}
+                          </TableCell>
+                          {/* ✅ NEW: Paid/Outstanding */}
+                          <TableCell>
+                            <div>
+                              <div className="text-sm text-green-600">
+                                Paid: {formatCurrency(invoice.paid_amount || 0)}
+                              </div>
+                              <div className="text-sm text-orange-600 font-medium">
+                                Due: {formatCurrency(invoice.outstanding_amount || 0)}
+                              </div>
                             </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{getPaymentStatusBadge(invoice.payment_status)}</TableCell>
+                          </TableCell>
+                          <TableCell>{getPaymentStatusBadge(invoice.payment_status)}</TableCell>
 
-                        {/* ✅ PDF Status Column */}
-                        <TableCell>
-                          {invoice.invoice_file_path ? (
-                            <Badge variant="default" className="bg-green-100 text-green-800">
-                              PDF Ready
-                            </Badge>
-                          ) : (
-                            <Badge variant="destructive" className="bg-red-100 text-red-800">
-                              PDF Missing
-                            </Badge>
-                          )}
-                        </TableCell>
-
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              asChild
-                            >
-                              <Link href={`/admin/b2b/invoices/${invoice.id}`}>
-                                <Eye className="w-4 h-4" />
-                              </Link>
-                            </Button>
-
-                            {/* Download Button - only show if PDF exists */}
+                          {/* ✅ PDF Status Column */}
+                          <TableCell>
                             {invoice.invoice_file_path ? (
+                              <Badge variant="default" className="bg-green-100 text-green-800">
+                                PDF Ready
+                              </Badge>
+                            ) : (
+                              <Badge variant="destructive" className="bg-red-100 text-red-800">
+                                PDF Missing
+                              </Badge>
+                            )}
+                          </TableCell>
+
+                          <TableCell>
+                            <div className="flex items-center space-x-2">
                               <Button
                                 variant="ghost"
                                 size="sm"
-                                onClick={() => handleDownloadInvoice(invoice.id)}
-                                disabled={downloadingId === invoice.id}
-                                title={downloadingId === invoice.id ? "Downloading..." : "Download Invoice PDF"}
+                                asChild
                               >
-                                {downloadingId === invoice.id ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <Download className="w-4 h-4" />
-                                )}
+                                <Link href={`/admin/b2b/invoices/${invoice.id}`}>
+                                  <Eye className="w-4 h-4" />
+                                </Link>
                               </Button>
-                            ) : (
+
+                              {/* Download Button - only show if PDF exists */}
+                              {invoice.invoice_file_path ? (
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => handleDownloadInvoice(invoice.id)}
+                                  disabled={downloadingId === invoice.id}
+                                  title={downloadingId === invoice.id ? "Downloading..." : "Download Invoice PDF"}
+                                >
+                                  {downloadingId === invoice.id ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                  ) : (
+                                    <Download className="w-4 h-4" />
+                                  )}
+                                </Button>
+                                {/* ✅ NEW: View PDF Button - opens in new tab without download */}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => window.open(invoice.invoice_file_path, '_blank')}
+                                title="View Invoice PDF"
+                                className="text-blue-600 hover:text-blue-700"
+                              >
+                                <FileText className="w-4 h-4" />
+                              </Button>
+                              ) : (
                               <Button
                                 variant="ghost"
                                 size="sm"
@@ -590,25 +676,25 @@ function B2BInvoicesContent() {
                                   <RefreshCw className="w-4 h-4" />
                                 )}
                               </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => handleDeleteInvoice(invoice.id)}
-                              disabled={deletingId === invoice.id}
-                              title={deletingId === invoice.id ? "Deleting..." : "Delete Invoice"}
-                              className="text-red-600 hover:text-red-700"
-                            >
-                              {deletingId === invoice.id ? (
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              ) : (
-                                <Trash className="w-4 h-4" />
                               )}
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    );
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteInvoice(invoice.id)}
+                                disabled={deletingId === invoice.id}
+                                title={deletingId === invoice.id ? "Deleting..." : "Delete Invoice"}
+                                className="text-red-600 hover:text-red-700"
+                              >
+                                {deletingId === invoice.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                  <Trash className="w-4 h-4" />
+                                )}
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
                     }) : (
                       <TableRow>
                         <TableCell colSpan={12} className="text-center py-8 text-gray-500">

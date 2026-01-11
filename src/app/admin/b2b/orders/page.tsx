@@ -76,6 +76,10 @@ interface B2BOrder {
   // Remarks
   crm_remarks?: string;
   ops_remarks?: string;
+  // Client Payment Tracking
+  payment_amount?: number;
+  client_payment_received_date?: string;
+  payment_reference_number?: string;
 }
 
 export default function B2BOrdersPage() {
@@ -873,6 +877,7 @@ export default function B2BOrdersPage() {
                       <TableHead>Amount</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead>Payment</TableHead>
+                      <TableHead>Payment Collection</TableHead>
                       <TableHead>Invoice</TableHead>
                       <TableHead>Invoice Date</TableHead>
                       <TableHead>Service Date</TableHead>
@@ -966,6 +971,28 @@ export default function B2BOrdersPage() {
                         <TableCell>
                           <StatusBadge type="payment" value={order.payment_status} />
                         </TableCell>
+                        {/* Payment Collection */}
+                        <TableCell>
+                          <div className="text-xs space-y-1">
+                            {order.payment_amount ? (
+                              <div className="font-medium text-green-600">
+                                ₹{order.payment_amount.toLocaleString()}
+                              </div>
+                            ) : (
+                              <div className="text-gray-400">-</div>
+                            )}
+                            {order.client_payment_received_date && (
+                              <div className="text-gray-500">
+                                {new Date(order.client_payment_received_date).toLocaleDateString('en-IN')}
+                              </div>
+                            )}
+                            {order.payment_reference_number && (
+                              <div className="text-blue-600 truncate max-w-[100px]" title={order.payment_reference_number}>
+                                {order.payment_reference_number}
+                              </div>
+                            )}
+                          </div>
+                        </TableCell>
                         <TableCell>
                           {order.invoice_status === 'generated' ? (
                             <Badge variant="default" className="bg-green-100 text-green-800">
@@ -995,7 +1022,7 @@ export default function B2BOrdersPage() {
                           {order.booking_received_date && order.booking_received_date > 0 ?
                             new Date(order.booking_received_date * 1000).toLocaleDateString('en-IN') :
                             order.created_at && order.created_at > 0 ?
-                            new Date(order.created_at * 1000).toLocaleDateString('en-IN') : 'N/A'}
+                              new Date(order.created_at * 1000).toLocaleDateString('en-IN') : 'N/A'}
                         </TableCell>
                         {/* CRM Remarks - Editable */}
                         <TableCell className="min-w-[200px]">

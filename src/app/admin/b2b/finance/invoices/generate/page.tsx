@@ -45,6 +45,8 @@ export default function GenerateInvoicePage() {
   const [dueDate, setDueDate] = useState('');
   const [notes, setNotes] = useState('');
   const [customInvoiceNumber, setCustomInvoiceNumber] = useState(''); // ✅ NEW: Custom invoice number
+  const [invoiceDateType, setInvoiceDateType] = useState<'current' | 'old' | 'future'>('current'); // ✅ NEW: Invoice date type
+  const [invoiceDate, setInvoiceDate] = useState(''); // ✅ NEW: Custom invoice date
 
   // Standard invoice
   const [standardOrderId, setStandardOrderId] = useState('');
@@ -353,9 +355,8 @@ export default function GenerateInvoicePage() {
                         setSelectedCustomer(customer.id);
                         setCustomerSearch(customer.company_name);
                       }}
-                      className={`p-3 cursor-pointer hover:bg-gray-50 border-b last:border-b-0 ${
-                        selectedCustomer === customer.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
-                      }`}
+                      className={`p-3 cursor-pointer hover:bg-gray-50 border-b last:border-b-0 ${selectedCustomer === customer.id ? 'bg-blue-50 border-l-4 border-l-blue-500' : ''
+                        }`}
                     >
                       <div className="font-medium">{customer.company_name}</div>
                       <div className="text-sm text-gray-600">
@@ -446,6 +447,50 @@ export default function GenerateInvoicePage() {
                           Leave empty to auto-generate in format: Inst/[number]/[FY]
                         </p>
                       </div>
+
+                      <div className="space-y-2">
+                        <Label>Invoice Date Type</Label>
+                        <Select
+                          value={invoiceDateType}
+                          onValueChange={(val: 'current' | 'old' | 'future') => {
+                            setInvoiceDateType(val);
+                            if (val === 'current') {
+                              setInvoiceDate(new Date().toISOString().split('T')[0]);
+                            } else {
+                              setInvoiceDate('');
+                            }
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select date type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="current">Current Date (Today)</SelectItem>
+                            <SelectItem value="old">Old Date (Backdate)</SelectItem>
+                            <SelectItem value="future">Future Date</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {invoiceDateType !== 'current' && (
+                        <div className="space-y-2">
+                          <Label htmlFor="standard-invoice-date">
+                            Invoice Date <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            id="standard-invoice-date"
+                            type="date"
+                            value={invoiceDate}
+                            onChange={(e) => setInvoiceDate(e.target.value)}
+                            max={invoiceDateType === 'old' ? new Date().toISOString().split('T')[0] : undefined}
+                            min={invoiceDateType === 'future' ? new Date(Date.now() + 86400000).toISOString().split('T')[0] : undefined}
+                            required
+                          />
+                          <p className="text-xs text-gray-500">
+                            {invoiceDateType === 'old' ? 'Select a past date for backdating' : 'Select a future date'}
+                          </p>
+                        </div>
+                      )}
 
                       <div className="space-y-2">
                         <Label htmlFor="standard-due-date">
@@ -812,11 +857,11 @@ export default function GenerateInvoicePage() {
                                 ✅ Maximum allowed: ₹
                                 {(
                                   (unbilledOrders.find(o => o.id === partialOrderId)?.base_remaining ||
-                                   unbilledOrders.find(o => o.id === partialOrderId)?.remaining_amount || 0) +
+                                    unbilledOrders.find(o => o.id === partialOrderId)?.remaining_amount || 0) +
                                   selectedOrderAdditionalCosts.reduce((sum, cost) => sum + parseFloat(cost.total_amount || 0), 0)
                                 ).toLocaleString()}
                                 {' '}(Base: ₹{(unbilledOrders.find(o => o.id === partialOrderId)?.base_remaining ||
-                                   unbilledOrders.find(o => o.id === partialOrderId)?.remaining_amount || 0).toLocaleString()} + Additional: ₹
+                                  unbilledOrders.find(o => o.id === partialOrderId)?.remaining_amount || 0).toLocaleString()} + Additional: ₹
                                 {selectedOrderAdditionalCosts.reduce((sum, cost) => sum + parseFloat(cost.total_amount || 0), 0).toLocaleString()})
                               </p>
                             ) : (

@@ -27,7 +27,9 @@ import {
   FileText,
   ExternalLink,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  FileSpreadsheet,
+  Loader2
 } from 'lucide-react';
 import { fetchB2BPayments, fetchB2BCustomers, B2BPayment } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -44,9 +46,12 @@ export default function AllPaymentsPage() {
     verificationStatus: '',
     startDate: '',
     endDate: '',
+    search: '', // ✅ NEW: Search filter
     page: 1,
     limit: 20,
   });
+
+  const [exporting, setExporting] = useState(false); // ✅ NEW: Export loading state
 
   const [pagination, setPagination] = useState({
     total: 0,
@@ -116,6 +121,59 @@ export default function AllPaymentsPage() {
     );
   };
 
+  // ✅ NEW: Handle export to CSV/XLSX
+  const handleExport = async (format: 'csv' | 'xlsx') => {
+    try {
+      setExporting(true);
+
+      const params = new URLSearchParams();
+      params.append('format', format);
+      if (filters.customerId) params.append('customerId', filters.customerId);
+      if (filters.verificationStatus) params.append('verificationStatus', filters.verificationStatus);
+      if (filters.startDate) params.append('startDate', filters.startDate);
+      if (filters.endDate) params.append('endDate', filters.endDate);
+      if (filters.search) params.append('search', filters.search);
+
+      const token = localStorage.getItem('adminToken');
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.eassylife.in';
+
+      const response = await fetch(`${API_BASE_URL}/admin-api/b2b/finance/payments/export?${params.toString()}`, {
+        method: 'GET',
+        headers: {
+          'admin-auth-token': token || '',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error('Export failed');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `payments_export.${format}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({
+        title: "Export Successful",
+        description: `Payments exported to ${format.toUpperCase()} file`,
+      });
+    } catch (error) {
+      console.error('Export error:', error);
+      toast({
+        title: "Export Failed",
+        description: "Failed to export payments. Please try again.",
+        variant: "destructive",
+      });
+    } finally {
+      setExporting(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -125,11 +183,31 @@ export default function AllPaymentsPage() {
             <h1 className="text-3xl font-bold text-gray-900">All Payments</h1>
             <p className="text-gray-600 mt-1">View and manage all B2B payments</p>
           </div>
-          <Button asChild>
-            <Link href="/admin/b2b/finance/payments/record">
-              Record Payment
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('csv')}
+              disabled={exporting}
+            >
+              {exporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 mr-2" />}
+              Export CSV
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => handleExport('xlsx')}
+              disabled={exporting}
+            >
+              {exporting ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileSpreadsheet className="w-4 h-4 mr-2" />}
+              Export Excel
+            </Button>
+            <Button asChild>
+              <Link href="/admin/b2b/finance/payments/record">
+                Record Payment
+              </Link>
+            </Button>
+          </div>
         </div>
 
         {/* Filters */}
@@ -141,7 +219,20 @@ export default function AllPaymentsPage() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+              {/* ✅ NEW: Search Bar */}
+              <div className="space-y-2">
+                <label className="text-sm font-medium">Search</label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                  <Input
+                    placeholder="Transaction ref, notes..."
+                    value={filters.search}
+                    onChange={(e) => setFilters({ ...filters, search: e.target.value, page: 1 })}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
               {/* Customer Filter */}
               <div className="space-y-2">
                 <label className="text-sm font-medium">Customer</label>
@@ -204,12 +295,12 @@ export default function AllPaymentsPage() {
             </div>
 
             {/* Clear Filters */}
-            {(filters.customerId || filters.verificationStatus || filters.startDate || filters.endDate) && (
+            {(filters.customerId || filters.verificationStatus || filters.startDate || filters.endDate || filters.search) && (
               <div className="mt-4">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => setFilters({ customerId: '', verificationStatus: '', startDate: '', endDate: '', page: 1, limit: 20 })}
+                  onClick={() => setFilters({ customerId: '', verificationStatus: '', startDate: '', endDate: '', search: '', page: 1, limit: 20 })}
                 >
                   Clear Filters
                 </Button>
@@ -241,8 +332,9 @@ export default function AllPaymentsPage() {
                   <Table>
                     <TableHeader>
                       <TableRow>
-                        <TableHead>Date</TableHead>
+                        <TableHead>Payment Received Date</TableHead>
                         <TableHead>Customer</TableHead>
+                        <TableHead>Transaction Ref</TableHead>
                         <TableHead>Amount</TableHead>
                         <TableHead>Allocated</TableHead>
                         <TableHead>Unallocated</TableHead>
@@ -260,6 +352,9 @@ export default function AllPaymentsPage() {
                           </TableCell>
                           <TableCell className="font-medium">
                             {payment.customer?.company_name || 'Unknown'}
+                          </TableCell>
+                          <TableCell className="text-blue-600 font-medium">
+                            {payment.transaction_ref || '-'}
                           </TableCell>
                           <TableCell>₹{payment.amount.toLocaleString()}</TableCell>
                           <TableCell>₹{payment.allocated_amount.toLocaleString()}</TableCell>
