@@ -638,44 +638,46 @@ function B2BInvoicesContent() {
 
                               {/* Download Button - only show if PDF exists */}
                               {invoice.invoice_file_path ? (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => handleDownloadInvoice(invoice.id)}
+                                    disabled={downloadingId === invoice.id}
+                                    title={downloadingId === invoice.id ? "Downloading..." : "Download Invoice PDF"}
+                                  >
+                                    {downloadingId === invoice.id ? (
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                      <Download className="w-4 h-4" />
+                                    )}
+                                  </Button>
+                                  {/* ✅ View PDF Button - opens in new tab without download */}
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => window.open(invoice.invoice_file_path, '_blank')}
+                                    title="View Invoice PDF"
+                                    className="text-blue-600 hover:text-blue-700"
+                                  >
+                                    <FileText className="w-4 h-4" />
+                                  </Button>
+                                </>
+                              ) : (
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => handleDownloadInvoice(invoice.id)}
-                                  disabled={downloadingId === invoice.id}
-                                  title={downloadingId === invoice.id ? "Downloading..." : "Download Invoice PDF"}
+                                  onClick={() => handleRetryPDF(invoice.id)}
+                                  disabled={regeneratingId === invoice.id}
+                                  title={regeneratingId === invoice.id ? "Generating PDF..." : "Generate PDF"}
+                                  className="text-orange-600 hover:text-orange-700"
                                 >
-                                  {downloadingId === invoice.id ? (
+                                  {regeneratingId === invoice.id ? (
                                     <Loader2 className="w-4 h-4 animate-spin" />
                                   ) : (
-                                    <Download className="w-4 h-4" />
+                                    <RefreshCw className="w-4 h-4" />
                                   )}
                                 </Button>
-                                {/* ✅ NEW: View PDF Button - opens in new tab without download */}
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => window.open(invoice.invoice_file_path, '_blank')}
-                                title="View Invoice PDF"
-                                className="text-blue-600 hover:text-blue-700"
-                              >
-                                <FileText className="w-4 h-4" />
-                              </Button>
-                              ) : (
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                onClick={() => handleRetryPDF(invoice.id)}
-                                disabled={regeneratingId === invoice.id}
-                                title={regeneratingId === invoice.id ? "Generating PDF..." : "Generate PDF"}
-                                className="text-orange-600 hover:text-orange-700"
-                              >
-                                {regeneratingId === invoice.id ? (
-                                  <Loader2 className="w-4 h-4 animate-spin" />
-                                ) : (
-                                  <RefreshCw className="w-4 h-4" />
-                                )}
-                              </Button>
                               )}
                               <Button
                                 variant="ghost"
