@@ -198,6 +198,19 @@ export default function GenerateInvoicePage() {
       return;
     }
 
+    // Validate invoice date for old/future types
+    if (invoiceDateType !== 'current' && !invoiceDate) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please select an invoice date',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Determine the final invoice date
+    const finalInvoiceDate = invoiceDateType === 'current' ? new Date().toISOString().split('T')[0] : invoiceDate;
+
     try {
       setLoading(true);
       await generateConsolidatedInvoice({
@@ -207,7 +220,8 @@ export default function GenerateInvoicePage() {
         periodEnd,
         dueDate,
         notes,
-        invoiceNumber: customInvoiceNumber || undefined,  // ✅ NEW: Pass custom invoice number
+        invoiceNumber: customInvoiceNumber || undefined,
+        invoiceDate: finalInvoiceDate,
       });
 
       toast({
@@ -269,10 +283,23 @@ export default function GenerateInvoicePage() {
       return;
     }
 
+    // Validate invoice date for old/future types
+    if (invoiceDateType !== 'current' && !invoiceDate) {
+      toast({
+        title: 'Validation Error',
+        description: 'Please select an invoice date',
+        variant: 'destructive',
+      });
+      return;
+    }
+
+    // Determine the final invoice date
+    const finalInvoiceDate = invoiceDateType === 'current' ? new Date().toISOString().split('T')[0] : invoiceDate;
+
     try {
       setLoading(true);
-      // ✅ NEW: Pass includeAdditionalCosts and custom invoice number to API
-      await generatePartialInvoice(partialOrderId, amount, dueDate, notes, includeAdditionalCosts, customInvoiceNumber || undefined);
+      // Pass includeAdditionalCosts, custom invoice number, and invoiceDate to API
+      await generatePartialInvoice(partialOrderId, amount, dueDate, notes, includeAdditionalCosts, customInvoiceNumber || undefined, finalInvoiceDate);
 
       toast({
         title: 'Success',
