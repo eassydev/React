@@ -460,10 +460,15 @@ export default function B2BAnalyticsDashboard() {
                   >
                     {formatCurrency(data.overall_metrics.orders_received?.total_value)}
                   </TableCell>
-                  <TableCell>{formatCurrency(
-                    (data.overall_metrics.billed_orders?.total_value || 0) +
-                    (data.overall_metrics.wip_orders?.billed_orders?.total_value || 0)
-                  )}</TableCell>
+                  <TableCell
+                    className="cursor-pointer hover:bg-blue-100 transition-colors"
+                    onClick={() => openDrillDown('orders_received', 'Total Orders Billed')}
+                  >
+                    {formatCurrency(
+                      (data.overall_metrics.billed_orders?.total_value || 0) +
+                      (data.overall_metrics.wip_orders?.billed_orders?.total_value || 0)
+                    )}
+                  </TableCell>
                   <TableCell
                     className="cursor-pointer hover:bg-blue-100 transition-colors"
                     onClick={() => openDrillDown('collections', 'Total Collections')}
@@ -473,10 +478,15 @@ export default function B2BAnalyticsDashboard() {
                       (data.overall_metrics.wip_orders?.collections?.total_value || 0)
                     )}
                   </TableCell>
-                  <TableCell>{formatCurrency(
-                    (data.overall_metrics.sp_payout || 0) +
-                    (data.overall_metrics.wip_orders?.sp_payout || 0)
-                  )}</TableCell>
+                  <TableCell
+                    className="cursor-pointer hover:bg-blue-100 transition-colors"
+                    onClick={() => openDrillDown('orders_received', 'Total SP Payout')}
+                  >
+                    {formatCurrency(
+                      (data.overall_metrics.sp_payout || 0) +
+                      (data.overall_metrics.wip_orders?.sp_payout || 0)
+                    )}
+                  </TableCell>
                   <TableCell>{formatCurrency(data.overall_metrics.gross_margin?.total)}</TableCell>
                   <TableCell>{data.overall_metrics.gross_margin?.avg_percentage}%</TableCell>
                 </TableRow>
@@ -506,14 +516,24 @@ export default function B2BAnalyticsDashboard() {
                   >
                     {formatCurrency(data.overall_metrics.orders_executed?.total_value)}
                   </TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.billed_orders?.total_value)}</TableCell>
+                  <TableCell
+                    className="cursor-pointer hover:bg-green-50 transition-colors"
+                    onClick={() => openDrillDown('orders_executed', 'Completed Orders Billed')}
+                  >
+                    {formatCurrency(data.overall_metrics.billed_orders?.total_value)}
+                  </TableCell>
                   <TableCell
                     className="cursor-pointer hover:bg-green-50 transition-colors"
                     onClick={() => openDrillDown('collections', 'Completed Order Collections')}
                   >
                     {formatCurrency(data.overall_metrics.collections?.total_value)}
                   </TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.sp_payout)}</TableCell>
+                  <TableCell
+                    className="cursor-pointer hover:bg-green-50 transition-colors"
+                    onClick={() => openDrillDown('orders_executed', 'Completed Orders SP Payout')}
+                  >
+                    {formatCurrency(data.overall_metrics.sp_payout)}
+                  </TableCell>
                   <TableCell>{formatCurrency(data.overall_metrics.gross_margin?.total)}</TableCell>
                   <TableCell>{data.overall_metrics.gross_margin?.avg_percentage}%</TableCell>
                 </TableRow>
@@ -539,7 +559,12 @@ export default function B2BAnalyticsDashboard() {
                   >
                     {formatCurrency(data.overall_metrics.wip_orders?.collections?.total_value)}
                   </TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.sp_payout)}</TableCell>
+                  <TableCell
+                    className="cursor-pointer hover:bg-purple-50 transition-colors"
+                    onClick={() => openDrillDown('wip_orders', 'WIP SP Payout')}
+                  >
+                    {formatCurrency(data.overall_metrics.wip_orders?.sp_payout)}
+                  </TableCell>
                   <TableCell>-</TableCell>
                   <TableCell>-</TableCell>
                 </TableRow>

@@ -275,7 +275,7 @@ function B2BInvoicesContent() {
       const token = localStorage.getItem('adminToken');
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.eassylife.in';
 
-      const response = await fetch(`${API_BASE_URL}/admin-api/b2b/invoices/export?${params.toString()}`, {
+      const response = await fetch(`${API_BASE_URL}/b2b/invoices/export?${params.toString()}`, {
         method: 'GET',
         headers: {
           'admin-auth-token': token || '',
