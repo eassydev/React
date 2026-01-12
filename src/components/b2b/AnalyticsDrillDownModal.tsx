@@ -65,17 +65,19 @@ const getFiltersForMetric = (metricType: MetricType): Record<string, string> => 
         case 'orders_cancelled':
             return { status: 'cancelled' };
         case 'net_orders':
-            return { excludeCancelled: 'true' };
+            // Pending orders - only show orders with pending status
+            return { status: 'pending' };
         case 'orders_executed':
             return { status: 'completed' };
         case 'collections':
             return { status: 'completed', paymentStatus: 'paid' };
         case 'wip_orders':
-            return { excludeCompleted: 'true', excludeCancelled: 'true' };
+            // Work in progress - only show orders with in_progress status
+            return { status: 'in_progress' };
         case 'wip_billed':
-            return { excludeCompleted: 'true', excludeCancelled: 'true', invoiceStatus: 'generated' };
+            return { status: 'in_progress', invoiceStatus: 'generated' };
         case 'wip_collections':
-            return { excludeCompleted: 'true', excludeCancelled: 'true', paymentStatus: 'paid' };
+            return { status: 'in_progress', paymentStatus: 'paid' };
         default:
             return {};
     }

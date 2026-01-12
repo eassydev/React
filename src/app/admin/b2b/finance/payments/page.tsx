@@ -29,7 +29,8 @@ import {
   ChevronLeft,
   ChevronRight,
   FileSpreadsheet,
-  Loader2
+  Loader2,
+  Upload
 } from 'lucide-react';
 import { fetchB2BPayments, fetchB2BCustomers, B2BPayment } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
@@ -205,6 +206,12 @@ export default function AllPaymentsPage() {
             <Button asChild>
               <Link href="/admin/b2b/finance/payments/record">
                 Record Payment
+              </Link>
+            </Button>
+            <Button asChild variant="outline">
+              <Link href="/admin/b2b/finance/payments/bulk-upload">
+                <Upload className="w-4 h-4 mr-2" />
+                Bulk Upload
               </Link>
             </Button>
           </div>
