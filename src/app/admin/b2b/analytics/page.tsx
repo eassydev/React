@@ -17,6 +17,7 @@ import B2BMetricCard from '@/components/b2b/B2BMetricCard';
 import B2BPaymentCollectionChart from '@/components/b2b/B2BPaymentCollectionChart';
 import B2BTopCustomersTable from '@/components/b2b/B2BTopCustomersTable';
 import AnalyticsExportPanel from '@/components/b2b/AnalyticsExportPanel';
+import AnalyticsDrillDownModal, { MetricType } from '@/components/b2b/AnalyticsDrillDownModal';
 import { DateRangePicker } from '@/components/DateRangePicker';
 import { Separator } from '@/components/ui/separator';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -67,6 +68,21 @@ export default function B2BAnalyticsDashboard() {
   const [userRole, setUserRole] = useState<string>('');
   const [selectedMonth, setSelectedMonth] = useState<string>('all'); // 'all' or 'YYYY-MM' format
   const [useReceivedDate, setUseReceivedDate] = useState<boolean>(false); // Toggle for booking_received_date
+
+  // ✅ NEW: Drill-down modal state
+  const [drillDownModal, setDrillDownModal] = useState<{
+    isOpen: boolean;
+    metricType: MetricType | null;
+    metricTitle: string;
+  }>({ isOpen: false, metricType: null, metricTitle: '' });
+
+  const openDrillDown = (metricType: MetricType, title: string) => {
+    setDrillDownModal({ isOpen: true, metricType, metricTitle: title });
+  };
+
+  const closeDrillDown = () => {
+    setDrillDownModal({ isOpen: false, metricType: null, metricTitle: '' });
+  };
 
   const fetchDashboard = async () => {
     setLoading(true);
@@ -230,6 +246,7 @@ export default function B2BAnalyticsDashboard() {
                 value={data.overall_metrics.orders_received?.count || 0}
                 subtitle={formatCurrency(data.overall_metrics.orders_received?.total_value)}
                 icon={<ShoppingCart className="h-4 w-4" />}
+                onClick={() => openDrillDown('orders_received', 'Orders Received')}
               />
 
               <B2BMetricCard
@@ -260,6 +277,7 @@ export default function B2BAnalyticsDashboard() {
                 icon={<AlertCircle className="h-4 w-4" />}
                 valueClassName="text-red-600"
                 alert={(data.overall_metrics.orders_cancelled?.count || 0) > 0}
+                onClick={() => openDrillDown('orders_cancelled', 'Orders Cancelled')}
               />
 
               <B2BMetricCard
@@ -267,6 +285,7 @@ export default function B2BAnalyticsDashboard() {
                 value={data.overall_metrics.net_orders?.count || 0}
                 subtitle={formatCurrency(data.overall_metrics.net_orders?.total_value)}
                 icon={<Package className="h-4 w-4" />}
+                onClick={() => openDrillDown('net_orders', 'Net Orders')}
               />
 
               <B2BMetricCard
@@ -274,6 +293,7 @@ export default function B2BAnalyticsDashboard() {
                 value={data.overall_metrics.orders_executed?.count || 0}
                 subtitle={formatCurrency(data.overall_metrics.orders_executed?.total_value)}
                 icon={<CheckCircle className="h-4 w-4" />}
+                onClick={() => openDrillDown('orders_executed', 'Orders Executed')}
               />
 
               <B2BMetricCard
@@ -282,6 +302,7 @@ export default function B2BAnalyticsDashboard() {
                 subtitle={`${data.overall_metrics.collections?.count || 0} completed & paid orders`}
                 icon={<CheckCircle className="h-4 w-4" />}
                 valueClassName="text-green-600"
+                onClick={() => openDrillDown('collections', 'Collections')}
               />
             </div>
           </div>
@@ -297,6 +318,7 @@ export default function B2BAnalyticsDashboard() {
                   subtitle={formatCurrency(data.overall_metrics.wip_orders.total_value)}
                   icon={<Clock className="h-4 w-4" />}
                   valueClassName="text-blue-600"
+                  onClick={() => openDrillDown('wip_orders', 'WIP Orders')}
                 />
 
                 <B2BMetricCard
@@ -497,6 +519,17 @@ export default function B2BAnalyticsDashboard() {
           </div>
         </TabsContent>
       </Tabs>
+
+      {/* ✅ NEW: Drill-Down Modal */}
+      <AnalyticsDrillDownModal
+        isOpen={drillDownModal.isOpen}
+        onClose={closeDrillDown}
+        metricType={drillDownModal.metricType}
+        metricTitle={drillDownModal.metricTitle}
+        dateRange={dateRange ? { from: dateRange.from, to: dateRange.to } : undefined}
+        selectedMonth={selectedMonth}
+        useReceivedDate={useReceivedDate}
+      />
     </div>
   );
 }

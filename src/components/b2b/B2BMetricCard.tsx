@@ -16,23 +16,28 @@ interface B2BMetricCardProps {
   };
   className?: string;
   valueClassName?: string;
+  onClick?: () => void; // ✅ NEW: Click handler for drill-down
 }
 
-export default function B2BMetricCard({ 
-  title, 
-  value, 
+export default function B2BMetricCard({
+  title,
+  value,
   subtitle,
-  icon, 
+  icon,
   alert = false,
   trend,
   className,
-  valueClassName
+  valueClassName,
+  onClick // ✅ NEW
 }: B2BMetricCardProps) {
   const isPositive = trend && trend.value >= 0;
   const isNegative = trend && trend.value < 0;
 
   return (
-    <Card className={`${className} ${alert ? 'border-l-4 border-l-red-500' : ''}`}>
+    <Card
+      className={`${className} ${alert ? 'border-l-4 border-l-red-500' : ''} ${onClick ? 'cursor-pointer hover:shadow-lg hover:border-primary/50 transition-all' : ''}`}
+      onClick={onClick}
+    >
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
         <CardTitle className="text-sm font-semibold text-black dark:text-white">{title}</CardTitle>
         {icon && (
@@ -52,7 +57,7 @@ export default function B2BMetricCard({
         {subtitle && (
           <p className="text-sm font-medium text-black dark:text-white mt-2">{subtitle}</p>
         )}
-        
+
         {trend && (
           <div className="flex items-center space-x-1 text-xs mt-2">
             {isPositive && <TrendingUp className="h-3 w-3 text-green-500" />}

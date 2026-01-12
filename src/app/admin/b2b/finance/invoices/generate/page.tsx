@@ -684,6 +684,51 @@ export default function GenerateInvoicePage() {
                         </div>
                       </div>
 
+                      {/* ✅ Invoice Date Type Selector */}
+                      <div className="space-y-2">
+                        <Label>Invoice Date Type</Label>
+                        <Select
+                          value={invoiceDateType}
+                          onValueChange={(val: 'current' | 'old' | 'future') => {
+                            setInvoiceDateType(val);
+                            if (val === 'current') {
+                              setInvoiceDate(new Date().toISOString().split('T')[0]);
+                            } else {
+                              setInvoiceDate('');
+                            }
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select date type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="current">Current Date (Today)</SelectItem>
+                            <SelectItem value="old">Old Date (Backdate)</SelectItem>
+                            <SelectItem value="future">Future Date</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {invoiceDateType !== 'current' && (
+                        <div className="space-y-2">
+                          <Label htmlFor="consolidated-invoice-date">
+                            Invoice Date <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            id="consolidated-invoice-date"
+                            type="date"
+                            value={invoiceDate}
+                            onChange={(e) => setInvoiceDate(e.target.value)}
+                            max={invoiceDateType === 'old' ? new Date().toISOString().split('T')[0] : undefined}
+                            min={invoiceDateType === 'future' ? new Date(Date.now() + 86400000).toISOString().split('T')[0] : undefined}
+                            required
+                          />
+                          <p className="text-xs text-gray-500">
+                            {invoiceDateType === 'old' ? 'Select a past date for backdating' : 'Select a future date'}
+                          </p>
+                        </div>
+                      )}
+
                       <div className="space-y-2">
                         <Label htmlFor="consolidated-due-date">
                           Due Date <span className="text-red-500">*</span>
@@ -915,6 +960,51 @@ export default function GenerateInvoicePage() {
                           </div>
                         )}
                       </div>
+
+                      {/* ✅ Invoice Date Type Selector */}
+                      <div className="space-y-2">
+                        <Label>Invoice Date Type</Label>
+                        <Select
+                          value={invoiceDateType}
+                          onValueChange={(val: 'current' | 'old' | 'future') => {
+                            setInvoiceDateType(val);
+                            if (val === 'current') {
+                              setInvoiceDate(new Date().toISOString().split('T')[0]);
+                            } else {
+                              setInvoiceDate('');
+                            }
+                          }}
+                        >
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select date type" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="current">Current Date (Today)</SelectItem>
+                            <SelectItem value="old">Old Date (Backdate)</SelectItem>
+                            <SelectItem value="future">Future Date</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {invoiceDateType !== 'current' && (
+                        <div className="space-y-2">
+                          <Label htmlFor="partial-invoice-date">
+                            Invoice Date <span className="text-red-500">*</span>
+                          </Label>
+                          <Input
+                            id="partial-invoice-date"
+                            type="date"
+                            value={invoiceDate}
+                            onChange={(e) => setInvoiceDate(e.target.value)}
+                            max={invoiceDateType === 'old' ? new Date().toISOString().split('T')[0] : undefined}
+                            min={invoiceDateType === 'future' ? new Date(Date.now() + 86400000).toISOString().split('T')[0] : undefined}
+                            required
+                          />
+                          <p className="text-xs text-gray-500">
+                            {invoiceDateType === 'old' ? 'Select a past date for backdating' : 'Select a future date'}
+                          </p>
+                        </div>
+                      )}
 
                       <div className="space-y-2">
                         <Label htmlFor="partial-due-date">
