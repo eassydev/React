@@ -454,15 +454,25 @@ export default function B2BAnalyticsDashboard() {
                 {/* ✅ REORDERED: Row 1 - Total Orders Received */}
                 <TableRow className="bg-blue-50 font-bold border-t-2">
                   <TableCell>Total Orders Received</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.orders_received?.total_value)}</TableCell>
+                  <TableCell
+                    className="cursor-pointer hover:bg-blue-100 transition-colors"
+                    onClick={() => openDrillDown('orders_received', 'Total Orders Received')}
+                  >
+                    {formatCurrency(data.overall_metrics.orders_received?.total_value)}
+                  </TableCell>
                   <TableCell>{formatCurrency(
                     (data.overall_metrics.billed_orders?.total_value || 0) +
                     (data.overall_metrics.wip_orders?.billed_orders?.total_value || 0)
                   )}</TableCell>
-                  <TableCell>{formatCurrency(
-                    (data.overall_metrics.collections?.total_value || 0) +
-                    (data.overall_metrics.wip_orders?.collections?.total_value || 0)
-                  )}</TableCell>
+                  <TableCell
+                    className="cursor-pointer hover:bg-blue-100 transition-colors"
+                    onClick={() => openDrillDown('collections', 'Total Collections')}
+                  >
+                    {formatCurrency(
+                      (data.overall_metrics.collections?.total_value || 0) +
+                      (data.overall_metrics.wip_orders?.collections?.total_value || 0)
+                    )}
+                  </TableCell>
                   <TableCell>{formatCurrency(
                     (data.overall_metrics.sp_payout || 0) +
                     (data.overall_metrics.wip_orders?.sp_payout || 0)
@@ -474,7 +484,12 @@ export default function B2BAnalyticsDashboard() {
                 {/* ✅ REORDERED: Row 2 - Cancelled Orders */}
                 <TableRow>
                   <TableCell className="font-medium">Cancelled Orders</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.orders_cancelled?.total_value)}</TableCell>
+                  <TableCell
+                    className="cursor-pointer hover:bg-red-50 transition-colors"
+                    onClick={() => openDrillDown('orders_cancelled', 'Cancelled Orders')}
+                  >
+                    {formatCurrency(data.overall_metrics.orders_cancelled?.total_value)}
+                  </TableCell>
                   <TableCell>-</TableCell>
                   <TableCell>-</TableCell>
                   <TableCell>-</TableCell>
@@ -485,9 +500,19 @@ export default function B2BAnalyticsDashboard() {
                 {/* ✅ REORDERED: Row 3 - Completed Orders */}
                 <TableRow>
                   <TableCell className="font-medium">Completed Orders</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.orders_executed?.total_value)}</TableCell>
+                  <TableCell
+                    className="cursor-pointer hover:bg-green-50 transition-colors"
+                    onClick={() => openDrillDown('orders_executed', 'Completed Orders')}
+                  >
+                    {formatCurrency(data.overall_metrics.orders_executed?.total_value)}
+                  </TableCell>
                   <TableCell>{formatCurrency(data.overall_metrics.billed_orders?.total_value)}</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.collections?.total_value)}</TableCell>
+                  <TableCell
+                    className="cursor-pointer hover:bg-green-50 transition-colors"
+                    onClick={() => openDrillDown('collections', 'Completed Order Collections')}
+                  >
+                    {formatCurrency(data.overall_metrics.collections?.total_value)}
+                  </TableCell>
                   <TableCell>{formatCurrency(data.overall_metrics.sp_payout)}</TableCell>
                   <TableCell>{formatCurrency(data.overall_metrics.gross_margin?.total)}</TableCell>
                   <TableCell>{data.overall_metrics.gross_margin?.avg_percentage}%</TableCell>
@@ -496,9 +521,24 @@ export default function B2BAnalyticsDashboard() {
                 {/* ✅ REORDERED: Row 4 - Work in Progress Orders */}
                 <TableRow>
                   <TableCell className="font-medium">Work In Progress Orders</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.total_value)}</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.billed_orders?.total_value)}</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.collections?.total_value)}</TableCell>
+                  <TableCell
+                    className="cursor-pointer hover:bg-purple-50 transition-colors"
+                    onClick={() => openDrillDown('wip_orders', 'Work In Progress Orders')}
+                  >
+                    {formatCurrency(data.overall_metrics.wip_orders?.total_value)}
+                  </TableCell>
+                  <TableCell
+                    className="cursor-pointer hover:bg-purple-50 transition-colors"
+                    onClick={() => openDrillDown('wip_billed', 'WIP Billed Orders')}
+                  >
+                    {formatCurrency(data.overall_metrics.wip_orders?.billed_orders?.total_value)}
+                  </TableCell>
+                  <TableCell
+                    className="cursor-pointer hover:bg-purple-50 transition-colors"
+                    onClick={() => openDrillDown('wip_collections', 'WIP Collections')}
+                  >
+                    {formatCurrency(data.overall_metrics.wip_orders?.collections?.total_value)}
+                  </TableCell>
                   <TableCell>{formatCurrency(data.overall_metrics.wip_orders?.sp_payout)}</TableCell>
                   <TableCell>-</TableCell>
                   <TableCell>-</TableCell>
@@ -507,7 +547,12 @@ export default function B2BAnalyticsDashboard() {
                 {/* ✅ REORDERED: Row 5 - Pending Orders */}
                 <TableRow>
                   <TableCell className="font-medium">Pending Orders</TableCell>
-                  <TableCell>{formatCurrency(data.overall_metrics.not_started_orders?.total_value)}</TableCell>
+                  <TableCell
+                    className="cursor-pointer hover:bg-yellow-50 transition-colors"
+                    onClick={() => openDrillDown('net_orders', 'Pending Orders')}
+                  >
+                    {formatCurrency(data.overall_metrics.not_started_orders?.total_value)}
+                  </TableCell>
                   <TableCell>-</TableCell>
                   <TableCell>-</TableCell>
                   <TableCell>-</TableCell>
