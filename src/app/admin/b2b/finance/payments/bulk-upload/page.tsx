@@ -37,7 +37,7 @@ export default function BulkUploadPage() {
             const formData = new FormData();
             formData.append('file', file);
 
-            const token = localStorage.getItem('adminToken');
+            const token = localStorage.getItem('token');
             const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.eassylife.in';
 
             const response = await fetch(`${API_BASE_URL}/admin-api/b2b/finance/payments/bulk-upload`, {

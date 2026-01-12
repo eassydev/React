@@ -135,7 +135,7 @@ export default function AllPaymentsPage() {
       if (filters.endDate) params.append('endDate', filters.endDate);
       if (filters.search) params.append('search', filters.search);
 
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('token');
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.eassylife.in';
 
       const response = await fetch(`${API_BASE_URL}/b2b/finance/payments/export?${params.toString()}`, {

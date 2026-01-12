@@ -272,7 +272,7 @@ function B2BInvoicesContent() {
       if (dateToFilter) params.append('endDate', dateToFilter);
 
       // Get auth token
-      const token = localStorage.getItem('adminToken');
+      const token = localStorage.getItem('token');
       const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.eassylife.in';
 
       const response = await fetch(`${API_BASE_URL}/b2b/invoices/export?${params.toString()}`, {
