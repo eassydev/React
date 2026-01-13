@@ -6022,6 +6022,7 @@ export const fetchB2BOrders = async (
     status?: string;
     customerId?: string;
     paymentStatus?: string;
+    hasPayment?: string; // ✅ NEW: Filter for orders with payment_amount > 0
     search?: string;
     dateFilter?: string;
     dateFrom?: string;
@@ -6053,6 +6054,7 @@ export const fetchB2BOrders = async (
       if (params.status && params.status !== 'all') queryParams.status = params.status;
       if (params.customerId) queryParams.customerId = params.customerId;
       if (params.paymentStatus && params.paymentStatus !== 'all') queryParams.payment_status = params.paymentStatus;
+      if (params.hasPayment === 'true') queryParams.has_payment = 'true'; // ✅ NEW: Support hasPayment filter
       if (params.search?.trim()) queryParams.search = params.search.trim();
       if (params.dateFilter && params.dateFilter !== 'all') {
         queryParams.date_filter = params.dateFilter;

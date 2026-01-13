@@ -77,7 +77,8 @@ const getFiltersForMetric = (metricType: MetricType): Record<string, string> => 
         case 'wip_billed':
             return { status: 'in_progress', invoiceStatus: 'generated' };
         case 'wip_collections':
-            return { status: 'in_progress', paymentStatus: 'paid' };
+            // ✅ FIX: Use hasPayment filter to match backend logic (payment_amount > 0)
+            return { status: 'in_progress', hasPayment: 'true' };
         default:
             return {};
     }
@@ -100,7 +101,8 @@ export default function AnalyticsDrillDownModal({
         if (isOpen && metricType) {
             fetchOrders();
         }
-    }, [isOpen, metricType]);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isOpen, metricType, useReceivedDate, selectedMonth, dateRange?.from?.toISOString(), dateRange?.to?.toISOString()]);
 
     const fetchOrders = async () => {
         if (!metricType) return;
@@ -130,6 +132,7 @@ export default function AnalyticsDrillDownModal({
                 search: '',
                 status: filters.status || '',
                 paymentStatus: filters.paymentStatus || '',
+                hasPayment: filters.hasPayment || '', // ✅ NEW: Support hasPayment filter for WIP Collections
                 dateFrom: useReceivedDate ? '' : dateFrom,
                 dateTo: useReceivedDate ? '' : dateTo,
                 receivedDateFrom: useReceivedDate ? dateFrom : '',
