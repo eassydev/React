@@ -57,11 +57,12 @@ const B2BQuotationDashboard: React.FC<B2BQuotationDashboardProps> = ({ orderId }
   const fetchQuotationStats = async () => {
     try {
       setIsLoadingStats(true);
+      const token = localStorage.getItem('token');
       const response = await fetch('/admin-api/b2b/quotations/statistics', {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
+          'admin-auth-token': token || '' // ✅ FIX: Use correct header name
         }
       });
 
@@ -151,7 +152,7 @@ const B2BQuotationDashboard: React.FC<B2BQuotationDashboardProps> = ({ orderId }
             {orderId ? 'Order Quotations' : 'B2B Quotation Management'}
           </h1>
           <p className="text-muted-foreground">
-            {orderId 
+            {orderId
               ? 'Manage quotations for this specific order'
               : 'Create, manage, and track B2B quotations'
             }
@@ -333,7 +334,7 @@ const B2BQuotationDashboard: React.FC<B2BQuotationDashboardProps> = ({ orderId }
                   ← Back to List
                 </Button>
               </div>
-              
+
               <B2BQuotationDetail
                 quotationId={selectedQuotation.id!}
                 onEdit={handleEditQuotation}
