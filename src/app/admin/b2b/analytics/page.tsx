@@ -477,12 +477,9 @@ export default function B2BAnalyticsDashboard() {
                   </TableCell>
                   <TableCell
                     className="cursor-pointer hover:bg-blue-100 transition-colors"
-                    onClick={() => openDrillDown('orders_received', 'Total Orders Billed')}
+                    onClick={() => openDrillDown('billed_orders_total', 'Total Orders Billed')}
                   >
-                    {formatCurrency(
-                      (data.overall_metrics.billed_orders?.total_value || 0) +
-                      (data.overall_metrics.wip_orders?.billed_orders?.total_value || 0)
-                    )}
+                    {formatCurrency(data.overall_metrics.billed_orders?.total_value)}
                   </TableCell>
                   <TableCell
                     className="cursor-pointer hover:bg-blue-100 transition-colors"
@@ -533,9 +530,9 @@ export default function B2BAnalyticsDashboard() {
                   </TableCell>
                   <TableCell
                     className="cursor-pointer hover:bg-green-50 transition-colors"
-                    onClick={() => openDrillDown('orders_executed', 'Completed Orders Billed')}
+                    onClick={() => openDrillDown('billed_orders_completed', 'Completed Orders Billed')}
                   >
-                    {formatCurrency(data.overall_metrics.billed_orders?.total_value)}
+                    {formatCurrency(data.overall_metrics.orders_executed?.billed_orders?.total_value)}
                   </TableCell>
                   <TableCell
                     className="cursor-pointer hover:bg-green-50 transition-colors"

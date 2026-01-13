@@ -29,33 +29,11 @@ export type MetricType =
     | 'collections'
     | 'wip_orders'
     | 'wip_billed'
-    | 'wip_collections';
+    | 'wip_collections'
+    | 'billed_orders_total'
+    | 'billed_orders_completed';
 
-interface DrillDownOrder {
-    id: string;
-    order_number: string;
-    customer?: {
-        company_name: string;
-    };
-    service_name: string;
-    service_date: string;
-    final_amount: number;
-    status: string;
-    payment_status: string;
-}
-
-interface AnalyticsDrillDownModalProps {
-    isOpen: boolean;
-    onClose: () => void;
-    metricType: MetricType | null;
-    metricTitle: string;
-    dateRange?: {
-        from?: Date;
-        to?: Date;
-    };
-    selectedMonth?: string;
-    useReceivedDate?: boolean;
-}
+// ... (interface DrillDownOrder)
 
 // Map metric type to API filter parameters
 const getFiltersForMetric = (metricType: MetricType): Record<string, string> => {
@@ -75,10 +53,14 @@ const getFiltersForMetric = (metricType: MetricType): Record<string, string> => 
             // Work in progress - only show orders with in_progress status
             return { status: 'in_progress' };
         case 'wip_billed':
-            return { status: 'in_progress', invoiceStatus: 'generated' };
+            return { status: 'in_progress' };
         case 'wip_collections':
             // ✅ FIX: Use hasPayment filter to match backend logic (payment_amount > 0)
             return { status: 'in_progress', hasPayment: 'true' };
+        case 'billed_orders_total':
+            return {}; // All statuses
+        case 'billed_orders_completed':
+            return { status: 'completed' };
         default:
             return {};
     }
