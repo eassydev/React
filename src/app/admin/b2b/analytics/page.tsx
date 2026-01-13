@@ -68,6 +68,21 @@ export default function B2BAnalyticsDashboard() {
   const [userRole, setUserRole] = useState<string>('');
   const [selectedMonth, setSelectedMonth] = useState<string>('all'); // 'all' or 'YYYY-MM' format
   const [useReceivedDate, setUseReceivedDate] = useState<boolean>(false); // Toggle for booking_received_date
+  const [selectedTab, setSelectedTab] = useState<string>('card'); // ✅ NEW: Persist tab state
+
+  // ✅ NEW: Load persisted tab from localStorage on mount
+  useEffect(() => {
+    const savedTab = localStorage.getItem('b2b-analytics-tab');
+    if (savedTab === 'card' || savedTab === 'sheet') {
+      setSelectedTab(savedTab);
+    }
+  }, []);
+
+  // ✅ NEW: Persist tab selection to localStorage
+  const handleTabChange = (value: string) => {
+    setSelectedTab(value);
+    localStorage.setItem('b2b-analytics-tab', value);
+  };
 
   // ✅ NEW: Drill-down modal state
   const [drillDownModal, setDrillDownModal] = useState<{
@@ -220,7 +235,7 @@ export default function B2BAnalyticsDashboard() {
         </div>
       </div>
 
-      <Tabs defaultValue="card" className="w-full">
+      <Tabs value={selectedTab} onValueChange={handleTabChange} className="w-full">
         <TabsList className="grid w-[200px] grid-cols-2">
           <TabsTrigger value="card">Card</TabsTrigger>
           <TabsTrigger value="sheet">Sheet</TabsTrigger>
