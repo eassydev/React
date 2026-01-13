@@ -674,24 +674,73 @@ export default function B2BAnalyticsDashboard() {
                       <TableHead className="font-bold">Orders Received (Lacs)</TableHead>
                       <TableHead className="font-bold">Orders Billed (Lacs)</TableHead>
                       <TableHead className="font-bold">Collections Amount (Lacs)</TableHead>
-                      <TableHead className="font-bold">Completed Billed (Lacs)</TableHead>
-                      <TableHead className="font-bold">WIP Billed (Lacs)</TableHead>
+                      <TableHead className="font-bold">SP Payment (Lacs)</TableHead>
+                      <TableHead className="font-bold">Gross Margin (Lacs)</TableHead>
+                      <TableHead className="font-bold">GM %</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    <TableRow className="font-medium">
-                      <TableCell>Total (All Statuses)</TableCell>
+                    {/* Row 1: Total Orders Received */}
+                    <TableRow className="bg-blue-50 font-bold border-t-2">
+                      <TableCell>Total Orders Received</TableCell>
                       <TableCell>{formatCurrency(hybridStats.orders_received_value)}</TableCell>
-                      <TableCell className="text-blue-600 font-bold">{formatCurrency(hybridStats.billed_orders_value)}</TableCell>
-                      <TableCell className="text-green-600">{formatCurrency(hybridStats.orders_collected_value)}</TableCell>
-                      <TableCell>{formatCurrency(hybridStats.completed_billed_value)}</TableCell>
-                      <TableCell>{formatCurrency(hybridStats.wip_billed_value)}</TableCell>
-                    </TableRow>
-                    <TableRow>
-                      <TableCell colSpan={6} className="bg-gray-50 text-xs text-center text-gray-500 py-2">
-                        * Counts: Received: {hybridStats.orders_received_count} | Billed: {hybridStats.billed_orders_count} |
-                        Completed Billed: {hybridStats.completed_billed_count} | WIP Billed: {hybridStats.wip_billed_count}
+                      <TableCell>{formatCurrency(hybridStats.billed_orders_value)}</TableCell>
+                      <TableCell>{formatCurrency(hybridStats.orders_collected_value)}</TableCell>
+                      <TableCell>{formatCurrency((hybridStats.orders_executed_sp_payout || 0) + (hybridStats.orders_wip_sp_payout || 0))}</TableCell>
+                      <TableCell>{formatCurrency(hybridStats.orders_executed_gross_margin)}</TableCell>
+                      <TableCell>
+                        {hybridStats.orders_executed_value > 0
+                          ? ((hybridStats.orders_executed_gross_margin / hybridStats.orders_executed_value) * 100).toFixed(2) + '%'
+                          : '0%'}
                       </TableCell>
+                    </TableRow>
+
+                    {/* Row 2: Cancelled Orders */}
+                    <TableRow>
+                      <TableCell className="font-medium">Cancelled Orders</TableCell>
+                      <TableCell className="text-red-600">{formatCurrency(hybridStats.orders_cancelled_value)}</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
+                    </TableRow>
+
+                    {/* Row 3: Completed Orders */}
+                    <TableRow>
+                      <TableCell className="font-medium">Completed Orders</TableCell>
+                      <TableCell>{formatCurrency(hybridStats.orders_executed_value)}</TableCell>
+                      <TableCell>{formatCurrency(hybridStats.orders_executed_billed_value)}</TableCell>
+                      <TableCell>{formatCurrency(hybridStats.orders_executed_collections_value)}</TableCell>
+                      <TableCell>{formatCurrency(hybridStats.orders_executed_sp_payout)}</TableCell>
+                      <TableCell>{formatCurrency(hybridStats.orders_executed_gross_margin)}</TableCell>
+                      <TableCell>
+                        {hybridStats.orders_executed_value > 0
+                          ? ((hybridStats.orders_executed_gross_margin / hybridStats.orders_executed_value) * 100).toFixed(2) + '%'
+                          : '0%'}
+                      </TableCell>
+                    </TableRow>
+
+                    {/* Row 4: Work In Progress Orders */}
+                    <TableRow>
+                      <TableCell className="font-medium">Work In Progress Orders</TableCell>
+                      <TableCell>{formatCurrency(hybridStats.orders_wip_value)}</TableCell>
+                      <TableCell>{formatCurrency(hybridStats.orders_wip_billed_value)}</TableCell>
+                      <TableCell>{formatCurrency(hybridStats.orders_wip_collections_value)}</TableCell>
+                      <TableCell>{formatCurrency(hybridStats.orders_wip_sp_payout)}</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
+                    </TableRow>
+
+                    {/* Row 5: Pending Orders */}
+                    <TableRow>
+                      <TableCell className="font-medium">Pending Orders</TableCell>
+                      <TableCell>{formatCurrency(hybridStats.orders_not_started_value)}</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
+                      <TableCell>-</TableCell>
                     </TableRow>
                   </TableBody>
                 </Table>
