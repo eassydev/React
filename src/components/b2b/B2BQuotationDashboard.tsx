@@ -9,7 +9,7 @@ import { Plus, FileText, TrendingUp, Clock, CheckCircle, XCircle, AlertTriangle 
 import B2BQuotationList from './B2BQuotationList';
 import B2BQuotationForm from './B2BQuotationForm';
 import B2BQuotationDetail from './B2BQuotationDetail';
-import { B2BQuotation } from '@/lib/api';
+import { B2BQuotation, getQuotationStatistics } from '@/lib/api';
 import { useToast } from '@/components/ui/use-toast';
 
 interface B2BQuotationDashboardProps {
@@ -57,20 +57,7 @@ const B2BQuotationDashboard: React.FC<B2BQuotationDashboardProps> = ({ orderId }
   const fetchQuotationStats = async () => {
     try {
       setIsLoadingStats(true);
-      const token = localStorage.getItem('token');
-      const response = await fetch('/admin-api/b2b/quotations/statistics', {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'admin-auth-token': token || '' // ✅ FIX: Use correct header name
-        }
-      });
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch quotation statistics');
-      }
-
-      const result = await response.json();
+      const result = await getQuotationStatistics();
 
       if (result.success) {
         setStats(result.data);

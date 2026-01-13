@@ -7308,6 +7308,20 @@ export interface B2BAdditionalCost {
   };
 }
 
+// ✅ NEW: Get quotation statistics for dashboard
+export const getQuotationStatistics = async () => {
+  try {
+    const token = getToken();
+    const response: AxiosResponse = await apiClient.get('/b2b/quotations/statistics', {
+      headers: { 'admin-auth-token': token || '' },
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching quotation statistics:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch quotation statistics.');
+  }
+};
+
 // Create new quotation
 export const createB2BQuotation = async (quotationData: Partial<B2BQuotation>) => {
   try {
