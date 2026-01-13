@@ -39,9 +39,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Button } from "@/components/ui/button";
 import { toast } from 'sonner';
 import {
   getB2BAnalyticsDashboard,
+  getHybridDashboardStats,
   B2BDashboardData
 } from '@/lib/api';
 
@@ -97,6 +99,44 @@ export default function B2BAnalyticsDashboard() {
 
   const closeDrillDown = () => {
     setDrillDownModal({ isOpen: false, metricType: null, metricTitle: '' });
+  };
+
+  // ✅ NEW: Hybrid Dashboard State
+  const [hybridStats, setHybridStats] = useState<any>(null);
+  const [hybridLoading, setHybridLoading] = useState(false);
+
+  const fetchHybridStats = async () => {
+    setHybridLoading(true);
+    try {
+      let startDate: string | undefined;
+      let endDate: string | undefined;
+
+      if (selectedMonth !== 'all') {
+        const [year, month] = selectedMonth.split('-');
+        const firstDay = new Date(parseInt(year), parseInt(month) - 1, 1);
+        const lastDay = new Date(parseInt(year), parseInt(month), 0);
+        startDate = firstDay.toISOString().split('T')[0];
+        endDate = lastDay.toISOString().split('T')[0];
+      } else if (dateRange?.from && dateRange?.to) {
+        startDate = dateRange.from.toISOString().split('T')[0];
+        endDate = dateRange.to.toISOString().split('T')[0];
+      }
+
+      console.log('Generating Sheet Two Stats...');
+      const response = await getHybridDashboardStats(startDate, endDate, useReceivedDate ? 'received' : 'created');
+
+      if (response && response.success) {
+        setHybridStats(response.data);
+        toast.success("Sheet Two Data Generated Successfully");
+      } else {
+        toast.error("Failed to generate data");
+      }
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.message || "Error generating data");
+    } finally {
+      setHybridLoading(false);
+    }
   };
 
   const fetchDashboard = async () => {
@@ -236,9 +276,10 @@ export default function B2BAnalyticsDashboard() {
       </div>
 
       <Tabs value={selectedTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-[200px] grid-cols-2">
+        <TabsList className="grid w-auto grid-cols-3">
           <TabsTrigger value="card">Card</TabsTrigger>
           <TabsTrigger value="sheet">Sheet</TabsTrigger>
+          <TabsTrigger value="sheet_two">Sheet Two (Export)</TabsTrigger>
         </TabsList>
 
         <TabsContent value="card" className="space-y-6 mt-6">
@@ -598,6 +639,64 @@ export default function B2BAnalyticsDashboard() {
                 </TableRow>
               </TableBody>
             </Table>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="sheet_two" className="mt-6">
+          <div className="space-y-4">
+            <div className="flex justify-between items-center bg-white p-4 rounded-md border shadow-sm">
+              <div>
+                <h3 className="font-bold text-lg">Sheet Two (Export Logic)</h3>
+                <p className="text-sm text-gray-500">
+                  These numbers are calculated using the <strong>exact iterative logic</strong> used in the Order Export.
+                  <br />
+                  Use this to verify discrepancies.
+                </p>
+              </div>
+              <Button onClick={fetchHybridStats} disabled={hybridLoading}>
+                {hybridLoading ? (
+                  <>
+                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
+                    Generating...
+                  </>
+                ) : (
+                  'Generate Data'
+                )}
+              </Button>
+            </div>
+
+            {hybridStats && (
+              <div className="rounded-md border bg-white shadow-sm overflow-hidden">
+                <Table>
+                  <TableHeader>
+                    <TableRow className="bg-gray-100">
+                      <TableHead className="w-[200px] font-bold">Category</TableHead>
+                      <TableHead className="font-bold">Orders Received (Lacs)</TableHead>
+                      <TableHead className="font-bold">Orders Billed (Lacs)</TableHead>
+                      <TableHead className="font-bold">Collections Amount (Lacs)</TableHead>
+                      <TableHead className="font-bold">Completed Billed (Lacs)</TableHead>
+                      <TableHead className="font-bold">WIP Billed (Lacs)</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    <TableRow className="font-medium">
+                      <TableCell>Total (All Statuses)</TableCell>
+                      <TableCell>{formatCurrency(hybridStats.orders_received_value)}</TableCell>
+                      <TableCell className="text-blue-600 font-bold">{formatCurrency(hybridStats.billed_orders_value)}</TableCell>
+                      <TableCell className="text-green-600">{formatCurrency(hybridStats.orders_collected_value)}</TableCell>
+                      <TableCell>{formatCurrency(hybridStats.completed_billed_value)}</TableCell>
+                      <TableCell>{formatCurrency(hybridStats.wip_billed_value)}</TableCell>
+                    </TableRow>
+                    <TableRow>
+                      <TableCell colSpan={6} className="bg-gray-50 text-xs text-center text-gray-500 py-2">
+                        * Counts: Received: {hybridStats.orders_received_count} | Billed: {hybridStats.billed_orders_count} |
+                        Completed Billed: {hybridStats.completed_billed_count} | WIP Billed: {hybridStats.wip_billed_count}
+                      </TableCell>
+                    </TableRow>
+                  </TableBody>
+                </Table>
+              </div>
+            )}
           </div>
         </TabsContent>
       </Tabs>

@@ -14879,3 +14879,27 @@ export const getMonthlyReportData = async (filters?: {
 }): Promise<any> => {
   return await getMonthlyReport(filters, 'json');
 };
+
+// ✅ NEW: Get Hybrid Dashboard Stats (Sheet Two)
+export const getHybridDashboardStats = async (
+  startDate?: string,
+  endDate?: string,
+  dateType?: 'created' | 'received'
+) => {
+  const params: any = {};
+  if (startDate) params.received_date_from = startDate;
+  if (endDate) params.received_date_to = endDate;
+  if (dateType === 'received') params.use_received_date = 'true';
+
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/b2b/analytics/hybrid-stats', {
+      params,
+      headers: { 'admin-auth-token': token || '' }
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching hybrid dashboard stats:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch hybrid dashboard stats');
+  }
+};
