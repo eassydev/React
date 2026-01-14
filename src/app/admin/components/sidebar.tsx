@@ -482,7 +482,7 @@ export default function Sidebar({ isCollapsed, isMobileSidebar = false }: NavPro
       >
         <nav
           className={cn(
-            'grid px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2 h-[calc(100dvh-64px)] overflow-y-auto scrollbar-thin',
+            'flex flex-col px-2 group-[[data-collapsed=true]]:items-center group-[[data-collapsed=true]]:px-2 h-[calc(100dvh-64px)] overflow-y-auto scrollbar-thin',
             isMobileSidebar && 'p-0 h-[calc(100dvh-64px)] overflow-y-auto'
           )}
         >
