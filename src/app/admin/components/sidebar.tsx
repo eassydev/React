@@ -304,25 +304,33 @@ function SectionComponent({
   getVariant,
   expandedSubMenus,
   setExpandedSubMenus,
-  hasPermissionForRoute,
-  isSuperAdmin,
+  expandedSections,
+  setExpandedSections,
 }: {
   readonly section: NavSection;
   readonly isCollapsed: boolean;
   readonly getVariant: GetVariantFunction;
   readonly expandedSubMenus: string[];
   readonly setExpandedSubMenus: React.Dispatch<React.SetStateAction<string[]>>;
-  readonly hasPermissionForRoute: (route: string) => boolean;
-  readonly isSuperAdmin: boolean;
+  readonly expandedSections: string[];
+  readonly setExpandedSections: (sections: string[]) => void;
 }) {
   const pathname = usePathname();
 
   // ALWAYS show all main section items - main headings are always visible
-  // Permission filtering only applies to child items (handled at NavItem level)
-  // This ensures all 8 main sections are always visible regardless of permissions
   const filteredItems = section.items;
 
-  // Main sections are ALWAYS rendered (never return null here)
+  // Check if section is expanded
+  const isExpanded = expandedSections.includes(section.title);
+
+  // Toggle section expand/collapse
+  const toggleSection = () => {
+    if (isExpanded) {
+      setExpandedSections(expandedSections.filter(s => s !== section.title));
+    } else {
+      setExpandedSections([...expandedSections, section.title]);
+    }
+  };
 
   // Check if any child is active for highlighting
   const sectionRoutes: string[] = [];
@@ -338,45 +346,49 @@ function SectionComponent({
 
   if (isCollapsed) {
     return (
-      <AccordionItem value={section.title} className="border-none">
+      <div>
         <Tooltip delayDuration={0}>
           <TooltipTrigger asChild>
-            <AccordionTrigger
+            <button
+              onClick={toggleSection}
               className={cn(
                 buttonVariants({ variant: 'ghost', size: 'icon' }),
-                'h-9 w-9 hide-accordion-icon',
+                'h-9 w-9',
                 isActive && 'bg-accent'
               )}
             >
               <section.icon className="h-4 w-4" />
-            </AccordionTrigger>
+            </button>
           </TooltipTrigger>
           <TooltipContent side="right" className="flex items-center gap-2">
             {section.title}
           </TooltipContent>
         </Tooltip>
-        <AccordionContent className="flex flex-col gap-1 pb-0 pt-1 [&>div]:pb-0">
-          {filteredItems.map((item) => (
-            <NavItemComponent
-              key={item.title}
-              item={item}
-              isCollapsed={true}
-              getVariant={getVariant}
-              expandedSubMenus={expandedSubMenus}
-              setExpandedSubMenus={setExpandedSubMenus}
-            />
-          ))}
-        </AccordionContent>
-      </AccordionItem>
+        {isExpanded && (
+          <div className="flex flex-col gap-1 pt-1">
+            {filteredItems.map((item) => (
+              <NavItemComponent
+                key={item.title}
+                item={item}
+                isCollapsed={true}
+                getVariant={getVariant}
+                expandedSubMenus={expandedSubMenus}
+                setExpandedSubMenus={setExpandedSubMenus}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     );
   }
 
   return (
-    <AccordionItem value={section.title} className="border-none">
-      <AccordionTrigger
+    <div>
+      <button
+        onClick={toggleSection}
         className={cn(
           buttonVariants({ variant: 'ghost', size: 'sm' }),
-          'flex items-center justify-between w-full px-2 h-10 hover:no-underline',
+          'flex items-center justify-between w-full px-2 h-10',
           isActive && 'bg-accent/50'
         )}
       >
@@ -384,20 +396,27 @@ function SectionComponent({
           <section.icon className="mr-2 h-4 w-4" />
           <span className="font-medium">{section.title}</span>
         </div>
-      </AccordionTrigger>
-      <AccordionContent className="flex flex-col gap-0.5 pb-1 pt-1 pl-2 [&>div]:pb-0">
-        {filteredItems.map((item) => (
-          <NavItemComponent
-            key={item.title}
-            item={item}
-            isCollapsed={false}
-            getVariant={getVariant}
-            expandedSubMenus={expandedSubMenus}
-            setExpandedSubMenus={setExpandedSubMenus}
-          />
-        ))}
-      </AccordionContent>
-    </AccordionItem>
+        {isExpanded ? (
+          <ChevronDown className="h-4 w-4 text-muted-foreground" />
+        ) : (
+          <ChevronRight className="h-4 w-4 text-muted-foreground" />
+        )}
+      </button>
+      {isExpanded && (
+        <div className="flex flex-col gap-0.5 pb-1 pt-1 pl-4">
+          {filteredItems.map((item) => (
+            <NavItemComponent
+              key={item.title}
+              item={item}
+              isCollapsed={false}
+              getVariant={getVariant}
+              expandedSubMenus={expandedSubMenus}
+              setExpandedSubMenus={setExpandedSubMenus}
+            />
+          ))}
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -457,36 +476,30 @@ export default function Sidebar({ isCollapsed, isMobileSidebar = false }: NavPro
 
   return (
     <TooltipProvider delayDuration={0}>
-      <Accordion
-        type="multiple"
-        value={expandedSections}
-        onValueChange={setExpandedSections}
+      <div
+        data-collapsed={isCollapsed}
+        className="group flex flex-col py-2 data-[collapsed=true]:py-2"
       >
-        <div
-          data-collapsed={isCollapsed}
-          className="group flex flex-col py-2 data-[collapsed=true]:py-2"
+        <nav
+          className={cn(
+            'grid px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2 h-[calc(100dvh-64px)] overflow-y-auto scrollbar-thin',
+            isMobileSidebar && 'p-0 h-[calc(100dvh-64px)] overflow-y-auto'
+          )}
         >
-          <nav
-            className={cn(
-              'grid px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2 h-[calc(100dvh-64px)] overflow-y-auto scrollbar-thin',
-              isMobileSidebar && 'p-0 h-[calc(100dvh-64px)] overflow-y-auto'
-            )}
-          >
-            {sidebarSections.map((section) => (
-              <SectionComponent
-                key={section.title}
-                section={section}
-                isCollapsed={isCollapsed}
-                getVariant={getVariant}
-                expandedSubMenus={expandedSubMenus}
-                setExpandedSubMenus={setExpandedSubMenus}
-                hasPermissionForRoute={hasPermissionForRoute}
-                isSuperAdmin={superAdmin}
-              />
-            ))}
-          </nav>
-        </div>
-      </Accordion>
+          {sidebarSections.map((section) => (
+            <SectionComponent
+              key={section.title}
+              section={section}
+              isCollapsed={isCollapsed}
+              getVariant={getVariant}
+              expandedSubMenus={expandedSubMenus}
+              setExpandedSubMenus={setExpandedSubMenus}
+              expandedSections={expandedSections}
+              setExpandedSections={setExpandedSections}
+            />
+          ))}
+        </nav>
+      </div>
     </TooltipProvider>
   );
 }
