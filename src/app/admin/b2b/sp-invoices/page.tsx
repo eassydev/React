@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import {
   Card,
   CardContent,
@@ -79,7 +80,7 @@ export default function SPInvoicesPage() {
 
   useEffect(() => {
     fetchInvoicesData();
-    fetchStatsData();
+    // fetchStatsData();
   }, [filters]);
 
   const fetchInvoicesData = async () => {
@@ -137,26 +138,56 @@ export default function SPInvoicesPage() {
 
     try {
       setActionLoading(true);
+      const token = localStorage.getItem('token');
+      const BASE_URL = process.env.NEXT_PUBLIC_API_URL;
       
-      const payload = {
-        admin_notes: adminNotes,
-        ...additionalData
-      };
+      let response;
 
-      const response = await api.post(
-        `/admin-api/b2b/sp-invoices/${selectedInvoice.id}/${action}`,
-        payload
-      );
+      if (action === 'approve') {
+        response = await axios.post(
+          `${BASE_URL}/b2b/sp-invoices/approval`,
+          { id: selectedInvoice.id,
+            adminNotes :adminNotes,
+           },
+          {
+            headers: {
+              'admin-auth-token': token
+            }
+          }
+        );
+      } else {
+        const payload = {
+          admin_notes: adminNotes,
+          ...additionalData
+        };
+
+        response = await axios.post(
+          `${BASE_URL}/b2b/sp-invoices/${selectedInvoice.id}/${action}`,
+          payload,
+          {
+            headers: {
+              'admin-auth-token': token
+            }
+          }
+        );
+      }
 
       if (response.data.success) {
-        toast.success(`Invoice ${action.replace('-', ' ')}d successfully`);
+        toast({
+          title: "Success",
+          description: `Invoice ${action.replace('-', ' ')}d successfully`,
+        });
         setReviewModalOpen(false);
-        fetchInvoices();
-        fetchStats();
+        fetchInvoicesData();
+        fetchStatsData();
       }
     } catch (error) {
       console.error(`Error ${action}ing invoice:`, error);
-      toast.error(`Failed to ${action.replace('-', ' ')} invoice`);
+      toast({
+        title: "Error",
+        description: `Failed to ${action.replace('-', ' ')} invoice`,
+        variant: "destructive",
+      });
     } finally {
       setActionLoading(false);
     }
