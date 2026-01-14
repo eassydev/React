@@ -355,7 +355,7 @@ function SectionComponent({
             {section.title}
           </TooltipContent>
         </Tooltip>
-        <AccordionContent className="flex flex-col gap-1 pb-0 pt-1">
+        <AccordionContent className="flex flex-col gap-1 pb-0 pt-1 [&>div]:pb-0">
           {filteredItems.map((item) => (
             <NavItemComponent
               key={item.title}
@@ -385,7 +385,7 @@ function SectionComponent({
           <span className="font-medium">{section.title}</span>
         </div>
       </AccordionTrigger>
-      <AccordionContent className="flex flex-col gap-0.5 pb-2 pt-1 pl-2">
+      <AccordionContent className="flex flex-col gap-0.5 pb-1 pt-1 pl-2 [&>div]:pb-0">
         {filteredItems.map((item) => (
           <NavItemComponent
             key={item.title}
