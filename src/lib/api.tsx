@@ -7381,6 +7381,37 @@ export const fetchB2BQuotations = async (params: {
   }
 };
 
+// Download quotations Excel
+export const downloadB2BQuotations = async (params: {
+  page?: number;
+  limit?: number;
+  status?: string;
+  b2b_booking_id?: string;
+  search?: string;
+  sort_by?: string;
+  created_by_type?: string;
+  admin_approval_status?: string;
+  sort_order?: 'ASC' | 'DESC';
+} = {}) => {
+  try {
+    const token = getToken();
+    const queryParams = {
+      ...params,
+      download: true
+    };
+
+    const response: AxiosResponse = await apiClient.get('/b2b/quotations', {
+      headers: { 'admin-auth-token': token || '' },
+      params: queryParams,
+      responseType: 'blob'
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error downloading B2B quotations:', error);
+    throw new Error('Failed to download quotations.');
+  }
+};
+
 // Get quotations for specific order
 export const fetchB2BQuotationsForOrder = async (orderId: string, params: {
   page?: number;
