@@ -317,31 +317,12 @@ function SectionComponent({
 }) {
   const pathname = usePathname();
 
-  // Filter items based on permissions
-  // NOTE: Show all items if user is super admin OR if no permissions are configured yet
-  const filteredItems = useMemo(() => {
-    // Super admin sees everything
-    if (isSuperAdmin) return section.items;
+  // ALWAYS show all main section items - main headings are always visible
+  // Permission filtering only applies to child items (handled at NavItem level)
+  // This ensures all 8 main sections are always visible regardless of permissions
+  const filteredItems = section.items;
 
-    // If hasPermissionForRoute returns true for any route, use permission filtering
-    // Otherwise, show all items (permissions not configured or still loading)
-    const hasAnyPermissions = section.items.some((item) => {
-      const routes = getItemRoutes(item);
-      return routes.some((route) => hasPermissionForRoute(route));
-    });
-
-    // If no permissions configured, show all items
-    if (!hasAnyPermissions) return section.items;
-
-    // Apply permission filtering
-    return section.items.filter((item) => {
-      const routes = getItemRoutes(item);
-      return routes.some((route) => hasPermissionForRoute(route));
-    });
-  }, [section.items, hasPermissionForRoute, isSuperAdmin]);
-
-  // Don't render section if no items (should never happen with above logic)
-  if (filteredItems.length === 0) return null;
+  // Main sections are ALWAYS rendered (never return null here)
 
   // Check if any child is active for highlighting
   const sectionRoutes: string[] = [];
