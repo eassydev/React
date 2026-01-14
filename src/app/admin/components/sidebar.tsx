@@ -464,11 +464,11 @@ export default function Sidebar({ isCollapsed, isMobileSidebar = false }: NavPro
       >
         <div
           data-collapsed={isCollapsed}
-          className="group flex flex-col gap-1 py-2 data-[collapsed=true]:py-2"
+          className="group flex flex-col py-2 data-[collapsed=true]:py-2"
         >
           <nav
             className={cn(
-              'grid gap-0.5 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2 h-[calc(100dvh-64px)] overflow-y-auto scrollbar-thin',
+              'grid px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2 h-[calc(100dvh-64px)] overflow-y-auto scrollbar-thin',
               isMobileSidebar && 'p-0 h-[calc(100dvh-64px)] overflow-y-auto'
             )}
           >
