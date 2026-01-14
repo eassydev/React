@@ -13697,6 +13697,8 @@ export const fetchB2BPayments = async (params?: {
   verificationStatus?: string;
   startDate?: string;
   endDate?: string;
+  search?: string;
+  unallocatedOnly?: boolean;
   page?: number;
   limit?: number;
 }) => {

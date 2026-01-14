@@ -58,6 +58,7 @@ export default function AllPaymentsPage() {
   });
 
   const [exporting, setExporting] = useState(false); // ✅ NEW: Export loading state
+  const [showUnallocatedOnly, setShowUnallocatedOnly] = useState(false); // ✅ Drill-down filter for unallocated
 
   const [pagination, setPagination] = useState({
     total: 0,
@@ -72,7 +73,7 @@ export default function AllPaymentsPage() {
   useEffect(() => {
     loadPayments();
     loadSummary();
-  }, [filters]);
+  }, [filters, showUnallocatedOnly]);
 
   const [summary, setSummary] = useState<B2BPaymentsSummary | null>(null);
   const [summaryLoading, setSummaryLoading] = useState(true);
@@ -96,6 +97,9 @@ export default function AllPaymentsPage() {
     try {
       setLoading(true);
       const params: any = { ...filters };
+      if (showUnallocatedOnly) {
+        params.unallocatedOnly = true;
+      }
 
       // Remove empty filters
       Object.keys(params).forEach(key => {
@@ -275,13 +279,27 @@ export default function AllPaymentsPage() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card
+            className="cursor-pointer hover:shadow-lg transition-shadow border-2 hover:border-orange-300"
+            onClick={() => {
+              const newValue = !showUnallocatedOnly;
+              setShowUnallocatedOnly(newValue);
+              if (newValue) {
+                setFilters(prev => ({ ...prev, page: 1 }));
+              }
+            }}
+          >
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-muted-foreground">Yet to Allocate</p>
+                  <p className="text-sm font-medium text-muted-foreground">
+                    Yet to Allocate {showUnallocatedOnly && <span className="text-orange-600">(Filtered)</span>}
+                  </p>
                   <p className="text-2xl font-bold text-orange-600">
                     {summaryLoading ? '...' : `₹${(summary?.total_unallocated.value || 0).toLocaleString()}`}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Click to {showUnallocatedOnly ? 'show all' : 'filter'}
                   </p>
                 </div>
                 <ArrowRightLeft className="h-8 w-8 text-orange-600 opacity-50" />
