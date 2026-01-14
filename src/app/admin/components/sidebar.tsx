@@ -318,16 +318,29 @@ function SectionComponent({
   const pathname = usePathname();
 
   // Filter items based on permissions
+  // NOTE: Show all items if user is super admin OR if no permissions are configured yet
   const filteredItems = useMemo(() => {
+    // Super admin sees everything
     if (isSuperAdmin) return section.items;
 
+    // If hasPermissionForRoute returns true for any route, use permission filtering
+    // Otherwise, show all items (permissions not configured or still loading)
+    const hasAnyPermissions = section.items.some((item) => {
+      const routes = getItemRoutes(item);
+      return routes.some((route) => hasPermissionForRoute(route));
+    });
+
+    // If no permissions configured, show all items
+    if (!hasAnyPermissions) return section.items;
+
+    // Apply permission filtering
     return section.items.filter((item) => {
       const routes = getItemRoutes(item);
       return routes.some((route) => hasPermissionForRoute(route));
     });
   }, [section.items, hasPermissionForRoute, isSuperAdmin]);
 
-  // Don't render section if no accessible items
+  // Don't render section if no items (should never happen with above logic)
   if (filteredItems.length === 0) return null;
 
   // Check if any child is active for highlighting
@@ -451,14 +464,15 @@ export default function Sidebar({ isCollapsed, isMobileSidebar = false }: NavPro
   // Permission check wrapper
   const hasPermissionForRoute = React.useCallback(
     (route: string): boolean => {
-      // During loading, assume no permissions
-      if (permissionsLoading) return false;
+      // During loading, return true to show all items
+      if (permissionsLoading) return true;
       return hasPermission(route);
     },
     [hasPermission, permissionsLoading]
   );
 
-  const superAdmin = isSuperAdmin();
+  // Check if super admin (default to false during loading to avoid flash)
+  const superAdmin = !permissionsLoading && isSuperAdmin();
 
   return (
     <TooltipProvider delayDuration={0}>
