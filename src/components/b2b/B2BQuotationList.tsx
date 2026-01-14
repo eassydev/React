@@ -8,8 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Eye, Send, CheckCircle, XCircle, FileText, Search, Filter } from 'lucide-react';
-import { fetchB2BQuotations, sendB2BQuotation, approveB2BQuotation, rejectB2BQuotation, approveSpQuotation, rejectSpQuotation, B2BQuotation } from '@/lib/api';
+import { Eye, Send, CheckCircle, XCircle, FileText, Search, Filter, Download } from 'lucide-react';
+import { fetchB2BQuotations, sendB2BQuotation, approveB2BQuotation, rejectB2BQuotation, approveSpQuotation, rejectSpQuotation, B2BQuotation, downloadB2BQuotations } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 import { SPQuotationApprovalModal } from './SPQuotationApprovalModal';
 import { SPQuotationRejectionModal } from './SPQuotationRejectionModal';
@@ -241,6 +241,44 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
     }
   };
 
+  const handleDownload = async () => {
+    try {
+      setActionLoading(prev => ({ ...prev, download: true }));
+      
+      const params = {
+        page: currentPage,
+        limit: 100,
+        status: statusFilter !== 'all' ? statusFilter : undefined,
+        search: searchQuery.trim() || undefined,
+        sort_by: sortBy,
+        sort_order: sortOrder,
+        created_by_type: created_by_type !== 'all' ? created_by_type : undefined,
+        admin_approval_status: admin_approval_status !== 'all' ? admin_approval_status : undefined,
+        b2b_booking_id: orderId || undefined
+      };
+
+      const blob = await downloadB2BQuotations(params);
+
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `quotations_${new Date().toISOString().split('T')[0]}.xlsx`; 
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+    } catch (error: any) {
+      toast({
+        title: 'Error',
+        description: error.message || 'Failed to download quotations',
+        variant: 'destructive',
+      });
+    } finally {
+      setActionLoading(prev => ({ ...prev, download: false }));
+    }
+  };
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       draft: { color: 'bg-gray-100 text-gray-800', label: 'Draft' },
@@ -283,6 +321,19 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
             {orderId ? 'Order Quotations' : 'B2B Quotations'}
             <Badge variant="outline">{totalRecords}</Badge>
           </CardTitle>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleDownload}
+            disabled={actionLoading['download']}
+          >
+            {actionLoading['download'] ? (
+              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2"></div>
+            ) : (
+              <Download className="h-4 w-4 mr-2" />
+            )}
+            Download
+          </Button>
         </div>
 
         {/* Filters */}

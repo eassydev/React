@@ -181,11 +181,18 @@ export default function SPInvoicesPage() {
         fetchInvoicesData();
         fetchStatsData();
       }
-    } catch (error) {
+    } catch (error: {
+      response: {
+        data: {
+          message: string;
+        };
+      };
+    }) {
+
       console.error(`Error ${action}ing invoice:`, error);
       toast({
         title: "Error",
-        description: `Failed to ${action.replace('-', ' ')} invoice`,
+        description: `${error?.response?.data?.message}`,
         variant: "destructive",
       });
     } finally {
