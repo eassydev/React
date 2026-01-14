@@ -30,9 +30,14 @@ import {
   ChevronRight,
   FileSpreadsheet,
   Loader2,
-  Upload
+  Upload,
+  Wallet,
+  CheckCircle,
+  Clock,
+  XCircle,
+  ArrowRightLeft
 } from 'lucide-react';
-import { fetchB2BPayments, fetchB2BCustomers, B2BPayment } from '@/lib/api';
+import { fetchB2BPayments, fetchB2BCustomers, fetchB2BPaymentsSummary, B2BPayment, B2BPaymentsSummary } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 
 export default function AllPaymentsPage() {
@@ -66,7 +71,11 @@ export default function AllPaymentsPage() {
 
   useEffect(() => {
     loadPayments();
+    loadSummary();
   }, [filters]);
+
+  const [summary, setSummary] = useState<B2BPaymentsSummary | null>(null);
+  const [summaryLoading, setSummaryLoading] = useState(true);
 
   const loadCustomers = async () => {
     try {
@@ -104,6 +113,22 @@ export default function AllPaymentsPage() {
       });
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadSummary = async () => {
+    try {
+      setSummaryLoading(true);
+      const params: any = {};
+      if (filters.startDate) params.startDate = filters.startDate;
+      if (filters.endDate) params.endDate = filters.endDate;
+
+      const data = await fetchB2BPaymentsSummary(params);
+      setSummary(data);
+    } catch (error: any) {
+      console.error('Failed to load summary:', error);
+    } finally {
+      setSummaryLoading(false);
     }
   };
 
@@ -215,6 +240,88 @@ export default function AllPaymentsPage() {
               </Link>
             </Button>
           </div>
+        </div>
+
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Total Received</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {summaryLoading ? '...' : `₹${(summary?.total_received.value || 0).toLocaleString()}`}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {summaryLoading ? '' : `${summary?.total_received.count || 0} payments`}
+                  </p>
+                </div>
+                <Wallet className="h-8 w-8 text-green-600 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Allocated</p>
+                  <p className="text-2xl font-bold text-blue-600">
+                    {summaryLoading ? '...' : `₹${(summary?.total_allocated.value || 0).toLocaleString()}`}
+                  </p>
+                </div>
+                <CheckCircle className="h-8 w-8 text-blue-600 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Yet to Allocate</p>
+                  <p className="text-2xl font-bold text-orange-600">
+                    {summaryLoading ? '...' : `₹${(summary?.total_unallocated.value || 0).toLocaleString()}`}
+                  </p>
+                </div>
+                <ArrowRightLeft className="h-8 w-8 text-orange-600 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Pending Verification</p>
+                  <p className="text-2xl font-bold text-yellow-600">
+                    {summaryLoading ? '...' : `₹${(summary?.pending_verification.value || 0).toLocaleString()}`}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {summaryLoading ? '' : `${summary?.pending_verification.count || 0} payments`}
+                  </p>
+                </div>
+                <Clock className="h-8 w-8 text-yellow-600 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="pt-6">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-muted-foreground">Rejected</p>
+                  <p className="text-2xl font-bold text-red-600">
+                    {summaryLoading ? '...' : `₹${(summary?.rejected.value || 0).toLocaleString()}`}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {summaryLoading ? '' : `${summary?.rejected.count || 0} payments`}
+                  </p>
+                </div>
+                <XCircle className="h-8 w-8 text-red-600 opacity-50" />
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Filters */}

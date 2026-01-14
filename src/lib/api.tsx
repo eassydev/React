@@ -13721,6 +13721,41 @@ export const fetchB2BPayments = async (params?: {
 };
 
 /**
+ * Get B2B payments summary for dashboard cards
+ */
+export interface B2BPaymentsSummary {
+  total_received: { count: number; value: number };
+  total_allocated: { value: number };
+  total_unallocated: { value: number };
+  pending_verification: { count: number; value: number };
+  rejected: { count: number; value: number };
+}
+
+export const fetchB2BPaymentsSummary = async (params?: {
+  startDate?: string;
+  endDate?: string;
+}): Promise<B2BPaymentsSummary> => {
+  try {
+    const token = getToken();
+    if (!token) {
+      throw new Error('No authentication token found');
+    }
+
+    const response = await apiClient.get('/b2b/finance/payments/summary', {
+      headers: {
+        'admin-auth-token': token,
+      },
+      params,
+    });
+
+    return response.data.data;
+  } catch (error: any) {
+    console.error('Error fetching payments summary:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch payments summary');
+  }
+};
+
+/**
  * Get B2B payment by ID
  */
 export const fetchB2BPaymentById = async (paymentId: string) => {
