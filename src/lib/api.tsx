@@ -6029,6 +6029,7 @@ export const fetchB2BOrders = async (
     dateTo?: string;
     receivedDateFrom?: string;
     receivedDateTo?: string;
+    dateFilterType?: 'service' | 'created' | 'received'; // ✅ NEW: Support explicit date filtering type
   } | number = {},
   limit?: number,
   status?: string,
@@ -6054,7 +6055,7 @@ export const fetchB2BOrders = async (
       if (params.status && params.status !== 'all') queryParams.status = params.status;
       if (params.customerId) queryParams.customerId = params.customerId;
       if (params.paymentStatus && params.paymentStatus !== 'all') queryParams.payment_status = params.paymentStatus;
-      if (params.hasPayment === 'true') queryParams.has_payment = 'true'; // ✅ NEW: Support hasPayment filter
+      if (params.hasPayment === 'true') queryParams.has_payment = 'true';
       if (params.search?.trim()) queryParams.search = params.search.trim();
       if (params.dateFilter && params.dateFilter !== 'all') {
         queryParams.date_filter = params.dateFilter;
@@ -6064,6 +6065,7 @@ export const fetchB2BOrders = async (
       }
       if (params.receivedDateFrom) queryParams.received_date_from = params.receivedDateFrom;
       if (params.receivedDateTo) queryParams.received_date_to = params.receivedDateTo;
+      if (params.dateFilterType) queryParams.date_filter_type = params.dateFilterType; // ✅ NEW: Pass date filter type
     } else {
       // Positional parameters (legacy)
       queryParams = { page: params || 1, limit: limit || 10 };

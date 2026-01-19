@@ -125,6 +125,8 @@ export default function AnalyticsDrillDownModal({
                 dateTo: useReceivedDate ? '' : dateTo,
                 receivedDateFrom: useReceivedDate ? dateFrom : '',
                 receivedDateTo: useReceivedDate ? dateTo : '',
+                // ✅ NEW: Explicitly use 'created' (NOT service_date) when not using received date
+                dateFilterType: useReceivedDate ? 'received' : 'created'
             });
 
             if (response.success) {
@@ -185,7 +187,7 @@ export default function AnalyticsDrillDownModal({
                 date_to: useReceivedDate ? '' : dateTo,
                 received_date_from: useReceivedDate ? dateFrom : '',
                 received_date_to: useReceivedDate ? dateTo : '',
-                date_filter_type: useReceivedDate ? 'received' : 'service'
+                date_filter_type: useReceivedDate ? 'received' : 'created' // ✅ Explicitly filter by created_at (not service)
             });
 
         } catch (error) {
