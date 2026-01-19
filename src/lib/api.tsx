@@ -6325,11 +6325,15 @@ export const exportB2BOrders = async (filters: {
   status?: string;
   payment_status?: string;
   invoice_status?: string;
+  has_payment?: string;
   customer_id?: string;
   provider_id?: string;
   category_id?: string;
   spoc_id?: string;
   format?: 'xlsx' | 'csv';
+  received_date_from?: string;
+  received_date_to?: string;
+  date_filter_type?: 'service' | 'received';
 } = {}): Promise<void> => {
   try {
     const token = getToken();
@@ -6341,11 +6345,15 @@ export const exportB2BOrders = async (filters: {
     if (filters.status) params.status = filters.status;
     if (filters.payment_status) params.payment_status = filters.payment_status;
     if (filters.invoice_status) params.invoice_status = filters.invoice_status;
+    if (filters.has_payment) params.has_payment = filters.has_payment;
     if (filters.customer_id) params.customer_id = filters.customer_id;
     if (filters.provider_id) params.provider_id = filters.provider_id;
     if (filters.category_id) params.category_id = filters.category_id;
     if (filters.spoc_id) params.spoc_id = filters.spoc_id;
     if (filters.format) params.format = filters.format;
+    if (filters.received_date_from) params.received_date_from = filters.received_date_from;
+    if (filters.received_date_to) params.received_date_to = filters.received_date_to;
+    if (filters.date_filter_type) params.date_filter_type = filters.date_filter_type;
 
     console.log('📊 Exporting B2B orders with filters:', params);
 

@@ -156,40 +156,44 @@ export default function AnalyticsDrillDownModal({
     };
 
     // ✅ NEW: Export Functionality
-    const handleExport = () => {
+    const handleExport = async () => {
         if (!metricType) return;
 
-        const filters = getFiltersForMetric(metricType);
-        let dateFrom = '';
-        let dateTo = '';
+        setLoading(true); // Show loading state while exporting
+        try {
+            const filters = getFiltersForMetric(metricType);
+            let dateFrom = '';
+            let dateTo = '';
 
-        if (selectedMonth && selectedMonth !== 'all') {
-            const [year, month] = selectedMonth.split('-');
-            const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
-            const endDate = new Date(parseInt(year), parseInt(month), 0);
-            dateFrom = startDate.toISOString().split('T')[0];
-            dateTo = endDate.toISOString().split('T')[0];
-        } else if (dateRange?.from) {
-            dateFrom = dateRange.from.toISOString().split('T')[0];
-            dateTo = dateRange.to?.toISOString().split('T')[0] || dateFrom;
+            if (selectedMonth && selectedMonth !== 'all') {
+                const [year, month] = selectedMonth.split('-');
+                const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+                const endDate = new Date(parseInt(year), parseInt(month), 0);
+                dateFrom = startDate.toISOString().split('T')[0];
+                dateTo = endDate.toISOString().split('T')[0];
+            } else if (dateRange?.from) {
+                dateFrom = dateRange.from.toISOString().split('T')[0];
+                dateTo = dateRange.to?.toISOString().split('T')[0] || dateFrom;
+            }
+
+            // ✅ CALL AUTHENTICATED EXPORT FUNCTION
+            await exportB2BOrders({
+                status: filters.status || '',
+                payment_status: filters.paymentStatus || '',
+                has_payment: filters.hasPayment || '',
+                date_from: useReceivedDate ? '' : dateFrom,
+                date_to: useReceivedDate ? '' : dateTo,
+                received_date_from: useReceivedDate ? dateFrom : '',
+                received_date_to: useReceivedDate ? dateTo : '',
+                date_filter_type: useReceivedDate ? 'received' : 'service'
+            });
+
+        } catch (error) {
+            console.error('Export failed:', error);
+            // Optionally add toast notification here
+        } finally {
+            setLoading(false);
         }
-
-        // Construct query parameters manually for the export URL
-        const queryParams = new URLSearchParams({
-            status: filters.status || '',
-            payment_status: filters.paymentStatus || '',
-            has_payment: filters.hasPayment || '',
-            date_from: useReceivedDate ? '' : dateFrom,
-            date_to: useReceivedDate ? '' : dateTo,
-            received_date_from: useReceivedDate ? dateFrom : '',
-            received_date_to: useReceivedDate ? dateTo : '',
-            date_filter_type: useReceivedDate ? 'received' : 'service' // Explicitly tell backend which date logic to use
-        });
-
-        const exportUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/admin-api'}/b2b/dashboard/export-orders?${queryParams.toString()}`;
-
-        // Trigger download
-        window.open(exportUrl, '_blank');
     };
 
     const handlePageChange = (newPage: number) => {
