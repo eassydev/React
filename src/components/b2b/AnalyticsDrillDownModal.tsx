@@ -19,7 +19,7 @@ import {
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { fetchB2BOrders } from '@/lib/api';
+import { fetchB2BOrders, exportB2BOrders } from '@/lib/api';
 
 export type MetricType =
     | 'orders_received'
