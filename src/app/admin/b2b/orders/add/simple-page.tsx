@@ -1,7 +1,8 @@
-import { getTodayYYYYMMDD } from '@/lib/dateUtils';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { getTodayYYYYMMDD } from '@/lib/dateUtils';
 import { ArrowLeft, Save, Plus } from 'lucide-react';
 import {
   fetchB2BCustomers,
