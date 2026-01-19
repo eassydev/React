@@ -148,16 +148,15 @@ export default function B2BAnalyticsDashboard() {
 
       // ✅ Month filter takes precedence over date range
       if (selectedMonth !== 'all') {
-        // Parse YYYY-MM format
         const [year, month] = selectedMonth.split('-');
         const firstDay = new Date(parseInt(year), parseInt(month) - 1, 1);
         const lastDay = new Date(parseInt(year), parseInt(month), 0);
 
-        startDate = firstDay.toISOString().split('T')[0];
-        endDate = lastDay.toISOString().split('T')[0];
+        startDate = formatDateToYYYYMMDD(firstDay);
+        endDate = formatDateToYYYYMMDD(lastDay);
       } else if (dateRange?.from && dateRange?.to) {
-        startDate = dateRange.from.toISOString().split('T')[0];
-        endDate = dateRange.to.toISOString().split('T')[0];
+        startDate = formatDateToYYYYMMDD(dateRange.from);
+        endDate = formatDateToYYYYMMDD(dateRange.to);
       }
 
       const dashboardData = await getB2BAnalyticsDashboard(startDate, endDate, useReceivedDate ? 'received' : 'created');
