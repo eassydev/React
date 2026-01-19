@@ -20,6 +20,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { fetchB2BOrders, exportB2BOrders } from '@/lib/api';
+import { formatDateToYYYYMMDD } from '@/lib/dateUtils';
 
 export type MetricType =
     | 'orders_received'
@@ -107,11 +108,11 @@ export default function AnalyticsDrillDownModal({
                 const [year, month] = selectedMonth.split('-');
                 const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
                 const endDate = new Date(parseInt(year), parseInt(month), 0);
-                dateFrom = startDate.toISOString().split('T')[0];
-                dateTo = endDate.toISOString().split('T')[0];
+                dateFrom = formatDateToYYYYMMDD(startDate);
+                dateTo = formatDateToYYYYMMDD(endDate);
             } else if (dateRange?.from) {
-                dateFrom = dateRange.from.toISOString().split('T')[0];
-                dateTo = dateRange.to?.toISOString().split('T')[0] || dateFrom;
+                dateFrom = formatDateToYYYYMMDD(dateRange.from);
+                dateTo = dateRange.to ? formatDateToYYYYMMDD(dateRange.to) : dateFrom;
             }
 
             const response = await fetchB2BOrders({
@@ -171,11 +172,11 @@ export default function AnalyticsDrillDownModal({
                 const [year, month] = selectedMonth.split('-');
                 const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
                 const endDate = new Date(parseInt(year), parseInt(month), 0);
-                dateFrom = startDate.toISOString().split('T')[0];
-                dateTo = endDate.toISOString().split('T')[0];
+                dateFrom = formatDateToYYYYMMDD(startDate);
+                dateTo = formatDateToYYYYMMDD(endDate);
             } else if (dateRange?.from) {
-                dateFrom = dateRange.from.toISOString().split('T')[0];
-                dateTo = dateRange.to?.toISOString().split('T')[0] || dateFrom;
+                dateFrom = formatDateToYYYYMMDD(dateRange.from);
+                dateTo = dateRange.to ? formatDateToYYYYMMDD(dateRange.to) : dateFrom;
             }
 
             // ✅ CALL AUTHENTICATED EXPORT FUNCTION

@@ -1,5 +1,7 @@
 'use client';
 
+import { formatDateToYYYYMMDD } from '@/lib/dateUtils';
+
 import React, { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { DateRange } from 'react-day-picker';
@@ -59,8 +61,8 @@ export default function CustomerAnalyticsPage() {
 
   const fetchAnalytics = async () => {
     try {
-      const startDate = dateRange?.from?.toISOString().split('T')[0];
-      const endDate = dateRange?.to?.toISOString().split('T')[0];
+      const startDate = dateRange?.from ? formatDateToYYYYMMDD(dateRange.from) : undefined;
+      const endDate = dateRange?.to ? formatDateToYYYYMMDD(dateRange.to) : undefined;
 
       const data = await getB2BCustomerAnalytics(customerId, startDate, endDate);
       setAnalyticsData(data);
@@ -115,8 +117,8 @@ export default function CustomerAnalyticsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
-          <Button 
-            variant="ghost" 
+          <Button
+            variant="ghost"
             size="icon"
             onClick={() => router.back()}
           >
@@ -183,21 +185,21 @@ export default function CustomerAnalyticsPage() {
             subtitle={formatCurrency(core_metrics.orders_received.total_value)}
             icon={<ShoppingCart className="h-4 w-4" />}
           />
-          
+
           <B2BMetricCard
             title="Orders Completed"
             value={core_metrics.orders_completed.count}
             subtitle={formatCurrency(core_metrics.orders_completed.total_value)}
             icon={<CheckCircle className="h-4 w-4" />}
           />
-          
+
           <B2BMetricCard
             title="Revenue Generated"
             value={formatCurrency(core_metrics.revenue_generated)}
             subtitle="From completed orders"
             icon={<DollarSign className="h-4 w-4" />}
           />
-          
+
           <B2BMetricCard
             title="Profit Generated"
             value={formatCurrency(core_metrics.profit_generated)}
@@ -215,21 +217,21 @@ export default function CustomerAnalyticsPage() {
           value={formatCurrency(financial_health.avg_order_value)}
           icon={<Activity className="h-4 w-4" />}
         />
-        
+
         <B2BMetricCard
           title="Outstanding Invoices"
           value={formatCurrency(financial_health.outstanding_invoice_amount)}
           icon={<AlertCircle className="h-4 w-4" />}
           alert={financial_health.outstanding_invoice_amount > 0}
         />
-        
+
         <B2BMetricCard
           title="Customer Tenure"
           value={`${relationship_metrics.customer_tenure.months} months`}
           subtitle={`Since ${relationship_metrics.customer_tenure.first_order_date}`}
           icon={<Calendar className="h-4 w-4" />}
         />
-        
+
         <B2BMetricCard
           title="Last Order"
           value={relationship_metrics.last_order_date || 'N/A'}
