@@ -204,6 +204,69 @@ export default function AllPaymentsPage() {
     }
   };
 
+  // Handle deallocate payment
+  const handleDeallocate = async (paymentId: string) => {
+    if (!confirm('Deallocate this payment from all invoices? This will reverse all allocations.')) {
+      return;
+    }
+
+    try {
+      const token = localStorage.getItem('token');
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.eassylife.in';
+
+      const response = await fetch(`${API_BASE_URL}/b2b/finance/payments/${paymentId}/deallocate`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'admin-auth-token': token || '',
+        },
+        body: JSON.stringify({ notes: 'Deallocated via payments page' })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({ title: 'Success', description: data.message });
+        loadPayments(); // Refresh
+      } else {
+        toast({ variant: 'destructive', title: 'Error', description: data.message });
+      }
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to deallocate payment' });
+    }
+  };
+
+  // Handle reject payment
+  const handleReject = async (paymentId: string) => {
+    const notes = prompt('Reason for rejecting this payment:');
+    if (!notes || notes.trim() === '') return;
+
+    try {
+      const token = localStorage.getItem('token');
+      const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.eassylife.in';
+
+      const response = await fetch(`${API_BASE_URL}/b2b/finance/payments/${paymentId}/reject`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'admin-auth-token': token || '',
+        },
+        body: JSON.stringify({ verificationNotes: notes })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        toast({ title: 'Success', description: 'Payment marked as rejected' });
+        loadPayments(); // Refresh
+      } else {
+        toast({ variant: 'destructive', title: 'Error', description: data.message });
+      }
+    } catch (error) {
+      toast({ variant: 'destructive', title: 'Error', description: 'Failed to reject payment' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 p-4 md:p-8">
       <div className="max-w-7xl mx-auto space-y-6">
@@ -513,13 +576,40 @@ export default function AllPaymentsPage() {
                             )}
                           </TableCell>
                           <TableCell>
-                            {payment.verification_status === 'verified' && payment.unallocated_amount > 0 && (
-                              <Button asChild size="sm" variant="outline">
-                                <Link href={`/admin/b2b/finance/payments/${payment.id}/allocate`}>
-                                  Allocate
-                                </Link>
-                              </Button>
-                            )}
+                            <div className="flex gap-2">
+                              {/* Allocate button - only for verified payments with unallocated amount */}
+                              {payment.verification_status === 'verified' && payment.unallocated_amount > 0 && (
+                                <Button asChild size="sm" variant="outline">
+                                  <Link href={`/admin/b2b/finance/payments/${payment.id}/allocate`}>
+                                    Allocate
+                                  </Link>
+                                </Button>
+                              )}
+
+                              {/* Deallocate button - only for verified payments with allocations */}
+                              {payment.verification_status === 'verified' && parseFloat(payment.allocated_amount.toString()) > 0 && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDeallocate(payment.id)}
+                                >
+                                  <ArrowRightLeft className="w-4 h-4 mr-1" />
+                                  Deallocate
+                                </Button>
+                              )}
+
+                              {/* Reject button - for non-rejected payments */}
+                              {payment.verification_status !== 'rejected' && (
+                                <Button
+                                  size="sm"
+                                  variant="destructive"
+                                  onClick={() => handleReject(payment.id)}
+                                >
+                                  <XCircle className="w-4 h-4 mr-1" />
+                                  Reject
+                                </Button>
+                              )}
+                            </div>
                           </TableCell>
                         </TableRow>
                       ))}
