@@ -1,7 +1,8 @@
-import { formatDateToYYYYMMDD } from '@/lib/dateUtils';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { formatDateToYYYYMMDD } from '@/lib/dateUtils';
 import { ArrowLeft, Save, Info, Edit, UserPlus, User, Building } from 'lucide-react';
 import {
   fetchB2BOrderById,
