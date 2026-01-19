@@ -78,15 +78,21 @@ export default function AnalyticsDrillDownModal({
     const [loading, setLoading] = useState(false);
     const [orders, setOrders] = useState<DrillDownOrder[]>([]);
     const [totalRecords, setTotalRecords] = useState(0);
+    // ✅ NEW: Pagination State
+    const [currentPage, setCurrentPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [limit] = useState(50); // Keep 50 as default limit for table view
 
+    // ✅ NEW: Reset pagination when modal opens or metric changes
     useEffect(() => {
         if (isOpen && metricType) {
-            fetchOrders();
+            setCurrentPage(1);
+            fetchOrders(1);
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [isOpen, metricType, useReceivedDate, selectedMonth, dateRange?.from?.toISOString(), dateRange?.to?.toISOString()]);
 
-    const fetchOrders = async () => {
+    const fetchOrders = async (page = 1) => {
         if (!metricType) return;
 
         setLoading(true);
@@ -109,12 +115,12 @@ export default function AnalyticsDrillDownModal({
             }
 
             const response = await fetchB2BOrders({
-                page: 1,
-                limit: 50, // Show top 50 orders
+                page: page,
+                limit: limit,
                 search: '',
                 status: filters.status || '',
                 paymentStatus: filters.paymentStatus || '',
-                hasPayment: filters.hasPayment || '', // ✅ NEW: Support hasPayment filter for WIP Collections
+                hasPayment: filters.hasPayment || '',
                 dateFrom: useReceivedDate ? '' : dateFrom,
                 dateTo: useReceivedDate ? '' : dateTo,
                 receivedDateFrom: useReceivedDate ? dateFrom : '',
@@ -122,9 +128,9 @@ export default function AnalyticsDrillDownModal({
             });
 
             if (response.success) {
-                // Apply additional client-side filters if needed
                 let filteredOrders = response.data.orders || [];
 
+                // Client-side filtering if needed (legacy, preferably move to backend if possible)
                 if (filters.excludeCancelled === 'true') {
                     filteredOrders = filteredOrders.filter((o: DrillDownOrder) => o.status !== 'cancelled');
                 }
@@ -133,12 +139,63 @@ export default function AnalyticsDrillDownModal({
                 }
 
                 setOrders(filteredOrders);
-                setTotalRecords(filteredOrders.length);
+                if (response.data.pagination) {
+                    setTotalRecords(response.data.pagination.total_records);
+                    setTotalPages(response.data.pagination.total_pages);
+                } else {
+                    // Fallback if pagination metadata is missing
+                    setTotalRecords(filteredOrders.length);
+                    setTotalPages(1);
+                }
             }
         } catch (error) {
             console.error('Error fetching drill-down orders:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // ✅ NEW: Export Functionality
+    const handleExport = () => {
+        if (!metricType) return;
+
+        const filters = getFiltersForMetric(metricType);
+        let dateFrom = '';
+        let dateTo = '';
+
+        if (selectedMonth && selectedMonth !== 'all') {
+            const [year, month] = selectedMonth.split('-');
+            const startDate = new Date(parseInt(year), parseInt(month) - 1, 1);
+            const endDate = new Date(parseInt(year), parseInt(month), 0);
+            dateFrom = startDate.toISOString().split('T')[0];
+            dateTo = endDate.toISOString().split('T')[0];
+        } else if (dateRange?.from) {
+            dateFrom = dateRange.from.toISOString().split('T')[0];
+            dateTo = dateRange.to?.toISOString().split('T')[0] || dateFrom;
+        }
+
+        // Construct query parameters manually for the export URL
+        const queryParams = new URLSearchParams({
+            status: filters.status || '',
+            payment_status: filters.paymentStatus || '',
+            has_payment: filters.hasPayment || '',
+            date_from: useReceivedDate ? '' : dateFrom,
+            date_to: useReceivedDate ? '' : dateTo,
+            received_date_from: useReceivedDate ? dateFrom : '',
+            received_date_to: useReceivedDate ? dateTo : '',
+            date_filter_type: useReceivedDate ? 'received' : 'service' // Explicitly tell backend which date logic to use
+        });
+
+        const exportUrl = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/admin-api'}/b2b/dashboard/export-orders?${queryParams.toString()}`;
+
+        // Trigger download
+        window.open(exportUrl, '_blank');
+    };
+
+    const handlePageChange = (newPage: number) => {
+        if (newPage >= 1 && newPage <= totalPages) {
+            setCurrentPage(newPage);
+            fetchOrders(newPage);
         }
     };
 
@@ -163,15 +220,23 @@ export default function AnalyticsDrillDownModal({
 
     return (
         <Dialog open={isOpen} onOpenChange={(open: boolean) => !open && onClose()}>
-            <DialogContent className="max-w-5xl max-h-[80vh] overflow-hidden flex flex-col">
+            <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col">
                 <DialogHeader>
-                    <DialogTitle className="flex items-center justify-between">
-                        <span>{metricTitle} - Order Details</span>
-                        <Badge variant="secondary">{totalRecords} orders</Badge>
-                    </DialogTitle>
+                    <div className="flex items-center justify-between mr-8">
+                        <div>
+                            <DialogTitle className="flex items-center gap-2">
+                                <span>{metricTitle}</span>
+                                <Badge variant="secondary">{totalRecords} orders</Badge>
+                            </DialogTitle>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={handleExport} className="flex gap-2">
+                            <ExternalLink className="h-4 w-4" />
+                            Export List
+                        </Button>
+                    </div>
                 </DialogHeader>
 
-                <div className="flex-1 overflow-auto">
+                <div className="flex-1 overflow-auto border rounded-md my-4">
                     {loading ? (
                         <div className="flex items-center justify-center py-12">
                             <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
@@ -183,7 +248,7 @@ export default function AnalyticsDrillDownModal({
                         </div>
                     ) : (
                         <Table>
-                            <TableHeader>
+                            <TableHeader className="bg-gray-50 sticky top-0">
                                 <TableRow>
                                     <TableHead>Order #</TableHead>
                                     <TableHead>Customer</TableHead>
@@ -192,7 +257,7 @@ export default function AnalyticsDrillDownModal({
                                     <TableHead>Amount</TableHead>
                                     <TableHead>Status</TableHead>
                                     <TableHead>Payment</TableHead>
-                                    <TableHead></TableHead>
+                                    <TableHead>Action</TableHead>
                                 </TableRow>
                             </TableHeader>
                             <TableBody>
@@ -231,10 +296,32 @@ export default function AnalyticsDrillDownModal({
                     )}
                 </div>
 
-                <div className="flex justify-end pt-4 border-t">
-                    <Button variant="outline" onClick={onClose}>
-                        Close
-                    </Button>
+                {/* ✅ NEW: Pagination Footer */}
+                <div className="flex justify-between items-center pt-4 border-t bg-white">
+                    <div className="text-sm text-gray-500">
+                        Page {currentPage} of {totalPages}
+                    </div>
+                    <div className="flex gap-2">
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(currentPage - 1)}
+                            disabled={currentPage <= 1 || loading}
+                        >
+                            Previous
+                        </Button>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => handlePageChange(currentPage + 1)}
+                            disabled={currentPage >= totalPages || loading}
+                        >
+                            Next
+                        </Button>
+                        <Button variant="default" onClick={onClose} className="ml-4">
+                            Close
+                        </Button>
+                    </div>
                 </div>
             </DialogContent>
         </Dialog>
