@@ -1,7 +1,8 @@
-import { formatDateToYYYYMMDD } from '@/lib/dateUtils';
+'use client';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { formatDateToYYYYMMDD } from '@/lib/dateUtils';
 import { Plus, Search, Eye, Edit, Settings, Download, FileText, Upload, CheckSquare, Square, X } from 'lucide-react';
 import {
   fetchB2BOrders,
