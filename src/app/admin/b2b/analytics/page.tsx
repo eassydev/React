@@ -72,6 +72,15 @@ export default function B2BAnalyticsDashboard() {
   const [useReceivedDate, setUseReceivedDate] = useState<boolean>(false); // Toggle for booking_received_date
   const [selectedTab, setSelectedTab] = useState<string>('card'); // ✅ NEW: Persist tab state
 
+  // ✅ Helper function to format Date to YYYY-MM-DD in local timezone
+  // This prevents timezone conversion issues when sending dates to backend
+  const formatDateToYYYYMMDD = (date: Date): string => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
   // ✅ NEW: Load persisted tab from localStorage on mount
   useEffect(() => {
     const savedTab = localStorage.getItem('b2b-analytics-tab');
@@ -115,11 +124,11 @@ export default function B2BAnalyticsDashboard() {
         const [year, month] = selectedMonth.split('-');
         const firstDay = new Date(parseInt(year), parseInt(month) - 1, 1);
         const lastDay = new Date(parseInt(year), parseInt(month), 0);
-        startDate = firstDay.toISOString().split('T')[0];
-        endDate = lastDay.toISOString().split('T')[0];
+        startDate = formatDateToYYYYMMDD(firstDay);
+        endDate = formatDateToYYYYMMDD(lastDay);
       } else if (dateRange?.from && dateRange?.to) {
-        startDate = dateRange.from.toISOString().split('T')[0];
-        endDate = dateRange.to.toISOString().split('T')[0];
+        startDate = formatDateToYYYYMMDD(dateRange.from);
+        endDate = formatDateToYYYYMMDD(dateRange.to);
       }
 
       console.log('Generating Sheet Two Stats...');
@@ -275,10 +284,9 @@ export default function B2BAnalyticsDashboard() {
       </div>
 
       <Tabs value={selectedTab} onValueChange={handleTabChange} className="w-full">
-        <TabsList className="grid w-auto grid-cols-3">
+        <TabsList className="grid w-auto grid-cols-2">
           <TabsTrigger value="card">Card</TabsTrigger>
           <TabsTrigger value="sheet">Sheet</TabsTrigger>
-          <TabsTrigger value="sheet_two">Sheet Two (Export)</TabsTrigger>
         </TabsList>
 
         <TabsContent value="card" className="space-y-6 mt-6">
@@ -638,113 +646,6 @@ export default function B2BAnalyticsDashboard() {
                 </TableRow>
               </TableBody>
             </Table>
-          </div>
-        </TabsContent>
-
-        <TabsContent value="sheet_two" className="mt-6">
-          <div className="space-y-4">
-            <div className="flex justify-between items-center bg-white p-4 rounded-md border shadow-sm">
-              <div>
-                <h3 className="font-bold text-lg">Sheet Two (Export Logic)</h3>
-                <p className="text-sm text-gray-500">
-                  These numbers are calculated using the <strong>exact iterative logic</strong> used in the Order Export.
-                  <br />
-                  Use this to verify discrepancies.
-                </p>
-              </div>
-              <Button onClick={fetchHybridStats} disabled={hybridLoading}>
-                {hybridLoading ? (
-                  <>
-                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-current border-t-transparent"></div>
-                    Generating...
-                  </>
-                ) : (
-                  'Generate Data'
-                )}
-              </Button>
-            </div>
-
-            {hybridStats && (
-              <div className="rounded-md border bg-white shadow-sm overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="bg-gray-100">
-                      <TableHead className="w-[200px] font-bold">Category</TableHead>
-                      <TableHead className="font-bold">Orders Received (Lacs)</TableHead>
-                      <TableHead className="font-bold">Orders Billed (Lacs)</TableHead>
-                      <TableHead className="font-bold">Collections Amount (Lacs)</TableHead>
-                      <TableHead className="font-bold">SP Payment (Lacs)</TableHead>
-                      <TableHead className="font-bold">Gross Margin (Lacs)</TableHead>
-                      <TableHead className="font-bold">GM %</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {/* Row 1: Total Orders Received */}
-                    <TableRow className="bg-blue-50 font-bold border-t-2">
-                      <TableCell>Total Orders Received</TableCell>
-                      <TableCell>{formatCurrency(hybridStats.orders_received_value)}</TableCell>
-                      <TableCell>{formatCurrency(hybridStats.billed_orders_value)}</TableCell>
-                      <TableCell>{formatCurrency(hybridStats.orders_collected_value)}</TableCell>
-                      <TableCell>{formatCurrency((hybridStats.orders_executed_sp_payout || 0) + (hybridStats.orders_wip_sp_payout || 0))}</TableCell>
-                      <TableCell>{formatCurrency(hybridStats.orders_executed_gross_margin)}</TableCell>
-                      <TableCell>
-                        {hybridStats.orders_executed_value > 0
-                          ? ((hybridStats.orders_executed_gross_margin / hybridStats.orders_executed_value) * 100).toFixed(2) + '%'
-                          : '0%'}
-                      </TableCell>
-                    </TableRow>
-
-                    {/* Row 2: Cancelled Orders */}
-                    <TableRow>
-                      <TableCell className="font-medium">Cancelled Orders</TableCell>
-                      <TableCell className="text-red-600">{formatCurrency(hybridStats.orders_cancelled_value)}</TableCell>
-                      <TableCell>-</TableCell>
-                      <TableCell>-</TableCell>
-                      <TableCell>-</TableCell>
-                      <TableCell>-</TableCell>
-                      <TableCell>-</TableCell>
-                    </TableRow>
-
-                    {/* Row 3: Completed Orders */}
-                    <TableRow>
-                      <TableCell className="font-medium">Completed Orders</TableCell>
-                      <TableCell>{formatCurrency(hybridStats.orders_executed_value)}</TableCell>
-                      <TableCell>{formatCurrency(hybridStats.orders_executed_billed_value)}</TableCell>
-                      <TableCell>{formatCurrency(hybridStats.orders_executed_collections_value)}</TableCell>
-                      <TableCell>{formatCurrency(hybridStats.orders_executed_sp_payout)}</TableCell>
-                      <TableCell>{formatCurrency(hybridStats.orders_executed_gross_margin)}</TableCell>
-                      <TableCell>
-                        {hybridStats.orders_executed_value > 0
-                          ? ((hybridStats.orders_executed_gross_margin / hybridStats.orders_executed_value) * 100).toFixed(2) + '%'
-                          : '0%'}
-                      </TableCell>
-                    </TableRow>
-
-                    {/* Row 4: Work In Progress Orders */}
-                    <TableRow>
-                      <TableCell className="font-medium">Work In Progress Orders</TableCell>
-                      <TableCell>{formatCurrency(hybridStats.orders_wip_value)}</TableCell>
-                      <TableCell>{formatCurrency(hybridStats.orders_wip_billed_value)}</TableCell>
-                      <TableCell>{formatCurrency(hybridStats.orders_wip_collections_value)}</TableCell>
-                      <TableCell>{formatCurrency(hybridStats.orders_wip_sp_payout)}</TableCell>
-                      <TableCell>-</TableCell>
-                      <TableCell>-</TableCell>
-                    </TableRow>
-
-                    {/* Row 5: Pending Orders */}
-                    <TableRow>
-                      <TableCell className="font-medium">Pending Orders</TableCell>
-                      <TableCell>{formatCurrency(hybridStats.orders_not_started_value)}</TableCell>
-                      <TableCell>-</TableCell>
-                      <TableCell>-</TableCell>
-                      <TableCell>-</TableCell>
-                      <TableCell>-</TableCell>
-                      <TableCell>-</TableCell>
-                    </TableRow>
-                  </TableBody>
-                </Table>
-              </div>
-            )}
           </div>
         </TabsContent>
       </Tabs>
