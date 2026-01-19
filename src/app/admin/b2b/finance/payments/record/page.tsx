@@ -18,6 +18,7 @@ import { ArrowLeft, Upload, CreditCard, Loader2 } from 'lucide-react';
 import { recordB2BPayment, fetchB2BCustomers, fetchB2BOrders } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { getTodayYYYYMMDD } from '@/lib/dateUtils';
 
 export default function RecordPaymentPage() {
   const router = useRouter();
@@ -31,7 +32,7 @@ export default function RecordPaymentPage() {
     customerId: '',
     bookingId: '',
     amount: '',
-    paymentDate: new Date().toISOString().split('T')[0],
+    paymentDate: getTodayYYYYMMDD(),
     paymentMode: 'bank_transfer',
     transactionRef: '',
     notes: '',

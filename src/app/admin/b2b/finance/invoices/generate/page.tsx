@@ -27,6 +27,7 @@ import {
 } from '@/lib/api';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
+import { getTodayYYYYMMDD, formatDateToYYYYMMDD } from '@/lib/dateUtils';
 
 export default function GenerateInvoicePage() {
   const router = useRouter();
@@ -165,7 +166,7 @@ export default function GenerateInvoicePage() {
     }
 
     // Determine the final invoice date
-    const finalInvoiceDate = invoiceDateType === 'current' ? new Date().toISOString().split('T')[0] : invoiceDate;
+    const finalInvoiceDate = invoiceDateType === 'current' ? getTodayYYYYMMDD() : invoiceDate;
 
     try {
       setLoading(true);
@@ -209,7 +210,7 @@ export default function GenerateInvoicePage() {
     }
 
     // Determine the final invoice date
-    const finalInvoiceDate = invoiceDateType === 'current' ? new Date().toISOString().split('T')[0] : invoiceDate;
+    const finalInvoiceDate = invoiceDateType === 'current' ? getTodayYYYYMMDD() : invoiceDate;
 
     try {
       setLoading(true);
@@ -294,7 +295,7 @@ export default function GenerateInvoicePage() {
     }
 
     // Determine the final invoice date
-    const finalInvoiceDate = invoiceDateType === 'current' ? new Date().toISOString().split('T')[0] : invoiceDate;
+    const finalInvoiceDate = invoiceDateType === 'current' ? getTodayYYYYMMDD() : invoiceDate;
 
     try {
       setLoading(true);
@@ -495,7 +496,7 @@ export default function GenerateInvoicePage() {
                           onValueChange={(val: 'current' | 'old' | 'future') => {
                             setInvoiceDateType(val);
                             if (val === 'current') {
-                              setInvoiceDate(new Date().toISOString().split('T')[0]);
+                              setInvoiceDate(getTodayYYYYMMDD());
                             } else {
                               setInvoiceDate('');
                             }
@@ -522,8 +523,8 @@ export default function GenerateInvoicePage() {
                             type="date"
                             value={invoiceDate}
                             onChange={(e) => setInvoiceDate(e.target.value)}
-                            max={invoiceDateType === 'old' ? new Date().toISOString().split('T')[0] : undefined}
-                            min={invoiceDateType === 'future' ? new Date(Date.now() + 86400000).toISOString().split('T')[0] : undefined}
+                            max={invoiceDateType === 'old' ? getTodayYYYYMMDD() : undefined}
+                            min={invoiceDateType === 'future' ? formatDateToYYYYMMDD(new Date(Date.now() + 86400000)) : undefined}
                             required
                           />
                           <p className="text-xs text-gray-500">
@@ -692,7 +693,7 @@ export default function GenerateInvoicePage() {
                           onValueChange={(val: 'current' | 'old' | 'future') => {
                             setInvoiceDateType(val);
                             if (val === 'current') {
-                              setInvoiceDate(new Date().toISOString().split('T')[0]);
+                              setInvoiceDate(getTodayYYYYMMDD());
                             } else {
                               setInvoiceDate('');
                             }
@@ -719,8 +720,8 @@ export default function GenerateInvoicePage() {
                             type="date"
                             value={invoiceDate}
                             onChange={(e) => setInvoiceDate(e.target.value)}
-                            max={invoiceDateType === 'old' ? new Date().toISOString().split('T')[0] : undefined}
-                            min={invoiceDateType === 'future' ? new Date(Date.now() + 86400000).toISOString().split('T')[0] : undefined}
+                            max={invoiceDateType === 'old' ? getTodayYYYYMMDD() : undefined}
+                            min={invoiceDateType === 'future' ? formatDateToYYYYMMDD(new Date(Date.now() + 86400000)) : undefined}
                             required
                           />
                           <p className="text-xs text-gray-500">
@@ -969,7 +970,7 @@ export default function GenerateInvoicePage() {
                           onValueChange={(val: 'current' | 'old' | 'future') => {
                             setInvoiceDateType(val);
                             if (val === 'current') {
-                              setInvoiceDate(new Date().toISOString().split('T')[0]);
+                              setInvoiceDate(getTodayYYYYMMDD());
                             } else {
                               setInvoiceDate('');
                             }
@@ -996,8 +997,8 @@ export default function GenerateInvoicePage() {
                             type="date"
                             value={invoiceDate}
                             onChange={(e) => setInvoiceDate(e.target.value)}
-                            max={invoiceDateType === 'old' ? new Date().toISOString().split('T')[0] : undefined}
-                            min={invoiceDateType === 'future' ? new Date(Date.now() + 86400000).toISOString().split('T')[0] : undefined}
+                            max={invoiceDateType === 'old' ? getTodayYYYYMMDD() : undefined}
+                            min={invoiceDateType === 'future' ? formatDateToYYYYMMDD(new Date(Date.now() + 86400000)) : undefined}
                             required
                           />
                           <p className="text-xs text-gray-500">
