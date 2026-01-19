@@ -1,4 +1,4 @@
-'use client';
+import { formatDateToYYYYMMDD } from '@/lib/dateUtils';
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
@@ -236,7 +236,7 @@ export default function B2BOrdersPage() {
       // ✅ Generate new invoice using unified finance API
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + 30); // 30 days from now
-      const dueDateStr = dueDate.toISOString().split('T')[0];
+      const dueDateStr = formatDateToYYYYMMDD(dueDate);
 
       const response = await generateStandardInvoice(
         orderId,

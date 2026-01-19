@@ -1,4 +1,4 @@
-'use client';
+import { getTodayYYYYMMDD } from '@/lib/dateUtils';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
@@ -1220,24 +1220,24 @@ export default function SimpleB2BOrderPage() {
                     {/* Service Area for area-based pricing */}
                     {(formData.client_scenario === 'mobile_furniture_store' ||
                       formData.client_scenario === 'home_rental_service') && (
-                      <div>
-                        <Label htmlFor="service_area_sqft">Service Area (sq ft) *</Label>
-                        <Input
-                          type="number"
-                          id="service_area_sqft"
-                          value={formData.service_area_sqft}
-                          onChange={(e) => handleInputChange('service_area_sqft', e.target.value)}
-                          placeholder="Enter area in square feet"
-                          min="1"
-                          step="0.1"
-                        />
-                        {formData.client_scenario === 'mobile_furniture_store' && (
-                          <div className="text-xs text-gray-500 mt-1">
-                            Rate: ₹25/sq ft (Min: ₹2500, Max: ₹3600)
-                          </div>
-                        )}
-                      </div>
-                    )}
+                        <div>
+                          <Label htmlFor="service_area_sqft">Service Area (sq ft) *</Label>
+                          <Input
+                            type="number"
+                            id="service_area_sqft"
+                            value={formData.service_area_sqft}
+                            onChange={(e) => handleInputChange('service_area_sqft', e.target.value)}
+                            placeholder="Enter area in square feet"
+                            min="1"
+                            step="0.1"
+                          />
+                          {formData.client_scenario === 'mobile_furniture_store' && (
+                            <div className="text-xs text-gray-500 mt-1">
+                              Rate: ₹25/sq ft (Min: ₹2500, Max: ₹3600)
+                            </div>
+                          )}
+                        </div>
+                      )}
                   </div>
 
                   {/* Auto-calculate pricing button */}

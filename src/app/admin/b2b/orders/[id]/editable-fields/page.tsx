@@ -1,4 +1,4 @@
-'use client';
+import { formatDateToYYYYMMDD } from '@/lib/dateUtils';
 
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';

@@ -83,8 +83,8 @@ const BookingList = () => {
         status: filterStatus,
         search: searchTerm,
         ...filters,
-        startDate: dateRange[0].startDate?.toISOString().split('T')[0] || '',
-        endDate: dateRange[0].endDate?.toISOString().split('T')[0] || '',
+        startDate: dateRange[0].startDate ? formatDateToYYYYMMDD(dateRange[0].startDate) : '',
+        endDate: dateRange[0].endDate ? formatDateToYYYYMMDD(dateRange[0].endDate) : '',
       };
 
       const { data, meta } = await fetchBookings(
@@ -113,8 +113,8 @@ const BookingList = () => {
         return;
       }
 
-      const startDate = dateRange[0].startDate.toISOString().split('T')[0];
-      const endDate = dateRange[0].endDate.toISOString().split('T')[0];
+      const startDate = formatDateToYYYYMMDD(dateRange[0].startDate);
+      const endDate = formatDateToYYYYMMDD(dateRange[0].endDate);
 
       await exportBookings(startDate, endDate);
 

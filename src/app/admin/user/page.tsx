@@ -72,8 +72,8 @@ const UserList = () => {
   const handleExport = async () => {
     try {
       setIsExporting(true);
-      const startDate = dateRange[0].startDate.toISOString().split('T')[0];
-      const endDate = dateRange[0].endDate.toISOString().split('T')[0];
+      const startDate = formatDateToYYYYMMDD(dateRange[0].startDate);
+      const endDate = formatDateToYYYYMMDD(dateRange[0].endDate);
 
       // Call the exportUsers function with separate arguments
       await exportUsers(startDate, endDate, pincode);

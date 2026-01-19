@@ -18,6 +18,7 @@ import {
   fetchB2BOrderById,
   generateStandardInvoice // ✅ NEW: Use unified finance API
 } from '@/lib/api';
+import { formatDateToYYYYMMDD } from '@/lib/dateUtils';
 
 interface InvoiceItem {
   description: string;
@@ -183,7 +184,7 @@ export default function GenerateInvoicePage() {
       // ✅ Calculate due date from due_days
       const dueDate = new Date();
       dueDate.setDate(dueDate.getDate() + invoiceData.due_days);
-      const dueDateStr = dueDate.toISOString().split('T')[0];
+      const dueDateStr = formatDateToYYYYMMDD(dueDate);
 
       // ✅ Use NEW unified finance API (generateStandardInvoice)
       const response = await generateStandardInvoice(
