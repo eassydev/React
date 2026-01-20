@@ -32,6 +32,7 @@ import { useToast } from '@/hooks/use-toast';
 import { DateRange } from 'react-date-range';
 import 'react-date-range/dist/styles.css';
 import 'react-date-range/dist/theme/default.css';
+import { formatDateToYYYYMMDD } from '@/lib/dateUtils';
 
 const BookingList = () => {
   const [bookings, setBookings] = useState<any[]>([]);
