@@ -8,11 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Eye, Send, CheckCircle, XCircle, FileText, Search, Filter, Download } from 'lucide-react';
-import { fetchB2BQuotations, sendB2BQuotation, approveB2BQuotation, rejectB2BQuotation, approveSpQuotation, rejectSpQuotation, B2BQuotation, downloadB2BQuotations } from '@/lib/api';
+import { Eye, Send, CheckCircle, XCircle, FileText, Search, Filter, Download, Trash } from 'lucide-react';
+import { fetchB2BQuotations, sendB2BQuotation, approveB2BQuotation, rejectB2BQuotation, approveSpQuotation, rejectSpQuotation, B2BQuotation, downloadB2BQuotations, deleteB2BQuotation } from '@/lib/api';
 import { toast } from '@/hooks/use-toast';
 import { SPQuotationApprovalModal } from './SPQuotationApprovalModal';
 import { SPQuotationRejectionModal } from './SPQuotationRejectionModal';
+import { DeleteConfirmationModal } from './DeleteConfirmationModal';
 
 interface B2BQuotationListProps {
   orderId?: string; // Optional: if showing quotations for specific order
@@ -45,6 +46,7 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
   // Modal states
   const [approvalModalOpen, setApprovalModalOpen] = useState(false);
   const [rejectionModalOpen, setRejectionModalOpen] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [selectedQuotation, setSelectedQuotation] = useState<B2BQuotation | null>(null);
 
   const fetchQuotations = async () => {
@@ -238,6 +240,38 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
         variant: 'destructive',
       });
       throw error; // Re-throw to let modal handle loading state
+    }
+  };
+
+  const handleDeleteQuotation = (quotation: B2BQuotation) => {
+    setSelectedQuotation(quotation);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!selectedQuotation) return;
+
+    try {
+      setActionLoading(prev => ({ ...prev, [`delete_${selectedQuotation.id}`]: true }));
+
+      const response = await deleteB2BQuotation(selectedQuotation.id!);
+
+      if (response.success) {
+        toast({
+          title: 'Success',
+          description: 'Quotation deleted successfully',
+        });
+        fetchQuotations(); // Refresh list
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Delete Failed',
+        description: error.message || 'Failed to delete quotation',
+        variant: 'destructive',
+      });
+      throw error; // Re-throw for modal
+    } finally {
+      setActionLoading(prev => ({ ...prev, [`delete_${selectedQuotation.id}`]: false }));
     }
   };
 
@@ -545,6 +579,17 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
                             )
                         }
 
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                          onClick={() => handleDeleteQuotation(quotation)}
+                          disabled={actionLoading[`delete_${quotation.id}`]}
+                          title="Delete Quotation"
+                        >
+                          <Trash className="h-4 w-4" />
+                        </Button>
+
                       </div>
                     </TableCell>
                   </TableRow>
@@ -602,6 +647,19 @@ const B2BQuotationList: React.FC<B2BQuotationListProps> = ({
         }}
         onConfirm={handleRejectSPQuotation}
         quotationNumber={selectedQuotation?.quotation_number}
+      />
+
+      {/* Delete Confirmation Modal */}
+      <DeleteConfirmationModal
+        open={deleteModalOpen}
+        onClose={() => {
+          setDeleteModalOpen(false);
+          setSelectedQuotation(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Delete Quotation"
+        description="Are you sure you want to delete this quotation? This action cannot be undone."
+        itemName={selectedQuotation?.quotation_number}
       />
     </Card>
   );

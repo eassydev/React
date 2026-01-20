@@ -290,7 +290,12 @@ export const sidebarSections: NavSection[] = [
       {
         title: 'Provider Learning',
         icon: BookOpen,
-        route: `${basePath}/video-learning`,
+        // route: `${basePath}/video-learning`,
+        children: [
+          { title: 'All Modules', route: `${basePath}/video-learning` },
+          { title: 'Add Module', route: `${basePath}/video-learning/add` },
+          { title: 'Statistics', route: `${basePath}/video-learning/statistics` },
+        ],
       },
       {
         title: 'Checklist',
