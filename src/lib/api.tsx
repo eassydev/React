@@ -4,7 +4,7 @@ import axios, { AxiosResponse } from 'axios';
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5001/admin-api';
 
 // Initialize Axios instance with base URL
-const apiClient = axios.create({
+export const apiClient = axios.create({
   baseURL: BASE_URL,
 });
 
@@ -14979,3 +14979,118 @@ export const getHybridDashboardStats = async (
     throw new Error(error.response?.data?.message || 'Failed to fetch hybrid dashboard stats');
   }
 };
+
+// ✅ NEW: Video Statistics APIs
+export const getAllVideoCategories = async () => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/videos/all-video-category', {
+      headers: { 'admin-auth-token': token || '' }
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching video categories:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch video categories');
+  }
+};
+
+export const getAllVideosViaCategory = async (categoryId: string) => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get(`/videos/all-video-via-category/${categoryId}`, {
+      headers: { 'admin-auth-token': token || '' }
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching videos via category:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch videos');
+  }
+};
+
+export const getProviderAnsweredDetailStats = async (videoId: string, search: string = '') => {
+  try {
+    const token = getToken();
+    const query = search ? `?search=${search}` : '';
+    const response = await apiClient.get(`/videos/provider-answered-detail-stats/${videoId}${query}`, {
+      headers: { 'admin-auth-token': token || '' }
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching provider stats:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch provider stats');
+  }
+};
+
+export const exportProviderStats = async () => {
+  try {
+    const token = getToken();
+    const response = await apiClient.get('/videos/export-provider-stats', {
+      headers: { 'admin-auth-token': token || '' },
+      responseType: 'blob',
+    });
+    
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'provider_stats.xlsx');
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode?.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    return true;
+  } catch (error: any) {
+    console.error('Error exporting provider stats:', error);
+    throw new Error(error.response?.data?.message || 'Failed to export provider stats');
+  }
+};
+
+export const downloadProviderStats = async (videoId: string, search: string = '') => {
+  try {
+    const token = getToken();
+    const query = search ? `?search=${search}&download=true` : '?download=true';
+    const response = await apiClient.get(`/videos/provider-answered-detail-stats/${videoId}${query}`, {
+      headers: { 'admin-auth-token': token || '' },
+      responseType: 'blob',
+    });
+    
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'provider_stats.xlsx');
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode?.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    return true;
+  } catch (error: any) {
+    console.error('Error downloading provider stats:', error);
+    throw new Error(error.response?.data?.message || 'Failed to download provider stats');
+  }
+};
+
+/**
+ * Delete B2B Quotation
+ * @param id - Quotation ID
+ */
+export const deleteB2BQuotation = async (id: string): Promise<{ success: boolean; message: string }> => {
+  const token = getToken();
+  if (!token) {
+    throw new Error('Authentication token not found');
+  }
+
+  try {
+    const response = await apiClient.delete(`/b2b/quatation/${id}`, {
+      headers: {
+        'admin-auth-token': token
+      }
+    });
+
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error deleting quotation:', error);
+    throw new Error(error.response?.data?.message || 'Failed to delete quotation');
+  }
+};
+
