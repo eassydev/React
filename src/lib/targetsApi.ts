@@ -102,8 +102,8 @@ export interface FetchTargetsParams {
 // API CONFIGURATION
 // ============================================================================
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_TARGETS_API_URL || 'https://eassylifejsr.vercel.app';
-const API_KEY = process.env.NEXT_PUBLIC_TARGETS_API_KEY || '';
+// Use internal Next.js API route as proxy (keeps API key secure on server)
+const API_PROXY_URL = '/api/targets';
 
 // ============================================================================
 // API CLIENT
@@ -128,15 +128,14 @@ export async function fetchTargets(params: FetchTargetsParams = {}): Promise<Tar
     if (params.sortBy) queryParams.append('sortBy', params.sortBy);
     if (params.sortOrder) queryParams.append('sortOrder', params.sortOrder);
 
-    const url = `${API_BASE_URL}/api/external/targets-listing?${queryParams.toString()}`;
+    // Call internal proxy route (API key is handled server-side)
+    const url = `${API_PROXY_URL}?${queryParams.toString()}`;
 
     try {
         const response = await fetch(url, {
             method: 'GET',
             headers: {
-                'X-API-Key': API_KEY,
                 'Content-Type': 'application/json',
-                'X-Client-ID': 'eassy-admin-panel',
             },
             cache: 'no-store', // Disable caching for real-time data
         });
