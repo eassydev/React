@@ -15073,6 +15073,117 @@ export const downloadProviderStats = async (videoId: string, search: string = ''
 };
 
 /**
+ * Provider Training Statistics Interface
+ */
+export interface ProviderTrainingStatCategory {
+  category_id: string;
+  category_name: string;
+  category_image: string;
+  total_providers: number;
+  training_providers_completed: number;
+  training_providers_not_completed: number;
+  Amc_training_Order: number;
+  active_videos_count: number;
+}
+
+export const getProviderTrainingStats = async (startDate?: string, endDate?: string) => {
+  try {
+    const token = getToken();
+    const params = new URLSearchParams();
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+    
+    const queryString = params.toString() ? `?${params.toString()}` : '';
+    
+    const response = await apiClient.get(`/videos/provider-training-stats${queryString}`, {
+      headers: { 'admin-auth-token': token || '' }
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching provider training stats:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch provider training stats');
+  }
+};
+
+export const downloadProviderTrainingStats = async (startDate?: string, endDate?: string) => {
+  try {
+    const token = getToken();
+    const params = new URLSearchParams();
+    params.append('download', 'excel');
+    if (startDate) params.append('start_date', startDate);
+    if (endDate) params.append('end_date', endDate);
+
+    const queryString = `?${params.toString()}`;
+
+    const response = await apiClient.get(`/videos/provider-training-stats${queryString}`, {
+      headers: { 'admin-auth-token': token || '' },
+      responseType: 'blob',
+    });
+    
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'provider_training_stats.xlsx');
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode?.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    return true;
+  } catch (error: any) {
+    console.error('Error downloading provider training stats:', error);
+    throw new Error(error.response?.data?.message || 'Failed to download provider training stats');
+  }
+};
+
+export interface CategoryProviderStat {
+  sp_id: string;
+  sp_name: string;
+  sp_unique_code: string;
+  sp_parent_name: string | null;
+  videos_completed: number;
+}
+
+export const getCategoryProviderStats = async (categoryId: string, search: string = '') => {
+  try {
+    const token = getToken();
+    const query = search ? `?search=${search}` : '';
+    const response = await apiClient.get(`/videos/category-provider-stats/${categoryId}${query}`, {
+      headers: { 'admin-auth-token': token || '' }
+    });
+    return response.data;
+  } catch (error: any) {
+    console.error('Error fetching category provider stats:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch category provider stats');
+  }
+};
+
+export const downloadCategoryProviderStats = async (categoryId: string, search: string = '') => {
+  try {
+    const token = getToken();
+    const query = search ? `?search=${search}&download=excel` : '?download=excel';
+    const response = await apiClient.get(`/videos/category-provider-stats/${categoryId}${query}`, {
+      headers: { 'admin-auth-token': token || '' },
+      responseType: 'blob',
+    });
+    
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `category_provider_stats_${categoryId}.xlsx`);
+    document.body.appendChild(link);
+    link.click();
+    link.parentNode?.removeChild(link);
+    window.URL.revokeObjectURL(url);
+
+    return true;
+  } catch (error: any) {
+    console.error('Error downloading category provider stats:', error);
+    throw new Error(error.response?.data?.message || 'Failed to download category provider stats');
+  }
+};
+
+/**
  * Delete B2B Quotation
  * @param id - Quotation ID
  */
