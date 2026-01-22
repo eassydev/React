@@ -19,6 +19,7 @@ import {
   Plug,
   LucideIcon,
   PanelsTopLeft,
+  Target,
 } from 'lucide-react';
 
 // ============================================================================
@@ -79,6 +80,11 @@ export const sidebarSections: NavSection[] = [
         title: 'Detailed Reports',
         icon: BarChart3,
         route: `${basePath}/analytics`,
+      },
+      {
+        title: 'Goal Tracking',
+        icon: Target,
+        route: `${basePath}/analytics/goal-tracking`,
       },
     ],
   },
