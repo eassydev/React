@@ -288,7 +288,6 @@ export default function StatisticsPage() {
                                         <TableHead className="text-right">AMC Order</TableHead>
                                         <TableHead className="text-right">Total Providers</TableHead>
                                         <TableHead className="text-right">Completed</TableHead>
-                                        <TableHead className="text-right">Not Completed</TableHead>
                                         <TableHead className="text-right">Videos</TableHead>
                                         <TableHead className="w-[100px]"></TableHead>
                                     </TableRow>
@@ -331,13 +330,7 @@ export default function StatisticsPage() {
                                                 </div>
                                             </TableCell>
                                             <TableCell className="text-right">
-                                                <div className="flex items-center justify-end text-slate-500">
-                                                    <span className="font-bold mr-2">{item.training_providers_not_completed}</span>
-                                                    <XCircle className="h-4 w-4" />
-                                                </div>
-                                            </TableCell>
-                                            <TableCell className="text-right">
-                                                 <div className="flex items-center justify-end">
+                                                <div className="flex items-center justify-end">
                                                     <span className="font-bold mr-2">{item.active_videos_count}</span>
                                                     <PlayCircle className="h-4 w-4 text-primary/50" />
                                                 </div>
