@@ -390,6 +390,10 @@ export default function StatisticsPage() {
                                             <TableHead>Unique Code</TableHead>
                                             <TableHead>Parent Name</TableHead>
                                             <TableHead className="text-right">Videos Completed</TableHead>
+                                            <TableHead className="text-right">Training Status</TableHead>
+                                            <TableHead className="text-right">Issue Date</TableHead>
+                                            <TableHead className="text-right">Valid Till</TableHead>
+                                            <TableHead className="text-right">Certificate</TableHead>
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
@@ -407,6 +411,28 @@ export default function StatisticsPage() {
                                                 </TableCell>
                                                 <TableCell className="text-right font-bold text-green-600">
                                                     {stat.videos_completed}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    {stat.training_status}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    {stat.certificate_created_at ? new Date(stat.certificate_created_at).toLocaleDateString() : '-'}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    {stat.certificate_expires_at ? new Date(stat.certificate_expires_at).toLocaleDateString() : '-'}
+                                                </TableCell>
+                                                <TableCell className="text-right">
+                                                    {stat.certificate_image ? (
+                                                        <Button 
+                                                            variant="outline" 
+                                                            size="sm"
+                                                            onClick={() => window.open(stat.certificate_image, '_blank')}
+                                                        >
+                                                            View
+                                                        </Button>
+                                                    ) : (
+                                                        <span className="text-muted-foreground">-</span>
+                                                    )}
                                                 </TableCell>
                                             </TableRow>
                                         ))}
