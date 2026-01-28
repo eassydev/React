@@ -15142,6 +15142,10 @@ export interface CategoryProviderStat {
   sp_unique_code: string;
   sp_parent_name: string | null;
   videos_completed: number;
+  training_status: string;
+  certificate_created_at: string;
+  certificate_expires_at: string;
+  certificate_image: string;
 }
 
 export const getCategoryProviderStats = async (categoryId: string, search: string = '') => {
